@@ -1,2 +1,2 @@
-# devfile-build
-golang library for reading devfiles and returning a build guidance
+# devfile-parser
+golang library for reading devfiles
