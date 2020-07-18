@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
+	"github.com/redhat-developer/devfileParser/pkg/testingutil/filesystem"
 )
 
 func TestCheckGitIgnoreFile(t *testing.T) {

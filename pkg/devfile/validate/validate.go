@@ -3,11 +3,11 @@ package validate
 import (
 	"reflect"
 
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/common"
+	"github.com/redhat-developer/devfileParser/pkg/devfile/parser/data/common"
 	"k8s.io/klog"
 
-	v100 "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/1.0.0"
-	v200 "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/2.0.0"
+	v100 "github.com/redhat-developer/devfileParser/pkg/devfile/parser/data/1.0.0"
+	v200 "github.com/redhat-developer/devfileParser/pkg/devfile/parser/data/2.0.0"
 )
 
 // ValidateDevfileData validates whether sections of devfile are odo compatible
