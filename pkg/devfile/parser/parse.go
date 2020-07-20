@@ -3,10 +3,10 @@ package parser
 import (
 	"encoding/json"
 
-	devfileCtx "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/context"
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data"
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/validate"
-	"github.com/redhat-developer/devfile-parser/pkg/errors"
+	devfileCtx "github.com/cli-playground/devfile-parser/pkg/devfile/parser/context"
+	"github.com/cli-playground/devfile-parser/pkg/devfile/parser/data"
+	"github.com/cli-playground/devfile-parser/pkg/devfile/validate"
+	"github.com/cli-playground/devfile-parser/pkg/errors"
 )
 
 // ParseDevfile func validates the devfile integrity.

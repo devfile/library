@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cli-playground/devfile-parser/pkg/devfile/parser/data"
 	"github.com/pkg/errors"
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data"
 	"k8s.io/klog"
 )
 

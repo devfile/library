@@ -3,8 +3,8 @@ package parser
 import (
 	"fmt"
 
-	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
-	"github.com/redhat-developer/devfile-parser/pkg/util"
+	"github.com/cli-playground/devfile-parser/pkg/testingutil/filesystem"
+	"github.com/cli-playground/devfile-parser/pkg/util"
 	"k8s.io/klog"
 )
 

@@ -1,6 +1,6 @@
 package version200
 
-import "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/common"
+import "github.com/cli-playground/devfile-parser/pkg/devfile/parser/data/common"
 
 // CommandGroupType describes the kind of command group.
 // +kubebuilder:validation:Enum=build;run;test;debug

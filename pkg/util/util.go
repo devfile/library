@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cli-playground/devfile-parser/pkg/testingutil/filesystem"
 	"github.com/gobwas/glob"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
-	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	kvalidation "k8s.io/apimachinery/pkg/util/validation"
