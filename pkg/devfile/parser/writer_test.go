@@ -3,9 +3,9 @@ package parser
 import (
 	"testing"
 
-	devfileCtx "github.com/redhat-developer/devfileParser/pkg/devfile/parser/context"
-	v100 "github.com/redhat-developer/devfileParser/pkg/devfile/parser/data/1.0.0"
-	"github.com/redhat-developer/devfileParser/pkg/testingutil/filesystem"
+	devfileCtx "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/context"
+	v100 "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/1.0.0"
+	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
 )
 
 func TestWriteJsonDevfile(t *testing.T) {

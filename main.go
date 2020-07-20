@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	parser "github.com/redhat-developer/devfileParser/pkg/devfile/parser"
+	parser "github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
 )
 
 type DevfileObject struct {

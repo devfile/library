@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/redhat-developer/devfileParser/pkg/devfile/parser/data"
+	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data"
 	"github.com/xeipuuv/gojsonschema"
 	"k8s.io/klog"
 )

@@ -1969,7 +1969,7 @@ func TestDownloadInMemory(t *testing.T) {
 	}{
 		{
 			name: "Case 1: valid URL",
-			url:  "https://github.com/redhat-developer/devfileParser/blob/master/tests/examples/source/devfiles/nodejs/devfile.yaml",
+			url:  "https://github.com/redhat-developer/devfile-parser/blob/master/tests/examples/source/devfiles/nodejs/devfile.yaml",
 			want: true,
 		},
 		{

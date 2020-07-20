@@ -1,8 +1,8 @@
 package parser
 
 import (
-	devfileCtx "github.com/redhat-developer/devfileParser/pkg/devfile/parser/context"
-	"github.com/redhat-developer/devfileParser/pkg/devfile/parser/data"
+	devfileCtx "github.com/redhat-developer/devfile-parser/pkg/devfile/parser/context"
+	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data"
 )
 
 // Default filenames for create devfile

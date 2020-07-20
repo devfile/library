@@ -3,7 +3,7 @@ package validate
 import (
 	"fmt"
 
-	"github.com/redhat-developer/devfileParser/pkg/devfile/parser/data/common"
+	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser/data/common"
 )
 
 // Errors

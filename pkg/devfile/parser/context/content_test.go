@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/redhat-developer/devfileParser/pkg/testingutil/filesystem"
+	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
 )
 
 const (
