@@ -463,7 +463,6 @@ const JsonSchema200 = `{
 					  }
 					},
 					"required": [
-					  "configuration",
 					  "name",
 					  "targetPort"
 					],
