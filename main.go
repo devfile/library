@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
-	devfileParser "github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
+	"github.com/cli-playground/devfile-parser/pkg/devfile/parser"
+	devfileParser "github.com/cli-playground/devfile-parser/pkg/devfile/parser"
 )
 
 type DevfileObject struct {

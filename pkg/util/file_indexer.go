@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cli-playground/devfile-parser/pkg/testingutil/filesystem"
 	"github.com/pkg/errors"
-	"github.com/redhat-developer/devfile-parser/pkg/testingutil/filesystem"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 )

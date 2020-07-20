@@ -1,4 +1,4 @@
-module github.com/redhat-developer/devfile-parser
+module github.com/cli-playground/devfile-parser
 
 go 1.14
 
