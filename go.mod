@@ -3,6 +3,10 @@ module github.com/redhat-developer/devfile-parser
 go 1.14
 
 require (
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-units v0.4.0 // indirect
+	github.com/fatih/color v1.9.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3

@@ -1,12 +1,23 @@
 package main
 
 import (
-
 	"fmt"
-	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
+
+	devfileParser "github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
 )
 
 func main() {
-	fmt.Println("Hello from the next-gen devfile parser")
+
+	var devfile devfileParser.DevfileObj
+	devfile, err := devfileParser.ParseAndValidate("devfile.yaml")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		for _, component := range devfile.Data.GetAliasedComponents() {
+			if component.Dockerfile != nil {
+				fmt.Println(component.Dockerfile.Destination)
+			}
+		}
+	}
 
 }
