@@ -808,7 +808,7 @@ func GetGitHubZipURL(repoURL string) (string, error) {
 	client := github.NewClient(nil)
 	opt := &github.RepositoryContentGetOptions{Ref: branch}
 
-	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt, true)
+	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt)
 	if err != nil {
 		errMessage := fmt.Sprintf("Error getting zip url. Response: %s.", response.Status)
 		return url, errors.New(errMessage)
