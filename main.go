@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 
+	"github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
 	devfileParser "github.com/redhat-developer/devfile-parser/pkg/devfile/parser"
 )
 
-func main() {
+type DevfileObject struct {
+	devfileObj parser.DevfileObj
+}
 
-	var devfile devfileParser.DevfileObj
-	devfile, err := devfileParser.ParseAndValidate("devfile.yaml")
+func main() {
+	devfile, err := ParseDevfile("devfile.yaml")
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -20,4 +23,11 @@ func main() {
 		}
 	}
 
+}
+
+func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
+
+	var devfile devfileParser.DevfileObj
+	devfile, err := devfileParser.ParseAndValidate(devfileLocation)
+	return devfile, err
 }
