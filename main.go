@@ -25,9 +25,10 @@ func main() {
 
 }
 
+//ParseDevfile to parse devfile from library
 func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
 
 	var devfile devfileParser.DevfileObj
-	devfile, err := devfileParser.ParseAndValidate(devfileLocation)
+	devfile, err = devfileParser.ParseAndValidate(devfileLocation)
 	return devfile, err
 }
