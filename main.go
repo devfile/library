@@ -7,10 +7,6 @@ import (
 	devfileParser "github.com/cli-playground/devfile-parser/pkg/devfile/parser"
 )
 
-type DevfileObject struct {
-	devfileObj parser.DevfileObj
-}
-
 func main() {
 	devfile, err := ParseDevfile("devfile.yaml")
 	if err != nil {
@@ -18,7 +14,8 @@ func main() {
 	} else {
 		for _, component := range devfile.Data.GetAliasedComponents() {
 			if component.Dockerfile != nil {
-				fmt.Println(component.Dockerfile.Destination)
+				fmt.Println(component.Dockerfile.DockerfileLocation)
+				break
 			}
 		}
 	}
