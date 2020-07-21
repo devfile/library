@@ -1,6 +1,6 @@
-package version200
+package version210
 
-const JsonSchema200 = `{
+const JsonSchema210 = `{
 	"description": "Devfile schema.",
 	"properties": {
 	  "commands": {
@@ -463,6 +463,7 @@ const JsonSchema200 = `{
 					  }
 					},
 					"required": [
+					  "configuration",
 					  "name",
 					  "targetPort"
 					],
@@ -613,7 +614,8 @@ const JsonSchema200 = `{
 				"CheEditor",
 				"Volume",
 				"ChePlugin",
-				"Custom"
+				"Custom",
+				"Dockerfile"
 			  ],
 			  "type": "string"
 			},
@@ -633,6 +635,40 @@ const JsonSchema200 = `{
 				"name"
 			  ],
 			  "type": "object"
+			},
+			"Dockerfile":{
+				"description":"Dockerfile component",
+				"properties":{
+					"name":{
+						"description":"Mandatory name that allows referencing the dockerfile component",
+						"type":"string"
+				   	},
+				   	"source":{
+						"sourceDir":{
+							"description":"path of source directory to establish build context",
+							"type":"string"
+						},
+						"location":{
+							"description":"location of the source code repostory",
+						 	"type":"string"
+						},
+					  	"type":"object"
+				   	},
+					"dockerfileLocation":{
+						"description":"path to dockerfile",
+						"type":"string"
+					},
+					"destination":{
+						"description":"path to registry where the build image is to be pushed",
+						"type":"string"
+					}
+				},
+				"required":[
+					"name",
+					"dockerfileLocation",
+					"source"
+				],
+				"type":"object"
 			}
 		  },
 		  "type": "object"
