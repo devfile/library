@@ -7,7 +7,7 @@ The Devfile Parser library is a Golang module that projects could use to generat
 
 ## Usage
 
-In the recent future, the following projects will consume this library
+In the recent future, the following projects will be consuming this library as Golang dependency
 
 * [Workspace Operator](https://github.com/devfile/devworkspace-operator)
 * [odo](https://github.com/openshift/odo)
