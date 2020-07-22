@@ -105,7 +105,7 @@ func In(arr []string, value string) bool {
 	return false
 }
 
-// Hyphenate applicationName and componentName
+//NamespaceOpenShiftObject Hyphenate applicationName and componentName
 func NamespaceOpenShiftObject(componentName string, applicationName string) (string, error) {
 
 	// Error if it's blank
@@ -168,6 +168,7 @@ func ParseComponentImageName(imageName string) (string, string, string, string) 
 	return componentImageName, componentType, componentName, componentVersion
 }
 
+//WIN for windows
 const WIN = "windows"
 
 // ReadFilePath Reads file path form URL file:///C:/path/to/file to C:\path\to\file
@@ -316,10 +317,10 @@ func removeNonAlphaSuffix(input string) string {
 	if matchesLength == 0 {
 		// in this case the string does not contain a non-alphanumeric suffix
 		return input
-	} else {
-		// in this case we return the smallest match which in the last element in the array
-		return matches[matchesLength-1]
 	}
+	// in this case we return the smallest match which in the last element in the array
+	return matches[matchesLength-1]
+
 }
 
 // SliceDifference returns the values of s2 that do not exist in s1
@@ -808,7 +809,7 @@ func GetGitHubZipURL(repoURL string) (string, error) {
 	client := github.NewClient(nil)
 	opt := &github.RepositoryContentGetOptions{Ref: branch}
 
-	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt, true)
+	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt)
 	if err != nil {
 		errMessage := fmt.Sprintf("Error getting zip url. Response: %s.", response.Status)
 		return url, errors.New(errMessage)
