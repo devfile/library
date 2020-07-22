@@ -1,4 +1,4 @@
-module github.com/cli-playground/devfile-parser
+module github.com/devfile/devfile-parser
 
 go 1.14
 
