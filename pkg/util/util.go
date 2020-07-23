@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli-playground/devfile-parser/pkg/testingutil/filesystem"
+	"github.com/devfile/parser/pkg/testingutil/filesystem"
 	"github.com/gobwas/glob"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"

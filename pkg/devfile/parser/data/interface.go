@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/cli-playground/devfile-parser/pkg/devfile/parser/data/common"
+	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // DevfileData is an interface that defines functions for Devfile data operations
