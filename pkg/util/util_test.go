@@ -1969,7 +1969,7 @@ func TestDownloadInMemory(t *testing.T) {
 	}{
 		{
 			name: "Case 1: valid URL",
-			url:  "https://github.com/devfile/devfile-parser/blob/master/devfile.yaml",
+			url:  "https://github.com/devfile/parser/blob/master/devfile.yaml",
 			want: true,
 		},
 		{

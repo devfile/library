@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/devfile/devfile-parser/pkg/devfile/parser"
-	devfileParser "github.com/devfile/devfile-parser/pkg/devfile/parser"
+	"github.com/devfile/parser/pkg/devfile/parser"
+	devfileParser "github.com/devfile/parser/pkg/devfile/parser"
 )
 
 func main() {

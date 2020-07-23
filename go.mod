@@ -1,4 +1,4 @@
-module github.com/devfile/devfile-parser
+module github.com/devfile/parser
 
 go 1.14
 

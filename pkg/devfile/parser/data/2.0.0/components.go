@@ -3,7 +3,7 @@ package version200
 import (
 	"strings"
 
-	"github.com/devfile/devfile-parser/pkg/devfile/parser/data/common"
+	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // GetComponents returns the slice of DevfileComponent objects parsed from the Devfile

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/devfile/devfile-parser/pkg/testingutil/filesystem"
+	"github.com/devfile/parser/pkg/testingutil/filesystem"
 )
 
 func TestPopulateFromBytes(t *testing.T) {

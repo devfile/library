@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/devfile/devfile-parser/pkg/devfile/parser/data"
+	"github.com/devfile/parser/pkg/devfile/parser/data"
 	"github.com/pkg/errors"
 	"github.com/xeipuuv/gojsonschema"
 	"k8s.io/klog"
