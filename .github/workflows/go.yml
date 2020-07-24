@@ -22,13 +22,6 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Build main
-      run: go build main.go
-    
-    # Commenting tests untill tests are fixed, mentioned in Issue#18
-    #- name: Run Go Tests
-    #  run: go test ./...
-
     - name: Check go mod status
       run: |
         go mod tidy
@@ -37,6 +30,12 @@ jobs:
           echo "Go mod state is not clean"
           exit 1
         fi
+    - name: Build main
+      run: go build main.go
+    
+    # Commenting tests untill tests are fixed, mentioned in Issue#18
+    #- name: Run Go Tests
+    #  run: go test ./...
 
     - name: Check format
       run: |
