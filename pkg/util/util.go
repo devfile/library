@@ -26,7 +26,7 @@ import (
 
 	"github.com/devfile/parser/pkg/testingutil/filesystem"
 	"github.com/gobwas/glob"
-	"github.com/google/go-github/github"
+	github "github.com/google/go-github/v30/github"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -809,7 +809,7 @@ func GetGitHubZipURL(repoURL string) (string, error) {
 	client := github.NewClient(nil)
 	opt := &github.RepositoryContentGetOptions{Ref: branch}
 
-	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt)
+	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt, true)
 	if err != nil {
 		errMessage := fmt.Sprintf("Error getting zip url. Response: %s.", response.Status)
 		return url, errors.New(errMessage)

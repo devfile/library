@@ -6,7 +6,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v30 v30.1.0 
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.3.2
