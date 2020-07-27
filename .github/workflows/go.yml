@@ -24,21 +24,21 @@ jobs:
 
     - name: Check go mod status
       run: |
-        go mod tidy
+        make gomod_tidy
         if [[ ! -z $(git status -s) ]]
         then
           echo "Go mod state is not clean"
           exit 1
         fi
-    - name: Build main
-      run: go build main.go
+    - name: Build Binary
+      run: make bin
     
     - name: Run Go Tests
       run: make test
 
     - name: Check format
       run: |
-        go fmt -x ./...
+        make gofmt
         if [[ ! -z $(git status -s) ]]
         then
           echo "not well formatted sources are found"

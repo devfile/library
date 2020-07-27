@@ -1,21 +1,25 @@
 FILES := main
 
-default: main
+default: bin
 
 .PHONY: all
-all:  deps main test
+all:  gomod_tidy gofmt bin test
 
-.PHONY: deps
-deps:
+.PHONY: gomod_tidy
+gomod_tidy:
 	 go mod tidy
+
+.PHONY: gofmt
+gofmt:
+	go fmt -x ./...
+
+.PHONY: bin
+bin:
+	 go build main.go
 
 .PHONY: test
 test:
 	 go test ./...
-
-.PHONY: main
-main:
-	 go build main.go
 
 .PHONY: clean
 clean:
