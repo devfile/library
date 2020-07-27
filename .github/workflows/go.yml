@@ -33,9 +33,8 @@ jobs:
     - name: Build main
       run: go build main.go
     
-    # Commenting tests untill tests are fixed, mentioned in Issue#18
-    #- name: Run Go Tests
-    #  run: go test ./...
+    - name: Run Go Tests
+      run: go test ./...
 
     - name: Check format
       run: |
