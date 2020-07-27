@@ -34,7 +34,7 @@ jobs:
       run: go build main.go
     
     - name: Run Go Tests
-      run: go test ./...
+      run: make test
 
     - name: Check format
       run: |
@@ -44,4 +44,3 @@ jobs:
           echo "not well formatted sources are found"
           exit 1
         fi
-
