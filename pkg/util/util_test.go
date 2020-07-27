@@ -1688,13 +1688,12 @@ func TestLoadFileIntoMemory(t *testing.T) {
 			}
 
 			if tt.expectedError == "" && !bytes.Contains(data, tt.contains) {
-				t.Errorf("Got: %w, should contain: %v", data, tt.contains)
+				t.Errorf("Got: %v, should contain: %v", data, tt.contains)
 			}
 		})
 	}
 }
 
-/*
 func TestGetGitHubZipURL(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -1736,7 +1735,6 @@ func TestGetGitHubZipURL(t *testing.T) {
 		})
 	}
 }
-*/
 
 func TestValidateURL(t *testing.T) {
 	tests := []struct {
@@ -2002,27 +2000,27 @@ func TestValidateDockerfile(t *testing.T) {
 	}{
 		{
 			name: "Case 1: valid Dockerfile",
-			path: filepath.Join("tests", "examples", "source", "dockerfiles", "Dockerfile"),
+			path: filepath.Join("tests", "dockerfiles", "Dockerfile"),
 			want: true,
 		},
 		{
 			name: "Case 2: valid Dockerfile with comment",
-			path: filepath.Join("tests", "examples", "source", "dockerfiles", "DockerfileWithComment"),
+			path: filepath.Join("tests", "dockerfiles", "DockerfileWithComment"),
 			want: true,
 		},
 		{
 			name: "Case 3: valid Dockerfile with whitespace",
-			path: filepath.Join("tests", "examples", "source", "dockerfiles", "DockerfileWithWhitespace"),
+			path: filepath.Join("tests", "dockerfiles", "DockerfileWithWhitespace"),
 			want: true,
 		},
 		{
 			name: "Case 4: invalid Dockerfile with missing FROM",
-			path: filepath.Join("tests", "examples", "source", "dockerfiles", "DockerfileInvalid"),
+			path: filepath.Join("tests", "dockerfiles", "DockerfileInvalid"),
 			want: false,
 		},
 		{
 			name: "Case 5: invalid Dockerfile with entry before FROM",
-			path: filepath.Join("tests", "examples", "source", "dockerfiles", "DockerfileInvalidFROM"),
+			path: filepath.Join("tests", "dockerfiles", "DockerfileInvalidFROM"),
 			want: false,
 		},
 	}
