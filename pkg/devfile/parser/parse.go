@@ -2,11 +2,11 @@ package parser
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
 
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
 	"github.com/devfile/parser/pkg/devfile/parser/data"
 	"github.com/devfile/parser/pkg/devfile/validate"
-	"github.com/devfile/parser/pkg/errors"
 )
 
 // ParseDevfile func validates the devfile integrity.

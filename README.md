@@ -11,5 +11,5 @@ In the recent future, the following projects will be consuming this library as G
 
 * [Workspace Operator](https://github.com/devfile/devworkspace-operator)
 * [odo](https://github.com/openshift/odo)
-* [OKD Console](https://github.com/openshift/console)
+* [OpenShift Console](https://github.com/openshift/console)
 
