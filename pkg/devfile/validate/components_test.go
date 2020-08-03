@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -27,7 +28,7 @@ func TestValidateComponents(t *testing.T) {
 
 		components := []common.DevfileComponent{
 			{
-				Container: &common.Container{
+				Container: &apiComp.Container{
 					Name: "container",
 				},
 			},

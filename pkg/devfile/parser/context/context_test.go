@@ -39,7 +39,7 @@ func TestPopulateFromBytes(t *testing.T) {
 
 		var (
 			fakeFs      = filesystem.NewFakeFs()
-			tempDevfile = createTempDevfile(t, validJsonRawContent100(), fakeFs)
+			tempDevfile = createTempDevfile(t, validJsonRawContent200(), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
 				Fs:      fakeFs,
@@ -47,7 +47,7 @@ func TestPopulateFromBytes(t *testing.T) {
 		)
 		defer os.Remove(tempDevfile.Name())
 
-		err := d.PopulateFromBytes(validJsonRawContent100())
+		err := d.PopulateFromBytes(validJsonRawContent200())
 
 		if err != nil {
 			t.Errorf("unexpected error '%v'", err)
@@ -62,7 +62,7 @@ func TestPopulateFromBytes(t *testing.T) {
 
 		var (
 			fakeFs      = filesystem.NewFakeFs()
-			tempDevfile = createTempDevfile(t, []byte(validJsonRawContent100()), fakeFs)
+			tempDevfile = createTempDevfile(t, []byte(validJsonRawContent200()), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
 				Fs:      fakeFs,

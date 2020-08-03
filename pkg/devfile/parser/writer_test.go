@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v100 "github.com/devfile/parser/pkg/devfile/parser/data/1.0.0"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 	"github.com/devfile/parser/pkg/testingutil/filesystem"
 )
 
@@ -12,7 +13,7 @@ func TestWriteJsonDevfile(t *testing.T) {
 
 	var (
 		devfileTempPath = "devfile.yaml"
-		apiVersion      = "1.0.0"
+		apiVersion      = "2.0.0"
 		testName        = "TestName"
 	)
 
@@ -21,9 +22,9 @@ func TestWriteJsonDevfile(t *testing.T) {
 		// DevfileObj
 		devfileObj := DevfileObj{
 			Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-			Data: &v100.Devfile100{
-				ApiVersion: v100.ApiVersion(apiVersion),
-				Metadata: v100.Metadata{
+			Data: &v200.Devfile200{
+				SchemaVersion: apiVersion,
+				Metadata: common.DevfileMetadata{
 					Name: testName,
 				},
 			},
@@ -49,9 +50,9 @@ func TestWriteJsonDevfile(t *testing.T) {
 		// DevfileObj
 		devfileObj := DevfileObj{
 			Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-			Data: &v100.Devfile100{
-				ApiVersion: v100.ApiVersion(apiVersion),
-				Metadata: v100.Metadata{
+			Data: &v200.Devfile200{
+				SchemaVersion: apiVersion,
+				Metadata: common.DevfileMetadata{
 					Name: testName,
 				},
 			},

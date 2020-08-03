@@ -3,6 +3,7 @@ package version210
 import (
 	"strings"
 
+	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -27,12 +28,12 @@ func (d *Devfile210) GetCommands() []common.DevfileCommand {
 }
 
 // GetParent returns the  DevfileParent object parsed from devfile
-func (d *Devfile210) GetParent() common.DevfileParent {
+func (d *Devfile210) GetParent() apiComp.Parent {
 	return d.Parent
 }
 
 // GetProjects returns the DevfileProject Object parsed from devfile
-func (d *Devfile210) GetProjects() []common.DevfileProject {
+func (d *Devfile210) GetProjects() []apiComp.Project {
 	return d.Projects
 }
 
@@ -42,7 +43,7 @@ func (d *Devfile210) GetMetadata() common.DevfileMetadata {
 }
 
 // GetEvents returns the Events Object parsed from devfile
-func (d *Devfile210) GetEvents() common.DevfileEvents {
+func (d *Devfile210) GetEvents() apiComp.WorkspaceEvents {
 	return d.Events
 }
 

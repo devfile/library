@@ -3,6 +3,7 @@ package version200
 import (
 	"testing"
 
+	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 	common "github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -31,14 +32,14 @@ func getTestDevfileData() (testDevfile Devfile200, commands []common.DevfileComm
 
 	execCommands := []common.DevfileCommand{
 		{
-			Exec: &common.Exec{
+			Exec: &apiComp.ExecCommand{
 				CommandLine: command,
 				Component:   component,
 				WorkingDir:  workDir,
 			},
 		},
 		{
-			Exec: &common.Exec{
+			Exec: &apiComp.ExecCommand{
 				CommandLine: debugCommand,
 				Component:   debugComponent,
 				WorkingDir:  workDir,

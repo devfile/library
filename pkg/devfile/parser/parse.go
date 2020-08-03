@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+
 	"github.com/pkg/errors"
 
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"

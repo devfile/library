@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/devfile/parser/pkg/devfile/parser"
-	devfileParser "github.com/devfile/parser/pkg/devfile/parser"
 )
 
 func main() {
@@ -15,7 +14,15 @@ func main() {
 		for _, component := range devfile.Data.GetAliasedComponents() {
 			if component.Dockerfile != nil {
 				fmt.Println(component.Dockerfile.DockerfileLocation)
-				break
+			}
+			if component.Container != nil {
+				fmt.Println(component.Container.Image)
+			}
+		}
+
+		for _, command := range devfile.Data.GetCommands() {
+			if command.Exec != nil {
+				fmt.Println(command.Exec.Group.Kind)
 			}
 		}
 	}
@@ -25,7 +32,7 @@ func main() {
 //ParseDevfile to parse devfile from library
 func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
 
-	var devfile devfileParser.DevfileObj
-	devfile, err = devfileParser.ParseAndValidate(devfileLocation)
+	var devfile parser.DevfileObj
+	devfile, err = parser.ParseAndValidate(devfileLocation)
 	return devfile, err
 }

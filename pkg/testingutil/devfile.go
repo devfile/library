@@ -1,38 +1,39 @@
 package testingutil
 
 import (
+	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
-	versionsCommon "github.com/devfile/parser/pkg/devfile/parser/data/common"
+	// versionsCommon "github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // TestDevfileData is a convenience data type used to mock up a devfile configuration
 type TestDevfileData struct {
-	Components   []versionsCommon.DevfileComponent
-	ExecCommands []versionsCommon.Exec
+	Components   []common.DevfileComponent
+	ExecCommands []apiComp.ExecCommand
 }
 
 // GetComponents is a mock function to get the components from a devfile
-func (d TestDevfileData) GetComponents() []versionsCommon.DevfileComponent {
+func (d TestDevfileData) GetComponents() []common.DevfileComponent {
 	return d.GetAliasedComponents()
 }
 
 // GetEvents is a mock function to get events from devfile
-func (d TestDevfileData) GetEvents() versionsCommon.DevfileEvents {
-	return versionsCommon.DevfileEvents{}
+func (d TestDevfileData) GetEvents() apiComp.WorkspaceEvents {
+	return apiComp.WorkspaceEvents{}
 }
 
 // GetMetadata is a mock function to get metadata from devfile
-func (d TestDevfileData) GetMetadata() versionsCommon.DevfileMetadata {
-	return versionsCommon.DevfileMetadata{}
+func (d TestDevfileData) GetMetadata() common.DevfileMetadata {
+	return common.DevfileMetadata{}
 }
 
 // GetParent is a mock function to get parent from devfile
-func (d TestDevfileData) GetParent() versionsCommon.DevfileParent {
-	return versionsCommon.DevfileParent{}
+func (d TestDevfileData) GetParent() apiComp.Parent {
+	return apiComp.Parent{}
 }
 
 // GetAliasedComponents is a mock function to get the components that have an alias from a devfile
-func (d TestDevfileData) GetAliasedComponents() []versionsCommon.DevfileComponent {
+func (d TestDevfileData) GetAliasedComponents() []common.DevfileComponent {
 	var aliasedComponents = []common.DevfileComponent{}
 
 	for _, comp := range d.Components {
@@ -47,37 +48,49 @@ func (d TestDevfileData) GetAliasedComponents() []versionsCommon.DevfileComponen
 }
 
 // GetProjects is a mock function to get the components that have an alias from a devfile
-func (d TestDevfileData) GetProjects() []versionsCommon.DevfileProject {
+func (d TestDevfileData) GetProjects() []apiComp.Project {
 	projectName := [...]string{"test-project", "anotherproject"}
 	clonePath := [...]string{"/test-project", "/anotherproject"}
 	sourceLocation := [...]string{"https://github.com/someproject/test-project.git", "https://github.com/another/project.git"}
 
-	project1 := versionsCommon.DevfileProject{
+	project1 := apiComp.Project{
 		ClonePath: clonePath[0],
 		Name:      projectName[0],
-		Git: &versionsCommon.Git{
-			Location: sourceLocation[0],
+		ProjectSource: apiComp.ProjectSource{
+			Git: &apiComp.GitProjectSource{
+				GitLikeProjectSource: apiComp.GitLikeProjectSource{
+					CommonProjectSource: apiComp.CommonProjectSource{
+						Location: sourceLocation[0],
+					},
+				},
+			},
 		},
 	}
 
-	project2 := versionsCommon.DevfileProject{
+	project2 := apiComp.Project{
 		ClonePath: clonePath[1],
 		Name:      projectName[1],
-		Git: &versionsCommon.Git{
-			Location: sourceLocation[1],
+		ProjectSource: apiComp.ProjectSource{
+			Git: &apiComp.GitProjectSource{
+				GitLikeProjectSource: apiComp.GitLikeProjectSource{
+					CommonProjectSource: apiComp.CommonProjectSource{
+						Location: sourceLocation[1],
+					},
+				},
+			},
 		},
 	}
-	return []versionsCommon.DevfileProject{project1, project2}
+	return []apiComp.Project{project1, project2}
 
 }
 
 // GetCommands is a mock function to get the commands from a devfile
-func (d TestDevfileData) GetCommands() []versionsCommon.DevfileCommand {
+func (d TestDevfileData) GetCommands() []common.DevfileCommand {
 
-	var commands []versionsCommon.DevfileCommand
+	var commands []common.DevfileCommand
 
 	for i := range d.ExecCommands {
-		commands = append(commands, versionsCommon.DevfileCommand{Exec: &d.ExecCommands[i]})
+		commands = append(commands, common.DevfileCommand{Exec: &d.ExecCommands[i]})
 	}
 
 	return commands
@@ -90,19 +103,19 @@ func (d TestDevfileData) Validate() error {
 }
 
 // GetFakeComponent returns fake component for testing
-func GetFakeComponent(name string) versionsCommon.DevfileComponent {
+func GetFakeComponent(name string) common.DevfileComponent {
 	image := "docker.io/maven:latest"
 	memoryLimit := "128Mi"
 	volumeName := "myvolume1"
 	volumePath := "/my/volume/mount/path1"
 
-	return versionsCommon.DevfileComponent{
-		Container: &versionsCommon.Container{
+	return common.DevfileComponent{
+		Container: &apiComp.Container{
 			Name:        name,
 			Image:       image,
-			Env:         []versionsCommon.Env{},
+			Env:         []apiComp.EnvVar{},
 			MemoryLimit: memoryLimit,
-			VolumeMounts: []versionsCommon.VolumeMount{{
+			VolumeMounts: []apiComp.VolumeMount{{
 				Name: volumeName,
 				Path: volumePath,
 			}},
@@ -112,13 +125,17 @@ func GetFakeComponent(name string) versionsCommon.DevfileComponent {
 }
 
 // GetFakeExecRunCommands returns fake commands for testing
-func GetFakeExecRunCommands() []versionsCommon.Exec {
-	return []versionsCommon.Exec{
+func GetFakeExecRunCommands() []apiComp.ExecCommand {
+	return []apiComp.ExecCommand{
 		{
 			CommandLine: "ls -a",
 			Component:   "alias1",
-			Group: &versionsCommon.Group{
-				Kind: versionsCommon.RunCommandGroupType,
+			LabeledCommand: apiComp.LabeledCommand{
+				BaseCommand: apiComp.BaseCommand{
+					Group: &apiComp.CommandGroup{
+						Kind: apiComp.RunCommandGroupKind,
+					},
+				},
 			},
 			WorkingDir: "/root",
 		},
