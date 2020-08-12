@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/devfile/parser/pkg/devfile/parser"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 )
 
 func main() {
@@ -11,7 +13,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		for _, component := range devfile.Data.GetAliasedComponents() {
+		devdata := devfile.Data
+		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v200.Devfile200{})) {
+			d := devdata.(*v200.Devfile200)
+			fmt.Println(d.SchemaVersion)
+		}
+
+		for _, component := range devfile.Data.GetComponents() {
 			if component.Dockerfile != nil {
 				fmt.Println(component.Dockerfile.DockerfileLocation)
 			}

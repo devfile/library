@@ -3,8 +3,7 @@ package version210
 import (
 	"testing"
 
-	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
-	common "github.com/devfile/parser/pkg/devfile/parser/data/common"
+	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 )
 
 func TestGetCommands(t *testing.T) {
@@ -22,7 +21,7 @@ func TestGetCommands(t *testing.T) {
 
 }
 
-func getTestDevfileData() (testDevfile Devfile210, commands []common.DevfileCommand) {
+func getTestDevfileData() (testDevfile Devfile210, commands []v1.Command) {
 
 	command := "ls -la"
 	component := "alias1"
@@ -30,16 +29,16 @@ func getTestDevfileData() (testDevfile Devfile210, commands []common.DevfileComm
 	debugComponent := "alias2"
 	workDir := "/root"
 
-	execCommands := []common.DevfileCommand{
+	execCommands := []v1.Command{
 		{
-			Exec: &apiComp.ExecCommand{
+			Exec: &v1.ExecCommand{
 				CommandLine: command,
 				Component:   component,
 				WorkingDir:  workDir,
 			},
 		},
 		{
-			Exec: &apiComp.ExecCommand{
+			Exec: &v1.ExecCommand{
 				CommandLine: debugCommand,
 				Component:   debugComponent,
 				WorkingDir:  workDir,

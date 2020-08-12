@@ -1,24 +1,24 @@
 package common
 
 import (
-	apiComp "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 )
 
 // DevfileComponentType describes the type of component.
 // Only one of the following component type may be specified
 // To support some print actions
-type DevfileComponentType string
+// type DevfileComponentType string
 
-const (
-	ContainerComponentType  DevfileComponentType = "Container"
-	KubernetesComponentType DevfileComponentType = "Kubernetes"
-	OpenshiftComponentType  DevfileComponentType = "Openshift"
-	PluginComponentType     DevfileComponentType = "Plugin"
-	VolumeComponentType     DevfileComponentType = "Volume"
-	CustomComponentType     DevfileComponentType = "Custom"
+// const (
+// 	ContainerComponentType  DevfileComponentType = "Container"
+// 	KubernetesComponentType DevfileComponentType = "Kubernetes"
+// 	OpenshiftComponentType  DevfileComponentType = "Openshift"
+// 	PluginComponentType     DevfileComponentType = "Plugin"
+// 	VolumeComponentType     DevfileComponentType = "Volume"
+// 	CustomComponentType     DevfileComponentType = "Custom"
 
-	DockerfileComponentType DevfileComponentType = "Dockerfile"
-)
+// 	DockerfileComponentType DevfileComponentType = "Dockerfile"
+// )
 
 // CommandGroupType describes the kind of command group.
 // +kubebuilder:validation:Enum=build;run;test;debug
@@ -47,25 +47,25 @@ type DevfileMetadata struct {
 }
 
 // DevfileCommand command specified in devfile
-type DevfileCommand struct {
-	// CLI Command executed in a component container
-	Exec *apiComp.ExecCommand `json:"exec,omitempty"`
-}
+// type DevfileCommand struct {
+// 	// CLI Command executed in a component container
+// 	Exec *v1.ExecCommand `json:"exec,omitempty"`
+// }
 
 // DevfileComponent component specified in devfile
 type DevfileComponent struct {
 
 	// Allows adding and configuring workspace-related containers
-	Container *apiComp.Container `json:"container,omitempty"`
+	Container *v1.Container `json:"container,omitempty"`
 
 	// Allows importing into the workspace the Kubernetes resources defined in a given manifest. For example this allows reusing the Kubernetes definitions used to deploy some runtime components in production.
-	Kubernetes *apiComp.KubernetesComponent `json:"kubernetes,omitempty"`
+	Kubernetes *v1.KubernetesComponent `json:"kubernetes,omitempty"`
 
 	// Allows importing into the workspace the OpenShift resources defined in a given manifest. For example this allows reusing the OpenShift definitions used to deploy some runtime components in production.
-	Openshift *apiComp.OpenshiftComponent `json:"openshift,omitempty"`
+	Openshift *v1.OpenshiftComponent `json:"openshift,omitempty"`
 
 	// Allows specifying the definition of a volume shared by several other components
-	Volume *apiComp.Volume `json:"volume,omitempty"`
+	Volume *v1.Volume `json:"volume,omitempty"`
 
 	// Allows specifying a dockerfile to initiate build
 	Dockerfile *Dockerfile `json:"dockerfile,omitempty"`
@@ -155,7 +155,7 @@ type Configuration struct {
 // 	Component string `json:"component,omitempty"`
 
 // 	// Optional list of environment variables that have to be set before running the command
-// 	Env []apiComp.EnvVar `json:"env,omitempty"`
+// 	Env []v1.EnvVar `json:"env,omitempty"`
 
 // 	// Defines the group this command is part of
 // 	Group *Group `json:"group,omitempty"`
@@ -248,16 +248,16 @@ type Configuration struct {
 // 	Components []*DevfileComponent `json:"components,omitempty"`
 
 // 	// Bindings of commands to events. Each command is referred-to by its name.
-// 	Events *apiComp.WorkspaceEvents `json:"events,omitempty"`
+// 	Events *v1.WorkspaceEvents `json:"events,omitempty"`
 
 // 	// Id in a registry that contains a Devfile yaml file
 // 	Id string `json:"id,omitempty"`
 
 // 	// Reference to a Kubernetes CRD of type DevWorkspaceTemplate
-// 	Kubernetes *apiComp.KubernetesComponent `json:"kubernetes,omitempty"`
+// 	Kubernetes *v1.KubernetesComponent `json:"kubernetes,omitempty"`
 
 // 	// Projects worked on in the workspace, containing names and sources locations
-// 	Projects []*apiComp.Project `json:"projects,omitempty"`
+// 	Projects []*v1.Project `json:"projects,omitempty"`
 
 // 	RegistryUrl string `json:"registryUrl,omitempty"`
 
@@ -278,7 +278,7 @@ type Configuration struct {
 // 	Id string `json:"id,omitempty"`
 
 // 	// Reference to a Kubernetes CRD of type DevWorkspaceTemplate
-// 	Kubernetes *apiComp.KubernetesComponent `json:"kubernetes,omitempty"`
+// 	Kubernetes *v1.KubernetesComponent `json:"kubernetes,omitempty"`
 
 // 	// Optional name that allows referencing the component in commands, or inside a parent If omitted it will be infered from the location (uri or registryEntry)
 // 	Name        string `json:"name,omitempty"`
@@ -295,16 +295,16 @@ type Configuration struct {
 // 	ClonePath string `json:"clonePath,omitempty"`
 
 // 	// Project's Git source
-// 	Git *apiComp.GitProjectSource `json:"git,omitempty"`
+// 	Git *v1.GitProjectSource `json:"git,omitempty"`
 
 // 	// Project's GitHub source
-// 	Github *apiComp.GithubProjectSource `json:"github,omitempty"`
+// 	Github *v1.GithubProjectSource `json:"github,omitempty"`
 
 // 	// Project name
 // 	Name string `json:"name"`
 
 // 	// Project's Zip source
-// 	Zip *apiComp.ZipProjectSource `json:"zip,omitempty"`
+// 	Zip *v1.ZipProjectSource `json:"zip,omitempty"`
 // }
 
 // Volume Allows specifying the definition of a volume shared by several other components
