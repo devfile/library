@@ -3,12 +3,10 @@ package validate
 import (
 	"reflect"
 
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
-	"k8s.io/klog"
-
-	v100 "github.com/devfile/parser/pkg/devfile/parser/data/1.0.0"
 	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 	v210 "github.com/devfile/parser/pkg/devfile/parser/data/2.1.0"
+	"github.com/devfile/parser/pkg/devfile/parser/data/common"
+	"k8s.io/klog"
 )
 
 // ValidateDevfileData validates whether sections of devfile are odo compatible
@@ -17,10 +15,10 @@ func ValidateDevfileData(data interface{}) error {
 
 	typeData := reflect.TypeOf(data)
 
-	if typeData == reflect.TypeOf(&v100.Devfile100{}) {
-		d := data.(*v100.Devfile100)
-		components = d.GetComponents()
-	}
+	// if typeData == reflect.TypeOf(&v100.Devfile100{}) {
+	// 	d := data.(*v100.Devfile100)
+	// 	components = d.GetComponents()
+	// }
 
 	if typeData == reflect.TypeOf(&v200.Devfile200{}) {
 		d := data.(*v200.Devfile200)

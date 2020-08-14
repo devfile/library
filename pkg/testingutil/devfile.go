@@ -1,83 +1,104 @@
 package testingutil
 
 import (
+	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
-	versionsCommon "github.com/devfile/parser/pkg/devfile/parser/data/common"
+	// versionsCommon "github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // TestDevfileData is a convenience data type used to mock up a devfile configuration
 type TestDevfileData struct {
-	Components   []versionsCommon.DevfileComponent
-	ExecCommands []versionsCommon.Exec
+	Components   []common.DevfileComponent
+	ExecCommands []v1.ExecCommand
 }
 
 // GetComponents is a mock function to get the components from a devfile
-func (d TestDevfileData) GetComponents() []versionsCommon.DevfileComponent {
-	return d.GetAliasedComponents()
-}
-
-// GetEvents is a mock function to get events from devfile
-func (d TestDevfileData) GetEvents() versionsCommon.DevfileEvents {
-	return versionsCommon.DevfileEvents{}
-}
-
-// GetMetadata is a mock function to get metadata from devfile
-func (d TestDevfileData) GetMetadata() versionsCommon.DevfileMetadata {
-	return versionsCommon.DevfileMetadata{}
-}
-
-// GetParent is a mock function to get parent from devfile
-func (d TestDevfileData) GetParent() versionsCommon.DevfileParent {
-	return versionsCommon.DevfileParent{}
-}
-
-// GetAliasedComponents is a mock function to get the components that have an alias from a devfile
-func (d TestDevfileData) GetAliasedComponents() []versionsCommon.DevfileComponent {
-	var aliasedComponents = []common.DevfileComponent{}
-
+func (d TestDevfileData) GetComponents() []common.DevfileComponent {
+	var components = []common.DevfileComponent{}
 	for _, comp := range d.Components {
 		if comp.Container != nil {
 			if comp.Container.Name != "" {
-				aliasedComponents = append(aliasedComponents, comp)
+				components = append(components, comp)
 			}
 		}
 	}
-	return aliasedComponents
-
+	return components
 }
 
+// GetEvents is a mock function to get events from devfile
+func (d TestDevfileData) GetEvents() v1.WorkspaceEvents {
+	return v1.WorkspaceEvents{}
+}
+
+// GetMetadata is a mock function to get metadata from devfile
+func (d TestDevfileData) GetMetadata() common.DevfileMetadata {
+	return common.DevfileMetadata{}
+}
+
+// GetParent is a mock function to get parent from devfile
+func (d TestDevfileData) GetParent() v1.Parent {
+	return v1.Parent{}
+}
+
+// GetAliasedComponents is a mock function to get the components that have an alias from a devfile
+// func (d TestDevfileData) GetAliasedComponents() []common.DevfileComponent {
+// 	var aliasedComponents = []common.DevfileComponent{}
+
+// 	for _, comp := range d.Components {
+// 		if comp.Container != nil {
+// 			if comp.Container.Name != "" {
+// 				aliasedComponents = append(aliasedComponents, comp)
+// 			}
+// 		}
+// 	}
+// 	return aliasedComponents
+
+// }
+
 // GetProjects is a mock function to get the components that have an alias from a devfile
-func (d TestDevfileData) GetProjects() []versionsCommon.DevfileProject {
+func (d TestDevfileData) GetProjects() []v1.Project {
 	projectName := [...]string{"test-project", "anotherproject"}
 	clonePath := [...]string{"/test-project", "/anotherproject"}
 	sourceLocation := [...]string{"https://github.com/someproject/test-project.git", "https://github.com/another/project.git"}
 
-	project1 := versionsCommon.DevfileProject{
+	project1 := v1.Project{
 		ClonePath: clonePath[0],
 		Name:      projectName[0],
-		Git: &versionsCommon.Git{
-			Location: sourceLocation[0],
+		ProjectSource: v1.ProjectSource{
+			Git: &v1.GitProjectSource{
+				GitLikeProjectSource: v1.GitLikeProjectSource{
+					CommonProjectSource: v1.CommonProjectSource{
+						Location: sourceLocation[0],
+					},
+				},
+			},
 		},
 	}
 
-	project2 := versionsCommon.DevfileProject{
+	project2 := v1.Project{
 		ClonePath: clonePath[1],
 		Name:      projectName[1],
-		Git: &versionsCommon.Git{
-			Location: sourceLocation[1],
+		ProjectSource: v1.ProjectSource{
+			Git: &v1.GitProjectSource{
+				GitLikeProjectSource: v1.GitLikeProjectSource{
+					CommonProjectSource: v1.CommonProjectSource{
+						Location: sourceLocation[1],
+					},
+				},
+			},
 		},
 	}
-	return []versionsCommon.DevfileProject{project1, project2}
+	return []v1.Project{project1, project2}
 
 }
 
 // GetCommands is a mock function to get the commands from a devfile
-func (d TestDevfileData) GetCommands() []versionsCommon.DevfileCommand {
+func (d TestDevfileData) GetCommands() []v1.Command {
 
-	var commands []versionsCommon.DevfileCommand
+	var commands []v1.Command
 
 	for i := range d.ExecCommands {
-		commands = append(commands, versionsCommon.DevfileCommand{Exec: &d.ExecCommands[i]})
+		commands = append(commands, v1.Command{Exec: &d.ExecCommands[i]})
 	}
 
 	return commands
@@ -90,19 +111,19 @@ func (d TestDevfileData) Validate() error {
 }
 
 // GetFakeComponent returns fake component for testing
-func GetFakeComponent(name string) versionsCommon.DevfileComponent {
+func GetFakeComponent(name string) common.DevfileComponent {
 	image := "docker.io/maven:latest"
 	memoryLimit := "128Mi"
 	volumeName := "myvolume1"
 	volumePath := "/my/volume/mount/path1"
 
-	return versionsCommon.DevfileComponent{
-		Container: &versionsCommon.Container{
+	return common.DevfileComponent{
+		Container: &v1.Container{
 			Name:        name,
 			Image:       image,
-			Env:         []versionsCommon.Env{},
+			Env:         []v1.EnvVar{},
 			MemoryLimit: memoryLimit,
-			VolumeMounts: []versionsCommon.VolumeMount{{
+			VolumeMounts: []v1.VolumeMount{{
 				Name: volumeName,
 				Path: volumePath,
 			}},
@@ -112,13 +133,17 @@ func GetFakeComponent(name string) versionsCommon.DevfileComponent {
 }
 
 // GetFakeExecRunCommands returns fake commands for testing
-func GetFakeExecRunCommands() []versionsCommon.Exec {
-	return []versionsCommon.Exec{
+func GetFakeExecRunCommands() []v1.ExecCommand {
+	return []v1.ExecCommand{
 		{
 			CommandLine: "ls -a",
 			Component:   "alias1",
-			Group: &versionsCommon.Group{
-				Kind: versionsCommon.RunCommandGroupType,
+			LabeledCommand: v1.LabeledCommand{
+				BaseCommand: v1.BaseCommand{
+					Group: &v1.CommandGroup{
+						Kind: v1.RunCommandGroupKind,
+					},
+				},
 			},
 			WorkingDir: "/root",
 		},

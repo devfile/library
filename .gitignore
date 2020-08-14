@@ -15,3 +15,6 @@ main
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Files used for debugging
+.vscode/
