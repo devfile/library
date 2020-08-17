@@ -1,12 +1,11 @@
 package validate
 
 import (
-	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
-	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
+	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
 )
 
 func TestValidateComponents(t *testing.T) {
@@ -14,30 +13,173 @@ func TestValidateComponents(t *testing.T) {
 	t.Run("No components present", func(t *testing.T) {
 
 		// Empty components
-		components := []common.DevfileComponent{}
+		components := []v1alpha1.Component{}
 
-		got := ValidateComponents(components)
-		want := fmt.Errorf(ErrorNoComponents)
+		got := validateComponents(components)
+		want := &NoComponentsError{}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got: '%v', want: '%v'", got, want)
+			t.Errorf("TestValidateComponents error - got: '%v', want: '%v'", got, want)
 		}
 	})
 
 	t.Run("Container type of component present", func(t *testing.T) {
 
-		components := []common.DevfileComponent{
+		components := []v1alpha1.Component{
 			{
-				Container: &v1.Container{
-					Name: "container",
+				Container: &v1alpha1.ContainerComponent{
+					Container: v1alpha1.Container{
+						Name: "container",
+					},
 				},
 			},
 		}
 
-		got := ValidateComponents(components)
+		got := validateComponents(components)
 
 		if got != nil {
-			t.Errorf("Not expecting an error: '%v'", got)
+			t.Errorf("TestValidateComponents error - Not expecting an error: '%v'", got)
+		}
+	})
+
+	t.Run("Duplicate volume components present", func(t *testing.T) {
+
+		components := []v1alpha1.Component{
+			{
+				Volume: &v1alpha1.VolumeComponent{
+					Volume: v1alpha1.Volume{
+						Name: "myvol",
+					},
+				},
+			},
+			{
+				Volume: &v1alpha1.VolumeComponent{
+					Volume: v1alpha1.Volume{
+						Name: "myvol",
+					},
+				},
+			},
+		}
+
+		got := validateComponents(components)
+		want := &DuplicateVolumeComponentsError{}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("TestValidateComponents error - got: '%v', want: '%v'", got, want)
+		}
+	})
+
+	t.Run("Valid container and volume component", func(t *testing.T) {
+
+		components := []v1alpha1.Component{
+			{
+				Volume: &v1alpha1.VolumeComponent{
+					Volume: v1alpha1.Volume{
+						Name: "myvol",
+					},
+				},
+			},
+			{
+				Container: &v1alpha1.ContainerComponent{
+					Container: v1alpha1.Container{
+						Name: "container",
+						VolumeMounts: []v1alpha1.VolumeMount{
+							{
+								Name: "myvol",
+								Path: "/some/path/",
+							},
+						},
+					},
+				},
+			},
+			{
+				Container: &v1alpha1.ContainerComponent{
+					Container: v1alpha1.Container{
+						Name: "container2",
+						VolumeMounts: []v1alpha1.VolumeMount{
+							{
+								Name: "myvol",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		got := validateComponents(components)
+
+		if got != nil {
+			t.Errorf("TestValidateComponents error - got: '%v'", got)
+		}
+	})
+
+	t.Run("Invalid volume component size", func(t *testing.T) {
+
+		components := []v1alpha1.Component{
+			{
+				Volume: &v1alpha1.VolumeComponent{
+					Volume: v1alpha1.Volume{
+						Name: "myvol",
+						Size: "randomgarbage",
+					},
+				},
+			},
+			{
+				Container: &v1alpha1.ContainerComponent{
+					Container: v1alpha1.Container{
+						Name: "container",
+						VolumeMounts: []v1alpha1.VolumeMount{
+							{
+								Name: "myvol",
+								Path: "/some/path/",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		got := validateComponents(components)
+		want := "size randomgarbage for volume component myvol is invalid"
+
+		if !strings.Contains(got.Error(), want) {
+			t.Errorf("TestValidateComponents error - got: '%v', want substring: '%v'", got.Error(), want)
+		}
+	})
+
+	t.Run("Invalid volume mount", func(t *testing.T) {
+
+		components := []v1alpha1.Component{
+			{
+				Volume: &v1alpha1.VolumeComponent{
+					Volume: v1alpha1.Volume{
+						Name: "myvol",
+						Size: "2Gi",
+					},
+				},
+			},
+			{
+				Container: &v1alpha1.ContainerComponent{
+					Container: v1alpha1.Container{
+						Name: "container",
+						VolumeMounts: []v1alpha1.VolumeMount{
+							{
+								Name: "myinvalidvol",
+							},
+							{
+								Name: "myinvalidvol2",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		got := validateComponents(components)
+		want := "unable to find volume mount"
+
+		if !strings.Contains(got.Error(), want) {
+			t.Errorf("TestValidateComponents error - got: '%v', want substr: '%v'", got.Error(), want)
 		}
 	})
 }

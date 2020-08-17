@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"unicode"
 
+	"github.com/devfile/parser/pkg/util"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
@@ -48,11 +49,20 @@ func hasPrefix(buf []byte, prefix []byte) bool {
 // SetDevfileContent reads devfile and if devfile is in YAML format converts it to JSON
 func (d *DevfileCtx) SetDevfileContent() error {
 
-	// Read devfile
-	fs := d.GetFs()
-	data, err := fs.ReadFile(d.absPath)
-	if err != nil {
-		return errors.Wrapf(err, "failed to read devfile from path '%s'", d.absPath)
+	var err error
+	var data []byte
+	if d.url != "" {
+		data, err = util.DownloadFileInMemory(d.url)
+		if err != nil {
+			return errors.Wrap(err, "error getting parent info from url")
+		}
+	} else if d.absPath != "" {
+		// Read devfile
+		fs := d.GetFs()
+		data, err = fs.ReadFile(d.absPath)
+		if err != nil {
+			return errors.Wrapf(err, "failed to read devfile from path '%s'", d.absPath)
+		}
 	}
 
 	// set devfile content

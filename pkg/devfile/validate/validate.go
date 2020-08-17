@@ -1,37 +1,32 @@
 package validate
 
 import (
-	"reflect"
+	"fmt"
 
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
-	v210 "github.com/devfile/parser/pkg/devfile/parser/data/2.1.0"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 	"k8s.io/klog"
+
+	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 )
 
 // ValidateDevfileData validates whether sections of devfile are odo compatible
 func ValidateDevfileData(data interface{}) error {
-	var components []common.DevfileComponent
+	var components []v1alpha1.Component
 
-	typeData := reflect.TypeOf(data)
-
-	// if typeData == reflect.TypeOf(&v100.Devfile100{}) {
-	// 	d := data.(*v100.Devfile100)
-	// 	components = d.GetComponents()
-	// }
-
-	if typeData == reflect.TypeOf(&v200.Devfile200{}) {
-		d := data.(*v200.Devfile200)
+	switch d := data.(type) {
+	case *v200.Devfile200:
 		components = d.GetComponents()
-	}
 
-	if typeData == reflect.TypeOf(&v210.Devfile210{}) {
-		d := data.(*v210.Devfile210)
-		components = d.GetComponents()
+		// Validate Events
+		if err := validateEvents(d); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown devfile type %T", d)
 	}
 
 	// Validate Components
-	if err := ValidateComponents(components); err != nil {
+	if err := validateComponents(components); err != nil {
 		return err
 	}
 
