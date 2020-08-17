@@ -4,8 +4,7 @@
 *.dll
 *.so
 *.dylib
-*/parser
-*/main
+main
 
 # Test binary, built with `go test -c`
 *.test
