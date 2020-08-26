@@ -3,7 +3,7 @@ package validate
 import (
 	"fmt"
 
-	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
