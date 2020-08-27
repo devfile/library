@@ -3,7 +3,7 @@ module github.com/devfile/parser
 go 1.14
 
 require (
-	github.com/devfile/kubernetes-api v0.0.0-20200721203247-1ae49a1fac4c
+	github.com/devfile/api v0.0.0-20200826170839-778718f72ad7
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3

@@ -1,7 +1,7 @@
 package testingutil
 
 import (
-	v1 "github.com/devfile/kubernetes-api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 	// versionsCommon "github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
@@ -67,8 +67,8 @@ func (d TestDevfileData) GetProjects() []v1.Project {
 		ProjectSource: v1.ProjectSource{
 			Git: &v1.GitProjectSource{
 				GitLikeProjectSource: v1.GitLikeProjectSource{
-					CommonProjectSource: v1.CommonProjectSource{
-						Location: sourceLocation[0],
+					Remotes: map[string]string{
+						"origin": sourceLocation[0],
 					},
 				},
 			},
@@ -81,8 +81,8 @@ func (d TestDevfileData) GetProjects() []v1.Project {
 		ProjectSource: v1.ProjectSource{
 			Git: &v1.GitProjectSource{
 				GitLikeProjectSource: v1.GitLikeProjectSource{
-					CommonProjectSource: v1.CommonProjectSource{
-						Location: sourceLocation[1],
+					Remotes: map[string]string{
+						"origin": sourceLocation[1],
 					},
 				},
 			},
