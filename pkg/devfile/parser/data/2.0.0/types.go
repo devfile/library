@@ -14,7 +14,7 @@ type Devfile200 struct {
 	Metadata common.DevfileMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
 	// Parent workspace template
-	Parent v1alpha1.Parent `json:"parent,omitempty" yaml:"parent,omitempty"`
+	Parent *v1alpha1.Parent `json:"parent,omitempty" yaml:"parent,omitempty"`
 
 	// Projects worked on in the workspace, containing names and sources locations
 	Projects []v1alpha1.Project `json:"projects,omitempty" yaml:"projects,omitempty"`

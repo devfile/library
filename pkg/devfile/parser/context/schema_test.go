@@ -7,7 +7,110 @@ import (
 )
 
 const (
-	validJson200 = `{"apiVersion":"2.0.0","metadata":{"name":"java-web-spring"},"projects":[{"name":"java-web-spring","source":{"type":"git","location":"https://github.com/spring-projects/spring-petclinic.git"}}],"components":[{"type":"chePlugin","id":"redhat/java/latest","memoryLimit":"1512Mi"},{"alias":"tools","type":"dockerimage","image":"quay.io/eclipse/che-java8-maven:nightly","memoryLimit":"768Mi"}],"commands":[{"actions":[{"command":"mvn clean install","component":"tools","type":"build","workdir":"${CHE_PROJECTS_ROOT}/java-web-spring"}],"name":"maven build"},{"actions":[{"command":"java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 \\\ntarget/*.jar\n","component":"tools","type":"run","workdir":"${CHE_PROJECTS_ROOT}/java-web-spring"}],"name":"run webapp"}]}`
+	validJson200 = `{
+		"schemaVersion": "2.0.0",
+		"metadata": {
+		   "name": "nodejs-stack"
+		},
+		"projects": [
+		   {
+			  "name": "project",
+			  "git": {
+				 "location": "https://github.com/che-samples/web-nodejs-sample.git"
+			  }
+		   }
+		],
+		"components": [
+		   {
+			  "plugin": {
+				 "id": "eclipse/che-theia/7.1.0"
+			  }
+		   },
+		   {
+			  "plugin": {
+				 "id": "eclipse/che-machine-exec-plugin/7.1.0"
+			  }
+		   },
+		   {
+			  "plugin": {
+				 "name": "typescript-plugin",
+				 "id": "che-incubator/typescript/1.30.2",
+				 "components": [
+					{
+					   "container": {
+						  "name": "??",
+						  "memoryLimit": "512Mi"
+					   }
+					}
+				 ]
+			  }
+		   },
+		   {
+			  "container": {
+				 "name": "nodejs",
+				 "image": "quay.io/eclipse/che-nodejs10-ubi:nightly",
+				 "memoryLimit": "512Mi",
+				 "endpoints": [
+					{
+					   "name": "nodejs",
+					   "protocol": "http",
+					   "targetPort": 3000
+					}
+				 ],
+				 "mountSources": true
+			  }
+		   }
+		],
+		"commands": [
+		   {
+			  "exec": {
+				 "id": "download dependencies",
+				 "component": "nodejs",
+				 "commandLine": "npm install",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "build"
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "run the app",
+				 "component": "nodejs",
+				 "commandLine": "nodemon app.js",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "run",
+					"isDefault": true
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "run the app (debugging enabled)",
+				 "component": "nodejs",
+				 "commandLine": "nodemon --inspect app.js",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "run"
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "stop the app",
+				 "component": "nodejs",
+				 "commandLine": "node_server_pids=$(pgrep -fx '.*nodemon (--inspect )?app.js' | tr \"\\\\n\" \" \") && echo \"Stopping node server with PIDs: ${node_server_pids}\" &&  kill -15 ${node_server_pids} &>/dev/null && echo 'Done.'"
+			  }
+		   },
+		   {
+			  "vscodeLaunch": {
+				 "id": "Attach remote debugger",
+				 "inlined": "{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"type\": \"node\",\n      \"request\": \"attach\",\n      \"name\": \"Attach to Remote\",\n      \"address\": \"localhost\",\n      \"port\": 9229,\n      \"localRoot\": \"${workspaceFolder}\",\n      \"remoteRoot\": \"${workspaceFolder}\"\n    }\n  ]\n}\n"
+			  }
+		   }
+		]
+	 }`
 )
 
 func TestValidateDevfileSchema(t *testing.T) {

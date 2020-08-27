@@ -26,12 +26,12 @@ func (d *Devfile200) SetMetadata(name, version string) {
 }
 
 // GetParent returns the Parent object parsed from devfile
-func (d *Devfile200) GetParent() v1alpha1.Parent {
+func (d *Devfile200) GetParent() *v1alpha1.Parent {
 	return d.Parent
 }
 
 // SetParent sets the parent for the devfile
-func (d *Devfile200) SetParent(parent v1alpha1.Parent) {
+func (d *Devfile200) SetParent(parent *v1alpha1.Parent) {
 	d.Parent = parent
 }
 

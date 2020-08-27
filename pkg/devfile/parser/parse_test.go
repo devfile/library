@@ -32,7 +32,7 @@ func Test_parseParent(t *testing.T) {
 				devFileObj: DevfileObj{
 					Ctx: parser.NewDevfileCtx(devfileTempPath),
 					Data: &v200.Devfile200{
-						Parent: v1alpha1.Parent{
+						Parent: &v1alpha1.Parent{
 							DevWorkspaceTemplateSpecContent: v1alpha1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1alpha1.Command{
 									{
@@ -385,7 +385,7 @@ func Test_parseParent(t *testing.T) {
 				devFileObj: DevfileObj{
 					Ctx: parser.NewDevfileCtx(devfileTempPath),
 					Data: &v200.Devfile200{
-						Parent: v1alpha1.Parent{
+						Parent: &v1alpha1.Parent{
 							DevWorkspaceTemplateSpecContent: v1alpha1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1alpha1.Command{
 									{
@@ -582,6 +582,9 @@ func Test_parseParent(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// if tt.name != "case 2: handle a parent'data without any local override and add the local devfile's data" {
+		// 	continue
+		// }
 		t.Run(tt.name, func(t *testing.T) {
 
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -598,12 +601,25 @@ func Test_parseParent(t *testing.T) {
 			defer testServer.Close()
 
 			parent := tt.args.devFileObj.Data.GetParent()
+			// err := nil
+			// if parent != nil {
+			if parent == nil {
+				parent = &v1alpha1.Parent{}
+			}
 			parent.Uri = testServer.URL
 
 			tt.args.devFileObj.Data.SetParent(parent)
 			tt.wantDevFile.Data.SetParent(parent)
-
 			err := parseParent(tt.args.devFileObj)
+			// if (err != nil) != tt.wantErr {
+			// 	t.Errorf("parseParent() error = %v, wantErr %v", err, tt.wantErr)
+			// }
+
+			// if tt.wantErr && err != nil {
+			// 	return
+			// }
+			// }
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseParent() error = %v, wantErr %v", err, tt.wantErr)
 			}

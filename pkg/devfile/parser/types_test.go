@@ -604,6 +604,9 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		if tt.name != "case 1: override a container's non list/map fields" {
+			continue
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.devFileObj.OverrideComponents(tt.args.overridePatch)
 			if (err != nil) != tt.wantErr {

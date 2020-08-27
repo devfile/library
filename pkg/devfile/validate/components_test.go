@@ -49,6 +49,7 @@ func TestValidateComponents(t *testing.T) {
 				Volume: &v1alpha1.VolumeComponent{
 					Volume: v1alpha1.Volume{
 						Name: "myvol",
+						Size: "1Gi",
 					},
 				},
 			},
@@ -56,6 +57,7 @@ func TestValidateComponents(t *testing.T) {
 				Volume: &v1alpha1.VolumeComponent{
 					Volume: v1alpha1.Volume{
 						Name: "myvol",
+						Size: "1Gi",
 					},
 				},
 			},
@@ -76,6 +78,7 @@ func TestValidateComponents(t *testing.T) {
 				Volume: &v1alpha1.VolumeComponent{
 					Volume: v1alpha1.Volume{
 						Name: "myvol",
+						Size: "1Gi",
 					},
 				},
 			},

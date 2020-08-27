@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // validateComponents validates all the devfile components
@@ -21,10 +22,10 @@ func validateComponents(components []v1alpha1.Component) error {
 	// and if volume components are unique
 	isContainerComponentPresent := false
 	for _, component := range components {
+
 		if component.Container != nil {
 			isContainerComponentPresent = true
-
-			for _, volumeMount := range component.Container.VolumeMounts {
+			for _, volumeMount := range component.Container.Container.VolumeMounts {
 				if _, ok := processedVolumeMounts[volumeMount.Name]; !ok {
 					processedVolumeMounts[volumeMount.Name] = true
 				}
@@ -32,7 +33,14 @@ func validateComponents(components []v1alpha1.Component) error {
 		}
 
 		if component.Volume != nil {
-			if _, ok := processedVolumes[component.Volume.Name]; !ok {
+			if _, ok := processedVolumes[component.Volume.Volume.Name]; !ok {
+				processedVolumes[component.Volume.Name] = true
+				if len(component.Volume.Size) > 0 {
+					if _, err := resource.ParseQuantity(component.Volume.Size); err != nil {
+						return &InvalidVolumeSizeError{size: component.Volume.Size, componentName: component.Volume.Name, validationError: err}
+					}
+				}
+
 				/*
 					processedVolumes[component.Volume.Name] = true
 					if !pushtarget.IsPushTargetDocker() && len(component.Volume.Size) > 0 {
@@ -56,6 +64,7 @@ func validateComponents(components []v1alpha1.Component) error {
 	}
 
 	var invalidVolumeMounts []string
+
 	for volumeMountName := range processedVolumeMounts {
 		if _, ok := processedVolumes[volumeMountName]; !ok {
 			invalidVolumeMounts = append(invalidVolumeMounts, volumeMountName)

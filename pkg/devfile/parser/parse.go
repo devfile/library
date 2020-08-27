@@ -35,10 +35,12 @@ func parseDevfile(d DevfileObj) (DevfileObj, error) {
 		return d, errors.Wrapf(err, "failed to decode devfile content")
 	}
 
-	if !reflect.DeepEqual(d.Data.GetParent(), v1alpha1.Parent{}) && d.Data.GetParent().Uri != "" {
-		err = parseParent(d)
-		if err != nil {
-			return DevfileObj{}, err
+	if d.Data.GetParent() != nil {
+		if !reflect.DeepEqual(d.Data.GetParent(), &v1alpha1.Parent{}) && d.Data.GetParent().Uri != "" {
+			err = parseParent(d)
+			if err != nil {
+				return DevfileObj{}, err
+			}
 		}
 	}
 
@@ -81,7 +83,7 @@ func parseParent(d DevfileObj) error {
 	if err != nil {
 		return err
 	}
-
+	// fmt.Println("parent Data", parentData)
 	klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
 
 	// override the parent's components, commands, projects and events

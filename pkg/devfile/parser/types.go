@@ -31,19 +31,22 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1alpha1.Component) error
 			if strings.ToLower(patchComponent.Container.Name) == originalComponent.Container.Name {
 				found = true
 
-				var updatedComponent v1alpha1.ContainerComponent
+				var updatedComponent v1alpha1.Container
 
-				merged, err := handleMerge(originalComponent.Container, patchComponent.Container, v1alpha1.Container{})
+				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.Container, v1alpha1.Container{})
 				if err != nil {
 					return err
 				}
-
 				err = json.Unmarshal(merged, &updatedComponent)
 				if err != nil {
 					return err
 				}
 
-				d.Data.UpdateComponent(v1alpha1.Component{Container: &updatedComponent})
+				d.Data.UpdateComponent(v1alpha1.Component{
+					Container: &v1alpha1.ContainerComponent{
+						Container: updatedComponent,
+					},
+				})
 			}
 		}
 		if !found {

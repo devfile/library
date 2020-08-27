@@ -30,8 +30,8 @@ func (d TestDevfileData) GetEvents() v1alpha1.Events {
 }
 
 // GetParent is a mock function to get parent from devfile
-func (d TestDevfileData) GetParent() v1alpha1.Parent {
-	return v1alpha1.Parent{}
+func (d TestDevfileData) GetParent() *v1alpha1.Parent {
+	return &v1alpha1.Parent{}
 }
 
 // GetAliasedComponents is a mock function to get the components that have an alias from a devfile
@@ -134,7 +134,7 @@ func (d TestDevfileData) AddEvents(events v1alpha1.Events) error { return nil }
 
 func (d TestDevfileData) UpdateEvents(postStart, postStop, preStart, preStop []string) {}
 
-func (d TestDevfileData) SetParent(parent v1alpha1.Parent) {}
+func (d TestDevfileData) SetParent(parent *v1alpha1.Parent) {}
 
 // GetFakeContainerComponent returns a fake container component for testing
 func GetFakeContainerComponent(name string) v1alpha1.Component {

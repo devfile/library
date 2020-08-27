@@ -13,8 +13,8 @@ type DevfileData interface {
 	SetMetadata(name, version string)
 
 	// parent related methods
-	GetParent() v1alpha1.Parent
-	SetParent(parent v1alpha1.Parent)
+	GetParent() *v1alpha1.Parent
+	SetParent(parent *v1alpha1.Parent)
 
 	// event related methods
 	GetEvents() v1alpha1.Events
