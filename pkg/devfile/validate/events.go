@@ -12,38 +12,39 @@ import (
 // validateEvents validates all the devfile events
 func validateEvents(data data.DevfileData) error {
 
-	eventErrors := ""
+	var eventErrors []string
+	//eventErrors := ""
 	events := data.GetEvents()
 
 	switch {
 	case len(events.PreStart) > 0:
 		klog.V(4).Info("Validating preStart events")
 		if preStartErr := isEventValid(data, events.PreStart, "preStart"); preStartErr != nil {
-			eventErrors += fmt.Sprintf("\n%s", preStartErr.Error())
+			eventErrors = append(eventErrors, preStartErr.Error())
 		}
 		fallthrough
 	case len(events.PostStart) > 0:
 		klog.V(4).Info("Validating postStart events")
 		if postStartErr := isEventValid(data, events.PostStart, "postStart"); postStartErr != nil {
-			eventErrors += fmt.Sprintf("\n%s", postStartErr.Error())
+			eventErrors = append(eventErrors, postStartErr.Error())
 		}
 		fallthrough
 	case len(events.PreStop) > 0:
 		klog.V(4).Info("Validating preStop events")
 		if preStopErr := isEventValid(data, events.PreStop, "preStop"); preStopErr != nil {
-			eventErrors += fmt.Sprintf("\n%s", preStopErr.Error())
+			eventErrors = append(eventErrors, preStopErr.Error())
 		}
 		fallthrough
 	case len(events.PostStop) > 0:
 		klog.V(4).Info("Validating postStop events")
 		if postStopErr := isEventValid(data, events.PostStop, "postStop"); postStopErr != nil {
-			eventErrors += fmt.Sprintf("\n%s", postStopErr.Error())
+			eventErrors = append(eventErrors, postStopErr.Error())
 		}
 	}
 
 	// if there is any validation error, return it
 	if len(eventErrors) > 0 {
-		return fmt.Errorf("devfile events validation error: %s", eventErrors)
+		return fmt.Errorf("devfile events validation error:\n%s", strings.Join(eventErrors, "\n"))
 	}
 
 	return nil
