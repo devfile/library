@@ -56,7 +56,7 @@ func (d *Devfile200) AddProjects(projects []v1.Project) error {
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
 func (d *Devfile200) UpdateProject(project v1.Project) {
 	for i := range d.Projects {
-		if strings.ToLower(d.Projects[i].Name) == strings.ToLower(project.Name) {
+		if d.Projects[i].Name == strings.ToLower(project.Name) {
 			d.Projects[i] = project
 		}
 	}
@@ -96,8 +96,6 @@ func (d *Devfile200) AddComponents(components []v1.Component) error {
 		if component.Volume != nil {
 			if _, ok := volumeMap[component.Volume.Name]; !ok {
 				d.Components = append(d.Components, component)
-			} else {
-				return &common.AlreadyExistError{Name: component.Volume.Name, Field: "component"}
 			}
 		}
 
