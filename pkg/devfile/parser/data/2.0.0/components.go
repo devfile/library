@@ -56,7 +56,7 @@ func (d *Devfile200) AddProjects(projects []v1.Project) error {
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
 func (d *Devfile200) UpdateProject(project v1.Project) {
 	for i := range d.Projects {
-		if d.Projects[i].Name == strings.ToLower(project.Name) {
+		if strings.ToLower(d.Projects[i].Name) == strings.ToLower(project.Name) {
 			d.Projects[i] = project
 		}
 	}
