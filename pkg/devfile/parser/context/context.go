@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"fmt"
+	"net/url"
 
 	"github.com/devfile/parser/pkg/testingutil/filesystem"
 	"github.com/devfile/parser/pkg/util"
@@ -26,6 +26,9 @@ type DevfileCtx struct {
 	// devfile json schema
 	jsonSchema string
 
+	//url path of the devfile
+	url string
+
 	// filesystem for devfile
 	Fs filesystem.Filesystem
 }
@@ -38,6 +41,13 @@ func NewDevfileCtx(path string) DevfileCtx {
 	}
 }
 
+// NewURLDevfileCtx returns a new DevfileCtx type object
+func NewURLDevfileCtx(url string) DevfileCtx {
+	return DevfileCtx{
+		url: url,
+	}
+}
+
 // populateDevfile checks the API version is supported and returns the JSON schema for the given devfile API Version
 func (d *DevfileCtx) populateDevfile() (err error) {
 
@@ -45,12 +55,6 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 	if err := d.SetDevfileAPIVersion(); err != nil {
 		return err
 	}
-
-	// Check if the apiVersion is supported
-	if !d.IsApiVersionSupported() {
-		return fmt.Errorf("devfile apiVersion '%s' not supported in odo", d.apiVersion)
-	}
-	klog.V(4).Infof("devfile apiVersion '%s' is supported in odo", d.apiVersion)
 
 	// Read and save devfile JSON schema for provided apiVersion
 	return d.SetDevfileJSONSchema()
@@ -72,11 +76,16 @@ func (d *DevfileCtx) Populate() (err error) {
 	return d.populateDevfile()
 }
 
-// PopulateFromBytes fills the DevfileCtx struct with relevant context info
-func (d *DevfileCtx) PopulateFromBytes(bytes []byte) (err error) {
+// PopulateFromURL fills the DevfileCtx struct with relevant context info
+func (d *DevfileCtx) PopulateFromURL() (err error) {
+
+	_, err = url.ParseRequestURI(d.url)
+	if err != nil {
+		return err
+	}
 
 	// Read and save devfile content
-	if err := d.SetDevfileContentFromBytes(bytes); err != nil {
+	if err := d.SetDevfileContent(); err != nil {
 		return err
 	}
 	return d.populateDevfile()

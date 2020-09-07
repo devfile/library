@@ -3,7 +3,7 @@ package util
 import (
 	"archive/zip"
 	"bufio"
-	"context"
+	"bytes"
 	"crypto/rand"
 	"fmt"
 	"io"
@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path"
 	"path/filepath"
@@ -22,11 +23,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/devfile/parser/pkg/testingutil/filesystem"
+	"github.com/fatih/color"
 	"github.com/gobwas/glob"
-	github "github.com/google/go-github/v30/github"
+	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -34,12 +38,15 @@ import (
 	"k8s.io/klog"
 )
 
-// HTTPRequestTimeout configures timeout of all HTTP requests
 const (
-	HTTPRequestTimeout    = 20 * time.Second // HTTPRequestTimeout configures timeout of all HTTP requests
-	ResponseHeaderTimeout = 10 * time.Second // ResponseHeaderTimeout is the timeout to retrieve the server's response headers
+	HTTPRequestTimeout    = 30 * time.Second // HTTPRequestTimeout configures timeout of all HTTP requests
+	ResponseHeaderTimeout = 30 * time.Second // ResponseHeaderTimeout is the timeout to retrieve the server's response headers
 	ModeReadWriteFile     = 0600             // default Permission for a file
+	CredentialPrefix      = "odo-"           // CredentialPrefix is the prefix of the credential that uses to access secure registry
 )
+
+// httpCacheDir determines directory where odo will cache HTTP respones
+var httpCacheDir = filepath.Join(os.TempDir(), "odohttpcache")
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 
@@ -51,11 +58,25 @@ const maxAllowedNamespacedStringLength = 63 - len("-s2idata") - 1
 // note for mocking purpose ONLY
 var customHomeDir = os.Getenv("CUSTOM_HOMEDIR")
 
+const defaultGithubRef = "master"
+
 // ResourceRequirementInfo holds resource quantity before transformation into its appropriate form in container spec
 type ResourceRequirementInfo struct {
 	ResourceType corev1.ResourceName
 	MinQty       resource.Quantity
 	MaxQty       resource.Quantity
+}
+
+// HTTPRequestParams holds parameters of forming http request
+type HTTPRequestParams struct {
+	URL   string
+	Token string
+}
+
+// DownloadParams holds parameters of forming file download request
+type DownloadParams struct {
+	Request  HTTPRequestParams
+	Filepath string
 }
 
 // ConvertLabelsToSelector converts the given labels to selector
@@ -105,7 +126,7 @@ func In(arr []string, value string) bool {
 	return false
 }
 
-//NamespaceOpenShiftObject Hyphenate applicationName and componentName
+// NamespaceOpenShiftObject hyphenates applicationName and componentName
 func NamespaceOpenShiftObject(componentName string, applicationName string) (string, error) {
 
 	// Error if it's blank
@@ -168,7 +189,7 @@ func ParseComponentImageName(imageName string) (string, string, string, string) 
 	return componentImageName, componentType, componentName, componentVersion
 }
 
-//WIN for windows
+// WIN represent the windows OS
 const WIN = "windows"
 
 // ReadFilePath Reads file path form URL file:///C:/path/to/file to C:\path\to\file
@@ -317,10 +338,10 @@ func removeNonAlphaSuffix(input string) string {
 	if matchesLength == 0 {
 		// in this case the string does not contain a non-alphanumeric suffix
 		return input
+	} else {
+		// in this case we return the smallest match which in the last element in the array
+		return matches[matchesLength-1]
 	}
-	// in this case we return the smallest match which in the last element in the array
-	return matches[matchesLength-1]
-
 }
 
 // SliceDifference returns the values of s2 that do not exist in s1
@@ -504,7 +525,7 @@ func GetSortedKeys(mapping map[string]string) []string {
 	return keys
 }
 
-//returns a slice containing the split string, using ',' as a separator
+// GetSplitValuesFromStr returns a slice containing the split string, using ',' as a separator
 func GetSplitValuesFromStr(inputStr string) []string {
 	if len(inputStr) == 0 {
 		return []string{}
@@ -646,8 +667,8 @@ func DeletePath(path string) error {
 	return nil
 }
 
-// HttpGetFreePort gets a free port from the system
-func HttpGetFreePort() (int, error) {
+// HTTPGetFreePort gets a free port from the system
+func HTTPGetFreePort() (int, error) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return -1, err
@@ -688,23 +709,69 @@ func GetRemoteFilesMarkedForDeletion(delSrcRelPaths []string, remoteFolder strin
 	return rmPaths
 }
 
-// HTTPGetRequest uses url to get file contents
-func HTTPGetRequest(url string) ([]byte, error) {
-	var httpClient = &http.Client{Transport: &http.Transport{
-		ResponseHeaderTimeout: ResponseHeaderTimeout,
-	},
-		Timeout: HTTPRequestTimeout}
-	resp, err := httpClient.Get(url)
+// HTTPGetRequest gets resource contents given URL and token (if applicable)
+// cacheFor determines how long the response should be cached (in minutes), 0 for no caching
+func HTTPGetRequest(request HTTPRequestParams, cacheFor int) ([]byte, error) {
+	// Build http request
+	req, err := http.NewRequest("GET", request.URL, nil)
+	if err != nil {
+		return nil, err
+	}
+	if request.Token != "" {
+		bearer := "Bearer " + request.Token
+		req.Header.Add("Authorization", bearer)
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: ResponseHeaderTimeout,
+		},
+		Timeout: HTTPRequestTimeout,
+	}
+
+	klog.V(4).Infof("HTTPGetRequest: %s", req.URL.String())
+
+	if cacheFor > 0 {
+		// if there is an error during cache setup we show warning and continue without using cache
+		cacheError := false
+		httpCacheTime := time.Duration(cacheFor) * time.Minute
+
+		// make sure that cache directory exists
+		err = os.MkdirAll(httpCacheDir, 0750)
+		if err != nil {
+			cacheError = true
+			klog.WarningDepth(4, "Unable to setup cache: ", err)
+		}
+		err = cleanHttpCache(httpCacheDir, httpCacheTime)
+		if err != nil {
+			cacheError = true
+			klog.WarningDepth(4, "Unable to clean up cache directory: ", err)
+		}
+
+		if !cacheError {
+			httpClient.Transport = httpcache.NewTransport(diskcache.New(httpCacheDir))
+			klog.V(4).Infof("Response will be cached in %s for %s", httpCacheDir, httpCacheTime)
+		} else {
+			klog.V(4).Info("Response won't be cached.")
+		}
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// we have a non 1xx / 2xx status, return an error
-	if (resp.StatusCode - 300) > 0 {
-		return nil, fmt.Errorf("error retrieving %s: %s", url, http.StatusText(resp.StatusCode))
+	if resp.Header.Get(httpcache.XFromCache) != "" {
+		klog.V(4).Infof("Cached response used.")
 	}
 
+	// We have a non 1xx / 2xx status, return an error
+	if (resp.StatusCode - 300) > 0 {
+		return nil, errors.Errorf("fail to retrive %s: %s", request.URL, http.StatusText(resp.StatusCode))
+	}
+
+	// Process http response
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -713,7 +780,7 @@ func HTTPGetRequest(url string) ([]byte, error) {
 	return bytes, err
 }
 
-// filterIgnores applies the glob rules on the filesChanged and filesDeleted and filters them
+// FilterIgnores applies the glob rules on the filesChanged and filesDeleted and filters them
 // returns the filtered results which match any of the glob rules
 func FilterIgnores(filesChanged, filesDeleted, absIgnoreRules []string) (filesChangedFiltered, filesDeletedFiltered []string) {
 	for _, file := range filesChanged {
@@ -738,7 +805,7 @@ func FilterIgnores(filesChanged, filesDeleted, absIgnoreRules []string) (filesCh
 	return filesChangedFiltered, filesDeletedFiltered
 }
 
-// Checks that the folder to download the project from devfile is
+// IsValidProjectDir checks that the folder to download the project from devfile is
 // either empty or only contains the devfile used.
 func IsValidProjectDir(path string, devfilePath string) error {
 	files, err := ioutil.ReadDir(path)
@@ -747,16 +814,16 @@ func IsValidProjectDir(path string, devfilePath string) error {
 	}
 
 	if len(files) > 1 {
-		return errors.Errorf("Folder is not empty. It can only contain the devfile used.")
+		return errors.Errorf("Folder %s is not empty. It can only contain the devfile used.", path)
 	} else if len(files) == 1 {
 		file := files[0]
 		if file.IsDir() {
-			return errors.Errorf("Folder is not empty. It contains a subfolder.")
+			return errors.Errorf("Folder %s is not empty. It contains a subfolder.", path)
 		}
 		fileName := files[0].Name()
 		devfilePath = strings.TrimPrefix(devfilePath, "./")
 		if fileName != devfilePath {
-			return errors.Errorf("Folder contains one element and it's not the devfile used.")
+			return errors.Errorf("Folder %s contains one element and it's not the devfile used.", path)
 		}
 	}
 
@@ -768,54 +835,6 @@ func ConvertGitSSHRemoteToHTTPS(remote string) string {
 	remote = strings.Replace(remote, ":", "/", 1)
 	remote = strings.Replace(remote, "git@", "https://", 1)
 	return remote
-}
-
-// GetGitHubZipURL downloads a repo from a URL to a destination
-func GetGitHubZipURL(repoURL string) (string, error) {
-	var url string
-	// Convert ssh remote to https
-	if strings.HasPrefix(repoURL, "git@") {
-		repoURL = ConvertGitSSHRemoteToHTTPS(repoURL)
-	}
-	// expecting string in format 'https://github.com/<owner>/<repo>'
-	if strings.HasPrefix(repoURL, "https://") {
-		repoURL = strings.TrimPrefix(repoURL, "https://")
-	} else {
-		return "", errors.New("Invalid GitHub URL. Please use https://")
-	}
-
-	repoArray := strings.Split(repoURL, "/")
-	if len(repoArray) < 2 {
-		return url, errors.New("Invalid GitHub URL: Could not extract owner and repo, expecting 'https://github.com/<owner>/<repo>'")
-	}
-
-	owner := repoArray[1]
-	if len(owner) == 0 {
-		return url, errors.New("Invalid GitHub URL: owner cannot be empty. Expecting 'https://github.com/<owner>/<repo>'")
-	}
-
-	repo := repoArray[2]
-	if len(repo) == 0 {
-		return url, errors.New("Invalid GitHub URL: repo cannot be empty. Expecting 'https://github.com/<owner>/<repo>'")
-	}
-
-	if strings.HasSuffix(repo, ".git") {
-		repo = strings.TrimSuffix(repo, ".git")
-	}
-
-	// TODO: pass branch or tag from devfile
-	branch := "master"
-
-	client := github.NewClient(nil)
-	opt := &github.RepositoryContentGetOptions{Ref: branch}
-
-	URL, response, err := client.Repositories.GetArchiveLink(context.Background(), owner, repo, "zipball", opt, true)
-	if err != nil {
-		errMessage := fmt.Sprintf("Error getting zip url. Response: %s.", response.Status)
-		return url, errors.New(errMessage)
-	}
-	url = URL.String()
-	return url, nil
 }
 
 // GetAndExtractZip downloads a zip file from a URL with a http prefix or
@@ -841,7 +860,13 @@ func GetAndExtractZip(zipURL string, destination string, pathToUnzip string) err
 		time = strings.Replace(time, ":", "-", -1) // ":" is illegal char in windows
 		pathToZip = path.Join(os.TempDir(), "_"+time+".zip")
 
-		err := DownloadFile(zipURL, pathToZip)
+		params := DownloadParams{
+			Request: HTTPRequestParams{
+				URL: zipURL,
+			},
+			Filepath: pathToZip,
+		}
+		err := DownloadFile(params)
 		if err != nil {
 			return err
 		}
@@ -883,10 +908,13 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 	// change path separator to correct character
 	pathToUnzip = filepath.FromSlash(pathToUnzip)
 
+	// removes first slash of pathToUnzip if present
+	pathToUnzip = strings.TrimPrefix(pathToUnzip, string(os.PathSeparator))
+
 	for _, f := range r.File {
 		// Store filename/path for returning and using later on
-		index := strings.Index(f.Name, string(os.PathSeparator))
-		filename := f.Name[index+1:]
+		index := strings.Index(f.Name, "/")
+		filename := filepath.FromSlash(f.Name[index+1:])
 		if filename == "" {
 			continue
 		}
@@ -897,11 +925,6 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 			return filenames, err
 		}
 
-		// removes first slash of pathToUnzip if present, adds trailing slash
-		pathToUnzip = strings.TrimPrefix(pathToUnzip, string(os.PathSeparator))
-		if pathToUnzip != "" && !strings.HasSuffix(pathToUnzip, string(os.PathSeparator)) {
-			pathToUnzip = pathToUnzip + string(os.PathSeparator)
-		}
 		// destination filepath before trim
 		fpath := filepath.Join(dest, filename)
 
@@ -968,20 +991,21 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 	return filenames, nil
 }
 
-// DownloadFile uses the url to download the file to the filepath
-func DownloadFile(url string, filepath string) error {
+// DownloadFileWithCache downloads the file to the filepath given URL and token (if applicable)
+// cacheFor determines how long the response should be cached (in minutes), 0 for no caching
+func DownloadFileWithCache(params DownloadParams, cacheFor int) error {
+	// Get the data
+	data, err := HTTPGetRequest(params.Request, cacheFor)
+	if err != nil {
+		return err
+	}
+
 	// Create the file
-	out, err := os.Create(filepath)
+	out, err := os.Create(params.Filepath)
 	if err != nil {
 		return err
 	}
 	defer out.Close() // #nosec G307
-
-	// Get the data
-	data, err := DownloadFileInMemory(url)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to download devfile.yaml for devfile component: %s", filepath)
-	}
 
 	// Write the data to file
 	_, err = out.Write(data)
@@ -992,67 +1016,21 @@ func DownloadFile(url string, filepath string) error {
 	return nil
 }
 
-// Load a file into memory (http(s):// or file://)
-func LoadFileIntoMemory(URL string) (fileBytes []byte, err error) {
-	// check if we have a file url
-	if strings.HasPrefix(strings.ToLower(URL), "file://") {
-		// strip off the "file://" to get a local filepath
-		filepath := strings.Replace(URL, "file://", "", -1)
-
-		// if filepath doesn't start with a "/"" then we have a relative
-		// filepath and will need to prepend the current working directory
-		if !strings.HasPrefix(filepath, "/") {
-			// get the current working directory
-			cwd, err := os.Getwd()
-			if err != nil {
-				return nil, errors.New("unable to determine current working directory")
-			}
-			// prepend the current working directory to the relatove filepath
-			filepath = fmt.Sprintf("%s/%s", cwd, filepath)
-		}
-
-		// check to see if filepath exists
-		info, err := os.Stat(filepath)
-		if os.IsNotExist(err) || info.IsDir() {
-			return nil, errors.New(fmt.Sprintf("unable to read file: %s, %s", URL, err))
-		}
-
-		// read the bytes from the filepath
-		fileBytes, err = ioutil.ReadFile(filepath)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("unable to read file: %s, %s", URL, err))
-		}
-
-		return fileBytes, nil
-	} else {
-		// assume we have an http:// or https:// url and validate it
-		err = ValidateURL(URL)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("invalid url: %s, %s", URL, err))
-		}
-
-		// download the file and store the bytes
-		fileBytes, err = DownloadFileInMemory(URL)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("unable to download url: %s, %s", URL, err))
-		}
-		return fileBytes, nil
-	}
+// DownloadFile downloads the file to the filepath given URL and token (if applicable)
+func DownloadFile(params DownloadParams) error {
+	return DownloadFileWithCache(params, 0)
 }
 
 // DownloadFileInMemory uses the url to download the file and return bytes
 func DownloadFileInMemory(url string) ([]byte, error) {
-	var httpClient = &http.Client{Timeout: HTTPRequestTimeout}
+	var httpClient = &http.Client{Transport: &http.Transport{
+		ResponseHeaderTimeout: ResponseHeaderTimeout,
+	}, Timeout: HTTPRequestTimeout}
 	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
-
 	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, errors.New(http.StatusText(resp.StatusCode))
-	}
 
 	return ioutil.ReadAll(resp.Body)
 }
@@ -1114,66 +1092,6 @@ func ValidateURL(sourceURL string) error {
 	return nil
 }
 
-// ValidateDockerfile validates the string passed through has a FROM on it's first non-whitespace/commented line
-// This function could be expanded to be a more viable linter
-func ValidateDockerfile(contents []byte) error {
-	if len(contents) == 0 {
-		return errors.New("DockerfileLocation provided in the Devfile is referencing an empty file")
-	}
-	// Split the file downloaded line-by-line
-	splitContents := strings.Split(string(contents), "\n")
-	// The first line in a Dockerfile must be a 'FROM', whitespace, or a comment ('#')
-	// If it there is whitespace, or there are comments, keep checking until we find either a FROM, or something else
-	// If there is something other than a FROM, the file downloaded wasn't a valid Dockerfile
-	for _, line := range splitContents {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "FROM") {
-			return nil
-		}
-		return errors.New("dockerfile URL provided in the Devfile does not reference a valid Dockerfile")
-	}
-	// Would only reach this return statement if splitContents is 0
-	return errors.New("dockerfile URL provided in the Devfile does not reference a valid Dockerfile")
-}
-
-// ValidateTag validates the string that has been passed as a tag meets the requirements of a tag
-func ValidateTag(tag string) error {
-	var splitTag = strings.Split(tag, "/")
-	if len(splitTag) != 3 {
-		return errors.New("invalid tag: odo deploy reguires a tag in the format <registry>/namespace>/<image>")
-	}
-
-	// Valid characters for the registry, namespace, and image name
-	characterMatch := regexp.MustCompile(`[a-zA-Z0-9\.\-:_]{4,128}`)
-	for _, element := range splitTag {
-		if len(element) < 4 {
-			return errors.New("invalid tag: " + element + " in the tag is too short. Each element needs to be at least 4 characters.")
-		}
-
-		if len(element) > 128 {
-			return errors.New("invalid tag: " + element + " in the tag is too long. Each element cannot be longer than 128.")
-		}
-
-		// Check that the whole string matches the regular expression
-		// Match.String was returning a match even when only part of the string is working
-		if characterMatch.FindString(element) != element {
-			return errors.New("invalid tag: " + element + " in the tag contains an illegal character. It must only contain alphanumerical values, periods, colons, underscores, and dashes.")
-		}
-
-		// The registry, namespace, and image, cannot end in '.', '-', '_',or ':'
-		if strings.HasSuffix(element, ".") || strings.HasSuffix(element, "-") || strings.HasSuffix(element, ":") || strings.HasSuffix(element, "_") {
-			return errors.New("invalid tag: " + element + " in the tag has an invalid final character. It must end in an alphanumeric value.")
-		}
-	}
-	return nil
-}
-
 // ValidateFile validates the file
 func ValidateFile(filePath string) error {
 	// Check if the file path exist
@@ -1191,6 +1109,10 @@ func ValidateFile(filePath string) error {
 
 // CopyFile copies file from source path to destination path
 func CopyFile(srcPath string, dstPath string, info os.FileInfo) error {
+	// In order to avoid file overriding issue, do nothing if source path is equal to destination path
+	if PathEqual(srcPath, dstPath) {
+		return nil
+	}
 	// Check if the source file path exists
 	err := ValidateFile(srcPath)
 	if err != nil {
@@ -1243,6 +1165,7 @@ func sliceContainsString(str string, slice []string) bool {
 	return false
 }
 
+// AddFileToIgnoreFile adds a file to the gitignore file. It only does that if the file doesn't exist
 func AddFileToIgnoreFile(gitIgnoreFile, filename string) error {
 	return addFileToIgnoreFile(gitIgnoreFile, filename, filesystem.DefaultFs{})
 }
@@ -1265,4 +1188,48 @@ func addFileToIgnoreFile(gitIgnoreFile, filename string, fs filesystem.Filesyste
 		}
 	}
 	return nil
+}
+
+// DisplayLog displays logs to user stdout with some color formatting
+func DisplayLog(followLog bool, rd io.ReadCloser, compName string) (err error) {
+
+	defer rd.Close()
+
+	// Copy to stdout (in yellow)
+	color.Set(color.FgYellow)
+	defer color.Unset()
+
+	// If we are going to followLog, we'll be copying it to stdout
+	// else, we copy it to a buffer
+	if followLog {
+
+		c := make(chan os.Signal)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			color.Unset()
+			os.Exit(1)
+		}()
+
+		if _, err = io.Copy(os.Stdout, rd); err != nil {
+			return errors.Wrapf(err, "error followLoging logs for %s", compName)
+		}
+
+	} else {
+
+		// Copy to buffer (we aren't going to be followLoging the logs..)
+		buf := new(bytes.Buffer)
+		_, err = io.Copy(buf, rd)
+		if err != nil {
+			return errors.Wrapf(err, "unable to copy followLog to buffer")
+		}
+
+		// Copy to stdout
+		if _, err = io.Copy(os.Stdout, buf); err != nil {
+			return errors.Wrapf(err, "error copying logs to stdout")
+		}
+
+	}
+	return
+
 }

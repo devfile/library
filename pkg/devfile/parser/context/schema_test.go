@@ -7,7 +7,110 @@ import (
 )
 
 const (
-	validJson200 = `{ "schemaVersion": "2.0.0", "metadata": { "name": "nodejs", "version": "1.0.0", "alpha.build-dockerfile": "https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/build/Dockerfile", "alpha.deployment-manifest": "https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/deploy/deployment-manifest.yaml" }, "projects": [ { "name": "nodejs-starter", "git": { "location": "https://github.com/odo-devfiles/nodejs-ex.git" } } ], "components": [ { "container": { "name": "runtime", "image": "registry.access.redhat.com/ubi8/nodejs-12:1-45", "memoryLimit": "1024Mi", "mountSources": true, "sourceMapping": "/project", "endpoints": [ { "name": "http-3000", "targetPort": 3000 } ] } } ], "commands": [ { "exec": { "id": "install", "component": "runtime", "commandLine": "npm install", "workingDir": "/project", "group": { "kind": "build", "isDefault": true } } }, { "exec": { "id": "run", "component": "runtime", "commandLine": "npm start", "workingDir": "/project", "group": { "kind": "run", "isDefault": true } } }, { "exec": { "id": "debug", "component": "runtime", "commandLine": "npm run debug", "workingDir": "/project", "group": { "kind": "debug", "isDefault": true } } }, { "exec": { "id": "test", "component": "runtime", "commandLine": "npm test", "workingDir": "/project", "group": { "kind": "test", "isDefault": true } } } ] }`
+	validJson200 = `{
+		"schemaVersion": "2.0.0",
+		"metadata": {
+		   "name": "nodejs-stack"
+		},
+		"projects": [
+		   {
+			  "name": "project",
+			  "git": {
+				 "location": "https://github.com/che-samples/web-nodejs-sample.git"
+			  }
+		   }
+		],
+		"components": [
+		   {
+			  "plugin": {
+				 "id": "eclipse/che-theia/7.1.0"
+			  }
+		   },
+		   {
+			  "plugin": {
+				 "id": "eclipse/che-machine-exec-plugin/7.1.0"
+			  }
+		   },
+		   {
+			  "plugin": {
+				 "name": "typescript-plugin",
+				 "id": "che-incubator/typescript/1.30.2",
+				 "components": [
+					{
+					   "container": {
+						  "name": "??",
+						  "memoryLimit": "512Mi"
+					   }
+					}
+				 ]
+			  }
+		   },
+		   {
+			  "container": {
+				 "name": "nodejs",
+				 "image": "quay.io/eclipse/che-nodejs10-ubi:nightly",
+				 "memoryLimit": "512Mi",
+				 "endpoints": [
+					{
+					   "name": "nodejs",
+					   "protocol": "http",
+					   "targetPort": 3000
+					}
+				 ],
+				 "mountSources": true
+			  }
+		   }
+		],
+		"commands": [
+		   {
+			  "exec": {
+				 "id": "download dependencies",
+				 "component": "nodejs",
+				 "commandLine": "npm install",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "build"
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "run the app",
+				 "component": "nodejs",
+				 "commandLine": "nodemon app.js",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "run",
+					"isDefault": true
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "run the app (debugging enabled)",
+				 "component": "nodejs",
+				 "commandLine": "nodemon --inspect app.js",
+				 "workingDir": "${PROJECTS_ROOT}/project/app",
+				 "group": {
+					"kind": "run"
+				 }
+			  }
+		   },
+		   {
+			  "exec": {
+				 "id": "stop the app",
+				 "component": "nodejs",
+				 "commandLine": "node_server_pids=$(pgrep -fx '.*nodemon (--inspect )?app.js' | tr \"\\\\n\" \" \") && echo \"Stopping node server with PIDs: ${node_server_pids}\" &&  kill -15 ${node_server_pids} &>/dev/null && echo 'Done.'"
+			  }
+		   },
+		   {
+			  "vscodeLaunch": {
+				 "id": "Attach remote debugger",
+				 "inlined": "{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"type\": \"node\",\n      \"request\": \"attach\",\n      \"name\": \"Attach to Remote\",\n      \"address\": \"localhost\",\n      \"port\": 9229,\n      \"localRoot\": \"${workspaceFolder}\",\n      \"remoteRoot\": \"${workspaceFolder}\"\n    }\n  ]\n}\n"
+			  }
+		   }
+		]
+	 }`
 )
 
 func TestValidateDevfileSchema(t *testing.T) {
