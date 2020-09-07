@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
 	"github.com/devfile/parser/pkg/devfile/parser/data"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
@@ -24,16 +24,16 @@ type DevfileObj struct {
 
 // OverrideComponents overrides the components of the parent devfile
 // overridePatch contains the patches to be applied to the parent's components
-func (d DevfileObj) OverrideComponents(overridePatch []v1alpha1.Component) error {
+func (d DevfileObj) OverrideComponents(overridePatch []v1.Component) error {
 	for _, patchComponent := range overridePatch {
 		found := false
 		for _, originalComponent := range d.Data.GetComponents() {
 			if strings.ToLower(patchComponent.Container.Name) == originalComponent.Container.Name {
 				found = true
 
-				var updatedComponent v1alpha1.Container
+				var updatedComponent v1.Container
 
-				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.Container, v1alpha1.Container{})
+				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.Container, v1.Container{})
 				if err != nil {
 					return err
 				}
@@ -42,8 +42,8 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1alpha1.Component) error
 					return err
 				}
 
-				d.Data.UpdateComponent(v1alpha1.Component{
-					Container: &v1alpha1.ContainerComponent{
+				d.Data.UpdateComponent(v1.Component{
+					Container: &v1.ContainerComponent{
 						Container: updatedComponent,
 					},
 				})
@@ -58,15 +58,15 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1alpha1.Component) error
 
 // OverrideCommands overrides the commands of the parent devfile
 // overridePatch contains the patches to be applied to the parent's commands
-func (d DevfileObj) OverrideCommands(overridePatch []v1alpha1.Command) error {
+func (d DevfileObj) OverrideCommands(overridePatch []v1.Command) error {
 	for _, patchCommand := range overridePatch {
 		found := false
 		for _, originalCommand := range d.Data.GetCommands() {
 			if strings.ToLower(patchCommand.Exec.Id) == originalCommand.Exec.Id {
 				found = true
-				var updatedCommand v1alpha1.ExecCommand
+				var updatedCommand v1.ExecCommand
 
-				merged, err := handleMerge(originalCommand.Exec, patchCommand.Exec, v1alpha1.ExecCommand{})
+				merged, err := handleMerge(originalCommand.Exec, patchCommand.Exec, v1.ExecCommand{})
 				if err != nil {
 					return err
 				}
@@ -76,7 +76,7 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1alpha1.Command) error {
 					return err
 				}
 
-				d.Data.UpdateCommand(v1alpha1.Command{Exec: &updatedCommand})
+				d.Data.UpdateCommand(v1.Command{Exec: &updatedCommand})
 			}
 		}
 		if !found {
@@ -88,10 +88,10 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1alpha1.Command) error {
 
 // OverrideEvents overrides the events of the parent devfile
 // overridePatch contains the patches to be applied to the parent's events
-func (d DevfileObj) OverrideEvents(overridePatch v1alpha1.Events) error {
-	var updatedEvents v1alpha1.Events
+func (d DevfileObj) OverrideEvents(overridePatch v1.Events) error {
+	var updatedEvents v1.Events
 
-	merged, err := handleMerge(d.Data.GetEvents(), overridePatch, v1alpha1.Events{})
+	merged, err := handleMerge(d.Data.GetEvents(), overridePatch, v1.Events{})
 	if err != nil {
 		return err
 	}
@@ -110,15 +110,15 @@ func (d DevfileObj) OverrideEvents(overridePatch v1alpha1.Events) error {
 
 // OverrideProjects overrides the projects of the parent devfile
 // overridePatch contains the patches to be applied to the parent's projects
-func (d DevfileObj) OverrideProjects(overridePatch []v1alpha1.Project) error {
+func (d DevfileObj) OverrideProjects(overridePatch []v1.Project) error {
 	for _, patchProject := range overridePatch {
 		found := false
 		for _, originalProject := range d.Data.GetProjects() {
 			if strings.ToLower(patchProject.Name) == originalProject.Name {
 				found = true
-				var updatedProject v1alpha1.Project
+				var updatedProject v1.Project
 
-				merged, err := handleMerge(originalProject, patchProject, v1alpha1.Project{})
+				merged, err := handleMerge(originalProject, patchProject, v1.Project{})
 				if err != nil {
 					return err
 				}

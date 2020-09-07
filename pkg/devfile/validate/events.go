@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data"
 	"k8s.io/klog"
 )
@@ -66,7 +66,7 @@ func isEventValid(data data.DevfileData, eventNames []string, eventType string) 
 				isEventPresent = true
 				/*
 					// Check if the devfile command is valid
-					err := v1alpha1.ValidateCommand(data, command)
+					err := v1.ValidateCommand(data, command)
 					if err != nil {
 						klog.V(4).Infof("command %s is not valid: %s", getId(&command), err.Error())
 						eventErrorMsg[strings.ToLower(eventName)] = append(eventErrorMsg[strings.ToLower(eventName)], err.Error())
@@ -97,7 +97,7 @@ func isEventValid(data data.DevfileData, eventNames []string, eventType string) 
 	return nil
 }
 
-func getId(command *v1alpha1.Command) string {
+func getId(command *v1.Command) string {
 	if command.Composite != nil {
 		return command.Composite.Id
 	}

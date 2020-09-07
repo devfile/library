@@ -3,7 +3,7 @@ package validate
 import (
 	"fmt"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
 // NoComponentsError returns an error if no component is found
@@ -19,7 +19,7 @@ type NoContainerComponentError struct {
 }
 
 func (e *NoContainerComponentError) Error() string {
-	return fmt.Sprintf("odo requires atleast one component of type '%s' in devfile", v1alpha1.ContainerComponentType)
+	return fmt.Sprintf("odo requires atleast one component of type '%s' in devfile", v1.ContainerComponentType)
 }
 
 // DuplicateVolumeComponentsError returns an error if duplicate volume components are found

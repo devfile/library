@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
 func TestValidateComponents(t *testing.T) {
@@ -13,7 +13,7 @@ func TestValidateComponents(t *testing.T) {
 	t.Run("No components present", func(t *testing.T) {
 
 		// Empty components
-		components := []v1alpha1.Component{}
+		components := []v1.Component{}
 
 		got := validateComponents(components)
 		want := &NoComponentsError{}
@@ -25,10 +25,10 @@ func TestValidateComponents(t *testing.T) {
 
 	t.Run("Container type of component present", func(t *testing.T) {
 
-		components := []v1alpha1.Component{
+		components := []v1.Component{
 			{
-				Container: &v1alpha1.ContainerComponent{
-					Container: v1alpha1.Container{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
 						Name: "container",
 					},
 				},
@@ -44,18 +44,18 @@ func TestValidateComponents(t *testing.T) {
 
 	t.Run("Duplicate volume components present", func(t *testing.T) {
 
-		components := []v1alpha1.Component{
+		components := []v1.Component{
 			{
-				Volume: &v1alpha1.VolumeComponent{
-					Volume: v1alpha1.Volume{
+				Volume: &v1.VolumeComponent{
+					Volume: v1.Volume{
 						Name: "myvol",
 						Size: "1Gi",
 					},
 				},
 			},
 			{
-				Volume: &v1alpha1.VolumeComponent{
-					Volume: v1alpha1.Volume{
+				Volume: &v1.VolumeComponent{
+					Volume: v1.Volume{
 						Name: "myvol",
 						Size: "1Gi",
 					},
@@ -73,20 +73,20 @@ func TestValidateComponents(t *testing.T) {
 
 	t.Run("Valid container and volume component", func(t *testing.T) {
 
-		components := []v1alpha1.Component{
+		components := []v1.Component{
 			{
-				Volume: &v1alpha1.VolumeComponent{
-					Volume: v1alpha1.Volume{
+				Volume: &v1.VolumeComponent{
+					Volume: v1.Volume{
 						Name: "myvol",
 						Size: "1Gi",
 					},
 				},
 			},
 			{
-				Container: &v1alpha1.ContainerComponent{
-					Container: v1alpha1.Container{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
 						Name: "container",
-						VolumeMounts: []v1alpha1.VolumeMount{
+						VolumeMounts: []v1.VolumeMount{
 							{
 								Name: "myvol",
 								Path: "/some/path/",
@@ -96,10 +96,10 @@ func TestValidateComponents(t *testing.T) {
 				},
 			},
 			{
-				Container: &v1alpha1.ContainerComponent{
-					Container: v1alpha1.Container{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
 						Name: "container2",
-						VolumeMounts: []v1alpha1.VolumeMount{
+						VolumeMounts: []v1.VolumeMount{
 							{
 								Name: "myvol",
 							},
@@ -118,20 +118,20 @@ func TestValidateComponents(t *testing.T) {
 
 	t.Run("Invalid volume component size", func(t *testing.T) {
 
-		components := []v1alpha1.Component{
+		components := []v1.Component{
 			{
-				Volume: &v1alpha1.VolumeComponent{
-					Volume: v1alpha1.Volume{
+				Volume: &v1.VolumeComponent{
+					Volume: v1.Volume{
 						Name: "myvol",
 						Size: "randomgarbage",
 					},
 				},
 			},
 			{
-				Container: &v1alpha1.ContainerComponent{
-					Container: v1alpha1.Container{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
 						Name: "container",
-						VolumeMounts: []v1alpha1.VolumeMount{
+						VolumeMounts: []v1.VolumeMount{
 							{
 								Name: "myvol",
 								Path: "/some/path/",
@@ -152,20 +152,20 @@ func TestValidateComponents(t *testing.T) {
 
 	t.Run("Invalid volume mount", func(t *testing.T) {
 
-		components := []v1alpha1.Component{
+		components := []v1.Component{
 			{
-				Volume: &v1alpha1.VolumeComponent{
-					Volume: v1alpha1.Volume{
+				Volume: &v1.VolumeComponent{
+					Volume: v1.Volume{
 						Name: "myvol",
 						Size: "2Gi",
 					},
 				},
 			},
 			{
-				Container: &v1alpha1.ContainerComponent{
-					Container: v1alpha1.Container{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
 						Name: "container",
-						VolumeMounts: []v1alpha1.VolumeMount{
+						VolumeMounts: []v1.VolumeMount{
 							{
 								Name: "myinvalidvol",
 							},

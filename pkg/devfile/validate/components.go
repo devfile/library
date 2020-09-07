@@ -3,12 +3,12 @@ package validate
 import (
 	"strings"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // validateComponents validates all the devfile components
-func validateComponents(components []v1alpha1.Component) error {
+func validateComponents(components []v1.Component) error {
 
 	// components cannot be empty
 	if len(components) < 1 {

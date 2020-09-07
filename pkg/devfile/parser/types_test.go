@@ -9,7 +9,7 @@ import (
 	"github.com/devfile/parser/pkg/testingutil"
 	"github.com/kylelemons/godebug/pretty"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
 const devfileTempPath = "devfile.yaml"
@@ -26,7 +26,7 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 	overrideWorkingDir := "/data"
 
 	type args struct {
-		overridePatch []v1alpha1.Command
+		overridePatch []v1.Command
 	}
 	tests := []struct {
 		name           string
@@ -40,17 +40,17 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: commandLineBuild,
 								Component:   componentName0,
 								Env:         nil,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
-										Group: &v1alpha1.CommandGroup{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
+										Group: &v1.CommandGroup{
 											IsDefault: false,
-											Kind:      v1alpha1.BuildCommandGroupKind,
+											Kind:      v1.BuildCommandGroupKind,
 										},
 										Id: "devbuild",
 									},
@@ -62,16 +62,16 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Command{
+				overridePatch: []v1.Command{
 					{
-						Exec: &v1alpha1.ExecCommand{
+						Exec: &v1.ExecCommand{
 							CommandLine: overrideBuild,
 							Component:   overrideComponent0,
-							LabeledCommand: v1alpha1.LabeledCommand{
-								BaseCommand: v1alpha1.BaseCommand{
-									Group: &v1alpha1.CommandGroup{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
 										IsDefault: true,
-										Kind:      v1alpha1.BuildCommandGroupKind,
+										Kind:      v1.BuildCommandGroupKind,
 									},
 									Id: "devbuild",
 								},
@@ -84,16 +84,16 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: overrideBuild,
 								Component:   overrideComponent0,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
-										Group: &v1alpha1.CommandGroup{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
+										Group: &v1.CommandGroup{
 											IsDefault: true,
-											Kind:      v1alpha1.BuildCommandGroupKind,
+											Kind:      v1.BuildCommandGroupKind,
 										},
 										Id: "devbuild",
 									},
@@ -110,18 +110,18 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+							Exec: &v1.ExecCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devbuild",
 										Attributes: map[string]string{
 											"key-0": "value-0",
 										},
 									},
 								},
-								Env: []v1alpha1.EnvVar{
+								Env: []v1.EnvVar{
 									testingutil.GetFakeEnv("env-0", "value-0"),
 								},
 							},
@@ -130,18 +130,18 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Command{
+				overridePatch: []v1.Command{
 					{
-						Exec: &v1alpha1.ExecCommand{
-							LabeledCommand: v1alpha1.LabeledCommand{
-								BaseCommand: v1alpha1.BaseCommand{
+						Exec: &v1.ExecCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
 									Id: "devbuild",
 									Attributes: map[string]string{
 										"key-1": "value-1",
 									},
 								},
 							},
-							Env: []v1alpha1.EnvVar{
+							Env: []v1.EnvVar{
 								testingutil.GetFakeEnv("env-0", "value-0-0"),
 								testingutil.GetFakeEnv("env-1", "value-1"),
 							},
@@ -152,11 +152,11 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+							Exec: &v1.ExecCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devbuild",
 										Attributes: map[string]string{
 											"key-0": "value-0",
@@ -164,7 +164,7 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 										},
 									},
 								},
-								Env: []v1alpha1.EnvVar{
+								Env: []v1.EnvVar{
 									testingutil.GetFakeEnv("env-0", "value-0-0"),
 									testingutil.GetFakeEnv("env-1", "value-1"),
 								},
@@ -179,22 +179,22 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: commandLineBuild,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devbuild",
 									},
 								},
 							},
 						},
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: commandLineRun,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devrun",
 									},
 								},
@@ -204,12 +204,12 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Command{
+				overridePatch: []v1.Command{
 					{
-						Exec: &v1alpha1.ExecCommand{
+						Exec: &v1.ExecCommand{
 							CommandLine: overrideBuild,
-							LabeledCommand: v1alpha1.LabeledCommand{
-								BaseCommand: v1alpha1.BaseCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
 									Id: "devbuild",
 								},
 							},
@@ -220,22 +220,22 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: overrideBuild,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devbuild",
 									},
 								},
 							},
 						},
 						{
-							Exec: &v1alpha1.ExecCommand{
+							Exec: &v1.ExecCommand{
 								CommandLine: commandLineRun,
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devrun",
 									},
 								},
@@ -251,14 +251,14 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{
+					Commands: []v1.Command{
 						{
-							Exec: &v1alpha1.ExecCommand{
-								Env: []v1alpha1.EnvVar{
+							Exec: &v1.ExecCommand{
+								Env: []v1.EnvVar{
 									testingutil.GetFakeEnv("env-0", "value-0"),
 								},
-								LabeledCommand: v1alpha1.LabeledCommand{
-									BaseCommand: v1alpha1.BaseCommand{
+								LabeledCommand: v1.LabeledCommand{
+									BaseCommand: v1.BaseCommand{
 										Id: "devbuild",
 									},
 								},
@@ -268,15 +268,15 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Command{
+				overridePatch: []v1.Command{
 					{
-						Exec: &v1alpha1.ExecCommand{
-							Env: []v1alpha1.EnvVar{
+						Exec: &v1.ExecCommand{
+							Env: []v1.EnvVar{
 								testingutil.GetFakeEnv("env-0", "value-0-0"),
 								testingutil.GetFakeEnv("env-1", "value-1"),
 							},
-							LabeledCommand: v1alpha1.LabeledCommand{
-								BaseCommand: v1alpha1.BaseCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
 									Id: "devbuild-custom",
 								},
 							},
@@ -287,7 +287,7 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Commands: []v1alpha1.Command{},
+					Commands: []v1.Command{},
 				},
 			},
 			wantErr: true,
@@ -321,7 +321,7 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 	overrideContainerImage := "image-0-override"
 
 	type args struct {
-		overridePatch []v1alpha1.Component
+		overridePatch []v1.Component
 	}
 	tests := []struct {
 		name           string
@@ -335,10 +335,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Args:          []string{"arg-0", "arg-1"},
 									Command:       []string{"cmd-0", "cmd-1"},
 									Image:         containerImage0,
@@ -353,10 +353,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Component{
+				overridePatch: []v1.Component{
 					{
-						Container: &v1alpha1.ContainerComponent{
-							Container: v1alpha1.Container{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
 								Args:          []string{"arg-0-0", "arg-1-1"},
 								Command:       []string{"cmd-0-0", "cmd-1-1"},
 								Image:         overrideContainerImage,
@@ -372,10 +372,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Args:          []string{"arg-0-0", "arg-1-1"},
 									Command:       []string{"cmd-0-0", "cmd-1-1"},
 									Image:         overrideContainerImage,
@@ -396,10 +396,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Endpoints: []v1alpha1.Endpoint{
+							Container: &v1.ContainerComponent{
+								Endpoints: []v1.Endpoint{
 									{
 										Attributes: map[string]string{
 											"key-0": "value-0",
@@ -409,12 +409,12 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 										TargetPort: 8080,
 									},
 								},
-								Container: v1alpha1.Container{
-									Env: []v1alpha1.EnvVar{
+								Container: v1.Container{
+									Env: []v1.EnvVar{
 										testingutil.GetFakeEnv("env-0", "value-0"),
 									},
 									Name: "nodejs",
-									VolumeMounts: []v1alpha1.VolumeMount{
+									VolumeMounts: []v1.VolumeMount{
 										testingutil.GetFakeVolumeMount("volume-0", "path-0"),
 									},
 								},
@@ -424,10 +424,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Component{
+				overridePatch: []v1.Component{
 					{
-						Container: &v1alpha1.ContainerComponent{
-							Endpoints: []v1alpha1.Endpoint{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
 								{
 									Attributes: map[string]string{
 										"key-1":      "value-1-1",
@@ -444,13 +444,13 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 									TargetPort: 3000,
 								},
 							},
-							Container: v1alpha1.Container{
-								Env: []v1alpha1.EnvVar{
+							Container: v1.Container{
+								Env: []v1.EnvVar{
 									testingutil.GetFakeEnv("env-0", "value-0-0"),
 									testingutil.GetFakeEnv("env-1", "value-1"),
 								},
 								Name: "nodejs",
-								VolumeMounts: []v1alpha1.VolumeMount{
+								VolumeMounts: []v1.VolumeMount{
 									testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
 									testingutil.GetFakeVolumeMount("volume-1", "path-1"),
 								},
@@ -462,21 +462,21 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
-									Env: []v1alpha1.EnvVar{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
+									Env: []v1.EnvVar{
 										testingutil.GetFakeEnv("env-0", "value-0-0"),
 										testingutil.GetFakeEnv("env-1", "value-1"),
 									},
 									Name: "nodejs",
-									VolumeMounts: []v1alpha1.VolumeMount{
+									VolumeMounts: []v1.VolumeMount{
 										testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
 										testingutil.GetFakeVolumeMount("volume-1", "path-1"),
 									},
 								},
-								Endpoints: []v1alpha1.Endpoint{
+								Endpoints: []v1.Endpoint{
 									{
 										Attributes: map[string]string{
 											"key-0":      "value-0",
@@ -506,18 +506,18 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Image: containerImage0,
 									Name:  "nodejs",
 								},
 							},
 						},
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Image: containerImage1,
 									Name:  "runtime",
 								},
@@ -527,18 +527,18 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Component{
+				overridePatch: []v1.Component{
 					{
-						Container: &v1alpha1.ContainerComponent{
-							Container: v1alpha1.Container{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
 								Image: overrideContainerImage,
 								Name:  "nodejs",
 							},
 						},
 					},
 					{
-						Container: &v1alpha1.ContainerComponent{
-							Container: v1alpha1.Container{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
 								Image: containerImage1,
 								Name:  "runtime",
 							},
@@ -548,18 +548,18 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Image: overrideContainerImage,
 									Name:  "nodejs",
 								},
 							},
 						},
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Image: containerImage1,
 									Name:  "runtime",
 								},
@@ -575,10 +575,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Components: []v1alpha1.Component{
+					Components: []v1.Component{
 						{
-							Container: &v1alpha1.ContainerComponent{
-								Container: v1alpha1.Container{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
 									Image: containerImage0,
 									Name:  "nodejs",
 								},
@@ -588,10 +588,10 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Component{
+				overridePatch: []v1.Component{
 					{
-						Container: &v1alpha1.ContainerComponent{
-							Container: v1alpha1.Container{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
 								Image: containerImage0,
 								Name:  "nodejs-custom",
 							},
@@ -626,7 +626,7 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 
 func TestDevfileObj_OverrideEvents(t *testing.T) {
 	type args struct {
-		overridePatch v1alpha1.Events
+		overridePatch v1.Events
 	}
 	tests := []struct {
 		name           string
@@ -640,8 +640,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Events: v1alpha1.Events{
-						WorkspaceEvents: v1alpha1.WorkspaceEvents{
+					Events: v1.Events{
+						WorkspaceEvents: v1.WorkspaceEvents{
 							PostStart: []string{"post-start-0", "post-start-1"},
 							PostStop:  []string{"post-stop-0", "post-stop-1"},
 							PreStart:  []string{"pre-start-0", "pre-start-1"},
@@ -651,8 +651,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: v1alpha1.Events{
-					WorkspaceEvents: v1alpha1.WorkspaceEvents{
+				overridePatch: v1.Events{
+					WorkspaceEvents: v1.WorkspaceEvents{
 						PostStart: []string{"override-post-start-0", "override-post-start-1"},
 						PostStop:  []string{"override-post-stop-0", "override-post-stop-1"},
 						PreStart:  []string{"override-pre-start-0", "override-pre-start-1"},
@@ -663,8 +663,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Events: v1alpha1.Events{
-						WorkspaceEvents: v1alpha1.WorkspaceEvents{
+					Events: v1.Events{
+						WorkspaceEvents: v1.WorkspaceEvents{
 							PostStart: []string{"override-post-start-0", "override-post-start-1"},
 							PostStop:  []string{"override-post-stop-0", "override-post-stop-1"},
 							PreStart:  []string{"override-pre-start-0", "override-pre-start-1"},
@@ -679,8 +679,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Events: v1alpha1.Events{
-						WorkspaceEvents: v1alpha1.WorkspaceEvents{
+					Events: v1.Events{
+						WorkspaceEvents: v1.WorkspaceEvents{
 							PostStart: []string{"post-start-0", "post-start-1"},
 							PostStop:  []string{"post-stop-0", "post-stop-1"},
 						},
@@ -688,8 +688,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: v1alpha1.Events{
-					WorkspaceEvents: v1alpha1.WorkspaceEvents{
+				overridePatch: v1.Events{
+					WorkspaceEvents: v1.WorkspaceEvents{
 						PostStart: []string{"override-post-start-0", "override-post-start-1"},
 					},
 				},
@@ -697,8 +697,8 @@ func TestDevfileObj_OverrideEvents(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Events: v1alpha1.Events{
-						WorkspaceEvents: v1alpha1.WorkspaceEvents{
+					Events: v1.Events{
+						WorkspaceEvents: v1.WorkspaceEvents{
 							PostStart: []string{"override-post-start-0", "override-post-start-1"},
 							PostStop:  []string{"post-stop-0", "post-stop-1"},
 						},
@@ -726,7 +726,7 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 	projectName1 := "project-1"
 
 	type args struct {
-		overridePatch []v1alpha1.Project
+		overridePatch []v1.Project
 	}
 	tests := []struct {
 		name           string
@@ -740,13 +740,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Projects: []v1alpha1.Project{
+					Projects: []v1.Project{
 						{
 							ClonePath: "/data",
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "master",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "master",
+										},
 									},
 								},
 								Zip: nil,
@@ -757,13 +759,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Project{
+				overridePatch: []v1.Project{
 					{
 						ClonePath: "/source",
-						ProjectSource: v1alpha1.ProjectSource{
-							Github: &v1alpha1.GithubProjectSource{
-								GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-									Branch: "release-1.0.0",
+						ProjectSource: v1.ProjectSource{
+							Github: &v1.GithubProjectSource{
+								GitLikeProjectSource: v1.GitLikeProjectSource{
+									CheckoutFrom: &v1.CheckoutFrom{
+										Revision: "release-1.0.0",
+									},
 								},
 							},
 							Zip: nil,
@@ -775,13 +779,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Projects: []v1alpha1.Project{
+					Projects: []v1.Project{
 						{
 							ClonePath: "/source",
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "release-1.0.0",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "release-1.0.0",
+										},
 									},
 								},
 								Zip: nil,
@@ -797,13 +803,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Projects: []v1alpha1.Project{
+					Projects: []v1.Project{
 						{
 							ClonePath: "/data",
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "master",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "master",
+										},
 									},
 								},
 								Zip: nil,
@@ -811,10 +819,12 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 							Name: projectName0,
 						},
 						{
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "master",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "master",
+										},
 									},
 								},
 							},
@@ -824,13 +834,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Project{
+				overridePatch: []v1.Project{
 					{
 						ClonePath: "/source",
-						ProjectSource: v1alpha1.ProjectSource{
-							Github: &v1alpha1.GithubProjectSource{
-								GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-									Branch: "release-1.0.0",
+						ProjectSource: v1.ProjectSource{
+							Github: &v1.GithubProjectSource{
+								GitLikeProjectSource: v1.GitLikeProjectSource{
+									CheckoutFrom: &v1.CheckoutFrom{
+										Revision: "release-1.0.0",
+									},
 								},
 							},
 							Zip: nil,
@@ -842,13 +854,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Projects: []v1alpha1.Project{
+					Projects: []v1.Project{
 						{
 							ClonePath: "/source",
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "release-1.0.0",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "release-1.0.0",
+										},
 									},
 								},
 								Zip: nil,
@@ -856,10 +870,12 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 							Name: projectName0,
 						},
 						{
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "master",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "master",
+										},
 									},
 								},
 							},
@@ -874,13 +890,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 				Data: &v200.Devfile200{
-					Projects: []v1alpha1.Project{
+					Projects: []v1.Project{
 						{
 							ClonePath: "/data",
-							ProjectSource: v1alpha1.ProjectSource{
-								Github: &v1alpha1.GithubProjectSource{
-									GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-										Branch: "master",
+							ProjectSource: v1.ProjectSource{
+								Github: &v1.GithubProjectSource{
+									GitLikeProjectSource: v1.GitLikeProjectSource{
+										CheckoutFrom: &v1.CheckoutFrom{
+											Revision: "master",
+										},
 									},
 								},
 								Zip: nil,
@@ -891,13 +909,15 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 				},
 			},
 			args: args{
-				overridePatch: []v1alpha1.Project{
+				overridePatch: []v1.Project{
 					{
 						ClonePath: "/source",
-						ProjectSource: v1alpha1.ProjectSource{
-							Github: &v1alpha1.GithubProjectSource{
-								GitLikeProjectSource: v1alpha1.GitLikeProjectSource{
-									Branch: "release-1.0.0",
+						ProjectSource: v1.ProjectSource{
+							Github: &v1.GithubProjectSource{
+								GitLikeProjectSource: v1.GitLikeProjectSource{
+									CheckoutFrom: &v1.CheckoutFrom{
+										Revision: "release-1.0.0",
+									},
 								},
 							},
 							Zip: nil,

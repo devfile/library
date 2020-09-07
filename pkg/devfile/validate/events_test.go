@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser"
 	"github.com/devfile/parser/pkg/testingutil"
 )
@@ -12,17 +12,17 @@ import (
 func TestValidateEvents(t *testing.T) {
 
 	containers := []string{"container1", "container2"}
-	dummyComponents := []v1alpha1.Component{
+	dummyComponents := []v1.Component{
 		{
-			Container: &v1alpha1.ContainerComponent{
-				Container: v1alpha1.Container{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
 					Name: containers[0],
 				},
 			},
 		},
 		{
-			Container: &v1alpha1.ContainerComponent{
-				Container: v1alpha1.Container{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
 					Name: containers[1],
 				}},
 		},
@@ -30,19 +30,19 @@ func TestValidateEvents(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		events       v1alpha1.Events
-		components   []v1alpha1.Component
-		execCommands []v1alpha1.ExecCommand
-		compCommands []v1alpha1.CompositeCommand
+		events       v1.Events
+		components   []v1.Component
+		execCommands []v1.ExecCommand
+		compCommands []v1.CompositeCommand
 		wantErr      bool
 	}{
 		{
 			name:       "Case 1: Valid events",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -51,8 +51,8 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -61,18 +61,18 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
 					Commands: []string{"command1", "command2"},
 				},
 			},
-			events: v1alpha1.Events{
-				WorkspaceEvents: v1alpha1.WorkspaceEvents{
+			events: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
 					PostStart: []string{
 						"command1",
 					},
@@ -86,10 +86,10 @@ func TestValidateEvents(t *testing.T) {
 		{
 			name:       "Case 2: Invalid events with wrong mapping to devfile command",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -98,8 +98,8 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -108,18 +108,18 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
 					Commands: []string{"command1", "command2"},
 				},
 			},
-			events: v1alpha1.Events{
-				WorkspaceEvents: v1alpha1.WorkspaceEvents{
+			events: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
 					PostStart: []string{
 						"command1iswrong",
 					},
@@ -133,10 +133,10 @@ func TestValidateEvents(t *testing.T) {
 		{
 			name:       "Case 3: Invalid event command with mapping to wrong devfile container component",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -145,8 +145,8 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -155,18 +155,18 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
 					Commands: []string{"command1", "command2"},
 				},
 			},
-			events: v1alpha1.Events{
-				WorkspaceEvents: v1alpha1.WorkspaceEvents{
+			events: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
 					PostStart: []string{
 						"command1",
 					},
@@ -180,10 +180,10 @@ func TestValidateEvents(t *testing.T) {
 		{
 			name:       "Case 4: Invalid events with wrong child command in composite command",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -192,8 +192,8 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -202,18 +202,18 @@ func TestValidateEvents(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
 					Commands: []string{"command1iswrong", "command2"},
 				},
 			},
-			events: v1alpha1.Events{
-				WorkspaceEvents: v1alpha1.WorkspaceEvents{
+			events: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
 					PostStart: []string{
 						"command1",
 					},
@@ -247,17 +247,17 @@ func TestValidateEvents(t *testing.T) {
 func TestIsEventValid(t *testing.T) {
 
 	containers := []string{"container1", "container2"}
-	dummyComponents := []v1alpha1.Component{
+	dummyComponents := []v1.Component{
 		{
-			Container: &v1alpha1.ContainerComponent{
-				Container: v1alpha1.Container{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
 					Name: containers[0],
 				},
 			},
 		},
 		{
-			Container: &v1alpha1.ContainerComponent{
-				Container: v1alpha1.Container{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
 					Name: containers[1],
 				},
 			},
@@ -267,9 +267,9 @@ func TestIsEventValid(t *testing.T) {
 	tests := []struct {
 		name         string
 		eventType    string
-		components   []v1alpha1.Component
-		execCommands []v1alpha1.ExecCommand
-		compCommands []v1alpha1.CompositeCommand
+		components   []v1.Component
+		execCommands []v1.ExecCommand
+		compCommands []v1.CompositeCommand
 		eventNames   []string
 		wantErr      bool
 		wantErrMsg   string
@@ -278,10 +278,10 @@ func TestIsEventValid(t *testing.T) {
 			name:       "Case 1: Valid events",
 			eventType:  "preStart",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -290,8 +290,8 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -300,10 +300,10 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
@@ -320,10 +320,10 @@ func TestIsEventValid(t *testing.T) {
 			name:       "Case 2: Invalid events with wrong mapping to devfile command",
 			eventType:  "preStart",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -332,8 +332,8 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -342,10 +342,10 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
@@ -363,10 +363,10 @@ func TestIsEventValid(t *testing.T) {
 			name:       "Case 3: Invalid event command with mapping to wrong devfile container component",
 			eventType:  "preStart",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -375,8 +375,8 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -385,10 +385,10 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},
@@ -406,10 +406,10 @@ func TestIsEventValid(t *testing.T) {
 			name:       "Case 4: Invalid events with wrong child command in composite command",
 			eventType:  "preStart",
 			components: dummyComponents,
-			execCommands: []v1alpha1.ExecCommand{
+			execCommands: []v1.ExecCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command1",
 						},
 					},
@@ -418,8 +418,8 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "command2",
 						},
 					},
@@ -428,10 +428,10 @@ func TestIsEventValid(t *testing.T) {
 					WorkingDir:  "workDir",
 				},
 			},
-			compCommands: []v1alpha1.CompositeCommand{
+			compCommands: []v1.CompositeCommand{
 				{
-					LabeledCommand: v1alpha1.LabeledCommand{
-						BaseCommand: v1alpha1.BaseCommand{
+					LabeledCommand: v1.LabeledCommand{
+						BaseCommand: v1.BaseCommand{
 							Id: "composite1",
 						},
 					},

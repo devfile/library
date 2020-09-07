@@ -3,7 +3,7 @@ package version200
 import (
 	"strings"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -26,23 +26,23 @@ func (d *Devfile200) SetMetadata(name, version string) {
 }
 
 // GetParent returns the Parent object parsed from devfile
-func (d *Devfile200) GetParent() *v1alpha1.Parent {
+func (d *Devfile200) GetParent() *v1.Parent {
 	return d.Parent
 }
 
 // SetParent sets the parent for the devfile
-func (d *Devfile200) SetParent(parent *v1alpha1.Parent) {
+func (d *Devfile200) SetParent(parent *v1.Parent) {
 	d.Parent = parent
 }
 
 // GetProjects returns the Project Object parsed from devfile
-func (d *Devfile200) GetProjects() []v1alpha1.Project {
+func (d *Devfile200) GetProjects() []v1.Project {
 	return d.Projects
 }
 
 // AddProjects adss the slice of Devfile projects to the Devfile's project list
 // if a project is already defined, error out
-func (d *Devfile200) AddProjects(projects []v1alpha1.Project) error {
+func (d *Devfile200) AddProjects(projects []v1.Project) error {
 	projectsMap := make(map[string]bool)
 	for _, project := range d.Projects {
 		projectsMap[project.Name] = true
@@ -59,7 +59,7 @@ func (d *Devfile200) AddProjects(projects []v1alpha1.Project) error {
 }
 
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
-func (d *Devfile200) UpdateProject(project v1alpha1.Project) {
+func (d *Devfile200) UpdateProject(project v1.Project) {
 	for i := range d.Projects {
 		if d.Projects[i].Name == strings.ToLower(project.Name) {
 			d.Projects[i] = project
@@ -68,19 +68,19 @@ func (d *Devfile200) UpdateProject(project v1alpha1.Project) {
 }
 
 // GetComponents returns the slice of Component objects parsed from the Devfile
-func (d *Devfile200) GetComponents() []v1alpha1.Component {
+func (d *Devfile200) GetComponents() []v1.Component {
 	return d.Components
 }
 
 // GetAliasedComponents returns the slice of Component objects that each have an alias
-func (d *Devfile200) GetAliasedComponents() []v1alpha1.Component {
+func (d *Devfile200) GetAliasedComponents() []v1.Component {
 	// V2 has name required in jsonSchema
 	return d.Components
 }
 
 // AddComponents adds the slice of Component objects to the devfile's components
 // if a component is already defined, error out
-func (d *Devfile200) AddComponents(components []v1alpha1.Component) error {
+func (d *Devfile200) AddComponents(components []v1.Component) error {
 
 	// different map for volume and container component as a volume and a container with same name
 	// can exist in devfile
@@ -118,7 +118,7 @@ func (d *Devfile200) AddComponents(components []v1alpha1.Component) error {
 }
 
 // UpdateComponent updates the component with the given name
-func (d *Devfile200) UpdateComponent(component v1alpha1.Component) {
+func (d *Devfile200) UpdateComponent(component v1.Component) {
 	for i := range d.Components {
 		if d.Components[i].Container.Name == strings.ToLower(component.Container.Name) {
 			d.Components[i] = component
@@ -127,8 +127,8 @@ func (d *Devfile200) UpdateComponent(component v1alpha1.Component) {
 }
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
-func (d *Devfile200) GetCommands() []v1alpha1.Command {
-	var commands []v1alpha1.Command
+func (d *Devfile200) GetCommands() []v1.Command {
+	var commands []v1.Command
 
 	for _, command := range d.Commands {
 		// we convert devfile command id to lowercase so that we can handle
@@ -148,7 +148,7 @@ func (d *Devfile200) GetCommands() []v1alpha1.Command {
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
 // if a command is already defined, error out
-func (d *Devfile200) AddCommands(commands []v1alpha1.Command) error {
+func (d *Devfile200) AddCommands(commands []v1.Command) error {
 	commandsMap := make(map[string]bool)
 	for _, command := range d.Commands {
 		commandsMap[command.Exec.Id] = true
@@ -165,7 +165,7 @@ func (d *Devfile200) AddCommands(commands []v1alpha1.Command) error {
 }
 
 // UpdateCommand updates the command with the given id
-func (d *Devfile200) UpdateCommand(command v1alpha1.Command) {
+func (d *Devfile200) UpdateCommand(command v1.Command) {
 	for i := range d.Commands {
 		if d.Commands[i].Exec.Id == strings.ToLower(command.Exec.Id) {
 			d.Commands[i] = command
@@ -174,13 +174,13 @@ func (d *Devfile200) UpdateCommand(command v1alpha1.Command) {
 }
 
 // GetEvents returns the Events Object parsed from devfile
-func (d *Devfile200) GetEvents() v1alpha1.Events {
+func (d *Devfile200) GetEvents() v1.Events {
 	return d.Events
 }
 
 // AddEvents adds the Events Object to the devfile's events
 // if the event is already defined in the devfile, error out
-func (d *Devfile200) AddEvents(events v1alpha1.Events) error {
+func (d *Devfile200) AddEvents(events v1.Events) error {
 	if len(events.PreStop) > 0 {
 		if len(d.Events.PreStop) > 0 {
 			return &common.AlreadyExistError{Field: "pre stop"}

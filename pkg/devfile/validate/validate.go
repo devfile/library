@@ -5,13 +5,13 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 )
 
 // ValidateDevfileData validates whether sections of devfile are odo compatible
 func ValidateDevfileData(data interface{}) error {
-	var components []v1alpha1.Component
+	var components []v1.Component
 
 	switch d := data.(type) {
 	case *v200.Devfile200:

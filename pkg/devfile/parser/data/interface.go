@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -13,27 +13,27 @@ type DevfileData interface {
 	SetMetadata(name, version string)
 
 	// parent related methods
-	GetParent() *v1alpha1.Parent
-	SetParent(parent *v1alpha1.Parent)
+	GetParent() *v1.Parent
+	SetParent(parent *v1.Parent)
 
 	// event related methods
-	GetEvents() v1alpha1.Events
-	AddEvents(events v1alpha1.Events) error
+	GetEvents() v1.Events
+	AddEvents(events v1.Events) error
 	UpdateEvents(postStart, postStop, preStart, preStop []string)
 
 	// component related methods
-	GetComponents() []v1alpha1.Component
-	AddComponents(components []v1alpha1.Component) error
-	UpdateComponent(component v1alpha1.Component)
-	GetAliasedComponents() []v1alpha1.Component
+	GetComponents() []v1.Component
+	AddComponents(components []v1.Component) error
+	UpdateComponent(component v1.Component)
+	GetAliasedComponents() []v1.Component
 
 	// project related methods
-	GetProjects() []v1alpha1.Project
-	AddProjects(projects []v1alpha1.Project) error
-	UpdateProject(project v1alpha1.Project)
+	GetProjects() []v1.Project
+	AddProjects(projects []v1.Project) error
+	UpdateProject(project v1.Project)
 
 	// command related methods
-	GetCommands() []v1alpha1.Command
-	AddCommands(commands []v1alpha1.Command) error
-	UpdateCommand(command v1alpha1.Command)
+	GetCommands() []v1.Command
+	AddCommands(commands []v1.Command) error
+	UpdateCommand(command v1.Command)
 }

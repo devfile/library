@@ -8,7 +8,7 @@ import (
 
 	"reflect"
 
-	"github.com/devfile/api/pkg/apis/workspaces/v1alpha1"
+	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
 )
@@ -36,7 +36,7 @@ func parseDevfile(d DevfileObj) (DevfileObj, error) {
 	}
 
 	if d.Data.GetParent() != nil {
-		if !reflect.DeepEqual(d.Data.GetParent(), &v1alpha1.Parent{}) && d.Data.GetParent().Uri != "" {
+		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) && d.Data.GetParent().Uri != "" {
 			err = parseParent(d)
 			if err != nil {
 				return DevfileObj{}, err
@@ -93,11 +93,6 @@ func parseParent(d DevfileObj) error {
 	}
 
 	err = parentData.OverrideCommands(d.Data.GetParent().Commands)
-	if err != nil {
-		return err
-	}
-
-	err = parentData.OverrideEvents(d.Data.GetParent().Events)
 	if err != nil {
 		return err
 	}

@@ -3393,6 +3393,14 @@ const JsonSchema200 = `{
               "git": {
                 "description": "Project's Git source",
                 "properties": {
+                  "remotes": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                    "type": "object",
+                    "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+                  },
                   "branch": {
                     "description": "The branch to check",
                     "type": "string",
@@ -3421,6 +3429,14 @@ const JsonSchema200 = `{
               "github": {
                 "description": "Project's GitHub source",
                 "properties": {
+                  "remotes": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },                    
+                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                    "type": "object",
+                    "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+                  },                            
                   "branch": {
                     "description": "The branch to check",
                     "type": "string",
@@ -3440,7 +3456,7 @@ const JsonSchema200 = `{
                     "description": "The tag or commit id to reset the checked out branch to",
                     "type": "string",
                     "markdownDescription": "The tag or commit id to reset the checked out branch to"
-                  }
+                  }                 
                 },
                 "type": "object",
                 "markdownDescription": "Project's GitHub source",
@@ -3516,6 +3532,14 @@ const JsonSchema200 = `{
               "git": {
                 "description": "Project's Git source",
                 "properties": {
+                  "remotes": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },                    
+                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                    "type": "object",
+                    "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+                  },            
                   "branch": {
                     "description": "The branch to check",
                     "type": "string",
@@ -3544,6 +3568,14 @@ const JsonSchema200 = `{
               "github": {
                 "description": "Project's GitHub source",
                 "properties": {
+                  "remotes": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },                    
+                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                    "type": "object",
+                    "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+                  },                   
                   "branch": {
                     "description": "The branch to check",
                     "type": "string",
@@ -3663,6 +3695,14 @@ const JsonSchema200 = `{
           "git": {
             "description": "Project's Git source",
             "properties": {
+              "remotes": {
+                "additionalProperties": {
+                  "type": "string"
+                },                    
+                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                "type": "object",
+                "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+              },                 
               "branch": {
                 "description": "The branch to check",
                 "type": "string",
@@ -3691,6 +3731,14 @@ const JsonSchema200 = `{
           "github": {
             "description": "Project's GitHub source",
             "properties": {
+              "remotes": {
+                "additionalProperties": {
+                  "type": "string"
+                },                    
+                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                "type": "object",
+                "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+              },                
               "branch": {
                 "description": "The branch to check",
                 "type": "string",
@@ -3783,6 +3831,14 @@ const JsonSchema200 = `{
           "git": {
             "description": "Project's Git source",
             "properties": {
+              "remotes": {
+                "additionalProperties": {
+                  "type": "string"
+                },                    
+                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                "type": "object",
+                "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+              },                 
               "branch": {
                 "description": "The branch to check",
                 "type": "string",
@@ -3811,6 +3867,14 @@ const JsonSchema200 = `{
           "github": {
             "description": "Project's GitHub source",
             "properties": {
+              "remotes": {
+                "additionalProperties": {
+                  "type": "string"
+                },                    
+                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured.",
+                "type": "object",
+                "markdownDescription": "The remotes map which should be initialized in the git project. Must have at least one remote configured."
+              },                
               "branch": {
                 "description": "The branch to check",
                 "type": "string",
