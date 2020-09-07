@@ -7,11 +7,6 @@ import (
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
-//SetSchemaVersion sets devfile schema version
-func (d *Devfile200) SetSchemaVersion(version string) {
-	d.SchemaVersion = version
-}
-
 // GetMetadata returns the DevfileMetadata Object parsed from devfile
 func (d *Devfile200) GetMetadata() common.DevfileMetadata {
 	return d.Metadata

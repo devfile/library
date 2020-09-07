@@ -113,9 +113,6 @@ func (d TestDevfileData) Validate() error {
 // SetMetadata sets metadata for devfile
 func (d TestDevfileData) SetMetadata(name, version string) {}
 
-// SetSchemaVersion sets schema version for devfile
-func (d TestDevfileData) SetSchemaVersion(version string) {}
-
 func (d TestDevfileData) AddComponents(components []v1.Component) error { return nil }
 
 func (d TestDevfileData) UpdateComponent(component v1.Component) {}
