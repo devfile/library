@@ -17,3 +17,5 @@ main
 
 # Files used for debugging
 .vscode/
+
+.DS_Store

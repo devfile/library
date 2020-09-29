@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	devfilepkg "github.com/devfile/parser/pkg/devfile"
 	"github.com/devfile/parser/pkg/devfile/parser"
 	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 )
@@ -41,10 +42,10 @@ func main() {
 
 //ParseDevfile to parse devfile from library
 func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
-	/*
-		var devfile parser.DevfileObj
-		devfile, err = parser.ParseAndValidate(devfileLocation)
-		return devfile, err
-	*/
-	return
+
+	var devfile parser.DevfileObj
+	devfile, err = devfilepkg.ParseAndValidate(devfileLocation)
+	return devfile, err
+
+	// return
 }
