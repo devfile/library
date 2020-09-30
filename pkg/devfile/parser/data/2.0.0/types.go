@@ -2,7 +2,6 @@ package version200
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // Devfile200 Devfile schema.
@@ -11,7 +10,7 @@ type Devfile200 struct {
 	SchemaVersion string `json:"schemaVersion" yaml:"schemaVersion"`
 
 	// Optional metadata
-	Metadata common.DevfileMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Metadata v1.DevfileMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
 	// Parent workspace template
 	Parent *v1.Parent `json:"parent,omitempty" yaml:"parent,omitempty"`

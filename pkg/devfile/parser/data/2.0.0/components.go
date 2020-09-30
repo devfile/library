@@ -8,13 +8,13 @@ import (
 )
 
 // GetMetadata returns the DevfileMetadata Object parsed from devfile
-func (d *Devfile200) GetMetadata() common.DevfileMetadata {
+func (d *Devfile200) GetMetadata() v1.DevfileMetadata {
 	return d.Metadata
 }
 
 // SetMetadata sets the metadata for devfile
 func (d *Devfile200) SetMetadata(name, version string) {
-	d.Metadata = common.DevfileMetadata{
+	d.Metadata = v1.DevfileMetadata{
 		Name:    name,
 		Version: version,
 	}

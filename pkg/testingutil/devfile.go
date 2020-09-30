@@ -2,7 +2,6 @@ package testingutil
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // TestDevfileData is a convenience data type used to mock up a devfile configuration
@@ -20,8 +19,8 @@ func (d TestDevfileData) GetComponents() []v1.Component {
 }
 
 // GetMetadata is a mock function to get metadata from devfile
-func (d TestDevfileData) GetMetadata() common.DevfileMetadata {
-	return common.DevfileMetadata{}
+func (d TestDevfileData) GetMetadata() v1.DevfileMetadata {
+	return v1.DevfileMetadata{}
 }
 
 // GetEvents is a mock function to get events from devfile

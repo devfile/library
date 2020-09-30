@@ -3,12 +3,13 @@ module github.com/devfile/parser
 go 1.14
 
 require (
-	github.com/devfile/api v0.0.0-20200826170839-778718f72ad7
+	github.com/devfile/api v0.0.0-20200930164126-a0412cef2389
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
+	github.com/operator-framework/operator-sdk v0.17.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.3.2
 	github.com/xeipuuv/gojsonschema v1.2.0

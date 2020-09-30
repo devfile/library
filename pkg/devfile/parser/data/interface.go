@@ -2,12 +2,11 @@ package data
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // DevfileData is an interface that defines functions for Devfile data operations
 type DevfileData interface {
-	GetMetadata() common.DevfileMetadata
+	GetMetadata() v1.DevfileMetadata
 	SetMetadata(name, version string)
 
 	// parent related methods
