@@ -165,7 +165,10 @@ func (d *Devfile200) UpdateCommand(command v1.Command) {
 
 // GetEvents returns the Events Object parsed from devfile
 func (d *Devfile200) GetEvents() v1.Events {
-	return d.Events
+	if d.Events != nil {
+		return *d.Events
+	}
+	return v1.Events{}
 }
 
 // AddEvents adds the Events Object to the devfile's events
