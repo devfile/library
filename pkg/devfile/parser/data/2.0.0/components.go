@@ -84,26 +84,26 @@ func (d *Devfile200) AddComponents(components []v1.Component) error {
 
 	for _, component := range d.Components {
 		if component.Volume != nil {
-			volumeMap[component.Volume.Name] = true
+			volumeMap[component.Name] = true
 		}
 		if component.Container != nil {
-			containerMap[component.Container.Name] = true
+			containerMap[component.Name] = true
 		}
 	}
 
 	for _, component := range components {
 
 		if component.Volume != nil {
-			if _, ok := volumeMap[component.Volume.Name]; !ok {
+			if _, ok := volumeMap[component.Name]; !ok {
 				d.Components = append(d.Components, component)
 			}
 		}
 
 		if component.Container != nil {
-			if _, ok := containerMap[component.Container.Name]; !ok {
+			if _, ok := containerMap[component.Name]; !ok {
 				d.Components = append(d.Components, component)
 			} else {
-				return &common.AlreadyExistError{Name: component.Container.Name, Field: "component"}
+				return &common.AlreadyExistError{Name: component.Name, Field: "component"}
 			}
 		}
 	}
@@ -113,7 +113,7 @@ func (d *Devfile200) AddComponents(components []v1.Component) error {
 // UpdateComponent updates the component with the given name
 func (d *Devfile200) UpdateComponent(component v1.Component) {
 	for i := range d.Components {
-		if d.Components[i].Container.Name == strings.ToLower(component.Container.Name) {
+		if d.Components[i].Name == strings.ToLower(component.Name) {
 			d.Components[i] = component
 		}
 	}
@@ -127,13 +127,10 @@ func (d *Devfile200) GetCommands() []v1.Command {
 		// we convert devfile command id to lowercase so that we can handle
 		// cases efficiently without being error prone
 		// we also convert the odo push commands from build-command and run-command flags
-		if command.Exec != nil {
-			command.Exec.Id = strings.ToLower(command.Exec.Id)
-		} else if command.Composite != nil {
-			command.Composite.Id = strings.ToLower(command.Composite.Id)
+		if command.Exec != nil || command.Composite != nil {
+			command.Id = strings.ToLower(command.Id)
+			commands = append(commands, command)
 		}
-
-		commands = append(commands, command)
 	}
 
 	return commands
@@ -144,14 +141,14 @@ func (d *Devfile200) GetCommands() []v1.Command {
 func (d *Devfile200) AddCommands(commands []v1.Command) error {
 	commandsMap := make(map[string]bool)
 	for _, command := range d.Commands {
-		commandsMap[command.Exec.Id] = true
+		commandsMap[command.Id] = true
 	}
 
 	for _, command := range commands {
-		if _, ok := commandsMap[command.Exec.Id]; !ok {
+		if _, ok := commandsMap[command.Id]; !ok {
 			d.Commands = append(d.Commands, command)
 		} else {
-			return &common.AlreadyExistError{Name: command.Exec.Id, Field: "command"}
+			return &common.AlreadyExistError{Name: command.Id, Field: "command"}
 		}
 	}
 	return nil
@@ -160,7 +157,7 @@ func (d *Devfile200) AddCommands(commands []v1.Command) error {
 // UpdateCommand updates the command with the given id
 func (d *Devfile200) UpdateCommand(command v1.Command) {
 	for i := range d.Commands {
-		if d.Commands[i].Exec.Id == strings.ToLower(command.Exec.Id) {
+		if d.Commands[i].Id == strings.ToLower(command.Id) {
 			d.Commands[i] = command
 		}
 	}

@@ -33,11 +33,11 @@ func validateComponents(components []v1.Component) error {
 		}
 
 		if component.Volume != nil {
-			if _, ok := processedVolumes[component.Volume.Volume.Name]; !ok {
-				processedVolumes[component.Volume.Name] = true
+			if _, ok := processedVolumes[component.Name]; !ok {
+				processedVolumes[component.Name] = true
 				if len(component.Volume.Size) > 0 {
 					if _, err := resource.ParseQuantity(component.Volume.Size); err != nil {
-						return &InvalidVolumeSizeError{size: component.Volume.Size, componentName: component.Volume.Name, validationError: err}
+						return &InvalidVolumeSizeError{size: component.Volume.Size, componentName: component.Name, validationError: err}
 					}
 				}
 

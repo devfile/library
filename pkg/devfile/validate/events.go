@@ -99,11 +99,9 @@ func isEventValid(data data.DevfileData, eventNames []string, eventType string) 
 }
 
 func getId(command *v1.Command) string {
-	if command.Composite != nil {
-		return command.Composite.Id
+	if command.Composite != nil || command.Exec != nil {
+		return command.Id
 	}
-	if command.Exec != nil {
-		return command.Exec.Id
-	}
+
 	return ""
 }

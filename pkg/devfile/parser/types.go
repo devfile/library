@@ -24,16 +24,16 @@ type DevfileObj struct {
 
 // OverrideComponents overrides the components of the parent devfile
 // overridePatch contains the patches to be applied to the parent's components
-func (d DevfileObj) OverrideComponents(overridePatch []v1.Component) error {
+func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverride) error {
 	for _, patchComponent := range overridePatch {
 		found := false
 		for _, originalComponent := range d.Data.GetComponents() {
-			if strings.ToLower(patchComponent.Container.Name) == originalComponent.Container.Name {
+			if strings.ToLower(patchComponent.Name) == originalComponent.Name {
 				found = true
 
 				var updatedComponent v1.Container
 
-				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.Container, v1.Container{})
+				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.ContainerParentOverride, v1.Container{})
 				if err != nil {
 					return err
 				}
@@ -43,8 +43,10 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.Component) error {
 				}
 
 				d.Data.UpdateComponent(v1.Component{
-					Container: &v1.ContainerComponent{
-						Container: updatedComponent,
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: updatedComponent,
+						},
 					},
 				})
 			}
@@ -58,11 +60,11 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.Component) error {
 
 // OverrideCommands overrides the commands of the parent devfile
 // overridePatch contains the patches to be applied to the parent's commands
-func (d DevfileObj) OverrideCommands(overridePatch []v1.Command) error {
+func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) error {
 	for _, patchCommand := range overridePatch {
 		found := false
 		for _, originalCommand := range d.Data.GetCommands() {
-			if strings.ToLower(patchCommand.Exec.Id) == originalCommand.Exec.Id {
+			if strings.ToLower(patchCommand.Id) == originalCommand.Id {
 				found = true
 				var updatedCommand v1.ExecCommand
 
@@ -76,7 +78,10 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1.Command) error {
 					return err
 				}
 
-				d.Data.UpdateCommand(v1.Command{Exec: &updatedCommand})
+				d.Data.UpdateCommand(v1.Command{
+					CommandUnion: v1.CommandUnion{
+						Exec: &updatedCommand,
+					}})
 			}
 		}
 		if !found {
@@ -110,7 +115,7 @@ func (d DevfileObj) OverrideEvents(overridePatch v1.Events) error {
 
 // OverrideProjects overrides the projects of the parent devfile
 // overridePatch contains the patches to be applied to the parent's projects
-func (d DevfileObj) OverrideProjects(overridePatch []v1.Project) error {
+func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) error {
 	for _, patchProject := range overridePatch {
 		found := false
 		for _, originalProject := range d.Data.GetProjects() {
