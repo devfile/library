@@ -23,9 +23,9 @@ func (d *DevfileCtx) SetDevfileJSONSchema() error {
 
 // ValidateDevfileSchema validate JSON schema of the provided devfile
 func (d *DevfileCtx) ValidateDevfileSchema() error {
-
 	var (
-		schemaLoader   = gojsonschema.NewStringLoader(d.jsonSchema)
+		// schemaLoader   = gojsonschema.NewStringLoader(d.jsonSchema)
+		schemaLoader   = gojsonschema.NewReferenceLoader("https://raw.githubusercontent.com/devfile/api/master/schemas/latest/devfile.json")
 		documentLoader = gojsonschema.NewStringLoader(string(d.rawContent))
 	)
 
