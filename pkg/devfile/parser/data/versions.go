@@ -31,5 +31,5 @@ var devfileApiVersionToJSONSchema map[supportedApiVersion]string
 // init initializes a map of supported devfile apiVersions with it's respective devfile JSON schema
 func init() {
 	devfileApiVersionToJSONSchema = make(map[supportedApiVersion]string)
-	devfileApiVersionToJSONSchema[APIVersion200] = v200.JsonSchema200
+	devfileApiVersionToJSONSchema[APIVersion200] = "https://raw.githubusercontent.com/devfile/api/master/schemas/latest/devfile.json"
 }
