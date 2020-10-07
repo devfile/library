@@ -18,7 +18,7 @@ require (
 	github.com/spf13/afero v1.3.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.8 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
 	k8s.io/klog v1.0.0

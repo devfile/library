@@ -190,9 +190,17 @@ func GetFakeExecRunCommands() []v1.ExecCommand {
 	}
 }
 
-// GetFakeExecRunCommands returns a fake env for testing
+// GetFakeEnv returns a fake env for testing
 func GetFakeEnv(name, value string) v1.EnvVar {
 	return v1.EnvVar{
+		Name:  name,
+		Value: value,
+	}
+}
+
+// GetFakeEnvParentOverride returns a fake envParentOveride for testing
+func GetFakeEnvParentOverride(name, value string) v1.EnvVarParentOverride {
+	return v1.EnvVarParentOverride{
 		Name:  name,
 		Value: value,
 	}
