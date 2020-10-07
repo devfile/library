@@ -8,20 +8,14 @@ import (
 
 // GetID returns the ID of the command
 func GetID(dc v1.Command) string {
-	if dc.Composite != nil || dc.Exec != nil {
-		return dc.Id
-	}
-
-	return ""
+	return dc.Id
 }
 
 // SetIDToLower converts the command's id to lower case for more efficient processing and returns the new id
 func SetIDToLower(dc *v1.Command) string {
 	var newId string
-	if dc.Exec != nil || dc.Composite != nil {
-		newId = strings.ToLower(dc.Id)
-		dc.Id = newId
-	}
+	newId = strings.ToLower(dc.Id)
+	dc.Id = newId
 	return newId
 }
 
@@ -31,6 +25,14 @@ func GetGroup(dc v1.Command) *v1.CommandGroup {
 		return dc.Composite.Group
 	} else if dc.Exec != nil {
 		return dc.Exec.Group
+	} else if dc.Apply != nil {
+		return dc.Apply.Group
+	} else if dc.VscodeLaunch != nil {
+		return dc.VscodeLaunch.Group
+	} else if dc.VscodeTask != nil {
+		return dc.VscodeTask.Group
+	} else if dc.Custom != nil {
+		return dc.Custom.Group
 	}
 
 	return nil
