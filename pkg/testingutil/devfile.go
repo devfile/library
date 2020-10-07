@@ -2,6 +2,7 @@ package testingutil
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // TestDevfileData is a convenience data type used to mock up a devfile configuration
@@ -38,10 +39,8 @@ func (d TestDevfileData) GetAliasedComponents() []v1.Component {
 	var aliasedComponents = []v1.Component{}
 
 	for _, comp := range d.Components {
-		if comp.Container != nil {
-			if comp.Container.Name != "" {
-				aliasedComponents = append(aliasedComponents, comp)
-			}
+		if comp.Container != nil && comp.Name != "" {
+			aliasedComponents = append(aliasedComponents, comp)
 		}
 	}
 	return aliasedComponents
@@ -86,22 +85,18 @@ func (d TestDevfileData) GetProjects() []v1.Project {
 }
 
 // GetCommands is a mock function to get the commands from a devfile
-func (d TestDevfileData) GetCommands() []v1.Command {
-	if d.Commands == nil {
-		var commands []v1.Command
+func (d TestDevfileData) GetCommands() map[string]v1.Command {
 
-		for i := range d.ExecCommands {
-			commands = append(commands, v1.Command{Exec: &d.ExecCommands[i]})
-		}
+	commands := make(map[string]v1.Command, len(d.Commands))
 
-		for i := range d.CompositeCommands {
-			commands = append(commands, v1.Command{Composite: &d.CompositeCommands[i]})
-		}
-
-		return commands
-	} else {
-		return d.Commands
+	for _, command := range d.Commands {
+		// we convert devfile command id to lowercase so that we can handle
+		// cases efficiently without being error prone
+		// we also convert the odo push commands from build-command and run-command flags
+		commands[common.SetIDToLower(&command)] = command
 	}
+
+	return commands
 }
 
 // Validate is a mock validation that always validates without error
@@ -140,33 +135,36 @@ func GetFakeContainerComponent(name string) v1.Component {
 	volumePath := "/my/volume/mount/path1"
 
 	return v1.Component{
-		Container: &v1.ContainerComponent{
-			Container: v1.Container{
-				Name:        name,
-				Image:       image,
-				Env:         []v1.EnvVar{},
-				MemoryLimit: memoryLimit,
-				VolumeMounts: []v1.VolumeMount{
-					{
-						Name: volumeName,
-						Path: volumePath,
+		Name: name,
+		ComponentUnion: v1.ComponentUnion{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
+					Image:       image,
+					Env:         []v1.EnvVar{},
+					MemoryLimit: memoryLimit,
+					VolumeMounts: []v1.VolumeMount{
+						{
+							Name: volumeName,
+							Path: volumePath,
+						},
 					},
+					MountSources: true,
 				},
-				MountSources: true,
 			},
 		},
 	}
 }
 
 // GetFakeVolumeComponent returns a fake volume component for testing
-func GetFakeVolumeComponent(name string) v1.Component {
-	size := "4Gi"
+func GetFakeVolumeComponent(name, size string) v1.Component {
 
 	return v1.Component{
-		Volume: &v1.VolumeComponent{
-			Volume: v1.Volume{
-				Name: name,
-				Size: size,
+		Name: name,
+		ComponentUnion: v1.ComponentUnion{
+			Volume: &v1.VolumeComponent{
+				Volume: v1.Volume{
+					Size: size,
+				},
 			},
 		},
 	}

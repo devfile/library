@@ -81,7 +81,8 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) e
 				d.Data.UpdateCommand(v1.Command{
 					CommandUnion: v1.CommandUnion{
 						Exec: &updatedCommand,
-					}})
+					},
+				})
 			}
 		}
 		if !found {
