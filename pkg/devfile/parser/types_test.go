@@ -514,639 +514,904 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 	}
 }
 
-// func TestDevfileObj_OverrideComponents(t *testing.T) {
+func TestDevfileObj_OverrideComponents(t *testing.T) {
 
-// 	containerImage0 := "image-0"
-// 	containerImage1 := "image-1"
+	containerImage0 := "image-0"
+	containerImage1 := "image-1"
 
-// 	overrideContainerImage := "image-0-override"
+	overrideContainerImage := "image-0-override"
 
-// 	type args struct {
-// 		overridePatch []v1.Component
-// 	}
-// 	tests := []struct {
-// 		name           string
-// 		devFileObj     DevfileObj
-// 		args           args
-// 		wantDevFileObj DevfileObj
-// 		wantErr        bool
-// 	}{
-// 		{
-// 			name: "case 1: override a container's non list/map fields",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Args:          []string{"arg-0", "arg-1"},
-// 									Command:       []string{"cmd-0", "cmd-1"},
-// 									Image:         containerImage0,
-// 									MemoryLimit:   "512Mi",
-// 									MountSources:  false,
-// 									Name:          "nodejs",
-// 									SourceMapping: "/source",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Component{
-// 					{
-// 						Container: &v1.ContainerComponent{
-// 							Container: v1.Container{
-// 								Args:          []string{"arg-0-0", "arg-1-1"},
-// 								Command:       []string{"cmd-0-0", "cmd-1-1"},
-// 								Image:         overrideContainerImage,
-// 								MemoryLimit:   "1Gi",
-// 								MountSources:  true,
-// 								Name:          "nodejs",
-// 								SourceMapping: "/data",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Args:          []string{"arg-0-0", "arg-1-1"},
-// 									Command:       []string{"cmd-0-0", "cmd-1-1"},
-// 									Image:         overrideContainerImage,
-// 									MemoryLimit:   "1Gi",
-// 									MountSources:  true,
-// 									Name:          "nodejs",
-// 									SourceMapping: "/data",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantErr: false,
-// 		},
-// 		{
-// 			name: "case 2: append/override a command's list fields based on the key",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Endpoints: []v1.Endpoint{
-// 									{
-// 										Attributes: map[string]string{
-// 											"key-0": "value-0",
-// 											"key-1": "value-1",
-// 										},
-// 										Name:       "endpoint-0",
-// 										TargetPort: 8080,
-// 									},
-// 								},
-// 								Container: v1.Container{
-// 									Env: []v1.EnvVar{
-// 										testingutil.GetFakeEnv("env-0", "value-0"),
-// 									},
-// 									Name: "nodejs",
-// 									VolumeMounts: []v1.VolumeMount{
-// 										testingutil.GetFakeVolumeMount("volume-0", "path-0"),
-// 									},
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Component{
-// 					{
-// 						Container: &v1.ContainerComponent{
-// 							Endpoints: []v1.Endpoint{
-// 								{
-// 									Attributes: map[string]string{
-// 										"key-1":      "value-1-1",
-// 										"key-append": "value-append",
-// 									},
-// 									Name:       "endpoint-0",
-// 									TargetPort: 9090,
-// 								},
-// 								{
-// 									Attributes: map[string]string{
-// 										"key-0": "value-0",
-// 									},
-// 									Name:       "endpoint-1",
-// 									TargetPort: 3000,
-// 								},
-// 							},
-// 							Container: v1.Container{
-// 								Env: []v1.EnvVar{
-// 									testingutil.GetFakeEnv("env-0", "value-0-0"),
-// 									testingutil.GetFakeEnv("env-1", "value-1"),
-// 								},
-// 								Name: "nodejs",
-// 								VolumeMounts: []v1.VolumeMount{
-// 									testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
-// 									testingutil.GetFakeVolumeMount("volume-1", "path-1"),
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Env: []v1.EnvVar{
-// 										testingutil.GetFakeEnv("env-0", "value-0-0"),
-// 										testingutil.GetFakeEnv("env-1", "value-1"),
-// 									},
-// 									Name: "nodejs",
-// 									VolumeMounts: []v1.VolumeMount{
-// 										testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
-// 										testingutil.GetFakeVolumeMount("volume-1", "path-1"),
-// 									},
-// 								},
-// 								Endpoints: []v1.Endpoint{
-// 									{
-// 										Attributes: map[string]string{
-// 											"key-0":      "value-0",
-// 											"key-1":      "value-1-1",
-// 											"key-append": "value-append",
-// 										},
-// 										Name:       "endpoint-0",
-// 										TargetPort: 9090,
-// 									},
-// 									{
-// 										Attributes: map[string]string{
-// 											"key-0": "value-0",
-// 										},
-// 										Name:       "endpoint-1",
-// 										TargetPort: 3000,
-// 									},
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantErr: false,
-// 		},
-// 		{
-// 			name: "case 3: if multiple, override the correct command",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Image: containerImage0,
-// 									Name:  "nodejs",
-// 								},
-// 							},
-// 						},
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Image: containerImage1,
-// 									Name:  "runtime",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Component{
-// 					{
-// 						Container: &v1.ContainerComponent{
-// 							Container: v1.Container{
-// 								Image: overrideContainerImage,
-// 								Name:  "nodejs",
-// 							},
-// 						},
-// 					},
-// 					{
-// 						Container: &v1.ContainerComponent{
-// 							Container: v1.Container{
-// 								Image: containerImage1,
-// 								Name:  "runtime",
-// 							},
-// 						}},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Image: overrideContainerImage,
-// 									Name:  "nodejs",
-// 								},
-// 							},
-// 						},
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Image: containerImage1,
-// 									Name:  "runtime",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantErr: false,
-// 		},
-// 		{
-// 			name: "case 4: throw error if component to override is not found",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Components: []v1.Component{
-// 						{
-// 							Container: &v1.ContainerComponent{
-// 								Container: v1.Container{
-// 									Image: containerImage0,
-// 									Name:  "nodejs",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Component{
-// 					{
-// 						Container: &v1.ContainerComponent{
-// 							Container: v1.Container{
-// 								Image: containerImage0,
-// 								Name:  "nodejs-custom",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{},
-// 			wantErr:        true,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		if tt.name != "case 1: override a container's non list/map fields" {
-// 			continue
-// 		}
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			err := tt.devFileObj.OverrideComponents(tt.args.overridePatch)
-// 			if (err != nil) != tt.wantErr {
-// 				t.Errorf("OverrideComponents() error = %v, wantErr %v", err, tt.wantErr)
-// 			}
+	type args struct {
+		overridePatch []v1.ComponentParentOverride
+	}
+	tests := []struct {
+		name           string
+		devFileObj     DevfileObj
+		args           args
+		wantDevFileObj DevfileObj
+		wantErr        bool
+	}{
+		{
+			name: "case 1: override a container's non list/map fields",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Args:          []string{"arg-0", "arg-1"},
+													Command:       []string{"cmd-0", "cmd-1"},
+													Image:         containerImage0,
+													MemoryLimit:   "512Mi",
+													MountSources:  false,
+													SourceMapping: "/source",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ComponentParentOverride{
+					{
+						Name: "nodejs",
+						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+							Container: &v1.ContainerComponentParentOverride{
+								ContainerParentOverride: v1.ContainerParentOverride{
+									Args:          []string{"arg-0-0", "arg-1-1"},
+									Command:       []string{"cmd-0-0", "cmd-1-1"},
+									MemoryLimit:   "1Gi",
+									Image:         overrideContainerImage,
+									MountSources:  true,
+									SourceMapping: "/data",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Args:          []string{"arg-0-0", "arg-1-1"},
+													Command:       []string{"cmd-0-0", "cmd-1-1"},
+													Image:         overrideContainerImage,
+													MemoryLimit:   "1Gi",
+													MountSources:  true,
+													SourceMapping: "/data",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "case 2: append/override a command's list fields based on the key",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Endpoints: []v1.Endpoint{
+													{
+														Attributes: map[string]string{
+															"key-0": "value-0",
+															"key-1": "value-1",
+														},
+														Name:       "endpoint-0",
+														TargetPort: 8080,
+													},
+												},
+												Container: v1.Container{
+													Env: []v1.EnvVar{
+														testingutil.GetFakeEnv("env-0", "value-0"),
+													},
+													VolumeMounts: []v1.VolumeMount{
+														testingutil.GetFakeVolumeMount("volume-0", "path-0"),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ComponentParentOverride{
+					{
+						Name: "nodejs",
+						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+							Container: &v1.ContainerComponentParentOverride{
+								Endpoints: []v1.EndpointParentOverride{
+									{
+										Attributes: map[string]string{
+											"key-1":      "value-1-1",
+											"key-append": "value-append",
+										},
+										Name:       "endpoint-0",
+										TargetPort: 9090,
+									},
+									{
+										Attributes: map[string]string{
+											"key-0": "value-0",
+										},
+										Name:       "endpoint-1",
+										TargetPort: 3000,
+									},
+								},
+								ContainerParentOverride: v1.ContainerParentOverride{
+									Env: []v1.EnvVarParentOverride{
+										testingutil.GetFakeEnvParentOverride("env-0", "value-0-0"),
+										testingutil.GetFakeEnvParentOverride("env-1", "value-1"),
+									},
+									VolumeMounts: []v1.VolumeMountParentOverride{
+										testingutil.GetFakeVolumeMountParentOverride("volume-0", "path-0-0"),
+										testingutil.GetFakeVolumeMountParentOverride("volume-1", "path-1"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Env: []v1.EnvVar{
+														testingutil.GetFakeEnv("env-0", "value-0-0"),
+														testingutil.GetFakeEnv("env-1", "value-1"),
+													},
+													VolumeMounts: []v1.VolumeMount{
+														testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
+														testingutil.GetFakeVolumeMount("volume-1", "path-1"),
+													},
+												},
+												Endpoints: []v1.Endpoint{
+													{
+														Attributes: map[string]string{
+															"key-0":      "value-0",
+															"key-1":      "value-1-1",
+															"key-append": "value-append",
+														},
+														Name:       "endpoint-0",
+														TargetPort: 9090,
+													},
+													{
+														Attributes: map[string]string{
+															"key-0": "value-0",
+														},
+														Name:       "endpoint-1",
+														TargetPort: 3000,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "case 3: if multiple, override the correct command",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: containerImage0,
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: containerImage1,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ComponentParentOverride{
+					{
+						Name: "nodejs",
+						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+							Container: &v1.ContainerComponentParentOverride{
+								ContainerParentOverride: v1.ContainerParentOverride{
+									Image: overrideContainerImage,
+								},
+							},
+						},
+					},
+					{
+						Name: "runtime",
+						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+							Container: &v1.ContainerComponentParentOverride{
+								ContainerParentOverride: v1.ContainerParentOverride{
+									Image: containerImage1,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: overrideContainerImage,
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: containerImage1,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "case 4: throw error if component to override is not found",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "nodejs",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: containerImage0,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ComponentParentOverride{
+					{
+						Name: "nodejs-custom",
+						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+							Container: &v1.ContainerComponentParentOverride{
+								ContainerParentOverride: v1.ContainerParentOverride{
+									Image: containerImage0,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{},
+			wantErr:        true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.devFileObj.OverrideComponents(tt.args.overridePatch)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OverrideComponents() error = %v, wantErr %v", err, tt.wantErr)
+			}
 
-// 			if tt.wantErr && err != nil {
-// 				return
-// 			}
+			if tt.wantErr && err != nil {
+				return
+			}
 
-// 			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
-// 				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
-// 			}
-// 		})
-// 	}
-// }
+			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
+				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
+			}
+		})
+	}
+}
 
-// func TestDevfileObj_OverrideEvents(t *testing.T) {
-// 	type args struct {
-// 		overridePatch v1.Events
-// 	}
-// 	tests := []struct {
-// 		name           string
-// 		devFileObj     DevfileObj
-// 		args           args
-// 		wantDevFileObj DevfileObj
-// 		wantErr        bool
-// 	}{
-// 		{
-// 			name: "case 1: override the events",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Events: v1.Events{
-// 						WorkspaceEvents: v1.WorkspaceEvents{
-// 							PostStart: []string{"post-start-0", "post-start-1"},
-// 							PostStop:  []string{"post-stop-0", "post-stop-1"},
-// 							PreStart:  []string{"pre-start-0", "pre-start-1"},
-// 							PreStop:   []string{"pre-stop-0", "pre-stop-1"},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: v1.Events{
-// 					WorkspaceEvents: v1.WorkspaceEvents{
-// 						PostStart: []string{"override-post-start-0", "override-post-start-1"},
-// 						PostStop:  []string{"override-post-stop-0", "override-post-stop-1"},
-// 						PreStart:  []string{"override-pre-start-0", "override-pre-start-1"},
-// 						PreStop:   []string{"override-pre-stop-0", "override-pre-stop-1"},
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Events: v1.Events{
-// 						WorkspaceEvents: v1.WorkspaceEvents{
-// 							PostStart: []string{"override-post-start-0", "override-post-start-1"},
-// 							PostStop:  []string{"override-post-stop-0", "override-post-stop-1"},
-// 							PreStart:  []string{"override-pre-start-0", "override-pre-start-1"},
-// 							PreStop:   []string{"override-pre-stop-0", "override-pre-stop-1"},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name: "case 2: override some of the events",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Events: v1.Events{
-// 						WorkspaceEvents: v1.WorkspaceEvents{
-// 							PostStart: []string{"post-start-0", "post-start-1"},
-// 							PostStop:  []string{"post-stop-0", "post-stop-1"},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: v1.Events{
-// 					WorkspaceEvents: v1.WorkspaceEvents{
-// 						PostStart: []string{"override-post-start-0", "override-post-start-1"},
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Events: v1.Events{
-// 						WorkspaceEvents: v1.WorkspaceEvents{
-// 							PostStart: []string{"override-post-start-0", "override-post-start-1"},
-// 							PostStop:  []string{"post-stop-0", "post-stop-1"},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			if err := tt.devFileObj.OverrideEvents(tt.args.overridePatch); (err != nil) != tt.wantErr {
-// 				t.Errorf("OverrideEvents() error = %v, wantErr %v", err, tt.wantErr)
-// 				return
-// 			}
+func TestDevfileObj_OverrideProjects(t *testing.T) {
+	projectName0 := "project-0"
+	projectName1 := "project-1"
 
-// 			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
-// 				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
-// 			}
-// 		})
-// 	}
-// }
+	type args struct {
+		overridePatch []v1.ProjectParentOverride
+	}
+	tests := []struct {
+		name           string
+		devFileObj     DevfileObj
+		wantDevFileObj DevfileObj
+		args           args
+		wantErr        bool
+	}{
+		{
+			name: "case 1: override a project's fields",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Projects: []v1.Project{
+									{
+										ClonePath: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "master",
+													},
+												},
+											},
+											Zip: nil,
+										},
+										Name: projectName0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ProjectParentOverride{
+					{
+						ClonePath: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									CheckoutFrom: &v1.CheckoutFromParentOverride{
+										Revision: "release-1.0.0",
+									},
+								},
+							},
+							Zip: nil,
+						},
+						Name: projectName0,
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Projects: []v1.Project{
+									{
+										ClonePath: "/source",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "release-1.0.0",
+													},
+												},
+											},
+											Zip: nil,
+										},
+										Name: projectName0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "case 2: if multiple, override the correct project",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Projects: []v1.Project{
+									{
+										ClonePath: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "master",
+													},
+												},
+											},
+											Zip: nil,
+										},
+										Name: projectName0,
+									},
+									{
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "master",
+													},
+												},
+											},
+										},
+										Name: projectName1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ProjectParentOverride{
+					{
+						ClonePath: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									CheckoutFrom: &v1.CheckoutFromParentOverride{
+										Revision: "release-1.0.0",
+									},
+								},
+							},
+							Zip: nil,
+						},
+						Name: projectName0,
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Projects: []v1.Project{
+									{
+										ClonePath: "/source",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "release-1.0.0",
+													},
+												},
+											},
+											Zip: nil,
+										},
+										Name: projectName0,
+									},
+									{
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "master",
+													},
+												},
+											},
+										},
+										Name: projectName1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "case 3: throw error if project to override is not found",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Projects: []v1.Project{
+									{
+										ClonePath: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													CheckoutFrom: &v1.CheckoutFrom{
+														Revision: "master",
+													},
+												},
+											},
+											Zip: nil,
+										},
+										Name: projectName0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.ProjectParentOverride{
+					{
+						ClonePath: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									CheckoutFrom: &v1.CheckoutFromParentOverride{
+										Revision: "release-1.0.0",
+									},
+								},
+							},
+							Zip: nil,
+						},
+						Name: "custom-project",
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{},
+			wantErr:        true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.devFileObj.OverrideProjects(tt.args.overridePatch)
 
-// func TestDevfileObj_OverrideProjects(t *testing.T) {
-// 	projectName0 := "project-0"
-// 	projectName1 := "project-1"
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OverrideProjects() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 
-// 	type args struct {
-// 		overridePatch []v1.Project
-// 	}
-// 	tests := []struct {
-// 		name           string
-// 		devFileObj     DevfileObj
-// 		wantDevFileObj DevfileObj
-// 		args           args
-// 		wantErr        bool
-// 	}{
-// 		{
-// 			name: "case 1: override a project's fields",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Projects: []v1.Project{
-// 						{
-// 							ClonePath: "/data",
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "master",
-// 										},
-// 									},
-// 								},
-// 								Zip: nil,
-// 							},
-// 							Name: projectName0,
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Project{
-// 					{
-// 						ClonePath: "/source",
-// 						ProjectSource: v1.ProjectSource{
-// 							Github: &v1.GithubProjectSource{
-// 								GitLikeProjectSource: v1.GitLikeProjectSource{
-// 									CheckoutFrom: &v1.CheckoutFrom{
-// 										Revision: "release-1.0.0",
-// 									},
-// 								},
-// 							},
-// 							Zip: nil,
-// 						},
-// 						Name: projectName0,
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Projects: []v1.Project{
-// 						{
-// 							ClonePath: "/source",
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "release-1.0.0",
-// 										},
-// 									},
-// 								},
-// 								Zip: nil,
-// 							},
-// 							Name: projectName0,
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name: "case 2: if multiple, override the correct project",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Projects: []v1.Project{
-// 						{
-// 							ClonePath: "/data",
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "master",
-// 										},
-// 									},
-// 								},
-// 								Zip: nil,
-// 							},
-// 							Name: projectName0,
-// 						},
-// 						{
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "master",
-// 										},
-// 									},
-// 								},
-// 							},
-// 							Name: projectName1,
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Project{
-// 					{
-// 						ClonePath: "/source",
-// 						ProjectSource: v1.ProjectSource{
-// 							Github: &v1.GithubProjectSource{
-// 								GitLikeProjectSource: v1.GitLikeProjectSource{
-// 									CheckoutFrom: &v1.CheckoutFrom{
-// 										Revision: "release-1.0.0",
-// 									},
-// 								},
-// 							},
-// 							Zip: nil,
-// 						},
-// 						Name: projectName0,
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Projects: []v1.Project{
-// 						{
-// 							ClonePath: "/source",
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "release-1.0.0",
-// 										},
-// 									},
-// 								},
-// 								Zip: nil,
-// 							},
-// 							Name: projectName0,
-// 						},
-// 						{
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "master",
-// 										},
-// 									},
-// 								},
-// 							},
-// 							Name: projectName1,
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name: "case 3: throw error if project to override is not found",
-// 			devFileObj: DevfileObj{
-// 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-// 				Data: &v200.Devfile200{
-// 					Projects: []v1.Project{
-// 						{
-// 							ClonePath: "/data",
-// 							ProjectSource: v1.ProjectSource{
-// 								Github: &v1.GithubProjectSource{
-// 									GitLikeProjectSource: v1.GitLikeProjectSource{
-// 										CheckoutFrom: &v1.CheckoutFrom{
-// 											Revision: "master",
-// 										},
-// 									},
-// 								},
-// 								Zip: nil,
-// 							},
-// 							Name: projectName0,
-// 						},
-// 					},
-// 				},
-// 			},
-// 			args: args{
-// 				overridePatch: []v1.Project{
-// 					{
-// 						ClonePath: "/source",
-// 						ProjectSource: v1.ProjectSource{
-// 							Github: &v1.GithubProjectSource{
-// 								GitLikeProjectSource: v1.GitLikeProjectSource{
-// 									CheckoutFrom: &v1.CheckoutFrom{
-// 										Revision: "release-1.0.0",
-// 									},
-// 								},
-// 							},
-// 							Zip: nil,
-// 						},
-// 						Name: "custom-project",
-// 					},
-// 				},
-// 			},
-// 			wantDevFileObj: DevfileObj{},
-// 			wantErr:        true,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			err := tt.devFileObj.OverrideProjects(tt.args.overridePatch)
+			if tt.wantErr && err != nil {
+				return
+			}
 
-// 			if (err != nil) != tt.wantErr {
-// 				t.Errorf("OverrideProjects() error = %v, wantErr %v", err, tt.wantErr)
-// 				return
-// 			}
+			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
+				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
+			}
+		})
+	}
+}
 
-// 			if tt.wantErr && err != nil {
-// 				return
-// 			}
+func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
+	projectName1 := "starter-1"
+	projectName2 := "starter-2"
 
-// 			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
-// 				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
-// 			}
-// 		})
-// 	}
-// }
+	type args struct {
+		overridePatch []v1.StarterProjectParentOverride
+	}
+	tests := []struct {
+		name           string
+		devFileObj     DevfileObj
+		wantDevFileObj DevfileObj
+		args           args
+		wantErr        bool
+	}{
+		{
+			name: "Case 1: override a starter projects fields",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								StarterProjects: []v1.StarterProject{
+									{
+										Project: v1.Project{
+											Name:      projectName1,
+											ClonePath: "/data",
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.StarterProjectParentOverride{
+					{
+						ProjectParentOverride: v1.ProjectParentOverride{
+							Name:      projectName1,
+							ClonePath: "/source",
+							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+								Github: &v1.GithubProjectSourceParentOverride{
+									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+										Remotes:      map[string]string{"origin": "url"},
+										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
+									},
+								},
+								Zip: nil,
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								StarterProjects: []v1.StarterProject{
+									{
+										Project: v1.Project{
+											Name:      projectName1,
+											ClonePath: "/source",
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 2: if multiple, override the correct starter project",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								StarterProjects: []v1.StarterProject{
+									{
+										Project: v1.Project{
+											Name:      projectName1,
+											ClonePath: "/data",
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
+													},
+												},
+											},
+										},
+									},
+									{
+										Project: v1.Project{
+											Name: projectName2,
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.StarterProjectParentOverride{
+					{
+						ProjectParentOverride: v1.ProjectParentOverride{
+							Name:      projectName1,
+							ClonePath: "/source",
+							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+								Github: &v1.GithubProjectSourceParentOverride{
+									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+										Remotes:      map[string]string{"origin": "url"},
+										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								StarterProjects: []v1.StarterProject{
+									{
+										Project: v1.Project{
+											Name:      projectName1,
+											ClonePath: "/source",
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
+													},
+												},
+											},
+										},
+									},
+									{
+										Project: v1.Project{
+											Name: projectName2,
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 3: throw error if starter project to override is not found",
+			devFileObj: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+				Data: &v200.Devfile200{
+					v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								StarterProjects: []v1.StarterProject{
+									{
+										Project: v1.Project{
+											Name:      projectName1,
+											ClonePath: "/data",
+											ProjectSource: v1.ProjectSource{
+												Github: &v1.GithubProjectSource{
+													GitLikeProjectSource: v1.GitLikeProjectSource{
+														Remotes:      map[string]string{"origin": "url"},
+														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
+													},
+												},
+												Zip: nil,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				overridePatch: []v1.StarterProjectParentOverride{
+					{
+						ProjectParentOverride: v1.ProjectParentOverride{
+							Name:      "custom-starter-project",
+							ClonePath: "/source",
+							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+								Github: &v1.GithubProjectSourceParentOverride{
+									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+										Remotes:      map[string]string{"origin": "url"},
+										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
+									},
+								},
+								Zip: nil,
+							},
+						},
+					},
+				},
+			},
+			wantDevFileObj: DevfileObj{},
+			wantErr:        true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.devFileObj.OverrideStarterProjects(tt.args.overridePatch)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("OverrideStarterProjects() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(tt.wantDevFileObj, tt.devFileObj) {
+				t.Errorf("expected devfile and got devfile are different: %v", pretty.Compare(tt.wantDevFileObj, tt.devFileObj))
+			}
+		})
+	}
+}

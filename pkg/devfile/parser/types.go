@@ -37,9 +37,9 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 			if strings.ToLower(patchComponent.Name) == originalComponent.Name {
 				found = true
 
-				var updatedComponent v1.Container
+				var updatedComponent v1.ContainerComponent
 
-				merged, err := handleMerge(originalComponent.Container.Container, patchComponent.Container.ContainerParentOverride, v1.Container{})
+				merged, err := handleMerge(originalComponent.Container, patchComponent.Container, v1.ContainerComponent{})
 				if err != nil {
 					return err
 				}
@@ -49,10 +49,9 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 				}
 
 				d.Data.UpdateComponent(v1.Component{
+					Name: patchComponent.Name,
 					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: updatedComponent,
-						},
+						Container: &updatedComponent,
 					},
 				})
 			}

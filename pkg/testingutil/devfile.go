@@ -198,7 +198,7 @@ func GetFakeEnv(name, value string) v1.EnvVar {
 	}
 }
 
-// GetFakeEnvParentOverride returns a fake envParentOveride for testing
+// GetFakeEnvParentOverride returns a fake envParentOverride for testing
 func GetFakeEnvParentOverride(name, value string) v1.EnvVarParentOverride {
 	return v1.EnvVarParentOverride{
 		Name:  name,
@@ -209,6 +209,14 @@ func GetFakeEnvParentOverride(name, value string) v1.EnvVarParentOverride {
 // GetFakeVolumeMount returns a fake volume mount for testing
 func GetFakeVolumeMount(name, path string) v1.VolumeMount {
 	return v1.VolumeMount{
+		Name: name,
+		Path: path,
+	}
+}
+
+// GetFakeVolumeMountParentOverride returns a fake volumeMountParentOverride for testing
+func GetFakeVolumeMountParentOverride(name, path string) v1.VolumeMountParentOverride {
+	return v1.VolumeMountParentOverride{
 		Name: name,
 		Path: path,
 	}
