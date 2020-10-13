@@ -31,6 +31,7 @@ type DevfileObj struct {
 // OverrideComponents overrides the components of the parent devfile
 // overridePatch contains the patches to be applied to the parent's components
 func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverride) error {
+	// func (d DevfileObj) OverrideComponents(overridePatch interface{}) error {
 	for _, patchComponent := range overridePatch {
 		found := false
 		for _, originalComponent := range d.Data.GetComponents() {

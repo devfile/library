@@ -181,6 +181,7 @@ github.com/devfile/api v0.0.0-20200930164126-a0412cef2389/go.mod h1:hp5Lmob7ESmt
 github.com/devfile/api v0.0.0-20201001171212-f6de71b750ad h1:UUp8dCy51WgKTbg/uLUT2aZKAzU+VHZDR2O3gClrMdU=
 github.com/devfile/api v0.0.0-20201006145820-fdbc9b1d188d h1:Jj+dSCjSgZ/TLAQCOWIJW0MOh4iowlCmmf6o3TNpY5c=
 github.com/devfile/api v0.0.0-20201007153050-92323029295d h1:tRugzd7sapfeilpHW84c65c3BfB8Eb7pFSyBujXgBXA=
+github.com/devfile/api v0.0.0-20201009135113-bdb016b7b4f3 h1:uggPSotiMdbshRW9kFoHzI4viQum88OKoUKQavAX5Xo=
 github.com/dgrijalva/jwt-go v0.0.0-20160705203006-01aeca54ebda/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
