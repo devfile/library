@@ -520,6 +520,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 	containerImage1 := "image-1"
 
 	overrideContainerImage := "image-0-override"
+	MountSources := false
+	overrideMountSources := true
 
 	type args struct {
 		overridePatch []v1.ComponentParentOverride
@@ -549,7 +551,7 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 													Command:       []string{"cmd-0", "cmd-1"},
 													Image:         containerImage0,
 													MemoryLimit:   "512Mi",
-													MountSources:  false,
+													MountSources:  &MountSources,
 													SourceMapping: "/source",
 												},
 											},
@@ -572,7 +574,7 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 									Command:       []string{"cmd-0-0", "cmd-1-1"},
 									MemoryLimit:   "1Gi",
 									Image:         overrideContainerImage,
-									MountSources:  true,
+									MountSources:  &overrideMountSources,
 									SourceMapping: "/data",
 								},
 							},
@@ -596,7 +598,7 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 													Command:       []string{"cmd-0-0", "cmd-1-1"},
 													Image:         overrideContainerImage,
 													MemoryLimit:   "1Gi",
-													MountSources:  true,
+													MountSources:  &overrideMountSources,
 													SourceMapping: "/data",
 												},
 											},

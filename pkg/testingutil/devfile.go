@@ -2,6 +2,7 @@ package testingutil
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	devfilepkg "github.com/devfile/api/pkg/devfile"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -20,8 +21,8 @@ func (d TestDevfileData) GetComponents() []v1.Component {
 }
 
 // GetMetadata is a mock function to get metadata from devfile
-func (d TestDevfileData) GetMetadata() v1.DevfileMetadata {
-	return v1.DevfileMetadata{}
+func (d TestDevfileData) GetMetadata() devfilepkg.DevfileMetadata {
+	return devfilepkg.DevfileMetadata{}
 }
 
 // GetEvents is a mock function to get events from devfile
@@ -133,6 +134,7 @@ func GetFakeContainerComponent(name string) v1.Component {
 	memoryLimit := "128Mi"
 	volumeName := "myvolume1"
 	volumePath := "/my/volume/mount/path1"
+	mountSources := true
 
 	return v1.Component{
 		Name: name,
@@ -148,7 +150,7 @@ func GetFakeContainerComponent(name string) v1.Component {
 							Path: volumePath,
 						},
 					},
-					MountSources: true,
+					MountSources: &mountSources,
 				},
 			},
 		},

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	devfilepkg "github.com/devfile/api/pkg/devfile"
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
 	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
 	"github.com/ghodss/yaml"
@@ -109,7 +110,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -288,7 +291,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -464,7 +469,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands:   []v1.Command{},
@@ -508,7 +515,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -561,7 +570,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -609,7 +620,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Events: &v1.Events{
@@ -651,7 +664,9 @@ func Test_parseParent(t *testing.T) {
 			parentDevFile: DevfileObj{
 				Data: &v200.Devfile200{
 					v1.Devfile{
-						SchemaVersion: schemaV200,
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{

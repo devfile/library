@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2 // indirect
-	github.com/devfile/api v0.0.0-20200930164126-a0412cef2389
+	github.com/devfile/api v0.0.0-20201014163400-f42d9a0b9fb0
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3
@@ -12,7 +12,6 @@ require (
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/kubernetes-sigs/service-catalog v0.3.0 // indirect
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
-	github.com/openshift/odo v1.2.6
 	github.com/operator-framework/operator-sdk v0.17.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.3.2

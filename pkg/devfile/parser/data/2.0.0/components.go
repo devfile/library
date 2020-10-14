@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	devfilepkg "github.com/devfile/api/pkg/devfile"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
@@ -14,13 +15,13 @@ func (d *Devfile200) SetSchemaVersion(version string) {
 }
 
 // GetMetadata returns the DevfileMetadata Object parsed from devfile
-func (d *Devfile200) GetMetadata() v1.DevfileMetadata {
-	return d.Metadata
+func (d *Devfile200) GetMetadata() devfilepkg.DevfileMetadata {
+	return d.DevfileHeader.Metadata
 }
 
 // SetMetadata sets the metadata for devfile
 func (d *Devfile200) SetMetadata(name, version string) {
-	d.Metadata = v1.DevfileMetadata{
+	d.Metadata = devfilepkg.DevfileMetadata{
 		Name:    name,
 		Version: version,
 	}

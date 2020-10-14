@@ -2,12 +2,13 @@ package data
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	devfilepkg "github.com/devfile/api/pkg/devfile"
 )
 
 // DevfileData is an interface that defines functions for Devfile data operations
 type DevfileData interface {
 	SetSchemaVersion(version string)
-	GetMetadata() v1.DevfileMetadata
+	GetMetadata() devfilepkg.DevfileMetadata
 	SetMetadata(name, version string)
 
 	// parent related methods
