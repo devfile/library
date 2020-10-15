@@ -6,7 +6,7 @@ import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/api/pkg/devfile"
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 	"github.com/devfile/parser/pkg/testingutil/filesystem"
 )
 
@@ -25,8 +25,8 @@ func TestWriteJsonDevfile(t *testing.T) {
 		// DevfileObj
 		devfileObj := DevfileObj{
 			Ctx: devfileCtx.FakeContext(fs, OutputDevfileJsonPath),
-			Data: &v200.Devfile200{
-				v1.Devfile{
+			Data: &v2.DevfileV2{
+				Devfile: v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
 						SchemaVersion: schemaVersion,
 						Metadata: devfilepkg.DevfileMetadata{
@@ -56,8 +56,8 @@ func TestWriteJsonDevfile(t *testing.T) {
 		// DevfileObj
 		devfileObj := DevfileObj{
 			Ctx: devfileCtx.FakeContext(fs, OutputDevfileYamlPath),
-			Data: &v200.Devfile200{
-				v1.Devfile{
+			Data: &v2.DevfileV2{
+				Devfile: v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
 						SchemaVersion: schemaVersion,
 						Metadata: devfilepkg.DevfileMetadata{

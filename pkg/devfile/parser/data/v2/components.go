@@ -12,7 +12,7 @@ import (
 // GetCustomType gets the custom type
 func (d *DevfileV2) GetCustomType() string {
 
-	devfileV2Type := NewDevfileDataV2(d.SchemaVersion)
+	devfileV2Type := New(d.SchemaVersion)
 
 	return devfileV2Type.GetCustomType()
 }
@@ -23,12 +23,12 @@ func (d *DevfileV2) SetSchemaVersion(version string) {
 }
 
 // GetMetadata returns the DevfileMetadata Object parsed from devfile
-func (d *Devfile200) GetMetadata() devfilepkg.DevfileMetadata {
+func (d *DevfileV2) GetMetadata() devfilepkg.DevfileMetadata {
 	return d.DevfileHeader.Metadata
 }
 
 // SetMetadata sets the metadata for devfile
-func (d *Devfile200) SetMetadata(name, version string) {
+func (d *DevfileV2) SetMetadata(name, version string) {
 	d.Metadata = devfilepkg.DevfileMetadata{
 		Name:    name,
 		Version: version,

@@ -5,11 +5,13 @@ import (
 	v210 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.1.0"
 )
 
-// NewDevfileDataV2 returns relevant devfile struct for the provided API version
-func NewDevfileDataV2(version string) (obj DevfileDataV2) {
-	if version == "2.0.0" {
+// New returns relevant devfile ver 2.x.x struct for the provided API version
+func New(version string) (obj DevfileDataV2) {
+
+	switch version {
+	case "2.0.0":
 		return &v200.Devfile200{}
-	} else if version == "2.1.0" {
+	case "2.1.0":
 		return &v210.Devfile210{}
 	}
 
