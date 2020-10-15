@@ -1,8 +1,6 @@
 package version200
 
-import (
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-)
+// v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 
 // Devfile200 Devfile schema.
 type Devfile200 struct {
@@ -32,5 +30,6 @@ type Devfile200 struct {
 
 	// // Bindings of commands to events. Each command is referred-to by its name.
 	// Events v1.Events `json:"events,omitempty" yaml:"events,omitempty"`
-	v1.Devfile
+
+	// devfileV2 v2.DevfileV2
 }

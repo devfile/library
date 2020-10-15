@@ -1,4 +1,4 @@
-package version200
+package v2
 
 import (
 	"fmt"
@@ -9,8 +9,19 @@ import (
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
+// GetCustomType gets the custom type
+func (d *DevfileV2) GetCustomType() string {
+
+	devfileV2Type, err := NewDevfileDataV2(d.SchemaVersion)
+	if err != nil {
+		fmt.Printf("Error on DevfileV2 GetCustomType %v\n", err)
+	}
+
+	return devfileV2Type.GetCustomType()
+}
+
 //SetSchemaVersion sets devfile schema version
-func (d *Devfile200) SetSchemaVersion(version string) {
+func (d *DevfileV2) SetSchemaVersion(version string) {
 	d.SchemaVersion = version
 }
 
@@ -28,23 +39,23 @@ func (d *Devfile200) SetMetadata(name, version string) {
 }
 
 // GetParent returns the Parent object parsed from devfile
-func (d *Devfile200) GetParent() *v1.Parent {
+func (d *DevfileV2) GetParent() *v1.Parent {
 	return d.Parent
 }
 
 // SetParent sets the parent for the devfile
-func (d *Devfile200) SetParent(parent *v1.Parent) {
+func (d *DevfileV2) SetParent(parent *v1.Parent) {
 	d.Parent = parent
 }
 
 // GetProjects returns the Project Object parsed from devfile
-func (d *Devfile200) GetProjects() []v1.Project {
+func (d *DevfileV2) GetProjects() []v1.Project {
 	return d.Projects
 }
 
 // AddProjects adss the slice of Devfile projects to the Devfile's project list
 // if a project is already defined, error out
-func (d *Devfile200) AddProjects(projects []v1.Project) error {
+func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 	projectsMap := make(map[string]bool)
 	for _, project := range d.Projects {
 		projectsMap[project.Name] = true
@@ -61,7 +72,7 @@ func (d *Devfile200) AddProjects(projects []v1.Project) error {
 }
 
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
-func (d *Devfile200) UpdateProject(project v1.Project) {
+func (d *DevfileV2) UpdateProject(project v1.Project) {
 	for i := range d.Projects {
 		if d.Projects[i].Name == strings.ToLower(project.Name) {
 			d.Projects[i] = project
@@ -70,19 +81,19 @@ func (d *Devfile200) UpdateProject(project v1.Project) {
 }
 
 // GetComponents returns the slice of Component objects parsed from the Devfile
-func (d *Devfile200) GetComponents() []v1.Component {
+func (d *DevfileV2) GetComponents() []v1.Component {
 	return d.Components
 }
 
 // GetAliasedComponents returns the slice of Component objects that each have an alias
-func (d *Devfile200) GetAliasedComponents() []v1.Component {
+func (d *DevfileV2) GetAliasedComponents() []v1.Component {
 	// V2 has name required in jsonSchema
 	return d.Components
 }
 
 // AddComponents adds the slice of Component objects to the devfile's components
 // if a component is already defined, error out
-func (d *Devfile200) AddComponents(components []v1.Component) error {
+func (d *DevfileV2) AddComponents(components []v1.Component) error {
 
 	// different map for volume and container component as a volume and a container with same name
 	// can exist in devfile
@@ -120,7 +131,7 @@ func (d *Devfile200) AddComponents(components []v1.Component) error {
 }
 
 // UpdateComponent updates the component with the given name
-func (d *Devfile200) UpdateComponent(component v1.Component) {
+func (d *DevfileV2) UpdateComponent(component v1.Component) {
 	index := -1
 	for i := range d.Components {
 		if d.Components[i].Name == strings.ToLower(component.Name) {
@@ -134,7 +145,7 @@ func (d *Devfile200) UpdateComponent(component v1.Component) {
 }
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
-func (d *Devfile200) GetCommands() map[string]v1.Command {
+func (d *DevfileV2) GetCommands() map[string]v1.Command {
 
 	commands := make(map[string]v1.Command, len(d.Commands))
 
@@ -150,7 +161,7 @@ func (d *Devfile200) GetCommands() map[string]v1.Command {
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
 // if a command is already defined, error out
-func (d *Devfile200) AddCommands(commands ...v1.Command) error {
+func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
 	commandsMap := d.GetCommands()
 
 	for _, command := range commands {
@@ -165,7 +176,7 @@ func (d *Devfile200) AddCommands(commands ...v1.Command) error {
 }
 
 // UpdateCommand updates the command with the given id
-func (d *Devfile200) UpdateCommand(command v1.Command) {
+func (d *DevfileV2) UpdateCommand(command v1.Command) {
 	id := strings.ToLower(common.GetID(command))
 	for i := range d.Commands {
 		if common.SetIDToLower(&d.Commands[i]) == id {
@@ -175,13 +186,13 @@ func (d *Devfile200) UpdateCommand(command v1.Command) {
 }
 
 //GetStarterProjects returns the DevfileStarterProject parsed from devfile
-func (d *Devfile200) GetStarterProjects() []v1.StarterProject {
+func (d *DevfileV2) GetStarterProjects() []v1.StarterProject {
 	return d.StarterProjects
 }
 
 // AddStarterProjects adds the slice of Devfile starter projects to the Devfile's starter project list
 // if a starter project is already defined, error out
-func (d *Devfile200) AddStarterProjects(projects []v1.StarterProject) error {
+func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 	projectsMap := make(map[string]bool)
 	for _, project := range d.StarterProjects {
 		projectsMap[project.Name] = true
@@ -198,7 +209,7 @@ func (d *Devfile200) AddStarterProjects(projects []v1.StarterProject) error {
 }
 
 // UpdateStarterProject updates the slice of Devfile starter projects parsed from the Devfile
-func (d *Devfile200) UpdateStarterProject(project v1.StarterProject) {
+func (d *DevfileV2) UpdateStarterProject(project v1.StarterProject) {
 	for i := range d.StarterProjects {
 		if d.StarterProjects[i].Name == strings.ToLower(project.Name) {
 			d.StarterProjects[i] = project
@@ -207,7 +218,7 @@ func (d *Devfile200) UpdateStarterProject(project v1.StarterProject) {
 }
 
 // GetEvents returns the Events Object parsed from devfile
-func (d *Devfile200) GetEvents() v1.Events {
+func (d *DevfileV2) GetEvents() v1.Events {
 	if d.Events != nil {
 		return *d.Events
 	}
@@ -216,7 +227,7 @@ func (d *Devfile200) GetEvents() v1.Events {
 
 // AddEvents adds the Events Object to the devfile's events
 // if the event is already defined in the devfile, error out
-func (d *Devfile200) AddEvents(events v1.Events) error {
+func (d *DevfileV2) AddEvents(events v1.Events) error {
 	if len(events.PreStop) > 0 {
 		if len(d.Events.PreStop) > 0 {
 			return &common.AlreadyExistError{Field: "pre stop"}
@@ -250,7 +261,7 @@ func (d *Devfile200) AddEvents(events v1.Events) error {
 
 // UpdateEvents updates the devfile's events
 // it only updates the events passed to it
-func (d *Devfile200) UpdateEvents(postStart, postStop, preStart, preStop []string) {
+func (d *DevfileV2) UpdateEvents(postStart, postStop, preStart, preStop []string) {
 	if len(postStart) != 0 {
 		d.Events.PostStart = postStart
 	}
@@ -266,7 +277,7 @@ func (d *Devfile200) UpdateEvents(postStart, postStop, preStart, preStop []strin
 }
 
 // AddVolume adds the volume to the devFile and mounts it to all the container components
-func (d *Devfile200) AddVolume(volumeComponent v1.Component, path string) error {
+func (d *DevfileV2) AddVolume(volumeComponent v1.Component, path string) error {
 	volumeExists := false
 	var pathErrorContainers []string
 	for _, component := range d.Components {
@@ -304,7 +315,7 @@ func (d *Devfile200) AddVolume(volumeComponent v1.Component, path string) error 
 }
 
 // DeleteVolume removes the volume from the devFile and removes all the related volume mounts
-func (d *Devfile200) DeleteVolume(name string) error {
+func (d *DevfileV2) DeleteVolume(name string) error {
 	found := false
 	for i := len(d.Components) - 1; i >= 0; i-- {
 		if d.Components[i].Container != nil {
@@ -334,7 +345,7 @@ func (d *Devfile200) DeleteVolume(name string) error {
 }
 
 // GetVolumeMountPath gets the mount path of the required volume
-func (d *Devfile200) GetVolumeMountPath(name string) (string, error) {
+func (d *DevfileV2) GetVolumeMountPath(name string) (string, error) {
 	volumeFound := false
 	mountFound := false
 	path := ""

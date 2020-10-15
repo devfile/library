@@ -2,9 +2,21 @@ package data
 
 import (
 	"fmt"
-	"k8s.io/klog"
 	"reflect"
+
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
+	v210 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.1.0"
+
+	"k8s.io/klog"
 )
+
+// DevfileV2 Devfile
+type DevfileV2 struct {
+	v2.DevfileV2
+	v200.Devfile200
+	v210.Devfile210
+}
 
 // String converts supportedApiVersion type to string type
 func (s supportedApiVersion) String() string {
