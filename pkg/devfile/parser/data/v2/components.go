@@ -12,10 +12,7 @@ import (
 // GetCustomType gets the custom type
 func (d *DevfileV2) GetCustomType() string {
 
-	devfileV2Type, err := NewDevfileDataV2(d.SchemaVersion)
-	if err != nil {
-		fmt.Printf("Error on DevfileV2 GetCustomType %v\n", err)
-	}
+	devfileV2Type := NewDevfileDataV2(d.SchemaVersion)
 
 	return devfileV2Type.GetCustomType()
 }

@@ -47,6 +47,4 @@ type DevfileData interface {
 	GetVolumeMountPath(name string) (string, error)
 
 	GetCustomType() string
-
-	// v2.DevfileDataV2
 }

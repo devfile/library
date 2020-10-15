@@ -37,7 +37,7 @@ func main() {
 			}
 		}
 
-		fmt.Println(devdata.GetCustomType())
+		fmt.Println("Custom Type is " + devdata.GetCustomType())
 	}
 
 }
