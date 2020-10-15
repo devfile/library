@@ -9,14 +9,6 @@ import (
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
-// GetCustomType gets the custom type
-func (d *DevfileV2) GetCustomType() string {
-
-	devfileV2Type := New(d.SchemaVersion)
-
-	return devfileV2Type.GetCustomType()
-}
-
 //SetSchemaVersion sets devfile schema version
 func (d *DevfileV2) SetSchemaVersion(version string) {
 	d.SchemaVersion = version

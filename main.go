@@ -36,8 +36,6 @@ func main() {
 				fmt.Println(command.Exec.Group.Kind)
 			}
 		}
-
-		fmt.Println("Custom Type is " + devdata.GetCustomType())
 	}
 
 }
