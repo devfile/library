@@ -1,4 +1,4 @@
-package version200
+package v2
 
 import (
 	"reflect"
@@ -165,7 +165,7 @@ func TestDevfile200_AddVolume(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &Devfile200{
+			d := &DevfileV2{
 				v1.Devfile{
 					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -377,7 +377,7 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &Devfile200{
+			d := &DevfileV2{
 				v1.Devfile{
 					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -478,7 +478,7 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &Devfile200{
+			d := &DevfileV2{
 				v1.Devfile{
 					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -519,7 +519,7 @@ func TestAddStarterProjects(t *testing.T) {
 		},
 	}
 
-	d := &Devfile200{
+	d := &DevfileV2{
 		v1.Devfile{
 			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{

@@ -9,7 +9,7 @@ import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/api/pkg/devfile"
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
 )
@@ -32,8 +32,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								Parent: &v1.Parent{
 									ParentOverrides: v1.ParentOverrides{
@@ -108,8 +108,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -164,8 +164,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -245,8 +245,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Commands: []v1.Command{
@@ -289,8 +289,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -345,8 +345,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -426,8 +426,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								Parent: &v1.Parent{
 									ParentOverrides: v1.ParentOverrides{
@@ -467,8 +467,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -483,7 +483,7 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{},
+				Data: &v2.DevfileV2{},
 			},
 			wantErr: true,
 		},
@@ -492,8 +492,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Commands: []v1.Command{
@@ -513,8 +513,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -536,7 +536,7 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{},
+				Data: &v2.DevfileV2{},
 			},
 			wantErr: true,
 		},
@@ -545,8 +545,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Components: []v1.Component{
@@ -568,8 +568,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -593,7 +593,7 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{},
+				Data: &v2.DevfileV2{},
 			},
 			wantErr: true,
 		},
@@ -602,8 +602,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Events: &v1.Events{
@@ -618,8 +618,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -636,7 +636,7 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{},
+				Data: &v2.DevfileV2{},
 			},
 			wantErr: true,
 		},
@@ -645,8 +645,8 @@ func Test_parseParent(t *testing.T) {
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-					Data: &v200.Devfile200{
-						v1.Devfile{
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Projects: []v1.Project{
@@ -662,8 +662,8 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			parentDevFile: DevfileObj{
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
 							SchemaVersion: schemaV200,
 						},
@@ -681,7 +681,7 @@ func Test_parseParent(t *testing.T) {
 				},
 			},
 			wantDevFile: DevfileObj{
-				Data: &v200.Devfile200{},
+				Data: &v2.DevfileV2{},
 			},
 			wantErr: true,
 		},

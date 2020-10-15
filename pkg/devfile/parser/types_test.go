@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 	"github.com/devfile/parser/pkg/testingutil"
 	"github.com/kylelemons/godebug/pretty"
 
@@ -39,8 +39,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 1: override a command's non list/map fields",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -93,8 +93,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -127,8 +127,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 2: append/override a command's list fields based on the key",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -179,8 +179,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -214,8 +214,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 3: if multiple, override the correct command",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -255,8 +255,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -288,8 +288,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 4: throw error if command to override is not found",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -326,8 +326,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{},
@@ -342,8 +342,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 5: override a composite command",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -399,8 +399,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -447,8 +447,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			name: "case 6: throw error if trying to overide command with different type",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
@@ -481,8 +481,8 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{},
@@ -537,8 +537,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			name: "case 1: override a container's non list/map fields",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -584,8 +584,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -616,8 +616,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			name: "case 2: append/override a command's list fields based on the key",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -692,8 +692,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -744,8 +744,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			name: "case 3: if multiple, override the correct command",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -801,8 +801,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -838,8 +838,8 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			name: "case 4: throw error if component to override is not found",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
@@ -913,8 +913,8 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			name: "case 1: override a project's fields",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{
@@ -958,8 +958,8 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{
@@ -988,8 +988,8 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			name: "case 2: if multiple, override the correct project",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{
@@ -1045,8 +1045,8 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{
@@ -1087,8 +1087,8 @@ func TestDevfileObj_OverrideProjects(t *testing.T) {
 			name: "case 3: throw error if project to override is not found",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Projects: []v1.Project{
@@ -1172,8 +1172,8 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			name: "Case 1: override a starter projects fields",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
@@ -1218,8 +1218,8 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
@@ -1248,8 +1248,8 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			name: "Case 2: if multiple, override the correct starter project",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
@@ -1306,8 +1306,8 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			},
 			wantDevFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
@@ -1349,8 +1349,8 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			name: "Case 3: throw error if starter project to override is not found",
 			devFileObj: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v200.Devfile200{
-					v1.Devfile{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{

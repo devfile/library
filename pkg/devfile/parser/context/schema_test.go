@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 const (
@@ -16,29 +16,33 @@ const (
 		   {
 			  "name": "project",
 			  "git": {
-				 "location": "https://github.com/che-samples/web-nodejs-sample.git"
+				 "remotes": {
+					 "origin": "https://github.com/che-samples/web-nodejs-sample.git"
+				 }
 			  }
 		   }
 		],
 		"components": [
 		   {
+			  "name": "che-theia-plugin",
 			  "plugin": {
 				 "id": "eclipse/che-theia/7.1.0"
 			  }
 		   },
 		   {
+			  "name": "che-exec-plugin",
 			  "plugin": {
 				 "id": "eclipse/che-machine-exec-plugin/7.1.0"
 			  }
 		   },
 		   {
+			  "name": "typescript-plugin",
 			  "plugin": {
-				 "name": "typescript-plugin",
 				 "id": "che-incubator/typescript/1.30.2",
 				 "components": [
 					{
+					   "name": "somecontainer",
 					   "container": {
-						  "name": "??",
 						  "memoryLimit": "512Mi"
 					   }
 					}
@@ -46,8 +50,8 @@ const (
 			  }
 		   },
 		   {
+			  "name": "nodejs",
 			  "container": {
-				 "name": "nodejs",
 				 "image": "quay.io/eclipse/che-nodejs10-ubi:nightly",
 				 "memoryLimit": "512Mi",
 				 "endpoints": [
@@ -63,8 +67,8 @@ const (
 		],
 		"commands": [
 		   {
+			  "id": "download dependencies",
 			  "exec": {
-				 "id": "download dependencies",
 				 "component": "nodejs",
 				 "commandLine": "npm install",
 				 "workingDir": "${PROJECTS_ROOT}/project/app",
@@ -74,8 +78,8 @@ const (
 			  }
 		   },
 		   {
+			  "id": "run the app",
 			  "exec": {
-				 "id": "run the app",
 				 "component": "nodejs",
 				 "commandLine": "nodemon app.js",
 				 "workingDir": "${PROJECTS_ROOT}/project/app",
@@ -86,8 +90,8 @@ const (
 			  }
 		   },
 		   {
+			  "id": "run the app (debugging enabled)", 
 			  "exec": {
-				 "id": "run the app (debugging enabled)",
 				 "component": "nodejs",
 				 "commandLine": "nodemon --inspect app.js",
 				 "workingDir": "${PROJECTS_ROOT}/project/app",
@@ -97,15 +101,15 @@ const (
 			  }
 		   },
 		   {
+			  "id": "stop the app",
 			  "exec": {
-				 "id": "stop the app",
 				 "component": "nodejs",
 				 "commandLine": "node_server_pids=$(pgrep -fx '.*nodemon (--inspect )?app.js' | tr \"\\\\n\" \" \") && echo \"Stopping node server with PIDs: ${node_server_pids}\" &&  kill -15 ${node_server_pids} &>/dev/null && echo 'Done.'"
 			  }
 		   },
 		   {
+			  "id": "Attach remote debugger", 
 			  "vscodeLaunch": {
-				 "id": "Attach remote debugger",
 				 "inlined": "{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"type\": \"node\",\n      \"request\": \"attach\",\n      \"name\": \"Attach to Remote\",\n      \"address\": \"localhost\",\n      \"port\": 9229,\n      \"localRoot\": \"${workspaceFolder}\",\n      \"remoteRoot\": \"${workspaceFolder}\"\n    }\n  ]\n}\n"
 			  }
 		   }

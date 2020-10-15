@@ -6,7 +6,7 @@ import (
 
 	devfilepkg "github.com/devfile/parser/pkg/devfile"
 	"github.com/devfile/parser/pkg/devfile/parser"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 )
 
 func main() {
@@ -15,8 +15,8 @@ func main() {
 		fmt.Println(err)
 	} else {
 		devdata := devfile.Data
-		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v200.Devfile200{})) {
-			d := devdata.(*v200.Devfile200)
+		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v2.DevfileV2{})) {
+			d := devdata.(*v2.DevfileV2)
 			fmt.Println(d.SchemaVersion)
 		}
 
@@ -36,6 +36,8 @@ func main() {
 				fmt.Println(command.Exec.Group.Kind)
 			}
 		}
+
+		fmt.Println("Custom Type is " + devdata.GetCustomType())
 	}
 
 }

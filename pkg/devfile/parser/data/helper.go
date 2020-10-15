@@ -2,8 +2,9 @@ package data
 
 import (
 	"fmt"
-	"k8s.io/klog"
 	"reflect"
+
+	"k8s.io/klog"
 )
 
 // String converts supportedApiVersion type to string type

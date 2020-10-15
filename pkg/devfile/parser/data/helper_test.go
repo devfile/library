@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 func TestNewDevfileData(t *testing.T) {
@@ -14,7 +15,7 @@ func TestNewDevfileData(t *testing.T) {
 
 		var (
 			version  = APIVersion200
-			want     = reflect.TypeOf(&v200.Devfile200{})
+			want     = reflect.TypeOf(&v2.DevfileV2{})
 			obj, err = NewDevfileData(string(version))
 			got      = reflect.TypeOf(obj)
 		)
