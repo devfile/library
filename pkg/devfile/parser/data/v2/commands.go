@@ -1,8 +1,6 @@
 package v2
 
 import (
-	"strings"
-
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
@@ -13,10 +11,7 @@ func (d *DevfileV2) GetCommands() map[string]v1.Command {
 	commands := make(map[string]v1.Command, len(d.Commands))
 
 	for _, command := range d.Commands {
-		// we convert devfile command id to lowercase so that we can handle
-		// cases efficiently without being error prone
-		// we also convert the odo push commands from build-command and run-command flags
-		commands[common.SetIDToLower(&command)] = command
+		commands[command.Id] = command
 	}
 
 	return commands
@@ -28,11 +23,10 @@ func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
 	commandsMap := d.GetCommands()
 
 	for _, command := range commands {
-		id := common.GetID(command)
-		if _, ok := commandsMap[id]; !ok {
+		if _, ok := commandsMap[command.Id]; !ok {
 			d.Commands = append(d.Commands, command)
 		} else {
-			return &common.AlreadyExistError{Name: id, Field: "command"}
+			return &common.AlreadyExistError{Name: command.Id, Field: "command"}
 		}
 	}
 	return nil
@@ -40,9 +34,8 @@ func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
 
 // UpdateCommand updates the command with the given id
 func (d *DevfileV2) UpdateCommand(command v1.Command) {
-	id := strings.ToLower(common.GetID(command))
 	for i := range d.Commands {
-		if common.SetIDToLower(&d.Commands[i]) == id {
+		if d.Commands[i].Id == command.Id {
 			d.Commands[i] = command
 		}
 	}
