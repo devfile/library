@@ -35,19 +35,6 @@ func (d TestDevfileData) GetParent() *v1.Parent {
 	return &v1.Parent{}
 }
 
-// GetAliasedComponents is a mock function to get the components that have an alias from a devfile
-func (d TestDevfileData) GetAliasedComponents() []v1.Component {
-	var aliasedComponents = []v1.Component{}
-
-	for _, comp := range d.Components {
-		if comp.Container != nil && comp.Name != "" {
-			aliasedComponents = append(aliasedComponents, comp)
-		}
-	}
-	return aliasedComponents
-
-}
-
 // GetProjects is a mock function to get the components that have an alias from a devfile
 func (d TestDevfileData) GetProjects() []v1.Project {
 	projectName := [...]string{"test-project", "anotherproject"}

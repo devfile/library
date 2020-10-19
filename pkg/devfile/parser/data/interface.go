@@ -24,7 +24,6 @@ type DevfileData interface {
 	GetComponents() []v1.Component
 	AddComponents(components []v1.Component) error
 	UpdateComponent(component v1.Component)
-	GetAliasedComponents() []v1.Component
 
 	// project related methods
 	GetProjects() []v1.Project
