@@ -13,10 +13,8 @@ func GetID(dc v1.Command) string {
 
 // SetIDToLower converts the command's id to lower case for more efficient processing and returns the new id
 func SetIDToLower(dc *v1.Command) string {
-	var newId string
-	newId = strings.ToLower(dc.Id)
-	dc.Id = newId
-	return newId
+	dc.Id = strings.ToLower(dc.Id)
+	return dc.Id
 }
 
 // GetGroup returns the group the command belongs to
