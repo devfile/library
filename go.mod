@@ -3,7 +3,7 @@ module github.com/devfile/parser
 go 1.14
 
 require (
-	github.com/devfile/api v0.0.0-20201014163400-f42d9a0b9fb0
+	github.com/devfile/api v0.0.0-20201020083026-77074bac47ab
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3

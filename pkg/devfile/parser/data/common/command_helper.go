@@ -1,39 +1,28 @@
 package common
 
 import (
-	"strings"
-
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
-// GetID returns the ID of the command
-func GetID(dc v1.Command) string {
-	return dc.Id
-}
-
-// SetIDToLower converts the command's id to lower case for more efficient processing and returns the new id
-func SetIDToLower(dc *v1.Command) string {
-	dc.Id = strings.ToLower(dc.Id)
-	return dc.Id
-}
-
 // GetGroup returns the group the command belongs to
 func GetGroup(dc v1.Command) *v1.CommandGroup {
-	if dc.Composite != nil {
+	switch {
+	case dc.Composite != nil:
 		return dc.Composite.Group
-	} else if dc.Exec != nil {
+	case dc.Exec != nil:
 		return dc.Exec.Group
-	} else if dc.Apply != nil {
+	case dc.Apply != nil:
 		return dc.Apply.Group
-	} else if dc.VscodeLaunch != nil {
+	case dc.VscodeLaunch != nil:
 		return dc.VscodeLaunch.Group
-	} else if dc.VscodeTask != nil {
+	case dc.VscodeTask != nil:
 		return dc.VscodeTask.Group
-	} else if dc.Custom != nil {
+	case dc.Custom != nil:
 		return dc.Custom.Group
-	}
 
-	return nil
+	default:
+		return nil
+	}
 }
 
 // GetExecComponent returns the component of the exec command
@@ -61,9 +50,4 @@ func GetExecWorkingDir(dc v1.Command) string {
 	}
 
 	return ""
-}
-
-// IsComposite checks if the command is a composite command
-func IsComposite(dc v1.Command) bool {
-	return dc.Composite != nil
 }

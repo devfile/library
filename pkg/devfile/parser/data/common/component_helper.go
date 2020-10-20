@@ -27,23 +27,21 @@ func IsVolume(component v1.Component) bool {
 
 // GetComponentType returns the component type of a given component
 func GetComponentType(component v1.Component) (v1.ComponentType, error) {
-	if component.Container != nil {
+	switch {
+	case component.Container != nil:
 		return v1.ContainerComponentType, nil
-	}
-	if component.Volume != nil {
+	case component.Volume != nil:
 		return v1.VolumeComponentType, nil
-	}
-	if component.Plugin != nil {
+	case component.Plugin != nil:
 		return v1.PluginComponentType, nil
-	}
-	if component.Kubernetes != nil {
+	case component.Kubernetes != nil:
 		return v1.KubernetesComponentType, nil
-	}
-	if component.Openshift != nil {
+	case component.Openshift != nil:
 		return v1.OpenshiftComponentType, nil
-	}
-	if component.Custom != nil {
+	case component.Custom != nil:
 		return v1.CustomComponentType, nil
+
+	default:
+		return "", fmt.Errorf("unknown component type")
 	}
-	return "", fmt.Errorf("Unknown component type")
 }

@@ -1,9 +1,10 @@
 package testingutil
 
 import (
+	"strings"
+
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/api/pkg/devfile"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
 
 // TestDevfileData is a convenience data type used to mock up a devfile configuration
@@ -81,7 +82,8 @@ func (d TestDevfileData) GetCommands() map[string]v1.Command {
 		// we convert devfile command id to lowercase so that we can handle
 		// cases efficiently without being error prone
 		// we also convert the odo push commands from build-command and run-command flags
-		commands[common.SetIDToLower(&command)] = command
+		command.Id = strings.ToLower(command.Id)
+		commands[command.Id] = command
 	}
 
 	return commands

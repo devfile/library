@@ -7,54 +7,6 @@ import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
-func TestGetID(t *testing.T) {
-
-	tests := []struct {
-		name    string
-		command v1.Command
-		want    string
-	}{
-		{
-			name: "Case 1: Exec command ID",
-			command: v1.Command{
-				Id: "exec1",
-				CommandUnion: v1.CommandUnion{
-					Exec: &v1.ExecCommand{
-						Component: "nodejs",
-					},
-				},
-			},
-			want: "exec1",
-		},
-		{
-			name: "Case 2: Composite command ID",
-			command: v1.Command{
-				Id: "composite1",
-				CommandUnion: v1.CommandUnion{
-					Composite: &v1.CompositeCommand{
-						Parallel: false,
-					},
-				},
-			},
-			want: "composite1",
-		},
-		{
-			name:    "Case 3: Empty command",
-			command: v1.Command{},
-			want:    "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			commandID := GetID(tt.command)
-			if commandID != tt.want {
-				t.Errorf("expected %v, actual %v", tt.want, commandID)
-			}
-		})
-	}
-
-}
-
 func TestGetGroup(t *testing.T) {
 
 	tests := []struct {
@@ -339,48 +291,6 @@ func TestGetExecWorkingDir(t *testing.T) {
 			workingDir := GetExecWorkingDir(tt.command)
 			if workingDir != tt.want {
 				t.Errorf("expected %v, actual %v", tt.want, workingDir)
-			}
-		})
-	}
-
-}
-
-func TestSetIDToLower(t *testing.T) {
-
-	tests := []struct {
-		name    string
-		command v1.Command
-		want    string
-	}{
-		{
-			name: "Case 1: capital present",
-			command: v1.Command{
-				Id: "EXEC1",
-				CommandUnion: v1.CommandUnion{
-					Exec: &v1.ExecCommand{},
-				},
-			},
-			want: "exec1",
-		},
-		{
-			name: "Case 2: no capital present",
-			command: v1.Command{
-				Id: "exec1",
-				CommandUnion: v1.CommandUnion{
-					Exec: &v1.ExecCommand{},
-				},
-			},
-			want: "exec1",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			newId := SetIDToLower(&tt.command)
-			if newId != tt.want {
-				t.Errorf("expected %v, actual %v", tt.want, newId)
-			}
-			if tt.command.Id != tt.want {
-				t.Errorf("expected %v, actual %v", tt.want, tt.command.Id)
 			}
 		})
 	}
