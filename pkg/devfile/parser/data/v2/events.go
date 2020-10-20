@@ -2,7 +2,7 @@ package v2
 
 import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/devfile/parser/data/common"
+	"github.com/devfile/parser/pkg/devfile/parser/data/v2/common"
 )
 
 // GetEvents returns the Events Object parsed from devfile
