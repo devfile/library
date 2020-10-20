@@ -41,11 +41,8 @@ func main() {
 }
 
 //ParseDevfile to parse devfile from library
-func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
+func ParseDevfile(devfileLocation string) (parser.DevfileObj, error) {
 
-	var devfile parser.DevfileObj
-	devfile, err = devfilepkg.ParseAndValidate(devfileLocation)
+	devfile, err := devfilepkg.ParseAndValidate(devfileLocation)
 	return devfile, err
-
-	// return
 }

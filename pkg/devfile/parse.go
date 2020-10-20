@@ -2,7 +2,6 @@ package devfile
 
 import (
 	"github.com/devfile/parser/pkg/devfile/parser"
-	// "github.com/devfile/parser/pkg/devfile/validate"
 )
 
 // This is the top level parse code which has validation code specific to odo hence it cannot be kept inside the

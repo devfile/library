@@ -11,7 +11,7 @@ func (d *DevfileV2) SetSchemaVersion(version string) {
 
 // GetMetadata returns the DevfileMetadata Object parsed from devfile
 func (d *DevfileV2) GetMetadata() devfilepkg.DevfileMetadata {
-	return d.DevfileHeader.Metadata
+	return d.Metadata
 }
 
 // SetMetadata sets the metadata for devfile
