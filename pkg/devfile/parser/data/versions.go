@@ -13,7 +13,6 @@ type supportedApiVersion string
 // Supported devfile API versions in odo
 const (
 	APIVersion200 supportedApiVersion = "2.0.0"
-	APIVersion210 supportedApiVersion = "2.1.0"
 )
 
 // ------------- Init functions ------------- //
