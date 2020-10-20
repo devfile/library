@@ -26,7 +26,7 @@ func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
 		if _, ok := commandsMap[command.Id]; !ok {
 			d.Commands = append(d.Commands, command)
 		} else {
-			return &common.AlreadyExistError{Name: command.Id, Field: "command"}
+			return &common.FieldAlreadyExistError{Name: command.Id, Field: "command"}
 		}
 	}
 	return nil

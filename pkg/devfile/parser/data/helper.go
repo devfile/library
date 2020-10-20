@@ -33,7 +33,7 @@ func GetDevfileJSONSchema(version string) (string, error) {
 	schema, ok := devfileApiVersionToJSONSchema[supportedApiVersion(version)]
 	if !ok {
 		var supportedVersions []string
-		for version, _ := range devfileApiVersionToJSONSchema {
+		for version := range devfileApiVersionToJSONSchema {
 			supportedVersions = append(supportedVersions, string(version))
 		}
 		return "", fmt.Errorf("unable to find schema for version %q. The parser supports devfile schema for version %s", version, strings.Join(supportedVersions, ", "))

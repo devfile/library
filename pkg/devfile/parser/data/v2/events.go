@@ -18,28 +18,28 @@ func (d *DevfileV2) GetEvents() v1.Events {
 func (d *DevfileV2) AddEvents(events v1.Events) error {
 	if len(events.PreStop) > 0 {
 		if len(d.Events.PreStop) > 0 {
-			return &common.AlreadyExistError{Field: "pre stop"}
+			return &common.FieldAlreadyExistError{Field: "pre stop"}
 		}
 		d.Events.PreStop = events.PreStop
 	}
 
 	if len(events.PreStart) > 0 {
 		if len(d.Events.PreStart) > 0 {
-			return &common.AlreadyExistError{Field: "pre start"}
+			return &common.FieldAlreadyExistError{Field: "pre start"}
 		}
 		d.Events.PreStart = events.PreStart
 	}
 
 	if len(events.PostStop) > 0 {
 		if len(d.Events.PostStop) > 0 {
-			return &common.AlreadyExistError{Field: "post stop"}
+			return &common.FieldAlreadyExistError{Field: "post stop"}
 		}
 		d.Events.PostStop = events.PostStop
 	}
 
 	if len(events.PostStart) > 0 {
 		if len(d.Events.PostStart) > 0 {
-			return &common.AlreadyExistError{Field: "post start"}
+			return &common.FieldAlreadyExistError{Field: "post start"}
 		}
 		d.Events.PostStart = events.PostStart
 	}

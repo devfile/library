@@ -34,7 +34,7 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 			if _, ok := volumeMap[component.Name]; !ok {
 				d.Components = append(d.Components, component)
 			} else {
-				return &common.AlreadyExistError{Name: component.Name, Field: "component"}
+				return &common.FieldAlreadyExistError{Name: component.Name, Field: "component"}
 			}
 		}
 
@@ -42,7 +42,7 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 			if _, ok := containerMap[component.Name]; !ok {
 				d.Components = append(d.Components, component)
 			} else {
-				return &common.AlreadyExistError{Name: component.Name, Field: "component"}
+				return &common.FieldAlreadyExistError{Name: component.Name, Field: "component"}
 			}
 		}
 	}

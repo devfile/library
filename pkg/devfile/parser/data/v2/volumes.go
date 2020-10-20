@@ -31,7 +31,7 @@ func (d *DevfileV2) AddVolume(volumeComponent v1.Component, path string) error {
 	}
 
 	if volumeExists {
-		return &common.AlreadyExistError{
+		return &common.FieldAlreadyExistError{
 			Field: "volume",
 			Name:  volumeComponent.Name,
 		}
@@ -67,7 +67,7 @@ func (d *DevfileV2) DeleteVolume(name string) error {
 	}
 
 	if !found {
-		return &common.NotFoundError{
+		return &common.FieldNotFoundError{
 			Field: "volume",
 			Name:  name,
 		}
@@ -99,7 +99,7 @@ func (d *DevfileV2) GetVolumeMountPath(name string) (string, error) {
 	} else if !mountFound && volumeFound {
 		return "", fmt.Errorf("volume not mounted to any component")
 	}
-	return "", &common.NotFoundError{
+	return "", &common.FieldNotFoundError{
 		Field: "volume",
 		Name:  "name",
 	}

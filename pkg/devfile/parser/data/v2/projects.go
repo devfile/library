@@ -24,7 +24,7 @@ func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 		if _, ok := projectsMap[project.Name]; !ok {
 			d.Projects = append(d.Projects, project)
 		} else {
-			return &common.AlreadyExistError{Name: project.Name, Field: "project"}
+			return &common.FieldAlreadyExistError{Name: project.Name, Field: "project"}
 		}
 	}
 	return nil
@@ -56,7 +56,7 @@ func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 		if _, ok := projectsMap[project.Name]; !ok {
 			d.StarterProjects = append(d.StarterProjects, project)
 		} else {
-			return &common.AlreadyExistError{Name: project.Name, Field: "starterProject"}
+			return &common.FieldAlreadyExistError{Name: project.Name, Field: "starterProject"}
 		}
 	}
 	return nil
