@@ -183,14 +183,6 @@ func (d DevfileObj) GetMetadataName() string {
 	return d.Data.GetMetadata().Name
 }
 
-// FormatDevfileSupportedParameters outputs supported parameters and their description
-func FormatDevfileSupportedParameters() (result string) {
-	for _, v := range GetDevfileSupportedParameters() {
-		result = result + " " + v + " - " + supportedDevfileParameterDescriptions[v] + "\n"
-	}
-	return "\nAvailable Parameters for Devfile Components:\n" + result
-}
-
 // AsDevfileSupportedParameter returns the parameter in lower case and a boolean indicating if it is a supported parameter
 func AsDevfileSupportedParameter(param string) (string, bool) {
 	lower := strings.ToLower(param)
