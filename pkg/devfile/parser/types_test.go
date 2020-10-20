@@ -1178,15 +1178,13 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
 									{
-										Project: v1.Project{
-											Name:      projectName1,
-											ClonePath: "/data",
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
-													},
+										Name:   projectName1,
+										SubDir: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
 												},
 											},
 										},
@@ -1200,18 +1198,16 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			args: args{
 				overridePatch: []v1.StarterProjectParentOverride{
 					{
-						ProjectParentOverride: v1.ProjectParentOverride{
-							Name:      projectName1,
-							ClonePath: "/source",
-							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
-								Github: &v1.GithubProjectSourceParentOverride{
-									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
-										Remotes:      map[string]string{"origin": "url"},
-										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
-									},
+						Name:   projectName1,
+						SubDir: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									Remotes:      map[string]string{"origin": "url"},
+									CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
 								},
-								Zip: nil,
 							},
+							Zip: nil,
 						},
 					},
 				},
@@ -1224,15 +1220,13 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
 									{
-										Project: v1.Project{
-											Name:      projectName1,
-											ClonePath: "/source",
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
-													},
+										Name:   projectName1,
+										SubDir: "/source",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
 												},
 											},
 										},
@@ -1254,28 +1248,24 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
 									{
-										Project: v1.Project{
-											Name:      projectName1,
-											ClonePath: "/data",
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
-													},
+										Name:   projectName1,
+										SubDir: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
 												},
 											},
 										},
 									},
 									{
-										Project: v1.Project{
-											Name: projectName2,
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
-													},
+										Name: projectName2,
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
 												},
 											},
 										},
@@ -1289,15 +1279,13 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			args: args{
 				overridePatch: []v1.StarterProjectParentOverride{
 					{
-						ProjectParentOverride: v1.ProjectParentOverride{
-							Name:      projectName1,
-							ClonePath: "/source",
-							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
-								Github: &v1.GithubProjectSourceParentOverride{
-									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
-										Remotes:      map[string]string{"origin": "url"},
-										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
-									},
+						Name:   projectName1,
+						SubDir: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									Remotes:      map[string]string{"origin": "url"},
+									CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
 								},
 							},
 						},
@@ -1312,28 +1300,24 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
 									{
-										Project: v1.Project{
-											Name:      projectName1,
-											ClonePath: "/source",
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
-													},
+										Name:   projectName1,
+										SubDir: "/source",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "release-1.0.0"},
 												},
 											},
 										},
 									},
 									{
-										Project: v1.Project{
-											Name: projectName2,
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
-													},
+										Name: projectName2,
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
 												},
 											},
 										},
@@ -1355,18 +1339,16 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								StarterProjects: []v1.StarterProject{
 									{
-										Project: v1.Project{
-											Name:      projectName1,
-											ClonePath: "/data",
-											ProjectSource: v1.ProjectSource{
-												Github: &v1.GithubProjectSource{
-													GitLikeProjectSource: v1.GitLikeProjectSource{
-														Remotes:      map[string]string{"origin": "url"},
-														CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
-													},
+										Name:   projectName1,
+										SubDir: "/data",
+										ProjectSource: v1.ProjectSource{
+											Github: &v1.GithubProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes:      map[string]string{"origin": "url"},
+													CheckoutFrom: &v1.CheckoutFrom{Revision: "master"},
 												},
-												Zip: nil,
 											},
+											Zip: nil,
 										},
 									},
 								},
@@ -1378,18 +1360,16 @@ func TestDevfileObj_OverrideStarterProjects(t *testing.T) {
 			args: args{
 				overridePatch: []v1.StarterProjectParentOverride{
 					{
-						ProjectParentOverride: v1.ProjectParentOverride{
-							Name:      "custom-starter-project",
-							ClonePath: "/source",
-							ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
-								Github: &v1.GithubProjectSourceParentOverride{
-									GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
-										Remotes:      map[string]string{"origin": "url"},
-										CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
-									},
+						Name:   "custom-starter-project",
+						SubDir: "/source",
+						ProjectSourceParentOverride: v1.ProjectSourceParentOverride{
+							Github: &v1.GithubProjectSourceParentOverride{
+								GitLikeProjectSourceParentOverride: v1.GitLikeProjectSourceParentOverride{
+									Remotes:      map[string]string{"origin": "url"},
+									CheckoutFrom: &v1.CheckoutFromParentOverride{Revision: "release-1.0.0"},
 								},
-								Zip: nil,
 							},
+							Zip: nil,
 						},
 					},
 				},

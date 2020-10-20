@@ -191,15 +191,11 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 func TestDevfile200_AddStarterProjects(t *testing.T) {
 	currentProject := []v1.StarterProject{
 		{
-			Project: v1.Project{
-				Name: "java-starter",
-			},
+			Name:        "java-starter",
 			Description: "starter project for java",
 		},
 		{
-			Project: v1.Project{
-				Name: "quarkus-starter",
-			},
+			Name:        "quarkus-starter",
 			Description: "starter project for quarkus",
 		},
 	}
@@ -224,15 +220,11 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 			wantErr: false,
 			args: []v1.StarterProject{
 				{
-					Project: v1.Project{
-						Name: "nodejs",
-					},
+					Name:        "nodejs",
 					Description: "starter project for nodejs",
 				},
 				{
-					Project: v1.Project{
-						Name: "spring-pet-clinic",
-					},
+					Name:        "spring-pet-clinic",
 					Description: "starter project for springboot",
 				},
 			},
@@ -243,9 +235,7 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 			wantErr: true,
 			args: []v1.StarterProject{
 				{
-					Project: v1.Project{
-						Name: "quarkus-starter",
-					},
+					Name:        "quarkus-starter",
 					Description: "starter project for quarkus",
 				},
 			},
@@ -285,10 +275,8 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 		{
 			name: "case:1 It should update project for existing project",
 			args: v1.StarterProject{
-				Project: v1.Project{
-					Name:      "nodejs",
-					ClonePath: "/test",
-				},
+				Name:   "nodejs",
+				SubDir: "/test",
 			},
 			devfilev2: &DevfileV2{
 				v1.Devfile{
@@ -296,16 +284,12 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 							StarterProjects: []v1.StarterProject{
 								{
-									Project: v1.Project{
-										Name:      "nodejs",
-										ClonePath: "/project",
-									},
+									Name:   "nodejs",
+									SubDir: "/project",
 								},
 								{
-									Project: v1.Project{
-										Name:      "java-starter",
-										ClonePath: "/project",
-									},
+									Name:   "java-starter",
+									SubDir: "/project",
 								},
 							},
 						},
@@ -318,16 +302,12 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 							StarterProjects: []v1.StarterProject{
 								{
-									Project: v1.Project{
-										Name:      "nodejs",
-										ClonePath: "/test",
-									},
+									Name:   "nodejs",
+									SubDir: "/test",
 								},
 								{
-									Project: v1.Project{
-										Name:      "java-starter",
-										ClonePath: "/project",
-									},
+									Name:   "java-starter",
+									SubDir: "/project",
 								},
 							},
 						},
@@ -338,10 +318,8 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 		{
 			name: "case:2 It should not update project for non existing project",
 			args: v1.StarterProject{
-				Project: v1.Project{
-					Name:      "quarkus-starter",
-					ClonePath: "/project",
-				},
+				Name:   "quarkus-starter",
+				SubDir: "/project",
 			},
 			devfilev2: &DevfileV2{
 				v1.Devfile{
@@ -349,16 +327,12 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 							StarterProjects: []v1.StarterProject{
 								{
-									Project: v1.Project{
-										Name:      "nodejs",
-										ClonePath: "/project",
-									},
+									Name:   "nodejs",
+									SubDir: "/project",
 								},
 								{
-									Project: v1.Project{
-										Name:      "java-starter",
-										ClonePath: "/project",
-									},
+									Name:   "java-starter",
+									SubDir: "/project",
 								},
 							},
 						},
@@ -371,16 +345,12 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 							StarterProjects: []v1.StarterProject{
 								{
-									Project: v1.Project{
-										Name:      "nodejs",
-										ClonePath: "/project",
-									},
+									Name:   "nodejs",
+									SubDir: "/project",
 								},
 								{
-									Project: v1.Project{
-										Name:      "java-starter",
-										ClonePath: "/project",
-									},
+									Name:   "java-starter",
+									SubDir: "/project",
 								},
 							},
 						},
