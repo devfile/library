@@ -47,7 +47,7 @@ func TestSetDevfileContent(t *testing.T) {
 			tempDevfile = createTempDevfile(t, validJsonRawContent200(), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
-				Fs:      fakeFs,
+				fs:      fakeFs,
 			}
 		)
 		defer os.Remove(tempDevfile.Name())
@@ -70,7 +70,7 @@ func TestSetDevfileContent(t *testing.T) {
 			tempDevfile = createTempDevfile(t, []byte(InvalidDevfileContent), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
-				Fs:      fakeFs,
+				fs:      fakeFs,
 			}
 		)
 		defer os.Remove(tempDevfile.Name())
@@ -92,7 +92,7 @@ func TestSetDevfileContent(t *testing.T) {
 			fakeFs = filesystem.NewFakeFs()
 			d      = DevfileCtx{
 				absPath: InvalidDevfilePath,
-				Fs:      fakeFs,
+				fs:      fakeFs,
 			}
 		)
 
@@ -135,7 +135,7 @@ func TestSetDevfileContentFromBytes(t *testing.T) {
 			tempDevfile = createTempDevfile(t, validJsonRawContent200(), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
-				Fs:      fakeFs,
+				fs:      fakeFs,
 			}
 		)
 
@@ -159,7 +159,7 @@ func TestSetDevfileContentFromBytes(t *testing.T) {
 			tempDevfile = createTempDevfile(t, []byte(validJsonRawContent200()), fakeFs)
 			d           = DevfileCtx{
 				absPath: tempDevfile.Name(),
-				Fs:      fakeFs,
+				fs:      fakeFs,
 			}
 		)
 		defer os.Remove(tempDevfile.Name())

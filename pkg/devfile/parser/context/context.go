@@ -30,14 +30,14 @@ type DevfileCtx struct {
 	url string
 
 	// filesystem for devfile
-	Fs filesystem.Filesystem
+	fs filesystem.Filesystem
 }
 
 // NewDevfileCtx returns a new DevfileCtx type object
 func NewDevfileCtx(path string) DevfileCtx {
 	return DevfileCtx{
 		relPath: path,
-		Fs:      filesystem.DefaultFs{},
+		fs:      filesystem.DefaultFs{},
 	}
 }
 
