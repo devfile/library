@@ -1,8 +1,6 @@
 package v2
 
 import (
-	"strings"
-
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/parser/pkg/devfile/parser/data/common"
 )
@@ -55,7 +53,7 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 func (d *DevfileV2) UpdateComponent(component v1.Component) {
 	index := -1
 	for i := range d.Components {
-		if d.Components[i].Name == strings.ToLower(component.Name) {
+		if d.Components[i].Name == component.Name {
 			index = i
 			break
 		}
