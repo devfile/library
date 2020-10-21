@@ -8,18 +8,12 @@ import (
 
 // IsContainer checks if the component is a container
 func IsContainer(component v1.Component) bool {
-	if component.Container != nil {
-		return true
-	}
-	return false
+	return component.Container != nil
 }
 
 // IsVolume checks if the component is a volume
 func IsVolume(component v1.Component) bool {
-	if component.Volume != nil {
-		return true
-	}
-	return false
+	return component.Volume != nil
 }
 
 // GetComponentType returns the component type of a given component
