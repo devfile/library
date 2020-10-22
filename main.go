@@ -21,11 +21,6 @@ func main() {
 		}
 
 		for _, component := range devfile.Data.GetComponents() {
-			/*
-				if component.Dockerfile != nil {
-							fmt.Println(component.Dockerfile.DockerfileLocation)
-						}
-			*/
 			if component.Container != nil {
 				fmt.Println(component.Container.Image)
 			}

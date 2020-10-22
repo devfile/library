@@ -4,9 +4,6 @@ import (
 	"github.com/devfile/parser/pkg/devfile/parser"
 )
 
-// This is the top level parse code which has validation code specific to odo hence it cannot be kept inside the
-// devfile/parser package. That package is supposed to be independent of odo.
-
 // ParseFromURLAndValidate func parses the devfile data from the url
 // and validates the devfile integrity with the schema
 // and validates the devfile data.
