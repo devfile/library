@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
+	devfilepkg "github.com/devfile/parser/pkg/devfile"
 	"github.com/devfile/parser/pkg/devfile/parser"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
 )
 
 func main() {
@@ -14,17 +15,12 @@ func main() {
 		fmt.Println(err)
 	} else {
 		devdata := devfile.Data
-		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v200.Devfile200{})) {
-			d := devdata.(*v200.Devfile200)
+		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v2.DevfileV2{})) {
+			d := devdata.(*v2.DevfileV2)
 			fmt.Println(d.SchemaVersion)
 		}
 
 		for _, component := range devfile.Data.GetComponents() {
-			/*
-				if component.Dockerfile != nil {
-							fmt.Println(component.Dockerfile.DockerfileLocation)
-						}
-			*/
 			if component.Container != nil {
 				fmt.Println(component.Container.Image)
 			}
@@ -40,11 +36,8 @@ func main() {
 }
 
 //ParseDevfile to parse devfile from library
-func ParseDevfile(devfileLocation string) (devfileoj parser.DevfileObj, err error) {
-	/*
-		var devfile parser.DevfileObj
-		devfile, err = parser.ParseAndValidate(devfileLocation)
-		return devfile, err
-	*/
-	return
+func ParseDevfile(devfileLocation string) (parser.DevfileObj, error) {
+
+	devfile, err := devfilepkg.ParseAndValidate(devfileLocation)
+	return devfile, err
 }

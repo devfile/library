@@ -23,7 +23,6 @@ func (d *DevfileCtx) SetDevfileJSONSchema() error {
 
 // ValidateDevfileSchema validate JSON schema of the provided devfile
 func (d *DevfileCtx) ValidateDevfileSchema() error {
-
 	var (
 		schemaLoader   = gojsonschema.NewStringLoader(d.jsonSchema)
 		documentLoader = gojsonschema.NewStringLoader(string(d.rawContent))

@@ -30,14 +30,14 @@ type DevfileCtx struct {
 	url string
 
 	// filesystem for devfile
-	Fs filesystem.Filesystem
+	fs filesystem.Filesystem
 }
 
 // NewDevfileCtx returns a new DevfileCtx type object
 func NewDevfileCtx(path string) DevfileCtx {
 	return DevfileCtx{
 		relPath: path,
-		Fs:      filesystem.DefaultFs{},
+		fs:      filesystem.DefaultFs{},
 	}
 }
 
@@ -91,9 +91,18 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	return d.populateDevfile()
 }
 
+// PopulateFromRaw fills the DevfileCtx struct with relevant context info
+func (d *DevfileCtx) PopulateFromRaw() (err error) {
+	return d.populateDevfile()
+}
+
 // Validate func validates devfile JSON schema for the given apiVersion
 func (d *DevfileCtx) Validate() error {
 
 	// Validate devfile
 	return d.ValidateDevfileSchema()
+}
+
+func (d *DevfileCtx) GetAbsPath() string {
+	return d.absPath
 }

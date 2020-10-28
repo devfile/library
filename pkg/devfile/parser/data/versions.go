@@ -3,7 +3,8 @@ package data
 import (
 	"reflect"
 
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/2.0.0"
+	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
+	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 // SupportedApiVersions stores the supported devfile API versions
@@ -22,7 +23,7 @@ var apiVersionToDevfileStruct map[supportedApiVersion]reflect.Type
 // Initializes a map of supported devfile api versions and devfile structs
 func init() {
 	apiVersionToDevfileStruct = make(map[supportedApiVersion]reflect.Type)
-	apiVersionToDevfileStruct[APIVersion200] = reflect.TypeOf(v200.Devfile200{})
+	apiVersionToDevfileStruct[APIVersion200] = reflect.TypeOf(v2.DevfileV2{})
 }
 
 // Map to store mappings between supported devfile API versions and respective devfile JSON schemas
