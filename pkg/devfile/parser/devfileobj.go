@@ -70,8 +70,8 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) (
 	for _, patchCommand := range overridePatch {
 		found := false
 		for _, originalCommand := range d.Data.GetCommands() {
-
-			if strings.ToLower(patchCommand.Id) == originalCommand.Id {
+			fmt.Printf(">>> MJF PARENT CMD: %v\n", originalCommand.Id)
+			if patchCommand.Id == originalCommand.Id {
 				found = true
 
 				var devfileCommand v1.Command
@@ -97,7 +97,7 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) (
 			}
 		}
 		if !found {
-			return fmt.Errorf("the command to override is not found in the parent")
+			return fmt.Errorf("the command %s to override is not found in the parent", patchCommand.Id)
 		}
 	}
 	return nil
@@ -170,7 +170,7 @@ func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) e
 			}
 		}
 		if !found {
-			return fmt.Errorf("the command to override is not found in the parent")
+			return fmt.Errorf("the project to override is not found in the parent")
 		}
 	}
 	return nil

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	devfilepkg "github.com/devfile/library/pkg/devfile"
 	"github.com/devfile/library/pkg/devfile/parser"
@@ -23,12 +24,19 @@ func main() {
 		for _, component := range devfile.Data.GetComponents() {
 			if component.Container != nil {
 				fmt.Println(component.Container.Image)
+				for _, env := range component.Container.Env {
+					fmt.Printf("%s: %s\n", env.Name, env.Value)
+				}
 			}
 		}
 
 		for _, command := range devfile.Data.GetCommands() {
-			if command.Exec != nil {
-				fmt.Println(command.Exec.Group.Kind)
+			// if command.Exec != nil {
+			// 	fmt.Println(command.Exec.Group.Kind)
+			// }
+			fmt.Println("main.go cmd is " + command.Id)
+			if command.Id == "buildAndMkdir" {
+				fmt.Println("main.go composite commands: " + strings.Join(command.Composite.Commands, " "))
 			}
 		}
 	}

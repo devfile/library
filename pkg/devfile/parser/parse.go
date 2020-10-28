@@ -2,15 +2,18 @@ package parser
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
-	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
-	"github.com/devfile/library/pkg/devfile/parser/data"
+	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
+	"github.com/devfile/parser/pkg/devfile/parser/data"
+	"k8s.io/klog"
 
 	"reflect"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	apiOverride "github.com/devfile/api/pkg/utils/overriding"
 	"github.com/pkg/errors"
-	"k8s.io/klog"
 )
 
 // ParseDevfile func validates the devfile integrity.
@@ -99,28 +102,45 @@ func parseParent(d DevfileObj) error {
 	if err != nil {
 		return err
 	}
-	klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
 
-	// override the parent's components, commands, projects and events
-	err = parentData.OverrideComponents(d.Data.GetParent().Components)
+	parentWorkspaceContent := parentData.Data.GetDevfileWorkspace()
+	result, err := apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent)
 	if err != nil {
 		return err
 	}
 
-	err = parentData.OverrideCommands(d.Data.GetParent().Commands)
-	if err != nil {
-		return err
+	for _, command := range result.Commands {
+		fmt.Println(">>> API command is " + command.Id)
+		if command.Id == "buildAndMkdir" {
+			fmt.Println("API composite commands: " + strings.Join(command.Composite.Commands, " "))
+		}
 	}
 
-	err = parentData.OverrideProjects(d.Data.GetParent().Projects)
-	if err != nil {
-		return err
-	}
+	parentData.Data.SetDevfileWorkspace(*result)
 
-	err = parentData.OverrideStarterProjects(d.Data.GetParent().StarterProjects)
-	if err != nil {
-		return err
-	}
+	// // fmt.Println("parent Data", parentData)
+	// klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
+
+	// // override the parent's components, commands, projects and events
+	// err = parentData.OverrideComponents(d.Data.GetParent().Components)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = parentData.OverrideCommands(d.Data.GetParent().Commands)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = parentData.OverrideProjects(d.Data.GetParent().Projects)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = parentData.OverrideStarterProjects(d.Data.GetParent().StarterProjects)
+	// if err != nil {
+	// 	return err
+	// }
 
 	klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
 
