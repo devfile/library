@@ -109,7 +109,7 @@ func (d *DevfileCtx) GetAbsPath() string {
 
 // SetAbsPath sets absolute file path for devfile
 func (d *DevfileCtx) SetAbsPath() (err error) {
-	// Get devfile absolute path
+	// Set devfile absolute path
 	if d.absPath, err = util.GetAbsPath(d.relPath); err != nil {
 		return err
 	}
