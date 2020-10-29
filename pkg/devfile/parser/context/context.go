@@ -63,7 +63,6 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 // Populate fills the DevfileCtx struct with relevant context info
 func (d *DevfileCtx) Populate() (err error) {
 
-	// Get devfile absolute path
 	if err := d.SetAbsPath(); err != nil {
 		return err
 	}
