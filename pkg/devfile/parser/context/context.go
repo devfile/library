@@ -64,7 +64,7 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 func (d *DevfileCtx) Populate() (err error) {
 
 	// Get devfile absolute path
-	if d.absPath, err = util.GetAbsPath(d.relPath); err != nil {
+	if err := d.SetAbsPath(); err != nil {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
