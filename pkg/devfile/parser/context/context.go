@@ -63,8 +63,7 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 // Populate fills the DevfileCtx struct with relevant context info
 func (d *DevfileCtx) Populate() (err error) {
 
-	// Get devfile absolute path
-	if d.absPath, err = util.GetAbsPath(d.relPath); err != nil {
+	if err := d.SetAbsPath(); err != nil {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
@@ -105,4 +104,16 @@ func (d *DevfileCtx) Validate() error {
 
 func (d *DevfileCtx) GetAbsPath() string {
 	return d.absPath
+}
+
+// SetAbsPath sets absolute file path for devfile
+func (d *DevfileCtx) SetAbsPath() (err error) {
+	// Set devfile absolute path
+	if d.absPath, err = util.GetAbsPath(d.relPath); err != nil {
+		return err
+	}
+	klog.V(2).Infof("absolute devfile path: '%s'", d.absPath)
+
+	return nil
+
 }
