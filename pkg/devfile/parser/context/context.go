@@ -106,3 +106,15 @@ func (d *DevfileCtx) Validate() error {
 func (d *DevfileCtx) GetAbsPath() string {
 	return d.absPath
 }
+
+// SetAbsPath sets absolute file path for devfile
+func (d *DevfileCtx) SetAbsPath() (err error) {
+	// Get devfile absolute path
+	if d.absPath, err = util.GetAbsPath(d.relPath); err != nil {
+		return err
+	}
+	klog.V(2).Infof("absolute devfile path: '%s'", d.absPath)
+
+	return nil
+
+}
