@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
-	"github.com/devfile/parser/pkg/testingutil/filesystem"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/kylelemons/godebug/pretty"
 )
 

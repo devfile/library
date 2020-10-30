@@ -26,7 +26,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devfile/parser/pkg/testingutil/filesystem"
+	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
 	"github.com/gobwas/glob"
 	"github.com/gregjones/httpcache"

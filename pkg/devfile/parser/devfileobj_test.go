@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
-	"github.com/devfile/parser/pkg/testingutil"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/testingutil"
 	"github.com/kylelemons/godebug/pretty"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"

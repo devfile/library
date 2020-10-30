@@ -3,8 +3,8 @@ package parser
 import (
 	"encoding/json"
 
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	"github.com/devfile/parser/pkg/devfile/parser/data"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	"github.com/devfile/library/pkg/devfile/parser/data"
 
 	"reflect"
 
@@ -99,7 +99,6 @@ func parseParent(d DevfileObj) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println("parent Data", parentData)
 	klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
 
 	// override the parent's components, commands, projects and events

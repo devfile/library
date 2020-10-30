@@ -3,8 +3,8 @@ package data
 import (
 	"reflect"
 
-	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	v200 "github.com/devfile/library/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 // SupportedApiVersions stores the supported devfile API versions

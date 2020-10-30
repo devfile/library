@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	"github.com/devfile/parser/pkg/devfile/parser/data"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	"github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
