@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	devfilepkg "github.com/devfile/parser/pkg/devfile"
-	"github.com/devfile/parser/pkg/devfile/parser"
-	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
+	devfilepkg "github.com/devfile/library/pkg/devfile"
+	"github.com/devfile/library/pkg/devfile/parser"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 )
 
 func main() {

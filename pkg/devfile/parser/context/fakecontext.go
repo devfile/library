@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/devfile/parser/pkg/testingutil/filesystem"
+import "github.com/devfile/library/pkg/testingutil/filesystem"
 
 func FakeContext(fs filesystem.Filesystem, absPath string) DevfileCtx {
 	return DevfileCtx{

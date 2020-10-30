@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
+	v200 "github.com/devfile/library/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 const (

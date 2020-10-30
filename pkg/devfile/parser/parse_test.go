@@ -8,8 +8,8 @@ import (
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/api/pkg/devfile"
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	v2 "github.com/devfile/parser/pkg/devfile/parser/data/v2"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
 )
