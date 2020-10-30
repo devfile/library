@@ -3,7 +3,6 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
@@ -35,7 +34,7 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 	for _, patchComponent := range overridePatch {
 		found := false
 		for _, originalComponent := range d.Data.GetComponents() {
-			if strings.ToLower(patchComponent.Name) == originalComponent.Name {
+			if patchComponent.Name == originalComponent.Name {
 				found = true
 
 				var updatedComponent v1.ContainerComponent
@@ -71,7 +70,7 @@ func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) (
 		found := false
 		for _, originalCommand := range d.Data.GetCommands() {
 
-			if strings.ToLower(patchCommand.Id) == originalCommand.Id {
+			if patchCommand.Id == originalCommand.Id {
 				found = true
 
 				var devfileCommand v1.Command
@@ -152,7 +151,7 @@ func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) e
 	for _, patchProject := range overridePatch {
 		found := false
 		for _, originalProject := range d.Data.GetProjects() {
-			if strings.ToLower(patchProject.Name) == originalProject.Name {
+			if patchProject.Name == originalProject.Name {
 				found = true
 				var updatedProject v1.Project
 
@@ -182,7 +181,7 @@ func (d DevfileObj) OverrideStarterProjects(overridePatch []v1.StarterProjectPar
 	for _, patchProject := range overridePatch {
 		found := false
 		for _, originalProject := range d.Data.GetStarterProjects() {
-			if strings.ToLower(patchProject.Name) == originalProject.Name {
+			if patchProject.Name == originalProject.Name {
 				found = true
 				var updatedProject v1.StarterProject
 

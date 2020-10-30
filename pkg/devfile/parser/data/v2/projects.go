@@ -1,8 +1,6 @@
 package v2
 
 import (
-	"strings"
-
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
@@ -33,7 +31,7 @@ func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
 func (d *DevfileV2) UpdateProject(project v1.Project) {
 	for i := range d.Projects {
-		if d.Projects[i].Name == strings.ToLower(project.Name) {
+		if d.Projects[i].Name == project.Name {
 			d.Projects[i] = project
 		}
 	}
@@ -65,7 +63,7 @@ func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 // UpdateStarterProject updates the slice of Devfile starter projects parsed from the Devfile
 func (d *DevfileV2) UpdateStarterProject(project v1.StarterProject) {
 	for i := range d.StarterProjects {
-		if d.StarterProjects[i].Name == strings.ToLower(project.Name) {
+		if d.StarterProjects[i].Name == project.Name {
 			d.StarterProjects[i] = project
 		}
 	}

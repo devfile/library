@@ -1,8 +1,6 @@
 package testingutil
 
 import (
-	"strings"
-
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/api/pkg/devfile"
 )
@@ -79,10 +77,6 @@ func (d TestDevfileData) GetCommands() map[string]v1.Command {
 	commands := make(map[string]v1.Command, len(d.Commands))
 
 	for _, command := range d.Commands {
-		// we convert devfile command id to lowercase so that we can handle
-		// cases efficiently without being error prone
-		// we also convert the odo push commands from build-command and run-command flags
-		command.Id = strings.ToLower(command.Id)
 		commands[command.Id] = command
 	}
 
