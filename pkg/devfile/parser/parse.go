@@ -99,7 +99,6 @@ func parseParent(d DevfileObj) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println("parent Data", parentData)
 	klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
 
 	// override the parent's components, commands, projects and events
