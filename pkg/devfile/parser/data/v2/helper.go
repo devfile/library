@@ -1,8 +1,8 @@
 package v2
 
 import (
-	v200 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.0.0"
-	v210 "github.com/devfile/parser/pkg/devfile/parser/data/v2/2.1.0"
+	v200 "github.com/devfile/library/pkg/devfile/parser/data/v2/2.0.0"
+	v210 "github.com/devfile/library/pkg/devfile/parser/data/v2/2.1.0"
 )
 
 // New returns relevant devfile ver 2.x.x struct for the provided API version

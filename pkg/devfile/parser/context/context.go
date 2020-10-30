@@ -3,8 +3,8 @@ package parser
 import (
 	"net/url"
 
-	"github.com/devfile/parser/pkg/testingutil/filesystem"
-	"github.com/devfile/parser/pkg/util"
+	"github.com/devfile/library/pkg/testingutil/filesystem"
+	"github.com/devfile/library/pkg/util"
 	"k8s.io/klog"
 )
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"unicode"
 
-	"github.com/devfile/parser/pkg/util"
+	"github.com/devfile/library/pkg/util"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"k8s.io/klog"

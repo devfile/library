@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 // GetProjects returns the Project Object parsed from devfile

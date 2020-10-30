@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/parser/pkg/testingutil"
+	"github.com/devfile/library/pkg/testingutil"
 	"github.com/kylelemons/godebug/pretty"
 )
 
