@@ -46,8 +46,8 @@ github.com/davecgh/go-spew v0.0.0-20151105211317-5215b55f46b2/go.mod h1:J7Y8YcW2
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devfile/api v0.0.0-20201020083026-77074bac47ab h1:tIbsWYcHTMYQwj00XgzOMF4mU2MFQGJfniMoOzAjzE8=
-github.com/devfile/api v0.0.0-20201020083026-77074bac47ab/go.mod h1:hp5Lmob7ESmtSZXZ7xRN9o8vemsen9111+ASi2YuXs4=
+github.com/devfile/api v0.0.0-20201103130402-29b8738e196e h1:Ha6wyKs7VWqQTz2Fm1o4PAYpKX6SIiYjgWmGzNW8cBE=
+github.com/devfile/api v0.0.0-20201103130402-29b8738e196e/go.mod h1:hp5Lmob7ESmtSZXZ7xRN9o8vemsen9111+ASi2YuXs4=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
