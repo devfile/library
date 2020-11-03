@@ -215,7 +215,7 @@ func portsToEndpoints(ports ...string) ([]v1.Endpoint, error) {
 		endpoint := v1.Endpoint{
 			Name:       fmt.Sprintf("port-%d-%s", port.ContainerPort, strings.ToLower(string(port.Protocol))),
 			TargetPort: int(port.ContainerPort),
-			Protocol:   strings.ToLower(string(port.Protocol)),
+			Protocol:   v1.EndpointProtocol(strings.ToLower(string(port.Protocol))),
 		}
 		endpoints = append(endpoints, endpoint)
 	}
