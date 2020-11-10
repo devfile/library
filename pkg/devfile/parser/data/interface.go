@@ -44,4 +44,9 @@ type DevfileData interface {
 	AddVolume(volume v1.Component, path string) error
 	DeleteVolume(name string) error
 	GetVolumeMountPath(name string) (string, error)
+
+	//utils
+	GetDevfileContainerComponents() []v1.Component
+	GetDevfileVolumeComponents() []v1.Component
+	GetPortExposure() map[int]v1.EndpointExposure
 }
