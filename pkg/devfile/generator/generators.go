@@ -142,7 +142,6 @@ func GetPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
 func GetService(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
 
 	var containerPorts []corev1.ContainerPort
-	// containerComponents := devfileObj.Data.GetDevfileContainerComponents()
 	portExposureMap := devfileObj.Data.GetPortExposure()
 	containers, err := GetContainers(devfileObj)
 	if err != nil {
