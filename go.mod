@@ -11,9 +11,9 @@ require (
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/openshift/api v3.9.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/afero v1.2.2
-	github.com/openshift/api v3.9.0+incompatible
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
