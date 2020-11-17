@@ -109,8 +109,8 @@ func addSyncFolder(container *corev1.Container, sourceVolumePath string, project
 	return nil
 }
 
-// ContainerParams is a struct that contains the required data to create a container object
-type ContainerParams struct {
+// containerParams is a struct that contains the required data to create a container object
+type containerParams struct {
 	Name         string
 	Image        string
 	IsPrivileged bool
@@ -122,7 +122,7 @@ type ContainerParams struct {
 }
 
 // getContainer creates a container spec that can be used when creating a pod
-func getContainer(containerParams ContainerParams) *corev1.Container {
+func getContainer(containerParams containerParams) *corev1.Container {
 	container := &corev1.Container{
 		Name:            containerParams.Name,
 		Image:           containerParams.Image,

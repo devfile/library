@@ -17,7 +17,7 @@ import (
 var fakeResources corev1.ResourceRequirements
 
 func init() {
-	fakeResources = *fakeResourceRequirements()
+	fakeResources, _ = testingutil.FakeResourceRequirements("0.5m", "300Mi")
 }
 
 func TestGetContainers(t *testing.T) {
@@ -542,22 +542,6 @@ func TestGetBuildConfig(t *testing.T) {
 		})
 	}
 
-}
-
-func fakeResourceRequirements() *corev1.ResourceRequirements {
-	var resReq corev1.ResourceRequirements
-
-	limits := make(corev1.ResourceList)
-	limits[corev1.ResourceCPU], _ = resource.ParseQuantity("0.5m")
-	limits[corev1.ResourceMemory], _ = resource.ParseQuantity("300Mi")
-	resReq.Limits = limits
-
-	requests := make(corev1.ResourceList)
-	requests[corev1.ResourceCPU], _ = resource.ParseQuantity("0.5m")
-	requests[corev1.ResourceMemory], _ = resource.ParseQuantity("300Mi")
-	resReq.Requests = requests
-
-	return &resReq
 }
 
 func hasVolumeWithName(name string, volMounts []corev1.Volume) bool {

@@ -452,7 +452,7 @@ func TestGetContainer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			containerParams := ContainerParams{
+			containerParams := containerParams{
 				Name:         tt.containerName,
 				Image:        tt.image,
 				IsPrivileged: tt.isPrivileged,
