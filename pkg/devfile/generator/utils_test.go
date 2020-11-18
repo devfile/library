@@ -556,7 +556,7 @@ func TestGenerateServiceSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			serviceSpecParams := ServiceSpecParams{
+			serviceSpecParams := serviceSpecParams{
 				ContainerPorts: tt.ports,
 				SelectorLabels: map[string]string{
 					"component": tt.name,

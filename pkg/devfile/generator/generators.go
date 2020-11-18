@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// DevfileSourceVolumeMount is the directory to mount the volume in the container
+	// DevfileSourceVolumeMount is the default directory to mount the volume in the container
 	DevfileSourceVolumeMount = "/projects"
 
 	// EnvProjectsRoot is the env defined for project mount in a component container when component's mountSources=true
@@ -31,7 +31,7 @@ const (
 	deploymentAPIVersion = "apps/v1"
 )
 
-// GetObjectMeta creates a common object meta
+// GetObjectMeta gets an object meta with the parameters
 func GetObjectMeta(name, namespace string, labels, annotations map[string]string) metav1.ObjectMeta {
 
 	objectMeta := metav1.ObjectMeta{
@@ -44,7 +44,7 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 	return objectMeta
 }
 
-// GetContainers iterates through the components in the devfile and returns a slice of the corresponding containers
+// GetContainers iterates through the devfile components and returns a slice of the corresponding containers
 func GetContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 	var containers []corev1.Container
 	for _, comp := range devfileObj.Data.GetDevfileContainerComponents() {
@@ -63,8 +63,7 @@ func GetContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 		}
 		container := getContainer(containerParams)
 
-		// If `mountSources: true` was set, add an empty dir volume to the container to sync the source to
-		// Sync to `Container.SourceMapping` and/or devfile projects if set
+		// If `mountSources: true` was set PROJECTS_ROOT & PROJECT_SOURCE env
 		if comp.Container.MountSources == nil || *comp.Container.MountSources {
 			syncRootFolder := addSyncRootFolder(container, comp.Container.SourceMapping)
 
@@ -86,7 +85,7 @@ type PodTemplateSpecParams struct {
 	Volumes        []corev1.Volume
 }
 
-// GetPodTemplateSpec creates a pod template spec that can be used to create a deployment spec
+// GetPodTemplateSpec gets a pod template spec that can be used to create a deployment spec
 func GetPodTemplateSpec(podTemplateSpecParams PodTemplateSpecParams) *corev1.PodTemplateSpec {
 	podTemplateSpec := &corev1.PodTemplateSpec{
 		ObjectMeta: podTemplateSpecParams.ObjectMeta,
@@ -106,7 +105,7 @@ type DeploymentSpecParams struct {
 	PodSelectorLabels map[string]string
 }
 
-// GetDeploymentSpec creates a deployment spec
+// GetDeploymentSpec gets a deployment spec
 func GetDeploymentSpec(deployParams DeploymentSpecParams) *appsv1.DeploymentSpec {
 	deploymentSpec := &appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
@@ -121,7 +120,7 @@ func GetDeploymentSpec(deployParams DeploymentSpecParams) *appsv1.DeploymentSpec
 	return deploymentSpec
 }
 
-// GetPVCSpec creates a pvc spec
+// GetPVCSpec gets a RWO pvc spec
 func GetPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
 
 	pvcSpec := &corev1.PersistentVolumeClaimSpec{
@@ -138,8 +137,8 @@ func GetPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
 	return pvcSpec
 }
 
-// GetService iterates through the components in the devfile and returns a ServiceSpec
-func GetService(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
+// GetServiceSpec iterates through the devfile components and returns a ServiceSpec
+func GetServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
 
 	var containerPorts []corev1.ContainerPort
 	portExposureMap := devfileObj.Data.GetPortExposure()
@@ -163,7 +162,7 @@ func GetService(devfileObj parser.DevfileObj, selectorLabels map[string]string) 
 			}
 		}
 	}
-	serviceSpecParams := ServiceSpecParams{
+	serviceSpecParams := serviceSpecParams{
 		ContainerPorts: containerPorts,
 		SelectorLabels: selectorLabels,
 	}
@@ -185,7 +184,7 @@ type IngressParams struct {
 	Path          string
 }
 
-// GetIngressSpec creates an ingress spec
+// GetIngressSpec gets an ingress spec
 func GetIngressSpec(ingressParams IngressParams) *extensionsv1.IngressSpec {
 	path := "/"
 	if ingressParams.Path != "" {
@@ -237,7 +236,7 @@ type RouteParams struct {
 	Secure      bool
 }
 
-// GetRouteSpec creates a route spec
+// GetRouteSpec gets a route spec
 func GetRouteSpec(routeParams RouteParams) *routev1.RouteSpec {
 	routePath := "/"
 	if routeParams.Path != "" {
@@ -287,7 +286,7 @@ type BuildConfigParams struct {
 	BuildStrategy    buildv1.BuildStrategy
 }
 
-// GetBuildConfig gets te build config
+// GetBuildConfig gets the build config and output to the image stream
 func GetBuildConfig(buildConfigParams BuildConfigParams) buildv1.BuildConfig {
 
 	return buildv1.BuildConfig{

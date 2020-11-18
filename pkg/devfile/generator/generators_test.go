@@ -376,7 +376,7 @@ func TestGetRouteSpec(t *testing.T) {
 	}
 }
 
-func TestGetService(t *testing.T) {
+func TestGetServiceSpec(t *testing.T) {
 
 	endpointNames := []string{"port-8080-1", "port-8080-2", "port-9090"}
 
@@ -466,11 +466,11 @@ func TestGetService(t *testing.T) {
 				},
 			}
 
-			serviceSpec, err := GetService(devObj, tt.labels)
+			serviceSpec, err := GetServiceSpec(devObj, tt.labels)
 
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
-				t.Errorf("TestGetService() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("TestGetServiceSpec() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 

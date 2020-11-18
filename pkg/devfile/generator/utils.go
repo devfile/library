@@ -53,7 +53,7 @@ func getResourceReqs(comp v1.Component) corev1.ResourceRequirements {
 	return reqs
 }
 
-// addSyncRootFolder adds the sync root folder to the container env and volume mounts
+// addSyncRootFolder adds the sync root folder to the container env
 func addSyncRootFolder(container *corev1.Container, sourceMapping string) string {
 	var syncRootFolder string
 	if sourceMapping != "" {
@@ -73,7 +73,7 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 	return syncRootFolder
 }
 
-// addSyncFolder adds the sync folder path for the container
+// addSyncFolder adds the sync folder path to the container env
 // sourceVolumePath: mount path of the empty dir volume to sync source code
 // projects: list of projects from devfile
 func addSyncFolder(container *corev1.Container, sourceVolumePath string, projects []v1.Project) error {
@@ -121,7 +121,7 @@ type containerParams struct {
 	Ports        []corev1.ContainerPort
 }
 
-// getContainer creates a container spec that can be used when creating a pod
+// getContainer gets a container struct that can be used when creating a pod
 func getContainer(containerParams containerParams) *corev1.Container {
 	container := &corev1.Container{
 		Name:            containerParams.Name,
@@ -143,14 +143,14 @@ func getContainer(containerParams containerParams) *corev1.Container {
 	return container
 }
 
-// ServiceSpecParams is a struct that contains the required data to create a svc spec object
-type ServiceSpecParams struct {
+// serviceSpecParams is a struct that contains the required data to create a svc spec object
+type serviceSpecParams struct {
 	SelectorLabels map[string]string
 	ContainerPorts []corev1.ContainerPort
 }
 
-// getServiceSpec creates a service spec
-func getServiceSpec(serviceSpecParams ServiceSpecParams) *corev1.ServiceSpec {
+// getServiceSpec gets a service spec
+func getServiceSpec(serviceSpecParams serviceSpecParams) *corev1.ServiceSpec {
 	var svcPorts []corev1.ServicePort
 	for _, containerPort := range serviceSpecParams.ContainerPorts {
 		svcPort := corev1.ServicePort{
