@@ -31,6 +31,14 @@ const (
 	deploymentAPIVersion = "apps/v1"
 )
 
+// GetTypeMeta gets a type meta of the specified kind and version
+func GetTypeMeta(kind string, APIVersion string) metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       kind,
+		APIVersion: APIVersion,
+	}
+}
+
 // GetObjectMeta gets an object meta with the parameters
 func GetObjectMeta(name, namespace string, labels, annotations map[string]string) metav1.ObjectMeta {
 
@@ -106,18 +114,37 @@ type DeploymentSpecParams struct {
 }
 
 // GetDeploymentSpec gets a deployment spec
-func GetDeploymentSpec(deployParams DeploymentSpecParams) *appsv1.DeploymentSpec {
+func GetDeploymentSpec(deploySpecParams DeploymentSpecParams) *appsv1.DeploymentSpec {
 	deploymentSpec := &appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
 			Type: appsv1.RecreateDeploymentStrategyType,
 		},
 		Selector: &metav1.LabelSelector{
-			MatchLabels: deployParams.PodSelectorLabels,
+			MatchLabels: deploySpecParams.PodSelectorLabels,
 		},
-		Template: deployParams.PodTemplateSpec,
+		Template: deploySpecParams.PodTemplateSpec,
 	}
 
 	return deploymentSpec
+}
+
+// DeploymentParams is a struct that contains the required data to create a deployment object
+type DeploymentParams struct {
+	TypeMeta       metav1.TypeMeta
+	ObjectMeta     metav1.ObjectMeta
+	DeploymentSpec appsv1.DeploymentSpec
+}
+
+// GetDeployment gets a deployment object
+func GetDeployment(deployParams DeploymentParams) *appsv1.Deployment {
+
+	deployment := &appsv1.Deployment{
+		TypeMeta:   deployParams.TypeMeta,
+		ObjectMeta: deployParams.ObjectMeta,
+		Spec:       deployParams.DeploymentSpec,
+	}
+
+	return deployment
 }
 
 // GetPVCSpec gets a RWO pvc spec
@@ -170,13 +197,31 @@ func GetServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 	return getServiceSpec(serviceSpecParams), nil
 }
 
-// IngressParams struct for function GenerateIngressSpec
+// ServiceParams is a struct that contains the required data to create a service object
+type ServiceParams struct {
+	TypeMeta    metav1.TypeMeta
+	ObjectMeta  metav1.ObjectMeta
+	ServiceSpec corev1.ServiceSpec
+}
+
+// GetService gets the service
+func GetService(serviceParams ServiceParams) *corev1.Service {
+	service := &corev1.Service{
+		TypeMeta:   serviceParams.TypeMeta,
+		ObjectMeta: serviceParams.ObjectMeta,
+		Spec:       serviceParams.ServiceSpec,
+	}
+
+	return service
+}
+
+// IngressSpecParams struct for function GenerateIngressSpec
 // serviceName is the name of the service for the target reference
 // ingressDomain is the ingress domain to use for the ingress
 // portNumber is the target port of the ingress
 // Path is the path of the ingress
 // TLSSecretName is the target TLS Secret name of the ingress
-type IngressParams struct {
+type IngressSpecParams struct {
 	ServiceName   string
 	IngressDomain string
 	PortNumber    intstr.IntOrString
@@ -185,23 +230,23 @@ type IngressParams struct {
 }
 
 // GetIngressSpec gets an ingress spec
-func GetIngressSpec(ingressParams IngressParams) *extensionsv1.IngressSpec {
+func GetIngressSpec(ingressSpecParams IngressSpecParams) *extensionsv1.IngressSpec {
 	path := "/"
-	if ingressParams.Path != "" {
-		path = ingressParams.Path
+	if ingressSpecParams.Path != "" {
+		path = ingressSpecParams.Path
 	}
 	ingressSpec := &extensionsv1.IngressSpec{
 		Rules: []extensionsv1.IngressRule{
 			{
-				Host: ingressParams.IngressDomain,
+				Host: ingressSpecParams.IngressDomain,
 				IngressRuleValue: extensionsv1.IngressRuleValue{
 					HTTP: &extensionsv1.HTTPIngressRuleValue{
 						Paths: []extensionsv1.HTTPIngressPath{
 							{
 								Path: path,
 								Backend: extensionsv1.IngressBackend{
-									ServiceName: ingressParams.ServiceName,
-									ServicePort: ingressParams.PortNumber,
+									ServiceName: ingressSpecParams.ServiceName,
+									ServicePort: ingressSpecParams.PortNumber,
 								},
 							},
 						},
@@ -210,14 +255,14 @@ func GetIngressSpec(ingressParams IngressParams) *extensionsv1.IngressSpec {
 			},
 		},
 	}
-	secretNameLength := len(ingressParams.TLSSecretName)
+	secretNameLength := len(ingressSpecParams.TLSSecretName)
 	if secretNameLength != 0 {
 		ingressSpec.TLS = []extensionsv1.IngressTLS{
 			{
 				Hosts: []string{
-					ingressParams.IngressDomain,
+					ingressSpecParams.IngressDomain,
 				},
-				SecretName: ingressParams.TLSSecretName,
+				SecretName: ingressSpecParams.TLSSecretName,
 			},
 		}
 	}
@@ -225,11 +270,29 @@ func GetIngressSpec(ingressParams IngressParams) *extensionsv1.IngressSpec {
 	return ingressSpec
 }
 
-// RouteParams struct for function GenerateRouteSpec
+// IngressParams is a struct that contains the required data to create an ingress object
+type IngressParams struct {
+	TypeMeta    metav1.TypeMeta
+	ObjectMeta  metav1.ObjectMeta
+	IngressSpec extensionsv1.IngressSpec
+}
+
+// GetIngress gets an ingress
+func GetIngress(ingressParams IngressParams) *extensionsv1.Ingress {
+	ingress := &extensionsv1.Ingress{
+		TypeMeta:   ingressParams.TypeMeta,
+		ObjectMeta: ingressParams.ObjectMeta,
+		Spec:       ingressParams.IngressSpec,
+	}
+
+	return ingress
+}
+
+// RouteSpecParams struct for function GenerateRouteSpec
 // serviceName is the name of the service for the target reference
 // portNumber is the target port of the ingress
 // Path is the path of the route
-type RouteParams struct {
+type RouteSpecParams struct {
 	ServiceName string
 	PortNumber  intstr.IntOrString
 	Path        string
@@ -237,7 +300,7 @@ type RouteParams struct {
 }
 
 // GetRouteSpec gets a route spec
-func GetRouteSpec(routeParams RouteParams) *routev1.RouteSpec {
+func GetRouteSpec(routeParams RouteSpecParams) *routev1.RouteSpec {
 	routePath := "/"
 	if routeParams.Path != "" {
 		routePath = routeParams.Path
@@ -263,6 +326,24 @@ func GetRouteSpec(routeParams RouteParams) *routev1.RouteSpec {
 	return routeSpec
 }
 
+// RouteParams is a struct that contains the required data to create a route object
+type RouteParams struct {
+	TypeMeta   metav1.TypeMeta
+	ObjectMeta metav1.ObjectMeta
+	RouteSpec  routev1.RouteSpec
+}
+
+// GetRoute gets a route
+func GetRoute(routeParams RouteParams) *routev1.Route {
+	route := &routev1.Route{
+		TypeMeta:   routeParams.TypeMeta,
+		ObjectMeta: routeParams.ObjectMeta,
+		Spec:       routeParams.RouteSpec,
+	}
+
+	return route
+}
+
 // GetOwnerReference generates an ownerReference  from the deployment which can then be set as
 // owner for various Kubernetes objects and ensure that when the owner object is deleted from the
 // cluster, all other objects are automatically removed by Kubernetes garbage collector
@@ -278,38 +359,53 @@ func GetOwnerReference(deployment *appsv1.Deployment) metav1.OwnerReference {
 	return ownerReference
 }
 
-// BuildConfigParams is a struct to create build config
-type BuildConfigParams struct {
+// BuildConfigSpecParams is a struct to create build config spec
+type BuildConfigSpecParams struct {
 	CommonObjectMeta metav1.ObjectMeta
 	GitURL           string
 	GitRef           string
 	BuildStrategy    buildv1.BuildStrategy
 }
 
-// GetBuildConfig gets the build config and output to the image stream
-func GetBuildConfig(buildConfigParams BuildConfigParams) buildv1.BuildConfig {
+// GetBuildConfigSpec gets the build config spec and outputs the build to the image stream
+func GetBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.BuildConfigSpec {
 
-	return buildv1.BuildConfig{
-		ObjectMeta: buildConfigParams.CommonObjectMeta,
-		Spec: buildv1.BuildConfigSpec{
-			CommonSpec: buildv1.CommonSpec{
-				Output: buildv1.BuildOutput{
-					To: &corev1.ObjectReference{
-						Kind: "ImageStreamTag",
-						Name: buildConfigParams.CommonObjectMeta.Name + ":latest",
-					},
+	return &buildv1.BuildConfigSpec{
+		CommonSpec: buildv1.CommonSpec{
+			Output: buildv1.BuildOutput{
+				To: &corev1.ObjectReference{
+					Kind: "ImageStreamTag",
+					Name: buildConfigSpecParams.CommonObjectMeta.Name + ":latest",
 				},
-				Source: buildv1.BuildSource{
-					Git: &buildv1.GitBuildSource{
-						URI: buildConfigParams.GitURL,
-						Ref: buildConfigParams.GitRef,
-					},
-					Type: buildv1.BuildSourceGit,
-				},
-				Strategy: buildConfigParams.BuildStrategy,
 			},
+			Source: buildv1.BuildSource{
+				Git: &buildv1.GitBuildSource{
+					URI: buildConfigSpecParams.GitURL,
+					Ref: buildConfigSpecParams.GitRef,
+				},
+				Type: buildv1.BuildSourceGit,
+			},
+			Strategy: buildConfigSpecParams.BuildStrategy,
 		},
 	}
+}
+
+// BuildConfigParams is a struct that contains the required data to create a build config object
+type BuildConfigParams struct {
+	TypeMeta        metav1.TypeMeta
+	ObjectMeta      metav1.ObjectMeta
+	BuildConfigSpec buildv1.BuildConfigSpec
+}
+
+// GetBuildConfig gets a build config
+func GetBuildConfig(buildConfigParams BuildConfigParams) *buildv1.BuildConfig {
+	buildConfig := &buildv1.BuildConfig{
+		TypeMeta:   buildConfigParams.TypeMeta,
+		ObjectMeta: buildConfigParams.ObjectMeta,
+		Spec:       buildConfigParams.BuildConfigSpec,
+	}
+
+	return buildConfig
 }
 
 // GetSourceBuildStrategy gets the source build strategy

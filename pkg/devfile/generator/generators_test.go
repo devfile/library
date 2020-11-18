@@ -281,11 +281,11 @@ func TestGenerateIngressSpec(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		parameter IngressParams
+		parameter IngressSpecParams
 	}{
 		{
 			name: "1",
-			parameter: IngressParams{
+			parameter: IngressSpecParams{
 				ServiceName:   "service1",
 				IngressDomain: "test.1.2.3.4.nip.io",
 				PortNumber: intstr.IntOrString{
@@ -325,11 +325,11 @@ func TestGetRouteSpec(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		parameter RouteParams
+		parameter RouteSpecParams
 	}{
 		{
 			name: "Case 1: insecure route",
-			parameter: RouteParams{
+			parameter: RouteSpecParams{
 				ServiceName: "service1",
 				PortNumber: intstr.IntOrString{
 					IntVal: 8080,
@@ -340,7 +340,7 @@ func TestGetRouteSpec(t *testing.T) {
 		},
 		{
 			name: "Case 2: secure route",
-			parameter: RouteParams{
+			parameter: RouteSpecParams{
 				ServiceName: "service1",
 				PortNumber: intstr.IntOrString{
 					IntVal: 8080,
@@ -499,7 +499,7 @@ func TestGetServiceSpec(t *testing.T) {
 
 }
 
-func TestGetBuildConfig(t *testing.T) {
+func TestGetBuildConfigSpec(t *testing.T) {
 
 	tests := []struct {
 		name           string
@@ -520,24 +520,20 @@ func TestGetBuildConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			commonObjectMeta := GetObjectMeta(tt.ImageName, tt.ImageNamespace, nil, nil)
 			buildStrategy := GetSourceBuildStrategy(tt.ImageName, tt.ImageNamespace)
-			params := BuildConfigParams{
+			params := BuildConfigSpecParams{
 				CommonObjectMeta: commonObjectMeta,
 				BuildStrategy:    buildStrategy,
 				GitURL:           tt.GitURL,
 				GitRef:           tt.GitRef,
 			}
-			buildConfig := GetBuildConfig(params)
+			buildConfigSpec := GetBuildConfigSpec(params)
 
-			if buildConfig.Name != tt.ImageName {
-				t.Error("TestGetBuildConfig error - build config name does not match")
+			if !strings.Contains(buildConfigSpec.CommonSpec.Output.To.Name, tt.ImageName) {
+				t.Error("TestGetBuildConfigSpec error - build config output name does not match")
 			}
 
-			if !strings.Contains(buildConfig.Spec.CommonSpec.Output.To.Name, tt.ImageName) {
-				t.Error("TestGetBuildConfig error - build config output name does not match")
-			}
-
-			if buildConfig.Spec.Source.Git.Ref != tt.GitRef || buildConfig.Spec.Source.Git.URI != tt.GitURL {
-				t.Error("TestGetBuildConfig error - build config git source does not match")
+			if buildConfigSpec.Source.Git.Ref != tt.GitRef || buildConfigSpec.Source.Git.URI != tt.GitURL {
+				t.Error("TestGetBuildConfigSpec error - build config git source does not match")
 			}
 		})
 	}
