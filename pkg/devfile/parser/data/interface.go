@@ -48,5 +48,4 @@ type DevfileData interface {
 	//utils
 	GetDevfileContainerComponents() []v1.Component
 	GetDevfileVolumeComponents() []v1.Component
-	GetPortExposure() map[int]v1.EndpointExposure
 }

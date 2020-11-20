@@ -182,12 +182,6 @@ func (d TestDevfileData) GetDevfileVolumeComponents() []v1.Component {
 	return components
 }
 
-// GetPortExposure is a mock func that gets the port exposure from the endpoints in a test devfile
-func (d TestDevfileData) GetPortExposure() map[int]v1.EndpointExposure {
-	endpointExposure := make(map[int]v1.EndpointExposure)
-	return endpointExposure
-}
-
 // Validate is a mock validation that always validates without error
 func (d TestDevfileData) Validate() error {
 	return nil

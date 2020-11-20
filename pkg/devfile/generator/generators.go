@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	buildv1 "github.com/openshift/api/build/v1"
+	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -168,7 +169,7 @@ func GetPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
 func GetServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
 
 	var containerPorts []corev1.ContainerPort
-	portExposureMap := devfileObj.Data.GetPortExposure()
+	portExposureMap := getPortExposure(devfileObj)
 	containers, err := GetContainers(devfileObj)
 	if err != nil {
 		return nil, err
@@ -419,4 +420,21 @@ func GetSourceBuildStrategy(imageName, imageNamespace string) buildv1.BuildStrat
 			},
 		},
 	}
+}
+
+// ImageStreamParams is a struct that contains the required data to create an image stream object
+type ImageStreamParams struct {
+	TypeMeta        metav1.TypeMeta
+	ObjectMeta      metav1.ObjectMeta
+	ImageStreamSpec imagev1.ImageStreamSpec
+}
+
+// GetImageStream is a function to return the image stream
+func GetImageStream(imageStreamParams ImageStreamParams) imagev1.ImageStream {
+	imageStream := imagev1.ImageStream{
+		TypeMeta:   imageStreamParams.TypeMeta,
+		ObjectMeta: imageStreamParams.ObjectMeta,
+		Spec:       imageStreamParams.ImageStreamSpec,
+	}
+	return imageStream
 }

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/testingutil"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
@@ -579,4 +580,213 @@ func TestGenerateServiceSpec(t *testing.T) {
 
 		})
 	}
+}
+
+func TestGetPortExposure(t *testing.T) {
+	urlName := "testurl"
+	urlName2 := "testurl2"
+	tests := []struct {
+		name                string
+		containerComponents []v1.Component
+		wantMap             map[int]v1.EndpointExposure
+		wantErr             bool
+	}{
+		{
+			name: "Case 1: devfile has single container with single endpoint",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.PublicEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.PublicEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "Case 2: devfile no endpoints",
+			wantMap: map[int]v1.EndpointExposure{},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 3: devfile has multiple endpoints with same port, 1 public and 1 internal, should assign public",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.PublicEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.PublicEndpointExposure,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.InternalEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 4: devfile has multiple endpoints with same port, 1 public and 1 none, should assign public",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.PublicEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.PublicEndpointExposure,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 5: devfile has multiple endpoints with same port, 1 internal and 1 none, should assign internal",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.InternalEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.InternalEndpointExposure,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Case 6: devfile has multiple endpoints with different port",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.PublicEndpointExposure,
+				9090: v1.InternalEndpointExposure,
+				3000: v1.NoneEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 3000,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "testcontainer2",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName2,
+									TargetPort: 9090,
+									Secure:     true,
+									Path:       "/testpath",
+									Exposure:   v1.InternalEndpointExposure,
+									Protocol:   v1.HTTPSEndpointProtocol,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			devObj := parser.DevfileObj{
+				Data: &testingutil.TestDevfileData{
+					Components: tt.containerComponents,
+				},
+			}
+			mapCreated := getPortExposure(devObj)
+			if !reflect.DeepEqual(mapCreated, tt.wantMap) {
+				t.Errorf("Expected: %v, got %v", tt.wantMap, mapCreated)
+			}
+
+		})
+	}
+
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -167,4 +168,28 @@ func getServiceSpec(serviceSpecParams serviceSpecParams) *corev1.ServiceSpec {
 	}
 
 	return svcSpec
+}
+
+// getPortExposure iterates through all endpoints and returns the highest exposure level of all TargetPort.
+// exposure level: public > internal > none
+func getPortExposure(devfileObj parser.DevfileObj) map[int]v1.EndpointExposure {
+	portExposureMap := make(map[int]v1.EndpointExposure)
+	containerComponents := devfileObj.Data.GetDevfileContainerComponents()
+	for _, comp := range containerComponents {
+		for _, endpoint := range comp.Container.Endpoints {
+			// if exposure=public, no need to check for existence
+			if endpoint.Exposure == v1.PublicEndpointExposure || endpoint.Exposure == "" {
+				portExposureMap[endpoint.TargetPort] = v1.PublicEndpointExposure
+			} else if exposure, exist := portExposureMap[endpoint.TargetPort]; exist {
+				// if a container has multiple identical ports with different exposure levels, save the highest level in the map
+				if endpoint.Exposure == v1.InternalEndpointExposure && exposure == v1.NoneEndpointExposure {
+					portExposureMap[endpoint.TargetPort] = v1.InternalEndpointExposure
+				}
+			} else {
+				portExposureMap[endpoint.TargetPort] = endpoint.Exposure
+			}
+		}
+
+	}
+	return portExposureMap
 }

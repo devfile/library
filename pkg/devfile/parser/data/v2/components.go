@@ -32,30 +32,6 @@ func (d *DevfileV2) GetDevfileVolumeComponents() []v1.Component {
 	return components
 }
 
-// GetPortExposure iterate through all endpoints and returns the highest exposure level of all TargetPort.
-// exposure level: public > internal > none
-func (d *DevfileV2) GetPortExposure() map[int]v1.EndpointExposure {
-	portExposureMap := make(map[int]v1.EndpointExposure)
-	containerComponents := d.GetDevfileContainerComponents()
-	for _, comp := range containerComponents {
-		for _, endpoint := range comp.Container.Endpoints {
-			// if exposure=public, no need to check for existence
-			if endpoint.Exposure == v1.PublicEndpointExposure || endpoint.Exposure == "" {
-				portExposureMap[endpoint.TargetPort] = v1.PublicEndpointExposure
-			} else if exposure, exist := portExposureMap[endpoint.TargetPort]; exist {
-				// if a container has multiple identical ports with different exposure levels, save the highest level in the map
-				if endpoint.Exposure == v1.InternalEndpointExposure && exposure == v1.NoneEndpointExposure {
-					portExposureMap[endpoint.TargetPort] = v1.InternalEndpointExposure
-				}
-			} else {
-				portExposureMap[endpoint.TargetPort] = endpoint.Exposure
-			}
-		}
-
-	}
-	return portExposureMap
-}
-
 // AddComponents adds the slice of Component objects to the devfile's components
 // if a component is already defined, error out
 func (d *DevfileV2) AddComponents(components []v1.Component) error {
