@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	devfileCtx "github.com/devfile/parser/pkg/devfile/parser/context"
-	"github.com/devfile/parser/pkg/devfile/parser/data"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
+	"github.com/devfile/library/pkg/devfile/parser/data"
 	"k8s.io/klog"
 
 	"reflect"
