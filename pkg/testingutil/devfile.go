@@ -25,7 +25,10 @@ func (d TestDevfileData) GetMetadata() devfilepkg.DevfileMetadata {
 // SetMetadata sets metadata for the test devfile
 func (d TestDevfileData) SetMetadata(name, version string) {}
 
-// SetSchemaVersion sets the schema for the test devfile
+// GetSchemaVersion gets the schema version for the test devfile
+func (d TestDevfileData) GetSchemaVersion() string { return "testSchema" }
+
+// SetSchemaVersion sets the schema version for the test devfile
 func (d TestDevfileData) SetSchemaVersion(version string) {}
 
 // GetParent is a mock function to get parent from devfile
