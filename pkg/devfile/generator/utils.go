@@ -8,8 +8,13 @@ import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/util"
+	buildv1 "github.com/openshift/api/build/v1"
+	routev1 "github.com/openshift/api/route/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -144,16 +149,77 @@ func getContainer(containerParams containerParams) *corev1.Container {
 	return container
 }
 
-// serviceSpecParams is a struct that contains the required data to create a svc spec object
-type serviceSpecParams struct {
-	SelectorLabels map[string]string
-	ContainerPorts []corev1.ContainerPort
+// podTemplateSpecParams is a struct that contains the required data to create a pod template spec object
+type podTemplateSpecParams struct {
+	ObjectMeta     metav1.ObjectMeta
+	InitContainers []corev1.Container
+	Containers     []corev1.Container
+	Volumes        []corev1.Volume
 }
 
-// getServiceSpec gets a service spec
-func getServiceSpec(serviceSpecParams serviceSpecParams) *corev1.ServiceSpec {
+// getPodTemplateSpec gets a pod template spec that can be used to create a deployment spec
+func getPodTemplateSpec(podTemplateSpecParams podTemplateSpecParams) *corev1.PodTemplateSpec {
+	podTemplateSpec := &corev1.PodTemplateSpec{
+		ObjectMeta: podTemplateSpecParams.ObjectMeta,
+		Spec: corev1.PodSpec{
+			InitContainers: podTemplateSpecParams.InitContainers,
+			Containers:     podTemplateSpecParams.Containers,
+			Volumes:        podTemplateSpecParams.Volumes,
+		},
+	}
+
+	return podTemplateSpec
+}
+
+// deploymentSpecParams is a struct that contains the required data to create a deployment spec object
+type deploymentSpecParams struct {
+	PodTemplateSpec   corev1.PodTemplateSpec
+	PodSelectorLabels map[string]string
+}
+
+// getDeploymentSpec gets a deployment spec
+func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.DeploymentSpec {
+	deploymentSpec := &appsv1.DeploymentSpec{
+		Strategy: appsv1.DeploymentStrategy{
+			Type: appsv1.RecreateDeploymentStrategyType,
+		},
+		Selector: &metav1.LabelSelector{
+			MatchLabels: deploySpecParams.PodSelectorLabels,
+		},
+		Template: deploySpecParams.PodTemplateSpec,
+	}
+
+	return deploymentSpec
+}
+
+// getServiceSpec iterates through the devfile components and returns a ServiceSpec
+func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
+
+	var containerPorts []corev1.ContainerPort
+	portExposureMap := getPortExposure(devfileObj)
+	containers, err := GetContainers(devfileObj)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range containers {
+		for _, port := range c.Ports {
+			portExist := false
+			for _, entry := range containerPorts {
+				if entry.ContainerPort == port.ContainerPort {
+					portExist = true
+					break
+				}
+			}
+			// if Exposure == none, should not create a service for that port
+			if !portExist && portExposureMap[int(port.ContainerPort)] != v1.NoneEndpointExposure {
+				port.Name = fmt.Sprintf("port-%v", port.ContainerPort)
+				containerPorts = append(containerPorts, port)
+			}
+		}
+	}
+
 	var svcPorts []corev1.ServicePort
-	for _, containerPort := range serviceSpecParams.ContainerPorts {
+	for _, containerPort := range containerPorts {
 		svcPort := corev1.ServicePort{
 
 			Name:       containerPort.Name,
@@ -164,10 +230,10 @@ func getServiceSpec(serviceSpecParams serviceSpecParams) *corev1.ServiceSpec {
 	}
 	svcSpec := &corev1.ServiceSpec{
 		Ports:    svcPorts,
-		Selector: serviceSpecParams.SelectorLabels,
+		Selector: selectorLabels,
 	}
 
-	return svcSpec
+	return svcSpec, nil
 }
 
 // getPortExposure iterates through all endpoints and returns the highest exposure level of all TargetPort.
@@ -192,4 +258,145 @@ func getPortExposure(devfileObj parser.DevfileObj) map[int]v1.EndpointExposure {
 
 	}
 	return portExposureMap
+}
+
+// IngressSpecParams struct for function GenerateIngressSpec
+// serviceName is the name of the service for the target reference
+// ingressDomain is the ingress domain to use for the ingress
+// portNumber is the target port of the ingress
+// Path is the path of the ingress
+// TLSSecretName is the target TLS Secret name of the ingress
+type IngressSpecParams struct {
+	ServiceName   string
+	IngressDomain string
+	PortNumber    intstr.IntOrString
+	TLSSecretName string
+	Path          string
+}
+
+// getIngressSpec gets an ingress spec
+func getIngressSpec(ingressSpecParams IngressSpecParams) *extensionsv1.IngressSpec {
+	path := "/"
+	if ingressSpecParams.Path != "" {
+		path = ingressSpecParams.Path
+	}
+	ingressSpec := &extensionsv1.IngressSpec{
+		Rules: []extensionsv1.IngressRule{
+			{
+				Host: ingressSpecParams.IngressDomain,
+				IngressRuleValue: extensionsv1.IngressRuleValue{
+					HTTP: &extensionsv1.HTTPIngressRuleValue{
+						Paths: []extensionsv1.HTTPIngressPath{
+							{
+								Path: path,
+								Backend: extensionsv1.IngressBackend{
+									ServiceName: ingressSpecParams.ServiceName,
+									ServicePort: ingressSpecParams.PortNumber,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	secretNameLength := len(ingressSpecParams.TLSSecretName)
+	if secretNameLength != 0 {
+		ingressSpec.TLS = []extensionsv1.IngressTLS{
+			{
+				Hosts: []string{
+					ingressSpecParams.IngressDomain,
+				},
+				SecretName: ingressSpecParams.TLSSecretName,
+			},
+		}
+	}
+
+	return ingressSpec
+}
+
+// RouteSpecParams struct for function GenerateRouteSpec
+// serviceName is the name of the service for the target reference
+// portNumber is the target port of the ingress
+// Path is the path of the route
+type RouteSpecParams struct {
+	ServiceName string
+	PortNumber  intstr.IntOrString
+	Path        string
+	Secure      bool
+}
+
+// GetRouteSpec gets a route spec
+func getRouteSpec(routeParams RouteSpecParams) *routev1.RouteSpec {
+	routePath := "/"
+	if routeParams.Path != "" {
+		routePath = routeParams.Path
+	}
+	routeSpec := &routev1.RouteSpec{
+		To: routev1.RouteTargetReference{
+			Kind: "Service",
+			Name: routeParams.ServiceName,
+		},
+		Port: &routev1.RoutePort{
+			TargetPort: routeParams.PortNumber,
+		},
+		Path: routePath,
+	}
+
+	if routeParams.Secure {
+		routeSpec.TLS = &routev1.TLSConfig{
+			Termination:                   routev1.TLSTerminationEdge,
+			InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
+		}
+	}
+
+	return routeSpec
+}
+
+// getPVCSpec gets a RWO pvc spec
+func getPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
+
+	pvcSpec := &corev1.PersistentVolumeClaimSpec{
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceStorage: quantity,
+			},
+		},
+		AccessModes: []corev1.PersistentVolumeAccessMode{
+			corev1.ReadWriteOnce,
+		},
+	}
+
+	return pvcSpec
+}
+
+// BuildConfigSpecParams is a struct to create build config spec
+type BuildConfigSpecParams struct {
+	ImageStreamTagName string
+	GitURL             string
+	GitRef             string
+	BuildStrategy      buildv1.BuildStrategy
+}
+
+// getBuildConfigSpec gets the build config spec and outputs the build to the image stream
+func getBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.BuildConfigSpec {
+
+	return &buildv1.BuildConfigSpec{
+		CommonSpec: buildv1.CommonSpec{
+			Output: buildv1.BuildOutput{
+				To: &corev1.ObjectReference{
+					Kind: "ImageStreamTag",
+					Name: buildConfigSpecParams.ImageStreamTagName + ":latest",
+				},
+			},
+			Source: buildv1.BuildSource{
+				Git: &buildv1.GitBuildSource{
+					URI: buildConfigSpecParams.GitURL,
+					Ref: buildConfigSpecParams.GitRef,
+				},
+				Type: buildv1.BuildSourceGit,
+			},
+			Strategy: buildConfigSpecParams.BuildStrategy,
+		},
+	}
 }

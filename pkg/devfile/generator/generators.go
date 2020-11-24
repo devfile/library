@@ -1,8 +1,6 @@
 package generator
 
 import (
-	"fmt"
-
 	buildv1 "github.com/openshift/api/build/v1"
 	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -11,9 +9,6 @@ import (
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 
 	"github.com/devfile/library/pkg/devfile/parser"
 )
@@ -86,260 +81,121 @@ func GetContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 	return containers, nil
 }
 
-// PodTemplateSpecParams is a struct that contains the required data to create a pod template spec object
-type PodTemplateSpecParams struct {
-	ObjectMeta     metav1.ObjectMeta
-	InitContainers []corev1.Container
-	Containers     []corev1.Container
-	Volumes        []corev1.Volume
-}
-
-// GetPodTemplateSpec gets a pod template spec that can be used to create a deployment spec
-func GetPodTemplateSpec(podTemplateSpecParams PodTemplateSpecParams) *corev1.PodTemplateSpec {
-	podTemplateSpec := &corev1.PodTemplateSpec{
-		ObjectMeta: podTemplateSpecParams.ObjectMeta,
-		Spec: corev1.PodSpec{
-			InitContainers: podTemplateSpecParams.InitContainers,
-			Containers:     podTemplateSpecParams.Containers,
-			Volumes:        podTemplateSpecParams.Volumes,
-		},
-	}
-
-	return podTemplateSpec
-}
-
-// DeploymentSpecParams is a struct that contains the required data to create a deployment spec object
-type DeploymentSpecParams struct {
-	PodTemplateSpec   corev1.PodTemplateSpec
-	PodSelectorLabels map[string]string
-}
-
-// GetDeploymentSpec gets a deployment spec
-func GetDeploymentSpec(deploySpecParams DeploymentSpecParams) *appsv1.DeploymentSpec {
-	deploymentSpec := &appsv1.DeploymentSpec{
-		Strategy: appsv1.DeploymentStrategy{
-			Type: appsv1.RecreateDeploymentStrategyType,
-		},
-		Selector: &metav1.LabelSelector{
-			MatchLabels: deploySpecParams.PodSelectorLabels,
-		},
-		Template: deploySpecParams.PodTemplateSpec,
-	}
-
-	return deploymentSpec
-}
-
 // DeploymentParams is a struct that contains the required data to create a deployment object
 type DeploymentParams struct {
-	TypeMeta       metav1.TypeMeta
-	ObjectMeta     metav1.ObjectMeta
-	DeploymentSpec appsv1.DeploymentSpec
+	TypeMeta          metav1.TypeMeta
+	ObjectMeta        metav1.ObjectMeta
+	InitContainers    []corev1.Container
+	Containers        []corev1.Container
+	Volumes           []corev1.Volume
+	PodSelectorLabels map[string]string
 }
 
 // GetDeployment gets a deployment object
 func GetDeployment(deployParams DeploymentParams) *appsv1.Deployment {
 
+	podTemplateSpecParams := podTemplateSpecParams{
+		ObjectMeta:     deployParams.ObjectMeta,
+		InitContainers: deployParams.InitContainers,
+		Containers:     deployParams.Containers,
+		Volumes:        deployParams.Volumes,
+	}
+
+	deploySpecParams := deploymentSpecParams{
+		PodTemplateSpec:   *getPodTemplateSpec(podTemplateSpecParams),
+		PodSelectorLabels: deployParams.PodSelectorLabels,
+	}
+
 	deployment := &appsv1.Deployment{
 		TypeMeta:   deployParams.TypeMeta,
 		ObjectMeta: deployParams.ObjectMeta,
-		Spec:       deployParams.DeploymentSpec,
+		Spec:       *getDeploymentSpec(deploySpecParams),
 	}
 
 	return deployment
 }
 
-// GetPVCSpec gets a RWO pvc spec
-func GetPVCSpec(quantity resource.Quantity) *corev1.PersistentVolumeClaimSpec {
-
-	pvcSpec := &corev1.PersistentVolumeClaimSpec{
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceStorage: quantity,
-			},
-		},
-		AccessModes: []corev1.PersistentVolumeAccessMode{
-			corev1.ReadWriteOnce,
-		},
-	}
-
-	return pvcSpec
+// PVCParams is a struct to create PVC
+type PVCParams struct {
+	TypeMeta   metav1.TypeMeta
+	ObjectMeta metav1.ObjectMeta
+	Quantity   resource.Quantity
 }
 
-// GetServiceSpec iterates through the devfile components and returns a ServiceSpec
-func GetServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
+// GetPVC returns a PVC
+func GetPVC(pvcParams PVCParams) *corev1.PersistentVolumeClaim {
+	pvcSpec := getPVCSpec(pvcParams.Quantity)
 
-	var containerPorts []corev1.ContainerPort
-	portExposureMap := getPortExposure(devfileObj)
-	containers, err := GetContainers(devfileObj)
-	if err != nil {
-		return nil, err
-	}
-	for _, c := range containers {
-		for _, port := range c.Ports {
-			portExist := false
-			for _, entry := range containerPorts {
-				if entry.ContainerPort == port.ContainerPort {
-					portExist = true
-					break
-				}
-			}
-			// if Exposure == none, should not create a service for that port
-			if !portExist && portExposureMap[int(port.ContainerPort)] != v1.NoneEndpointExposure {
-				port.Name = fmt.Sprintf("port-%v", port.ContainerPort)
-				containerPorts = append(containerPorts, port)
-			}
-		}
-	}
-	serviceSpecParams := serviceSpecParams{
-		ContainerPorts: containerPorts,
-		SelectorLabels: selectorLabels,
+	pvc := &corev1.PersistentVolumeClaim{
+		TypeMeta:   pvcParams.TypeMeta,
+		ObjectMeta: pvcParams.ObjectMeta,
+		Spec:       *pvcSpec,
 	}
 
-	return getServiceSpec(serviceSpecParams), nil
+	return pvc
 }
 
 // ServiceParams is a struct that contains the required data to create a service object
 type ServiceParams struct {
-	TypeMeta    metav1.TypeMeta
-	ObjectMeta  metav1.ObjectMeta
-	ServiceSpec corev1.ServiceSpec
+	TypeMeta       metav1.TypeMeta
+	ObjectMeta     metav1.ObjectMeta
+	SelectorLabels map[string]string
 }
 
 // GetService gets the service
-func GetService(serviceParams ServiceParams) *corev1.Service {
+func GetService(devfileObj parser.DevfileObj, serviceParams ServiceParams) (*corev1.Service, error) {
+
+	serviceSpec, err := getServiceSpec(devfileObj, serviceParams.SelectorLabels)
+	if err != nil {
+		return nil, err
+	}
+
 	service := &corev1.Service{
 		TypeMeta:   serviceParams.TypeMeta,
 		ObjectMeta: serviceParams.ObjectMeta,
-		Spec:       serviceParams.ServiceSpec,
+		Spec:       *serviceSpec,
 	}
 
-	return service
-}
-
-// IngressSpecParams struct for function GenerateIngressSpec
-// serviceName is the name of the service for the target reference
-// ingressDomain is the ingress domain to use for the ingress
-// portNumber is the target port of the ingress
-// Path is the path of the ingress
-// TLSSecretName is the target TLS Secret name of the ingress
-type IngressSpecParams struct {
-	ServiceName   string
-	IngressDomain string
-	PortNumber    intstr.IntOrString
-	TLSSecretName string
-	Path          string
-}
-
-// GetIngressSpec gets an ingress spec
-func GetIngressSpec(ingressSpecParams IngressSpecParams) *extensionsv1.IngressSpec {
-	path := "/"
-	if ingressSpecParams.Path != "" {
-		path = ingressSpecParams.Path
-	}
-	ingressSpec := &extensionsv1.IngressSpec{
-		Rules: []extensionsv1.IngressRule{
-			{
-				Host: ingressSpecParams.IngressDomain,
-				IngressRuleValue: extensionsv1.IngressRuleValue{
-					HTTP: &extensionsv1.HTTPIngressRuleValue{
-						Paths: []extensionsv1.HTTPIngressPath{
-							{
-								Path: path,
-								Backend: extensionsv1.IngressBackend{
-									ServiceName: ingressSpecParams.ServiceName,
-									ServicePort: ingressSpecParams.PortNumber,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	secretNameLength := len(ingressSpecParams.TLSSecretName)
-	if secretNameLength != 0 {
-		ingressSpec.TLS = []extensionsv1.IngressTLS{
-			{
-				Hosts: []string{
-					ingressSpecParams.IngressDomain,
-				},
-				SecretName: ingressSpecParams.TLSSecretName,
-			},
-		}
-	}
-
-	return ingressSpec
+	return service, nil
 }
 
 // IngressParams is a struct that contains the required data to create an ingress object
 type IngressParams struct {
-	TypeMeta    metav1.TypeMeta
-	ObjectMeta  metav1.ObjectMeta
-	IngressSpec extensionsv1.IngressSpec
+	TypeMeta          metav1.TypeMeta
+	ObjectMeta        metav1.ObjectMeta
+	IngressSpecParams IngressSpecParams
 }
 
 // GetIngress gets an ingress
 func GetIngress(ingressParams IngressParams) *extensionsv1.Ingress {
+
+	ingressSpec := getIngressSpec(ingressParams.IngressSpecParams)
+
 	ingress := &extensionsv1.Ingress{
 		TypeMeta:   ingressParams.TypeMeta,
 		ObjectMeta: ingressParams.ObjectMeta,
-		Spec:       ingressParams.IngressSpec,
+		Spec:       *ingressSpec,
 	}
 
 	return ingress
 }
 
-// RouteSpecParams struct for function GenerateRouteSpec
-// serviceName is the name of the service for the target reference
-// portNumber is the target port of the ingress
-// Path is the path of the route
-type RouteSpecParams struct {
-	ServiceName string
-	PortNumber  intstr.IntOrString
-	Path        string
-	Secure      bool
-}
-
-// GetRouteSpec gets a route spec
-func GetRouteSpec(routeParams RouteSpecParams) *routev1.RouteSpec {
-	routePath := "/"
-	if routeParams.Path != "" {
-		routePath = routeParams.Path
-	}
-	routeSpec := &routev1.RouteSpec{
-		To: routev1.RouteTargetReference{
-			Kind: "Service",
-			Name: routeParams.ServiceName,
-		},
-		Port: &routev1.RoutePort{
-			TargetPort: routeParams.PortNumber,
-		},
-		Path: routePath,
-	}
-
-	if routeParams.Secure {
-		routeSpec.TLS = &routev1.TLSConfig{
-			Termination:                   routev1.TLSTerminationEdge,
-			InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
-		}
-	}
-
-	return routeSpec
-}
-
 // RouteParams is a struct that contains the required data to create a route object
 type RouteParams struct {
-	TypeMeta   metav1.TypeMeta
-	ObjectMeta metav1.ObjectMeta
-	RouteSpec  routev1.RouteSpec
+	TypeMeta        metav1.TypeMeta
+	ObjectMeta      metav1.ObjectMeta
+	RouteSpecParams RouteSpecParams
 }
 
 // GetRoute gets a route
 func GetRoute(routeParams RouteParams) *routev1.Route {
+
+	routeSpec := getRouteSpec(routeParams.RouteSpecParams)
+
 	route := &routev1.Route{
 		TypeMeta:   routeParams.TypeMeta,
 		ObjectMeta: routeParams.ObjectMeta,
-		Spec:       routeParams.RouteSpec,
+		Spec:       *routeSpec,
 	}
 
 	return route
@@ -360,50 +216,22 @@ func GetOwnerReference(deployment *appsv1.Deployment) metav1.OwnerReference {
 	return ownerReference
 }
 
-// BuildConfigSpecParams is a struct to create build config spec
-type BuildConfigSpecParams struct {
-	CommonObjectMeta metav1.ObjectMeta
-	GitURL           string
-	GitRef           string
-	BuildStrategy    buildv1.BuildStrategy
-}
-
-// GetBuildConfigSpec gets the build config spec and outputs the build to the image stream
-func GetBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.BuildConfigSpec {
-
-	return &buildv1.BuildConfigSpec{
-		CommonSpec: buildv1.CommonSpec{
-			Output: buildv1.BuildOutput{
-				To: &corev1.ObjectReference{
-					Kind: "ImageStreamTag",
-					Name: buildConfigSpecParams.CommonObjectMeta.Name + ":latest",
-				},
-			},
-			Source: buildv1.BuildSource{
-				Git: &buildv1.GitBuildSource{
-					URI: buildConfigSpecParams.GitURL,
-					Ref: buildConfigSpecParams.GitRef,
-				},
-				Type: buildv1.BuildSourceGit,
-			},
-			Strategy: buildConfigSpecParams.BuildStrategy,
-		},
-	}
-}
-
 // BuildConfigParams is a struct that contains the required data to create a build config object
 type BuildConfigParams struct {
-	TypeMeta        metav1.TypeMeta
-	ObjectMeta      metav1.ObjectMeta
-	BuildConfigSpec buildv1.BuildConfigSpec
+	TypeMeta              metav1.TypeMeta
+	ObjectMeta            metav1.ObjectMeta
+	BuildConfigSpecParams BuildConfigSpecParams
 }
 
 // GetBuildConfig gets a build config
 func GetBuildConfig(buildConfigParams BuildConfigParams) *buildv1.BuildConfig {
+
+	buildConfigSpec := getBuildConfigSpec(buildConfigParams.BuildConfigSpecParams)
+
 	buildConfig := &buildv1.BuildConfig{
 		TypeMeta:   buildConfigParams.TypeMeta,
 		ObjectMeta: buildConfigParams.ObjectMeta,
-		Spec:       buildConfigParams.BuildConfigSpec,
+		Spec:       *buildConfigSpec,
 	}
 
 	return buildConfig
@@ -422,11 +250,21 @@ func GetSourceBuildStrategy(imageName, imageNamespace string) buildv1.BuildStrat
 	}
 }
 
+// GetDockerBuildStrategy gets the docker build strategy
+func GetDockerBuildStrategy(dockerfilePath string, env []corev1.EnvVar) buildv1.BuildStrategy {
+	return buildv1.BuildStrategy{
+		Type: buildv1.DockerBuildStrategyType,
+		DockerStrategy: &buildv1.DockerBuildStrategy{
+			DockerfilePath: dockerfilePath,
+			Env:            env,
+		},
+	}
+}
+
 // ImageStreamParams is a struct that contains the required data to create an image stream object
 type ImageStreamParams struct {
-	TypeMeta        metav1.TypeMeta
-	ObjectMeta      metav1.ObjectMeta
-	ImageStreamSpec imagev1.ImageStreamSpec
+	TypeMeta   metav1.TypeMeta
+	ObjectMeta metav1.ObjectMeta
 }
 
 // GetImageStream is a function to return the image stream
@@ -434,7 +272,6 @@ func GetImageStream(imageStreamParams ImageStreamParams) imagev1.ImageStream {
 	imageStream := imagev1.ImageStream{
 		TypeMeta:   imageStreamParams.TypeMeta,
 		ObjectMeta: imageStreamParams.ObjectMeta,
-		Spec:       imageStreamParams.ImageStreamSpec,
 	}
 	return imageStream
 }

@@ -3,15 +3,18 @@ package generator
 import (
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/testingutil"
+	buildv1 "github.com/openshift/api/build/v1"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestConvertEnvs(t *testing.T) {
@@ -531,53 +534,195 @@ func TestGetContainer(t *testing.T) {
 	}
 }
 
-func TestGenerateServiceSpec(t *testing.T) {
-	port1 := corev1.ContainerPort{
-		Name:          "port-9090",
-		ContainerPort: 9090,
+func TestGetPodTemplateSpec(t *testing.T) {
+
+	container := []corev1.Container{
+		{
+			Name:            "container1",
+			Image:           "image1",
+			ImagePullPolicy: corev1.PullAlways,
+
+			Command: []string{"tail"},
+			Args:    []string{"-f", "/dev/null"},
+			Env:     []corev1.EnvVar{},
+		},
 	}
-	port2 := corev1.ContainerPort{
-		Name:          "port-8080",
-		ContainerPort: 8080,
+
+	volume := []corev1.Volume{
+		{
+			Name: "vol1",
+		},
 	}
 
 	tests := []struct {
-		name  string
-		ports []corev1.ContainerPort
+		podName        string
+		namespace      string
+		serviceAccount string
+		labels         map[string]string
 	}{
 		{
-			name:  "singlePort",
-			ports: []corev1.ContainerPort{port1},
-		},
-		{
-			name:  "multiplePorts",
-			ports: []corev1.ContainerPort{port1, port2},
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "default",
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
 		},
 	}
 
 	for _, tt := range tests {
+		t.Run(tt.podName, func(t *testing.T) {
+
+			objectMeta := GetObjectMeta(tt.podName, tt.namespace, tt.labels, nil)
+			podTemplateSpecParams := podTemplateSpecParams{
+				ObjectMeta:     objectMeta,
+				Containers:     container,
+				Volumes:        volume,
+				InitContainers: container,
+			}
+			podTemplateSpec := getPodTemplateSpec(podTemplateSpecParams)
+
+			if podTemplateSpec.Name != tt.podName {
+				t.Errorf("expected %s, actual %s", tt.podName, podTemplateSpec.Name)
+			}
+			if podTemplateSpec.Namespace != tt.namespace {
+				t.Errorf("expected %s, actual %s", tt.namespace, podTemplateSpec.Namespace)
+			}
+			if !hasVolumeWithName("vol1", podTemplateSpec.Spec.Volumes) {
+				t.Errorf("volume with name: %s not found", "vol1")
+			}
+			if !reflect.DeepEqual(podTemplateSpec.Labels, tt.labels) {
+				t.Errorf("expected %+v, actual %+v", tt.labels, podTemplateSpec.Labels)
+			}
+			if !reflect.DeepEqual(podTemplateSpec.Spec.Containers, container) {
+				t.Errorf("expected %+v, actual %+v", container, podTemplateSpec.Spec.Containers)
+			}
+			if !reflect.DeepEqual(podTemplateSpec.Spec.InitContainers, container) {
+				t.Errorf("expected %+v, actual %+v", container, podTemplateSpec.Spec.InitContainers)
+			}
+		})
+	}
+}
+
+func TestGetServiceSpec(t *testing.T) {
+
+	endpointNames := []string{"port-8080-1", "port-8080-2", "port-9090"}
+
+	tests := []struct {
+		name                string
+		containerComponents []v1.Component
+		labels              map[string]string
+		wantPorts           []corev1.ServicePort
+		wantErr             bool
+	}{
+		{
+			name: "Case 1: multiple endpoints share the same port",
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[0],
+									TargetPort: 8080,
+								},
+								{
+									Name:       endpointNames[1],
+									TargetPort: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+			labels: map[string]string{},
+			wantPorts: []corev1.ServicePort{
+				{
+					Name:       "port-8080",
+					Port:       8080,
+					TargetPort: intstr.FromInt(8080),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Case 2: multiple endpoints have different ports",
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[0],
+									TargetPort: 8080,
+								},
+								{
+									Name:       endpointNames[2],
+									TargetPort: 9090,
+								},
+							},
+						},
+					},
+				},
+			},
+			labels: map[string]string{
+				"component": "testcomponent",
+			},
+			wantPorts: []corev1.ServicePort{
+				{
+					Name:       "port-8080",
+					Port:       8080,
+					TargetPort: intstr.FromInt(8080),
+				},
+				{
+					Name:       "port-9090",
+					Port:       9090,
+					TargetPort: intstr.FromInt(9090),
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			serviceSpecParams := serviceSpecParams{
-				ContainerPorts: tt.ports,
-				SelectorLabels: map[string]string{
-					"component": tt.name,
+
+			devObj := parser.DevfileObj{
+				Data: &testingutil.TestDevfileData{
+					Components: tt.containerComponents,
 				},
 			}
-			serviceSpec := getServiceSpec(serviceSpecParams)
 
-			if len(serviceSpec.Ports) != len(tt.ports) {
-				t.Errorf("expected service ports length is %v, actual %v", len(tt.ports), len(serviceSpec.Ports))
+			serviceSpec, err := getServiceSpec(devObj, tt.labels)
+
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetServiceSpec() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Expected error and got an err
+			if tt.wantErr && err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(serviceSpec.Selector, tt.labels) {
+				t.Errorf("expected service selector is %v, actual %v", tt.labels, serviceSpec.Selector)
+			}
+			if len(serviceSpec.Ports) != len(tt.wantPorts) {
+				t.Errorf("expected service ports length is %v, actual %v", len(tt.wantPorts), len(serviceSpec.Ports))
 			} else {
 				for i := range serviceSpec.Ports {
-					if serviceSpec.Ports[i].Name != tt.ports[i].Name {
-						t.Errorf("expected name %s, actual name %s", tt.ports[i].Name, serviceSpec.Ports[i].Name)
+					if serviceSpec.Ports[i].Name != tt.wantPorts[i].Name {
+						t.Errorf("expected name %s, actual name %s", tt.wantPorts[i].Name, serviceSpec.Ports[i].Name)
 					}
-					if serviceSpec.Ports[i].Port != tt.ports[i].ContainerPort {
-						t.Errorf("expected port number is %v, actual %v", tt.ports[i].ContainerPort, serviceSpec.Ports[i].Port)
+					if serviceSpec.Ports[i].Port != tt.wantPorts[i].Port {
+						t.Errorf("expected port number is %v, actual %v", tt.wantPorts[i].Port, serviceSpec.Ports[i].Port)
 					}
 				}
 			}
-
 		})
 	}
 }
@@ -786,6 +931,202 @@ func TestGetPortExposure(t *testing.T) {
 				t.Errorf("Expected: %v, got %v", tt.wantMap, mapCreated)
 			}
 
+		})
+	}
+
+}
+
+func TestGenerateIngressSpec(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		parameter IngressSpecParams
+	}{
+		{
+			name: "1",
+			parameter: IngressSpecParams{
+				ServiceName:   "service1",
+				IngressDomain: "test.1.2.3.4.nip.io",
+				PortNumber: intstr.IntOrString{
+					IntVal: 8080,
+				},
+				TLSSecretName: "testTLSSecret",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ingressSpec := getIngressSpec(tt.parameter)
+
+			if ingressSpec.Rules[0].Host != tt.parameter.IngressDomain {
+				t.Errorf("expected %s, actual %s", tt.parameter.IngressDomain, ingressSpec.Rules[0].Host)
+			}
+
+			if ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServicePort != tt.parameter.PortNumber {
+				t.Errorf("expected %v, actual %v", tt.parameter.PortNumber, ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServicePort)
+			}
+
+			if ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServiceName != tt.parameter.ServiceName {
+				t.Errorf("expected %s, actual %s", tt.parameter.ServiceName, ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServiceName)
+			}
+
+			if ingressSpec.TLS[0].SecretName != tt.parameter.TLSSecretName {
+				t.Errorf("expected %s, actual %s", tt.parameter.TLSSecretName, ingressSpec.TLS[0].SecretName)
+			}
+
+		})
+	}
+}
+
+func TestGetRouteSpec(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		parameter RouteSpecParams
+	}{
+		{
+			name: "Case 1: insecure route",
+			parameter: RouteSpecParams{
+				ServiceName: "service1",
+				PortNumber: intstr.IntOrString{
+					IntVal: 8080,
+				},
+				Secure: false,
+				Path:   "/test",
+			},
+		},
+		{
+			name: "Case 2: secure route",
+			parameter: RouteSpecParams{
+				ServiceName: "service1",
+				PortNumber: intstr.IntOrString{
+					IntVal: 8080,
+				},
+				Secure: true,
+				Path:   "/test",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			routeSpec := getRouteSpec(tt.parameter)
+
+			if routeSpec.Port.TargetPort != tt.parameter.PortNumber {
+				t.Errorf("expected %v, actual %v", tt.parameter.PortNumber, routeSpec.Port.TargetPort)
+			}
+
+			if routeSpec.To.Name != tt.parameter.ServiceName {
+				t.Errorf("expected %s, actual %s", tt.parameter.ServiceName, routeSpec.To.Name)
+			}
+
+			if routeSpec.Path != tt.parameter.Path {
+				t.Errorf("expected %s, actual %s", tt.parameter.Path, routeSpec.Path)
+			}
+
+			if (routeSpec.TLS != nil) != tt.parameter.Secure {
+				t.Errorf("the route TLS does not match secure level %v", tt.parameter.Secure)
+			}
+
+		})
+	}
+}
+
+func TestGetPVCSpec(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		size    string
+		wantErr bool
+	}{
+		{
+			name:    "Case 1: Valid resource size",
+			size:    "1Gi",
+			wantErr: false,
+		},
+		{
+			name:    "Case 2: Resource size missing",
+			size:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			quantity, err := resource.ParseQuantity(tt.size)
+			// Checks for unexpected error cases
+			if !tt.wantErr == (err != nil) {
+				t.Errorf("resource.ParseQuantity unexpected error %v, wantErr %v", err, tt.wantErr)
+			}
+
+			pvcSpec := getPVCSpec(quantity)
+			if pvcSpec.AccessModes[0] != corev1.ReadWriteOnce {
+				t.Errorf("AccessMode Error: expected %s, actual %s", corev1.ReadWriteMany, pvcSpec.AccessModes[0])
+			}
+
+			pvcSpecQuantity := pvcSpec.Resources.Requests["storage"]
+			if pvcSpecQuantity.String() != quantity.String() {
+				t.Errorf("pvcSpec.Resources.Requests Error: expected %v, actual %v", pvcSpecQuantity.String(), quantity.String())
+			}
+		})
+	}
+}
+
+func hasVolumeWithName(name string, volMounts []corev1.Volume) bool {
+	for _, vm := range volMounts {
+		if vm.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func TestGetBuildConfigSpec(t *testing.T) {
+
+	image := "image"
+	namespace := "namespace"
+
+	tests := []struct {
+		name          string
+		GitURL        string
+		GitRef        string
+		buildStrategy buildv1.BuildStrategy
+	}{
+		{
+			name:          "Case 1: Get a Source Strategy Build Config",
+			GitURL:        "url",
+			GitRef:        "ref",
+			buildStrategy: GetSourceBuildStrategy(image, namespace),
+		},
+		{
+			name:          "Case 2: Get a Docker Strategy Build Config",
+			GitURL:        "url",
+			GitRef:        "ref",
+			buildStrategy: GetDockerBuildStrategy("dockerfilePath", []corev1.EnvVar{}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commonObjectMeta := GetObjectMeta(image, namespace, nil, nil)
+			params := BuildConfigSpecParams{
+				ImageStreamTagName: commonObjectMeta.Name,
+				BuildStrategy:      tt.buildStrategy,
+				GitURL:             tt.GitURL,
+				GitRef:             tt.GitRef,
+			}
+			buildConfigSpec := getBuildConfigSpec(params)
+
+			if !strings.Contains(buildConfigSpec.CommonSpec.Output.To.Name, image) {
+				t.Error("TestGetBuildConfigSpec error - build config output name does not match")
+			}
+
+			if buildConfigSpec.Source.Git.Ref != tt.GitRef || buildConfigSpec.Source.Git.URI != tt.GitURL {
+				t.Error("TestGetBuildConfigSpec error - build config git source does not match")
+			}
 		})
 	}
 
