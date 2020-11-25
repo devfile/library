@@ -8,6 +8,38 @@ import (
 	devfilepkg "github.com/devfile/api/pkg/devfile"
 )
 
+func TestDevfile200_GetSchemaVersion(t *testing.T) {
+
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name                  string
+		expectedSchemaVersion string
+		devfilev2             *DevfileV2
+	}{
+		{
+			name: "case 1: Get the schema version",
+			devfilev2: &DevfileV2{
+				v1.Devfile{
+					DevfileHeader: devfilepkg.DevfileHeader{
+						SchemaVersion: "1.0.0",
+					},
+				},
+			},
+			expectedSchemaVersion: "1.0.0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version := tt.devfilev2.GetSchemaVersion()
+			if version != tt.expectedSchemaVersion {
+				t.Errorf("TestDevfile200_GetSchemaVersion error - schema version did not match. Expected %s, got %s", tt.expectedSchemaVersion, version)
+			}
+		})
+	}
+}
+
 func TestDevfile200_SetSchemaVersion(t *testing.T) {
 
 	type args struct {

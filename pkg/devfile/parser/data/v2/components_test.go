@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/pkg/testingutil"
 )
 
 func TestDevfile200_AddComponent(t *testing.T) {
@@ -166,4 +167,111 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetDevfileContainerComponents(t *testing.T) {
+
+	tests := []struct {
+		name                 string
+		component            []v1.Component
+		expectedMatchesCount int
+	}{
+		{
+			name:                 "Case 1: Invalid devfile",
+			component:            []v1.Component{},
+			expectedMatchesCount: 0,
+		},
+		{
+			name: "Case 2: Valid devfile with wrong component type (Openshift)",
+			component: []v1.Component{
+				{
+					ComponentUnion: v1.ComponentUnion{
+						Openshift: &v1.OpenshiftComponent{},
+					},
+				},
+			},
+			expectedMatchesCount: 0,
+		},
+		{
+			name: "Case 3 : Valid devfile with correct component type (Container)",
+			component: []v1.Component{
+				testingutil.GetFakeContainerComponent("comp1"),
+				testingutil.GetFakeContainerComponent("comp2"),
+			},
+			expectedMatchesCount: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DevfileV2{
+				v1.Devfile{
+					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+							Components: tt.component,
+						},
+					},
+				},
+			}
+
+			devfileComponents := d.GetDevfileContainerComponents()
+
+			if len(devfileComponents) != tt.expectedMatchesCount {
+				t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
+			}
+		})
+	}
+
+}
+
+func TestGetDevfileVolumeComponents(t *testing.T) {
+
+	tests := []struct {
+		name                 string
+		component            []v1.Component
+		expectedMatchesCount int
+	}{
+		{
+			name:                 "Case 1: Invalid devfile",
+			component:            []v1.Component{},
+			expectedMatchesCount: 0,
+		},
+		{
+			name: "Case 2: Valid devfile with wrong component type (Kubernetes)",
+			component: []v1.Component{
+				{
+					ComponentUnion: v1.ComponentUnion{
+						Kubernetes: &v1.KubernetesComponent{},
+					},
+				},
+			},
+			expectedMatchesCount: 0,
+		},
+		{
+			name: "Case 3: Valid devfile with correct component type (Volume)",
+			component: []v1.Component{
+				testingutil.GetFakeContainerComponent("comp1"),
+				testingutil.GetFakeVolumeComponent("myvol", "4Gi"),
+			},
+			expectedMatchesCount: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DevfileV2{
+				v1.Devfile{
+					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+							Components: tt.component,
+						},
+					},
+				},
+			}
+			devfileComponents := d.GetDevfileVolumeComponents()
+
+			if len(devfileComponents) != tt.expectedMatchesCount {
+				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
+			}
+		})
+	}
+
 }
