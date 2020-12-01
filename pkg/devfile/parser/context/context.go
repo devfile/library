@@ -67,7 +67,6 @@ func (d *DevfileCtx) Populate() (err error) {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
-
 	// Read and save devfile content
 	if err := d.SetDevfileContent(); err != nil {
 		return err

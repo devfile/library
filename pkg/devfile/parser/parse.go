@@ -2,8 +2,6 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
@@ -45,6 +43,11 @@ func parseDevfile(d DevfileObj) (DevfileObj, error) {
 				return DevfileObj{}, err
 			}
 		}
+	}
+
+	err = parsePlugin(d)
+	if err != nil {
+		return DevfileObj{}, err
 	}
 
 	// Successful
@@ -109,38 +112,7 @@ func parseParent(d DevfileObj) error {
 		return err
 	}
 
-	for _, command := range result.Commands {
-		fmt.Println(">>> API command is " + command.Id)
-		if command.Id == "buildAndMkdir" {
-			fmt.Println("API composite commands: " + strings.Join(command.Composite.Commands, " "))
-		}
-	}
-
 	parentData.Data.SetDevfileWorkspace(*result)
-
-	// // fmt.Println("parent Data", parentData)
-	// klog.V(4).Infof("overriding data of devfile with URI: %v", parent.Uri)
-
-	// // override the parent's components, commands, projects and events
-	// err = parentData.OverrideComponents(d.Data.GetParent().Components)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = parentData.OverrideCommands(d.Data.GetParent().Commands)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = parentData.OverrideProjects(d.Data.GetParent().Projects)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = parentData.OverrideStarterProjects(d.Data.GetParent().StarterProjects)
-	// if err != nil {
-	// 	return err
-	// }
 
 	klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
 
@@ -177,4 +149,54 @@ func parseParent(d DevfileObj) error {
 		return errors.Wrapf(err, "error while adding events from the parent devfiles")
 	}
 	return nil
+}
+
+func parsePlugin(d DevfileObj) (err error) {
+
+	for _, component := range d.Data.GetComponents() {
+		if component.Plugin != nil && !reflect.DeepEqual(component.Plugin, &v1.PluginComponent{}) {
+			plugin := component.Plugin
+			var pluginData DevfileObj
+			if plugin.Uri != "" {
+				pluginData, err = ParseFromURL(plugin.Uri)
+				if err != nil {
+					return err
+				}
+			}
+			pluginWorkspaceContent := pluginData.Data.GetDevfileWorkspace()
+			result, err := apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin)
+			if err != nil {
+				return err
+			}
+			pluginData.Data.SetDevfileWorkspace(*result)
+			klog.V(4).Infof("adding data of devfile with URI: %v", plugin.Uri)
+			// since the plugin's data has been overriden
+			// add the items back to the current devfile
+			// error indicates that the item has been defined again in the current devfile
+			commandsMap := pluginData.Data.GetCommands()
+			commands := make([]v1.Command, 0, len(commandsMap))
+			for _, command := range commandsMap {
+				commands = append(commands, command)
+			}
+
+			// plugin component contributes components, commands and events
+			err = d.Data.AddCommands(commands...)
+			if err != nil {
+				return errors.Wrapf(err, "error while adding commands from the plugin devfiles")
+			}
+
+			err = d.Data.AddComponents(pluginData.Data.GetComponents())
+			if err != nil {
+				return errors.Wrapf(err, "error while adding components from the plugin devfiles")
+			}
+
+			err = d.Data.AddEvents(pluginData.Data.GetEvents())
+			if err != nil {
+				return errors.Wrapf(err, "error while adding events from the plugin devfiles")
+			}
+			return nil
+		}
+	}
+	return nil
+
 }
