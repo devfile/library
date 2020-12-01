@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 func TestDevfile200_GetCommands(t *testing.T) {
@@ -48,10 +49,17 @@ func TestDevfile200_GetCommands(t *testing.T) {
 				},
 			}
 
-			commandsMap := d.GetCommands()
+			commands := d.GetCommands(common.DevfileOptions{})
 
 			for _, wantCommand := range tt.wantCommands {
-				if _, ok := commandsMap[wantCommand]; !ok {
+				matched := false
+				for _, devfileCommand := range commands {
+					if wantCommand == devfileCommand.Id {
+						matched = true
+					}
+				}
+
+				if !matched {
 					t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the devfile", wantCommand)
 				}
 			}
@@ -191,15 +199,29 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 
 			d.UpdateCommand(tt.newCommand)
 
-			commandsMap := d.GetCommands()
+			commands := d.GetCommands(common.DevfileOptions{})
 
-			if updatedCommand, ok := commandsMap[tt.newCommand.Id]; ok {
-				if !reflect.DeepEqual(updatedCommand, tt.newCommand) {
-					t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, updatedCommand)
+			matched := false
+			for _, devfileCommand := range commands {
+				if tt.newCommand.Id == devfileCommand.Id {
+					matched = true
+					if !reflect.DeepEqual(devfileCommand, tt.newCommand) {
+						t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, devfileCommand)
+					}
 				}
-			} else {
+			}
+
+			if !matched {
 				t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
 			}
+
+			// if updatedCommand, ok := commandsMap[tt.newCommand.Id]; ok {
+			// 	if !reflect.DeepEqual(updatedCommand, tt.newCommand) {
+			// 		t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, updatedCommand)
+			// 	}
+			// } else {
+			// 	t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
+			// }
 		})
 	}
 }

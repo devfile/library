@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 )
 
@@ -152,7 +153,7 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 
 			d.UpdateComponent(tt.newComponent)
 
-			components := d.GetComponents()
+			components := d.GetComponents(common.DevfileOptions{})
 
 			matched := false
 			for _, component := range components {
@@ -213,7 +214,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 				},
 			}
 
-			devfileComponents := d.GetDevfileContainerComponents()
+			devfileComponents := d.GetDevfileContainerComponents(common.DevfileOptions{})
 
 			if len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
@@ -266,7 +267,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 					},
 				},
 			}
-			devfileComponents := d.GetDevfileVolumeComponents()
+			devfileComponents := d.GetDevfileVolumeComponents(common.DevfileOptions{})
 
 			if len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))

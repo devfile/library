@@ -6,14 +6,27 @@ import (
 )
 
 // GetComponents returns the slice of Component objects parsed from the Devfile
-func (d *DevfileV2) GetComponents() []v1.Component {
-	return d.Components
+func (d *DevfileV2) GetComponents(options common.DevfileOptions) []v1.Component {
+	if len(options.Filter) == 0 {
+		return d.Components
+	}
+
+	var components []v1.Component
+	for _, comp := range d.Components {
+		filterIn, _ := common.FilterDevfileObject(comp.Attributes, options)
+
+		if filterIn {
+			components = append(components, comp)
+		}
+	}
+
+	return components
 }
 
 // GetDevfileContainerComponents iterates through the components in the devfile and returns a list of devfile container components
-func (d *DevfileV2) GetDevfileContainerComponents() []v1.Component {
+func (d *DevfileV2) GetDevfileContainerComponents(options common.DevfileOptions) []v1.Component {
 	var components []v1.Component
-	for _, comp := range d.GetComponents() {
+	for _, comp := range d.GetComponents(options) {
 		if comp.Container != nil {
 			components = append(components, comp)
 		}
@@ -22,9 +35,9 @@ func (d *DevfileV2) GetDevfileContainerComponents() []v1.Component {
 }
 
 // GetDevfileVolumeComponents iterates through the components in the devfile and returns a list of devfile volume components
-func (d *DevfileV2) GetDevfileVolumeComponents() []v1.Component {
+func (d *DevfileV2) GetDevfileVolumeComponents(options common.DevfileOptions) []v1.Component {
 	var components []v1.Component
-	for _, comp := range d.GetComponents() {
+	for _, comp := range d.GetComponents(options) {
 		if comp.Volume != nil {
 			components = append(components, comp)
 		}

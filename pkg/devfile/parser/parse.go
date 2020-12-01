@@ -5,6 +5,7 @@ import (
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 
 	"reflect"
 
@@ -127,7 +128,7 @@ func parseParent(d DevfileObj) error {
 	// since the parent's data has been overriden
 	// add the items back to the current devfile
 	// error indicates that the item has been defined again in the current devfile
-	commandsMap := parentData.Data.GetCommands()
+	commandsMap := parentData.Data.GetCommands(common.DevfileOptions{})
 	commands := make([]v1.Command, 0, len(commandsMap))
 	for _, command := range commandsMap {
 		commands = append(commands, command)
@@ -137,17 +138,17 @@ func parseParent(d DevfileObj) error {
 		return errors.Wrapf(err, "error while adding commands from the parent devfiles")
 	}
 
-	err = d.Data.AddComponents(parentData.Data.GetComponents())
+	err = d.Data.AddComponents(parentData.Data.GetComponents(common.DevfileOptions{}))
 	if err != nil {
 		return errors.Wrapf(err, "error while adding components from the parent devfiles")
 	}
 
-	err = d.Data.AddProjects(parentData.Data.GetProjects())
+	err = d.Data.AddProjects(parentData.Data.GetProjects(common.DevfileOptions{}))
 	if err != nil {
 		return errors.Wrapf(err, "error while adding projects from the parent devfiles")
 	}
 
-	err = d.Data.AddStarterProjects(parentData.Data.GetStarterProjects())
+	err = d.Data.AddStarterProjects(parentData.Data.GetStarterProjects(common.DevfileOptions{}))
 	if err != nil {
 		return errors.Wrapf(err, "error while adding starter projects from the parent devfiles")
 	}

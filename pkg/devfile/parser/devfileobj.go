@@ -8,6 +8,7 @@ import (
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
@@ -34,7 +35,7 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 	// func (d DevfileObj) OverrideComponents(overridePatch interface{}) error {
 	for _, patchComponent := range overridePatch {
 		found := false
-		for _, originalComponent := range d.Data.GetComponents() {
+		for _, originalComponent := range d.Data.GetComponents(common.DevfileOptions{}) {
 			if strings.ToLower(patchComponent.Name) == originalComponent.Name {
 				found = true
 
@@ -69,7 +70,7 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) (err error) {
 	for _, patchCommand := range overridePatch {
 		found := false
-		for _, originalCommand := range d.Data.GetCommands() {
+		for _, originalCommand := range d.Data.GetCommands(common.DevfileOptions{}) {
 
 			if strings.ToLower(patchCommand.Id) == originalCommand.Id {
 				found = true
@@ -151,7 +152,7 @@ func overrideExecCommand(patchCommand v1.CommandParentOverride, originalCommand 
 func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) error {
 	for _, patchProject := range overridePatch {
 		found := false
-		for _, originalProject := range d.Data.GetProjects() {
+		for _, originalProject := range d.Data.GetProjects(common.DevfileOptions{}) {
 			if strings.ToLower(patchProject.Name) == originalProject.Name {
 				found = true
 				var updatedProject v1.Project
@@ -181,7 +182,7 @@ func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) e
 func (d DevfileObj) OverrideStarterProjects(overridePatch []v1.StarterProjectParentOverride) error {
 	for _, patchProject := range overridePatch {
 		found := false
-		for _, originalProject := range d.Data.GetStarterProjects() {
+		for _, originalProject := range d.Data.GetStarterProjects(common.DevfileOptions{}) {
 			if strings.ToLower(patchProject.Name) == originalProject.Name {
 				found = true
 				var updatedProject v1.StarterProject

@@ -7,6 +7,7 @@ import (
 	devfilepkg "github.com/devfile/library/pkg/devfile"
 	"github.com/devfile/library/pkg/devfile/parser"
 	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 func main() {
@@ -17,20 +18,39 @@ func main() {
 		devdata := devfile.Data
 		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v2.DevfileV2{})) {
 			d := devdata.(*v2.DevfileV2)
-			fmt.Println(d.SchemaVersion)
+			fmt.Printf("schema version: %s\n", d.SchemaVersion)
 		}
 
-		for _, component := range devfile.Data.GetComponents() {
+		compOptions := common.DevfileOptions{
+			Filter: map[string]interface{}{
+				"first": "a",
+				"last":  "c",
+				// "middle": "b",
+				// "name": map[string]interface{}{
+				// 	"first": "a",
+				// },
+			},
+		}
+
+		for _, component := range devfile.Data.GetComponents(compOptions) {
 			if component.Container != nil {
-				fmt.Println(component.Container.Image)
+				fmt.Printf("component container: %s\n", component.Name)
 			}
 		}
 
-		for _, command := range devfile.Data.GetCommands() {
+		for _, command := range devfile.Data.GetCommands(compOptions) {
 			if command.Exec != nil {
-				fmt.Println(command.Exec.Group.Kind)
+				fmt.Printf("exec command kind: %s\n", command.Exec.Group.Kind)
 			}
 		}
+
+		var err error
+		metadataAttr := devfile.Data.GetMetadata().Attributes
+		dockerfilePath := metadataAttr.GetString("alpha.build-dockerfile", &err)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		fmt.Printf("dockerfilePath: %s\n", dockerfilePath)
 	}
 
 }

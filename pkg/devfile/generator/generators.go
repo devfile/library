@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/devfile/library/pkg/devfile/parser"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 const (
@@ -49,9 +50,9 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 }
 
 // GetContainers iterates through the devfile components and returns a slice of the corresponding containers
-func GetContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
+func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) ([]corev1.Container, error) {
 	var containers []corev1.Container
-	for _, comp := range devfileObj.Data.GetDevfileContainerComponents() {
+	for _, comp := range devfileObj.Data.GetDevfileContainerComponents(options) {
 		envVars := convertEnvs(comp.Container.Env)
 		resourceReqs := getResourceReqs(comp)
 		ports := convertPorts(comp.Container.Endpoints)
@@ -71,7 +72,7 @@ func GetContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 		if comp.Container.MountSources == nil || *comp.Container.MountSources {
 			syncRootFolder := addSyncRootFolder(container, comp.Container.SourceMapping)
 
-			err := addSyncFolder(container, syncRootFolder, devfileObj.Data.GetProjects())
+			err := addSyncFolder(container, syncRootFolder, devfileObj.Data.GetProjects(common.DevfileOptions{}))
 			if err != nil {
 				return nil, err
 			}

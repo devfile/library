@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/util"
 	buildv1 "github.com/openshift/api/build/v1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -197,7 +198,7 @@ func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 
 	var containerPorts []corev1.ContainerPort
 	portExposureMap := getPortExposure(devfileObj)
-	containers, err := GetContainers(devfileObj)
+	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +241,7 @@ func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 // exposure level: public > internal > none
 func getPortExposure(devfileObj parser.DevfileObj) map[int]v1.EndpointExposure {
 	portExposureMap := make(map[int]v1.EndpointExposure)
-	containerComponents := devfileObj.Data.GetDevfileContainerComponents()
+	containerComponents := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
 	for _, comp := range containerComponents {
 		for _, endpoint := range comp.Container.Endpoints {
 			// if exposure=public, no need to check for existence

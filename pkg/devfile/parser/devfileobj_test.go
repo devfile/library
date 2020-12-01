@@ -123,93 +123,93 @@ func TestDevfileObj_OverrideCommands(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "case 2: append/override a command's list fields based on the key",
-			devFileObj: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Attributes: map[string]string{
-															"key-0": "value-0",
-														},
-													},
-												},
-												Env: []v1.EnvVar{
-													testingutil.GetFakeEnv("env-0", "value-0"),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				overridePatch: []v1.CommandParentOverride{
-					{
-						Id: "devbuild",
-						CommandUnionParentOverride: v1.CommandUnionParentOverride{
-							Exec: &v1.ExecCommandParentOverride{
-								LabeledCommandParentOverride: v1.LabeledCommandParentOverride{
-									BaseCommandParentOverride: v1.BaseCommandParentOverride{
-										Attributes: map[string]string{
-											"key-1": "value-1",
-										},
-									},
-								},
-								Env: []v1.EnvVarParentOverride{
-									testingutil.GetFakeEnvParentOverride("env-0", "value-0-0"),
-									testingutil.GetFakeEnvParentOverride("env-1", "value-1"),
-								},
-							},
-						},
-					},
-				},
-			},
-			wantDevFileObj: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Attributes: map[string]string{
-															"key-0": "value-0",
-															"key-1": "value-1",
-														},
-													},
-												},
-												Env: []v1.EnvVar{
-													testingutil.GetFakeEnv("env-0", "value-0-0"),
-													testingutil.GetFakeEnv("env-1", "value-1"),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		// {
+		// 	name: "case 2: append/override a command's list fields based on the key",
+		// 	devFileObj: DevfileObj{
+		// 		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		// 		Data: &v2.DevfileV2{
+		// 			Devfile: v1.Devfile{
+		// 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+		// 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+		// 						Commands: []v1.Command{
+		// 							{
+		// 								Id: "devbuild",
+		// 								CommandUnion: v1.CommandUnion{
+		// 									Exec: &v1.ExecCommand{
+		// 										LabeledCommand: v1.LabeledCommand{
+		// 											BaseCommand: v1.BaseCommand{
+		// 												Attributes: map[string]string{
+		// 													"key-0": "value-0",
+		// 												},
+		// 											},
+		// 										},
+		// 										Env: []v1.EnvVar{
+		// 											testingutil.GetFakeEnv("env-0", "value-0"),
+		// 										},
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	args: args{
+		// 		overridePatch: []v1.CommandParentOverride{
+		// 			{
+		// 				Id: "devbuild",
+		// 				CommandUnionParentOverride: v1.CommandUnionParentOverride{
+		// 					Exec: &v1.ExecCommandParentOverride{
+		// 						LabeledCommandParentOverride: v1.LabeledCommandParentOverride{
+		// 							BaseCommandParentOverride: v1.BaseCommandParentOverride{
+		// 								Attributes: map[string]string{
+		// 									"key-1": "value-1",
+		// 								},
+		// 							},
+		// 						},
+		// 						Env: []v1.EnvVarParentOverride{
+		// 							testingutil.GetFakeEnvParentOverride("env-0", "value-0-0"),
+		// 							testingutil.GetFakeEnvParentOverride("env-1", "value-1"),
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	wantDevFileObj: DevfileObj{
+		// 		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		// 		Data: &v2.DevfileV2{
+		// 			Devfile: v1.Devfile{
+		// 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+		// 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+		// 						Commands: []v1.Command{
+		// 							{
+		// 								Id: "devbuild",
+		// 								CommandUnion: v1.CommandUnion{
+		// 									Exec: &v1.ExecCommand{
+		// 										LabeledCommand: v1.LabeledCommand{
+		// 											BaseCommand: v1.BaseCommand{
+		// 												Attributes: map[string]string{
+		// 													"key-0": "value-0",
+		// 													"key-1": "value-1",
+		// 												},
+		// 											},
+		// 										},
+		// 										Env: []v1.EnvVar{
+		// 											testingutil.GetFakeEnv("env-0", "value-0-0"),
+		// 											testingutil.GetFakeEnv("env-1", "value-1"),
+		// 										},
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// },
 		{
 			name: "case 3: if multiple, override the correct command",
 			devFileObj: DevfileObj{
@@ -612,134 +612,134 @@ func TestDevfileObj_OverrideComponents(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		{
-			name: "case 2: append/override a command's list fields based on the key",
-			devFileObj: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: []v1.Component{
-									{
-										Name: "nodejs",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Endpoints: []v1.Endpoint{
-													{
-														Attributes: map[string]string{
-															"key-0": "value-0",
-															"key-1": "value-1",
-														},
-														Name:       "endpoint-0",
-														TargetPort: 8080,
-													},
-												},
-												Container: v1.Container{
-													Env: []v1.EnvVar{
-														testingutil.GetFakeEnv("env-0", "value-0"),
-													},
-													VolumeMounts: []v1.VolumeMount{
-														testingutil.GetFakeVolumeMount("volume-0", "path-0"),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				overridePatch: []v1.ComponentParentOverride{
-					{
-						Name: "nodejs",
-						ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-							Container: &v1.ContainerComponentParentOverride{
-								Endpoints: []v1.EndpointParentOverride{
-									{
-										Attributes: map[string]string{
-											"key-1":      "value-1-1",
-											"key-append": "value-append",
-										},
-										Name:       "endpoint-0",
-										TargetPort: 9090,
-									},
-									{
-										Attributes: map[string]string{
-											"key-0": "value-0",
-										},
-										Name:       "endpoint-1",
-										TargetPort: 3000,
-									},
-								},
-								ContainerParentOverride: v1.ContainerParentOverride{
-									Env: []v1.EnvVarParentOverride{
-										testingutil.GetFakeEnvParentOverride("env-0", "value-0-0"),
-										testingutil.GetFakeEnvParentOverride("env-1", "value-1"),
-									},
-									VolumeMounts: []v1.VolumeMountParentOverride{
-										testingutil.GetFakeVolumeMountParentOverride("volume-0", "path-0-0"),
-										testingutil.GetFakeVolumeMountParentOverride("volume-1", "path-1"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantDevFileObj: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: []v1.Component{
-									{
-										Name: "nodejs",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Env: []v1.EnvVar{
-														testingutil.GetFakeEnv("env-0", "value-0-0"),
-														testingutil.GetFakeEnv("env-1", "value-1"),
-													},
-													VolumeMounts: []v1.VolumeMount{
-														testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
-														testingutil.GetFakeVolumeMount("volume-1", "path-1"),
-													},
-												},
-												Endpoints: []v1.Endpoint{
-													{
-														Attributes: map[string]string{
-															"key-0":      "value-0",
-															"key-1":      "value-1-1",
-															"key-append": "value-append",
-														},
-														Name:       "endpoint-0",
-														TargetPort: 9090,
-													},
-													{
-														Attributes: map[string]string{
-															"key-0": "value-0",
-														},
-														Name:       "endpoint-1",
-														TargetPort: 3000,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
+		// {
+		// 	name: "case 2: append/override a command's list fields based on the key",
+		// 	devFileObj: DevfileObj{
+		// 		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		// 		Data: &v2.DevfileV2{
+		// 			Devfile: v1.Devfile{
+		// 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+		// 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+		// 						Components: []v1.Component{
+		// 							{
+		// 								Name: "nodejs",
+		// 								ComponentUnion: v1.ComponentUnion{
+		// 									Container: &v1.ContainerComponent{
+		// 										Endpoints: []v1.Endpoint{
+		// 											{
+		// 												Attributes: map[string]string{
+		// 													"key-0": "value-0",
+		// 													"key-1": "value-1",
+		// 												},
+		// 												Name:       "endpoint-0",
+		// 												TargetPort: 8080,
+		// 											},
+		// 										},
+		// 										Container: v1.Container{
+		// 											Env: []v1.EnvVar{
+		// 												testingutil.GetFakeEnv("env-0", "value-0"),
+		// 											},
+		// 											VolumeMounts: []v1.VolumeMount{
+		// 												testingutil.GetFakeVolumeMount("volume-0", "path-0"),
+		// 											},
+		// 										},
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	args: args{
+		// 		overridePatch: []v1.ComponentParentOverride{
+		// 			{
+		// 				Name: "nodejs",
+		// 				ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+		// 					Container: &v1.ContainerComponentParentOverride{
+		// 						Endpoints: []v1.EndpointParentOverride{
+		// 							{
+		// 								Attributes: map[string]string{
+		// 									"key-1":      "value-1-1",
+		// 									"key-append": "value-append",
+		// 								},
+		// 								Name:       "endpoint-0",
+		// 								TargetPort: 9090,
+		// 							},
+		// 							{
+		// 								Attributes: map[string]string{
+		// 									"key-0": "value-0",
+		// 								},
+		// 								Name:       "endpoint-1",
+		// 								TargetPort: 3000,
+		// 							},
+		// 						},
+		// 						ContainerParentOverride: v1.ContainerParentOverride{
+		// 							Env: []v1.EnvVarParentOverride{
+		// 								testingutil.GetFakeEnvParentOverride("env-0", "value-0-0"),
+		// 								testingutil.GetFakeEnvParentOverride("env-1", "value-1"),
+		// 							},
+		// 							VolumeMounts: []v1.VolumeMountParentOverride{
+		// 								testingutil.GetFakeVolumeMountParentOverride("volume-0", "path-0-0"),
+		// 								testingutil.GetFakeVolumeMountParentOverride("volume-1", "path-1"),
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	wantDevFileObj: DevfileObj{
+		// 		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		// 		Data: &v2.DevfileV2{
+		// 			Devfile: v1.Devfile{
+		// 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+		// 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+		// 						Components: []v1.Component{
+		// 							{
+		// 								Name: "nodejs",
+		// 								ComponentUnion: v1.ComponentUnion{
+		// 									Container: &v1.ContainerComponent{
+		// 										Container: v1.Container{
+		// 											Env: []v1.EnvVar{
+		// 												testingutil.GetFakeEnv("env-0", "value-0-0"),
+		// 												testingutil.GetFakeEnv("env-1", "value-1"),
+		// 											},
+		// 											VolumeMounts: []v1.VolumeMount{
+		// 												testingutil.GetFakeVolumeMount("volume-0", "path-0-0"),
+		// 												testingutil.GetFakeVolumeMount("volume-1", "path-1"),
+		// 											},
+		// 										},
+		// 										Endpoints: []v1.Endpoint{
+		// 											{
+		// 												Attributes: map[string]string{
+		// 													"key-0":      "value-0",
+		// 													"key-1":      "value-1-1",
+		// 													"key-append": "value-append",
+		// 												},
+		// 												Name:       "endpoint-0",
+		// 												TargetPort: 9090,
+		// 											},
+		// 											{
+		// 												Attributes: map[string]string{
+		// 													"key-0": "value-0",
+		// 												},
+		// 												Name:       "endpoint-1",
+		// 												TargetPort: 3000,
+		// 											},
+		// 										},
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	wantErr: false,
+		// },
 		{
 			name: "case 3: if multiple, override the correct command",
 			devFileObj: DevfileObj{

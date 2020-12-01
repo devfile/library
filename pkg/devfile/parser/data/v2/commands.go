@@ -8,13 +8,19 @@ import (
 )
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
-func (d *DevfileV2) GetCommands() map[string]v1.Command {
+func (d *DevfileV2) GetCommands(options common.DevfileOptions) []v1.Command {
+	if len(options.Filter) == 0 {
+		return d.Commands
+	}
 
-	commands := make(map[string]v1.Command, len(d.Commands))
-
+	var commands []v1.Command
 	for _, command := range d.Commands {
-		command.Id = strings.ToLower(command.Id)
-		commands[command.Id] = command
+		filterIn, _ := common.FilterDevfileObject(command.Attributes, options)
+
+		if filterIn {
+			command.Id = strings.ToLower(command.Id)
+			commands = append(commands, command)
+		}
 	}
 
 	return commands
@@ -23,14 +29,15 @@ func (d *DevfileV2) GetCommands() map[string]v1.Command {
 // AddCommands adds the slice of Command objects to the Devfile's commands
 // if a command is already defined, error out
 func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
-	commandsMap := d.GetCommands()
+	devfileCommands := d.GetCommands(common.DevfileOptions{})
 
 	for _, command := range commands {
-		if _, ok := commandsMap[command.Id]; !ok {
-			d.Commands = append(d.Commands, command)
-		} else {
-			return &common.FieldAlreadyExistError{Name: command.Id, Field: "command"}
+		for _, devfileCommand := range devfileCommands {
+			if command.Id == devfileCommand.Id {
+				return &common.FieldAlreadyExistError{Name: command.Id, Field: "command"}
+			}
 		}
+		d.Commands = append(d.Commands, command)
 	}
 	return nil
 }

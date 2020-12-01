@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 
 	corev1 "k8s.io/api/core/v1"
@@ -131,7 +132,7 @@ func TestGetContainers(t *testing.T) {
 				},
 			}
 
-			containers, err := GetContainers(devObj)
+			containers, err := GetContainers(devObj, common.DevfileOptions{})
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetContainers() error = %v, wantErr %v", err, tt.wantErr)
