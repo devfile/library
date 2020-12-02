@@ -926,7 +926,7 @@ func TestGetPortExposure(t *testing.T) {
 					Components: tt.containerComponents,
 				},
 			}
-			mapCreated := getPortExposure(devObj)
+			mapCreated, _ := getPortExposure(devObj)
 			if !reflect.DeepEqual(mapCreated, tt.wantMap) {
 				t.Errorf("Expected: %v, got %v", tt.wantMap, mapCreated)
 			}

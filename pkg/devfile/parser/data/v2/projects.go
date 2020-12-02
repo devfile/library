@@ -8,21 +8,24 @@ import (
 )
 
 // GetProjects returns the Project Object parsed from devfile
-func (d *DevfileV2) GetProjects(options common.DevfileOptions) []v1.Project {
+func (d *DevfileV2) GetProjects(options common.DevfileOptions) ([]v1.Project, error) {
 	if len(options.Filter) == 0 {
-		return d.Projects
+		return d.Projects, nil
 	}
 
 	var projects []v1.Project
 	for _, proj := range d.Projects {
-		filterIn, _ := common.FilterDevfileObject(proj.Attributes, options)
+		filterIn, err := common.FilterDevfileObject(proj.Attributes, options)
+		if err != nil {
+			return nil, err
+		}
 
 		if filterIn {
 			projects = append(projects, proj)
 		}
 	}
 
-	return projects
+	return projects, nil
 }
 
 // AddProjects adss the slice of Devfile projects to the Devfile's project list
@@ -53,21 +56,24 @@ func (d *DevfileV2) UpdateProject(project v1.Project) {
 }
 
 //GetStarterProjects returns the DevfileStarterProject parsed from devfile
-func (d *DevfileV2) GetStarterProjects(options common.DevfileOptions) []v1.StarterProject {
+func (d *DevfileV2) GetStarterProjects(options common.DevfileOptions) ([]v1.StarterProject, error) {
 	if len(options.Filter) == 0 {
-		return d.StarterProjects
+		return d.StarterProjects, nil
 	}
 
-	var projects []v1.StarterProject
-	for _, proj := range d.StarterProjects {
-		filterIn, _ := common.FilterDevfileObject(proj.Attributes, options)
+	var starterProjects []v1.StarterProject
+	for _, starterProj := range d.StarterProjects {
+		filterIn, err := common.FilterDevfileObject(starterProj.Attributes, options)
+		if err != nil {
+			return nil, err
+		}
 
 		if filterIn {
-			projects = append(projects, proj)
+			starterProjects = append(starterProjects, starterProj)
 		}
 	}
 
-	return projects
+	return starterProjects, nil
 }
 
 // AddStarterProjects adds the slice of Devfile starter projects to the Devfile's starter project list

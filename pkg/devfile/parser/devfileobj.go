@@ -35,7 +35,11 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 	// func (d DevfileObj) OverrideComponents(overridePatch interface{}) error {
 	for _, patchComponent := range overridePatch {
 		found := false
-		for _, originalComponent := range d.Data.GetComponents(common.DevfileOptions{}) {
+		originalComponents, err := d.Data.GetComponents(common.DevfileOptions{})
+		if err != nil {
+			return err
+		}
+		for _, originalComponent := range originalComponents {
 			if strings.ToLower(patchComponent.Name) == originalComponent.Name {
 				found = true
 
@@ -70,7 +74,11 @@ func (d DevfileObj) OverrideComponents(overridePatch []v1.ComponentParentOverrid
 func (d DevfileObj) OverrideCommands(overridePatch []v1.CommandParentOverride) (err error) {
 	for _, patchCommand := range overridePatch {
 		found := false
-		for _, originalCommand := range d.Data.GetCommands(common.DevfileOptions{}) {
+		originalCommands, err := d.Data.GetCommands(common.DevfileOptions{})
+		if err != nil {
+			return err
+		}
+		for _, originalCommand := range originalCommands {
 
 			if strings.ToLower(patchCommand.Id) == originalCommand.Id {
 				found = true
@@ -152,7 +160,11 @@ func overrideExecCommand(patchCommand v1.CommandParentOverride, originalCommand 
 func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) error {
 	for _, patchProject := range overridePatch {
 		found := false
-		for _, originalProject := range d.Data.GetProjects(common.DevfileOptions{}) {
+		originalProjects, err := d.Data.GetProjects(common.DevfileOptions{})
+		if err != nil {
+			return err
+		}
+		for _, originalProject := range originalProjects {
 			if strings.ToLower(patchProject.Name) == originalProject.Name {
 				found = true
 				var updatedProject v1.Project
@@ -182,7 +194,12 @@ func (d DevfileObj) OverrideProjects(overridePatch []v1.ProjectParentOverride) e
 func (d DevfileObj) OverrideStarterProjects(overridePatch []v1.StarterProjectParentOverride) error {
 	for _, patchProject := range overridePatch {
 		found := false
-		for _, originalProject := range d.Data.GetStarterProjects(common.DevfileOptions{}) {
+
+		originalProjects, err := d.Data.GetStarterProjects(common.DevfileOptions{})
+		if err != nil {
+			return err
+		}
+		for _, originalProject := range originalProjects {
 			if strings.ToLower(patchProject.Name) == originalProject.Name {
 				found = true
 				var updatedProject v1.StarterProject

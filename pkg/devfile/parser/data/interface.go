@@ -23,22 +23,22 @@ type DevfileData interface {
 	UpdateEvents(postStart, postStop, preStart, preStop []string)
 
 	// component related methods
-	GetComponents(common.DevfileOptions) []v1.Component
+	GetComponents(common.DevfileOptions) ([]v1.Component, error)
 	AddComponents(components []v1.Component) error
 	UpdateComponent(component v1.Component)
 
 	// project related methods
-	GetProjects(common.DevfileOptions) []v1.Project
+	GetProjects(common.DevfileOptions) ([]v1.Project, error)
 	AddProjects(projects []v1.Project) error
 	UpdateProject(project v1.Project)
 
 	// starter projects related commands
-	GetStarterProjects(common.DevfileOptions) []v1.StarterProject
+	GetStarterProjects(common.DevfileOptions) ([]v1.StarterProject, error)
 	AddStarterProjects(projects []v1.StarterProject) error
 	UpdateStarterProject(project v1.StarterProject)
 
 	// command related methods
-	GetCommands(common.DevfileOptions) []v1.Command
+	GetCommands(common.DevfileOptions) ([]v1.Command, error)
 	AddCommands(commands ...v1.Command) error
 	UpdateCommand(command v1.Command)
 
@@ -48,6 +48,6 @@ type DevfileData interface {
 	GetVolumeMountPath(name string) (string, error)
 
 	//utils
-	GetDevfileContainerComponents(common.DevfileOptions) []v1.Component
-	GetDevfileVolumeComponents(common.DevfileOptions) []v1.Component
+	GetDevfileContainerComponents(common.DevfileOptions) ([]v1.Component, error)
+	GetDevfileVolumeComponents(common.DevfileOptions) ([]v1.Component, error)
 }

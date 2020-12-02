@@ -23,22 +23,35 @@ func main() {
 
 		compOptions := common.DevfileOptions{
 			Filter: map[string]interface{}{
-				"first": "a",
-				"last":  "c",
-				// "middle": "b",
-				// "name": map[string]interface{}{
-				// 	"first": "a",
-				// },
+				"tool": "console-import",
+				"import": map[string]interface{}{
+					"strategy": "Dockerfile",
+				},
 			},
 		}
 
-		for _, component := range devfile.Data.GetComponents(compOptions) {
+		components, e := devfile.Data.GetComponents(compOptions)
+		if e != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+
+		for _, component := range components {
 			if component.Container != nil {
 				fmt.Printf("component container: %s\n", component.Name)
 			}
 		}
 
-		for _, command := range devfile.Data.GetCommands(compOptions) {
+		cmdOptions := common.DevfileOptions{
+			Filter: map[string]interface{}{
+				"tool": "odo",
+			},
+		}
+
+		commands, e := devfile.Data.GetCommands(cmdOptions)
+		if e != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		for _, command := range commands {
 			if command.Exec != nil {
 				fmt.Printf("exec command kind: %s\n", command.Exec.Group.Kind)
 			}

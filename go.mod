@@ -17,11 +17,8 @@ require (
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f // indirect
-	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
 	k8s.io/klog v1.0.0
-	sigs.k8s.io/structured-merge-diff v1.0.1-0.20191108220359-b1b620dd3f06 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )

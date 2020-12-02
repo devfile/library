@@ -8,14 +8,17 @@ import (
 )
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
-func (d *DevfileV2) GetCommands(options common.DevfileOptions) []v1.Command {
+func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, error) {
 	if len(options.Filter) == 0 {
-		return d.Commands
+		return d.Commands, nil
 	}
 
 	var commands []v1.Command
 	for _, command := range d.Commands {
-		filterIn, _ := common.FilterDevfileObject(command.Attributes, options)
+		filterIn, err := common.FilterDevfileObject(command.Attributes, options)
+		if err != nil {
+			return nil, err
+		}
 
 		if filterIn {
 			command.Id = strings.ToLower(command.Id)
@@ -23,13 +26,16 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) []v1.Command {
 		}
 	}
 
-	return commands
+	return commands, nil
 }
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
 // if a command is already defined, error out
 func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
-	devfileCommands := d.GetCommands(common.DevfileOptions{})
+	devfileCommands, err := d.GetCommands(common.DevfileOptions{})
+	if err != nil {
+		return err
+	}
 
 	for _, command := range commands {
 		for _, devfileCommand := range devfileCommands {

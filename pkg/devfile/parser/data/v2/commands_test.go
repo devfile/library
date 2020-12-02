@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
@@ -16,7 +17,9 @@ func TestDevfile200_GetCommands(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentCommands []v1.Command
+		filterOptions   common.DevfileOptions
 		wantCommands    []string
+		wantErr         bool
 	}{
 		{
 			name: "case 1: get the necessary commands",
@@ -34,7 +37,74 @@ func TestDevfile200_GetCommands(t *testing.T) {
 					},
 				},
 			},
-			wantCommands: []string{"command1", "command2"},
+			filterOptions: common.DevfileOptions{},
+			wantCommands:  []string{"command1", "command2"},
+			wantErr:       false,
+		},
+		{
+			name: "case 2: get the filtered commands",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString":  "firstStringValue",
+					"secondString": "secondStringValue",
+				},
+			},
+			wantCommands: []string{"command1"},
+			wantErr:      false,
+		},
+		{
+			name: "case 3: get the wrong filtered commands",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstStringIsWrong": "firstStringValue",
+				},
+			},
+			wantCommands: []string{},
+			wantErr:      false,
 		},
 	}
 	for _, tt := range tests {
@@ -49,7 +119,16 @@ func TestDevfile200_GetCommands(t *testing.T) {
 				},
 			}
 
-			commands := d.GetCommands(common.DevfileOptions{})
+			commands, err := d.GetCommands(tt.filterOptions)
+			if !tt.wantErr && err != nil {
+				t.Errorf("TestDevfile200_GetCommands() unexpected error - %v", err)
+				return
+			} else if tt.wantErr && err == nil {
+				t.Errorf("TestDevfile200_GetCommands() expected an error but got nil %v", commands)
+				return
+			} else if tt.wantErr && err != nil {
+				return
+			}
 
 			for _, wantCommand := range tt.wantCommands {
 				matched := false
@@ -199,7 +278,7 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 
 			d.UpdateCommand(tt.newCommand)
 
-			commands := d.GetCommands(common.DevfileOptions{})
+			commands, _ := d.GetCommands(common.DevfileOptions{})
 
 			matched := false
 			for _, devfileCommand := range commands {
@@ -214,14 +293,6 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 			if !matched {
 				t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
 			}
-
-			// if updatedCommand, ok := commandsMap[tt.newCommand.Id]; ok {
-			// 	if !reflect.DeepEqual(updatedCommand, tt.newCommand) {
-			// 		t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, updatedCommand)
-			// 	}
-			// } else {
-			// 	t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
-			// }
 		})
 	}
 }

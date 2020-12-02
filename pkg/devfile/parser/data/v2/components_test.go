@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 )
@@ -153,7 +154,7 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 
 			d.UpdateComponent(tt.newComponent)
 
-			components := d.GetComponents(common.DevfileOptions{})
+			components, _ := d.GetComponents(common.DevfileOptions{})
 
 			matched := false
 			for _, component := range components {
@@ -176,6 +177,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 		name                 string
 		component            []v1.Component
 		expectedMatchesCount int
+		filterOptions        common.DevfileOptions
 	}{
 		{
 			name:                 "Case 1: Invalid devfile",
@@ -200,6 +202,39 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 				testingutil.GetFakeContainerComponent("comp2"),
 			},
 			expectedMatchesCount: 2,
+			filterOptions:        common.DevfileOptions{},
+		},
+		{
+			name: "Case 4 : Get Container component with the specified filter",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString":  "firstStringValue",
+					"secondString": "secondStringValue",
+				},
+			},
+			expectedMatchesCount: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -214,7 +249,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 				},
 			}
 
-			devfileComponents := d.GetDevfileContainerComponents(common.DevfileOptions{})
+			devfileComponents, _ := d.GetDevfileContainerComponents(tt.filterOptions)
 
 			if len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
@@ -230,6 +265,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 		name                 string
 		component            []v1.Component
 		expectedMatchesCount int
+		filterOptions        common.DevfileOptions
 	}{
 		{
 			name:                 "Case 1: Invalid devfile",
@@ -255,6 +291,37 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 			},
 			expectedMatchesCount: 1,
 		},
+		{
+			name: "Case 4 : Get Container component with the specified filter",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+			expectedMatchesCount: 2,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -267,7 +334,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 					},
 				},
 			}
-			devfileComponents := d.GetDevfileVolumeComponents(common.DevfileOptions{})
+			devfileComponents, _ := d.GetDevfileVolumeComponents(tt.filterOptions)
 
 			if len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))

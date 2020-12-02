@@ -3,8 +3,7 @@ metadata:
   name: nodejs
   version: 1.0.0
   attributes:
-    alpha.build-dockerfile: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/build/Dockerfile
-    alpha.deployment-manifest: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/deploy/deployment-manifest.yaml
+    alpha.build-dockerfile: /relative/path/to/Dockerfile
 starterProjects:
 - name: nodejs-starter
   git:
@@ -13,8 +12,9 @@ starterProjects:
 components:
 - name: runtime
   attributes:
-    first: a
-    last: c
+    tool: console-import
+    import:
+      strategy: Dockerfile
   container:
     endpoints:
     - name: http-3000
@@ -25,9 +25,9 @@ components:
     sourceMapping: /project
 - name: runtime2
   attributes:
-    name:
-      first: a
-    middle: b
+    tool: odo
+    cli:
+      usage: deploy
   container:
     endpoints:
     - name: http-3000
@@ -38,10 +38,7 @@ components:
     sourceMapping: /project
 - name: runtime3
   attributes:
-    first: maysun
-    names:
-      first: a
-      middle: b
+    tool: workspace-operator
   container:
     endpoints:
     - name: http-3000
@@ -60,8 +57,8 @@ commands:
     workingDir: /project
   id: install
   attributes:
-    first: a
-    last: c
+    tool: odo
+    mandatory: false
 - exec:
     commandLine: npm start
     component: runtime
@@ -71,7 +68,8 @@ commands:
     workingDir: /project
   id: run
   attributes:
-    first: a
+    tool: odo
+    mandatory: true
 - exec:
     commandLine: npm run debug
     component: runtime

@@ -52,7 +52,11 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 // GetContainers iterates through the devfile components and returns a slice of the corresponding containers
 func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) ([]corev1.Container, error) {
 	var containers []corev1.Container
-	for _, comp := range devfileObj.Data.GetDevfileContainerComponents(options) {
+	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
+	if err != nil {
+		return nil, err
+	}
+	for _, comp := range containerComponents {
 		envVars := convertEnvs(comp.Container.Env)
 		resourceReqs := getResourceReqs(comp)
 		ports := convertPorts(comp.Container.Endpoints)
@@ -72,7 +76,11 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 		if comp.Container.MountSources == nil || *comp.Container.MountSources {
 			syncRootFolder := addSyncRootFolder(container, comp.Container.SourceMapping)
 
-			err := addSyncFolder(container, syncRootFolder, devfileObj.Data.GetProjects(common.DevfileOptions{}))
+			projects, err := devfileObj.Data.GetProjects(common.DevfileOptions{})
+			if err != nil {
+				return nil, err
+			}
+			err = addSyncFolder(container, syncRootFolder, projects)
 			if err != nil {
 				return nil, err
 			}

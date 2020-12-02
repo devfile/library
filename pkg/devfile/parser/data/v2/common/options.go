@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/devfile/api/pkg/attributes"
@@ -21,7 +20,6 @@ func FilterDevfileObject(attributes attributes.Attributes, options DevfileOption
 		currentFilterIn := false
 		attrValue := attributes.Get(key, &err)
 		if err != nil {
-			fmt.Printf(">>> MJF err is %v\n", err)
 			return false, err
 		} else if reflect.DeepEqual(attrValue, value) {
 			currentFilterIn = true

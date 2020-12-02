@@ -197,7 +197,10 @@ func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.Deployment
 func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
 
 	var containerPorts []corev1.ContainerPort
-	portExposureMap := getPortExposure(devfileObj)
+	portExposureMap, err := getPortExposure(devfileObj)
+	if err != nil {
+		return nil, err
+	}
 	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
 	if err != nil {
 		return nil, err
@@ -239,9 +242,12 @@ func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 
 // getPortExposure iterates through all endpoints and returns the highest exposure level of all TargetPort.
 // exposure level: public > internal > none
-func getPortExposure(devfileObj parser.DevfileObj) map[int]v1.EndpointExposure {
+func getPortExposure(devfileObj parser.DevfileObj) (map[int]v1.EndpointExposure, error) {
 	portExposureMap := make(map[int]v1.EndpointExposure)
-	containerComponents := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
+	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
+	if err != nil {
+		return portExposureMap, err
+	}
 	for _, comp := range containerComponents {
 		for _, endpoint := range comp.Container.Endpoints {
 			// if exposure=public, no need to check for existence
@@ -258,7 +264,7 @@ func getPortExposure(devfileObj parser.DevfileObj) map[int]v1.EndpointExposure {
 		}
 
 	}
-	return portExposureMap
+	return portExposureMap, nil
 }
 
 // IngressSpecParams struct for function GenerateIngressSpec

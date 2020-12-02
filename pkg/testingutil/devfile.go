@@ -52,8 +52,8 @@ func (d TestDevfileData) AddEvents(events v1.Events) error { return nil }
 func (d TestDevfileData) UpdateEvents(postStart, postStop, preStart, preStop []string) {}
 
 // GetComponents is a mock function to get the components from a devfile
-func (d TestDevfileData) GetComponents(options common.DevfileOptions) []v1.Component {
-	return d.Components
+func (d TestDevfileData) GetComponents(options common.DevfileOptions) ([]v1.Component, error) {
+	return d.Components, nil
 }
 
 // AddComponents is a mock function to add components to the test devfile
@@ -63,7 +63,7 @@ func (d TestDevfileData) AddComponents(components []v1.Component) error { return
 func (d TestDevfileData) UpdateComponent(component v1.Component) {}
 
 // GetProjects is a mock function to get the projects from a test devfile
-func (d TestDevfileData) GetProjects(options common.DevfileOptions) []v1.Project {
+func (d TestDevfileData) GetProjects(options common.DevfileOptions) ([]v1.Project, error) {
 	projectName := [...]string{"test-project", "anotherproject"}
 	clonePath := [...]string{"test-project/", "anotherproject/"}
 	sourceLocation := [...]string{"https://github.com/someproject/test-project.git", "https://github.com/another/project.git"}
@@ -95,7 +95,7 @@ func (d TestDevfileData) GetProjects(options common.DevfileOptions) []v1.Project
 			},
 		},
 	}
-	return []v1.Project{project1, project2}
+	return []v1.Project{project1, project2}, nil
 
 }
 
@@ -106,8 +106,8 @@ func (d TestDevfileData) AddProjects(projects []v1.Project) error { return nil }
 func (d TestDevfileData) UpdateProject(project v1.Project) {}
 
 // GetStarterProjects is a mock function to get the starter projects from a test devfile
-func (d TestDevfileData) GetStarterProjects(options common.DevfileOptions) []v1.StarterProject {
-	return []v1.StarterProject{}
+func (d TestDevfileData) GetStarterProjects(options common.DevfileOptions) ([]v1.StarterProject, error) {
+	return []v1.StarterProject{}, nil
 }
 
 // AddStarterProjects is a mock func to add the starter projects to the test devfile
@@ -119,7 +119,7 @@ func (d TestDevfileData) AddStarterProjects(projects []v1.StarterProject) error 
 func (d TestDevfileData) UpdateStarterProject(project v1.StarterProject) {}
 
 // GetCommands is a mock function to get the commands from a devfile
-func (d TestDevfileData) GetCommands(options common.DevfileOptions) []v1.Command {
+func (d TestDevfileData) GetCommands(options common.DevfileOptions) ([]v1.Command, error) {
 
 	var commands []v1.Command
 
@@ -130,12 +130,15 @@ func (d TestDevfileData) GetCommands(options common.DevfileOptions) []v1.Command
 		commands = append(commands, command)
 	}
 
-	return commands
+	return commands, nil
 }
 
 // AddCommands is a mock func that adds commands to the test devfile
 func (d *TestDevfileData) AddCommands(commands ...v1.Command) error {
-	devfileCommands := d.GetCommands(common.DevfileOptions{})
+	devfileCommands, err := d.GetCommands(common.DevfileOptions{})
+	if err != nil {
+		return err
+	}
 
 	for _, command := range commands {
 		id := command.Id
@@ -167,25 +170,33 @@ func (d TestDevfileData) GetVolumeMountPath(name string) (string, error) {
 }
 
 // GetDevfileContainerComponents gets the container components from the test devfile
-func (d TestDevfileData) GetDevfileContainerComponents(options common.DevfileOptions) []v1.Component {
+func (d TestDevfileData) GetDevfileContainerComponents(options common.DevfileOptions) ([]v1.Component, error) {
 	var components []v1.Component
-	for _, comp := range d.GetComponents(options) {
+	devfileComponents, err := d.GetComponents(options)
+	if err != nil {
+		return nil, err
+	}
+	for _, comp := range devfileComponents {
 		if comp.Container != nil {
 			components = append(components, comp)
 		}
 	}
-	return components
+	return components, nil
 }
 
 // GetDevfileVolumeComponents gets the volume components from the test devfile
-func (d TestDevfileData) GetDevfileVolumeComponents(options common.DevfileOptions) []v1.Component {
+func (d TestDevfileData) GetDevfileVolumeComponents(options common.DevfileOptions) ([]v1.Component, error) {
 	var components []v1.Component
-	for _, comp := range d.GetComponents(options) {
+	devfileComponents, err := d.GetComponents(options)
+	if err != nil {
+		return nil, err
+	}
+	for _, comp := range devfileComponents {
 		if comp.Volume != nil {
 			components = append(components, comp)
 		}
 	}
-	return components
+	return components, nil
 }
 
 // Validate is a mock validation that always validates without error
