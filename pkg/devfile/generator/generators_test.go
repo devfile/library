@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
@@ -27,6 +28,7 @@ func TestGetContainers(t *testing.T) {
 	tests := []struct {
 		name                  string
 		containerComponents   []v1.Component
+		filterOptions         common.DevfileOptions
 		wantContainerName     string
 		wantContainerImage    string
 		wantContainerEnv      []corev1.EnvVar
@@ -122,6 +124,44 @@ func TestGetContainers(t *testing.T) {
 			wantContainerName:  containerNames[0],
 			wantContainerImage: containerImages[0],
 		},
+		{
+			name: "Case 4: Filter containers",
+			containerComponents: []v1.Component{
+				{
+					Name: containerNames[0],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[0],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+				{
+					Name: containerNames[1],
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[0],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+			},
+			wantContainerName:  containerNames[1],
+			wantContainerImage: containerImages[0],
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,7 +172,7 @@ func TestGetContainers(t *testing.T) {
 				},
 			}
 
-			containers, err := GetContainers(devObj, common.DevfileOptions{})
+			containers, err := GetContainers(devObj, tt.filterOptions)
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetContainers() error = %v, wantErr %v", err, tt.wantErr)

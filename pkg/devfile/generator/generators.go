@@ -152,9 +152,9 @@ type ServiceParams struct {
 }
 
 // GetService gets the service
-func GetService(devfileObj parser.DevfileObj, serviceParams ServiceParams) (*corev1.Service, error) {
+func GetService(devfileObj parser.DevfileObj, serviceParams ServiceParams, options common.DevfileOptions) (*corev1.Service, error) {
 
-	serviceSpec, err := getServiceSpec(devfileObj, serviceParams.SelectorLabels)
+	serviceSpec, err := getServiceSpec(devfileObj, serviceParams.SelectorLabels, options)
 	if err != nil {
 		return nil, err
 	}

@@ -53,7 +53,23 @@ func (d TestDevfileData) UpdateEvents(postStart, postStop, preStart, preStop []s
 
 // GetComponents is a mock function to get the components from a devfile
 func (d TestDevfileData) GetComponents(options common.DevfileOptions) ([]v1.Component, error) {
-	return d.Components, nil
+	if len(options.Filter) == 0 {
+		return d.Components, nil
+	}
+
+	var components []v1.Component
+	for _, comp := range d.Components {
+		filterIn, err := common.FilterDevfileObject(comp.Attributes, options)
+		if err != nil {
+			return nil, err
+		}
+
+		if filterIn {
+			components = append(components, comp)
+		}
+	}
+
+	return components, nil
 }
 
 // AddComponents is a mock function to add components to the test devfile

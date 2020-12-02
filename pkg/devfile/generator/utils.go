@@ -194,14 +194,14 @@ func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.Deployment
 }
 
 // getServiceSpec iterates through the devfile components and returns a ServiceSpec
-func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string) (*corev1.ServiceSpec, error) {
+func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]string, options common.DevfileOptions) (*corev1.ServiceSpec, error) {
 
 	var containerPorts []corev1.ContainerPort
-	portExposureMap, err := getPortExposure(devfileObj)
+	portExposureMap, err := getPortExposure(devfileObj, options)
 	if err != nil {
 		return nil, err
 	}
-	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
+	containers, err := GetContainers(devfileObj, options)
 	if err != nil {
 		return nil, err
 	}
@@ -242,9 +242,9 @@ func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 
 // getPortExposure iterates through all endpoints and returns the highest exposure level of all TargetPort.
 // exposure level: public > internal > none
-func getPortExposure(devfileObj parser.DevfileObj) (map[int]v1.EndpointExposure, error) {
+func getPortExposure(devfileObj parser.DevfileObj, options common.DevfileOptions) (map[int]v1.EndpointExposure, error) {
 	portExposureMap := make(map[int]v1.EndpointExposure)
-	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
+	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
 	if err != nil {
 		return portExposureMap, err
 	}

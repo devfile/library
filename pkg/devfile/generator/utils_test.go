@@ -6,7 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/devfile/api/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 	buildv1 "github.com/openshift/api/build/v1"
 
@@ -613,6 +615,7 @@ func TestGetServiceSpec(t *testing.T) {
 		name                string
 		containerComponents []v1.Component
 		labels              map[string]string
+		filterOptions       common.DevfileOptions
 		wantPorts           []corev1.ServicePort
 		wantErr             bool
 	}{
@@ -685,6 +688,57 @@ func TestGetServiceSpec(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Case 3: filter components",
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[0],
+									TargetPort: 8080,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "testcontainer2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[2],
+									TargetPort: 9090,
+								},
+							},
+						},
+					},
+				},
+			},
+			labels: map[string]string{
+				"component": "testcomponent",
+			},
+			wantPorts: []corev1.ServicePort{
+				{
+					Name:       "port-9090",
+					Port:       9090,
+					TargetPort: intstr.FromInt(9090),
+				},
+			},
+			wantErr: false,
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -695,7 +749,7 @@ func TestGetServiceSpec(t *testing.T) {
 				},
 			}
 
-			serviceSpec, err := getServiceSpec(devObj, tt.labels)
+			serviceSpec, err := getServiceSpec(devObj, tt.labels, tt.filterOptions)
 
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
@@ -733,6 +787,7 @@ func TestGetPortExposure(t *testing.T) {
 	tests := []struct {
 		name                string
 		containerComponents []v1.Component
+		filterOptions       common.DevfileOptions
 		wantMap             map[int]v1.EndpointExposure
 		wantErr             bool
 	}{
@@ -918,6 +973,65 @@ func TestGetPortExposure(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Case 7: Filter components",
+			wantMap: map[int]v1.EndpointExposure{
+				8080: v1.PublicEndpointExposure,
+				3000: v1.NoneEndpointExposure,
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 3000,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "testcontainer2",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName2,
+									TargetPort: 9090,
+									Secure:     true,
+									Path:       "/testpath",
+									Exposure:   v1.InternalEndpointExposure,
+									Protocol:   v1.HTTPSEndpointProtocol,
+								},
+							},
+						},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -926,7 +1040,7 @@ func TestGetPortExposure(t *testing.T) {
 					Components: tt.containerComponents,
 				},
 			}
-			mapCreated, _ := getPortExposure(devObj)
+			mapCreated, _ := getPortExposure(devObj, tt.filterOptions)
 			if !reflect.DeepEqual(mapCreated, tt.wantMap) {
 				t.Errorf("Expected: %v, got %v", tt.wantMap, mapCreated)
 			}
