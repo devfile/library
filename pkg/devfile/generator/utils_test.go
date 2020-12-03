@@ -1249,6 +1249,7 @@ func TestGetBuildConfigSpec(t *testing.T) {
 		name          string
 		GitURL        string
 		GitRef        string
+		ContextDir    string
 		buildStrategy buildv1.BuildStrategy
 	}{
 		{
@@ -1261,6 +1262,7 @@ func TestGetBuildConfigSpec(t *testing.T) {
 			name:          "Case 2: Get a Docker Strategy Build Config",
 			GitURL:        "url",
 			GitRef:        "ref",
+			ContextDir:    "./",
 			buildStrategy: GetDockerBuildStrategy("dockerfilePath", []corev1.EnvVar{}),
 		},
 	}
@@ -1272,6 +1274,7 @@ func TestGetBuildConfigSpec(t *testing.T) {
 				BuildStrategy:      tt.buildStrategy,
 				GitURL:             tt.GitURL,
 				GitRef:             tt.GitRef,
+				ContextDir:         tt.ContextDir,
 			}
 			buildConfigSpec := getBuildConfigSpec(params)
 
@@ -1281,6 +1284,10 @@ func TestGetBuildConfigSpec(t *testing.T) {
 
 			if buildConfigSpec.Source.Git.Ref != tt.GitRef || buildConfigSpec.Source.Git.URI != tt.GitURL {
 				t.Error("TestGetBuildConfigSpec error - build config git source does not match")
+			}
+
+			if buildConfigSpec.CommonSpec.Source.ContextDir != tt.ContextDir {
+				t.Error("TestGetBuildConfigSpec error - context dir does not match")
 			}
 		})
 	}

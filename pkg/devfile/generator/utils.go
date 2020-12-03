@@ -382,6 +382,7 @@ type BuildConfigSpecParams struct {
 	ImageStreamTagName string
 	GitURL             string
 	GitRef             string
+	ContextDir         string
 	BuildStrategy      buildv1.BuildStrategy
 }
 
@@ -401,7 +402,8 @@ func getBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.Bu
 					URI: buildConfigSpecParams.GitURL,
 					Ref: buildConfigSpecParams.GitRef,
 				},
-				Type: buildv1.BuildSourceGit,
+				ContextDir: buildConfigSpecParams.ContextDir,
+				Type:       buildv1.BuildSourceGit,
 			},
 			Strategy: buildConfigSpecParams.BuildStrategy,
 		},
