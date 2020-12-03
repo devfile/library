@@ -278,7 +278,11 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 
 			d.UpdateCommand(tt.newCommand)
 
-			commands, _ := d.GetCommands(common.DevfileOptions{})
+			commands, err := d.GetCommands(common.DevfileOptions{})
+			if err != nil {
+				t.Errorf("TestDevfile200_UpdateCommands() unxpected error %v", err)
+				return
+			}
 
 			matched := false
 			for _, devfileCommand := range commands {

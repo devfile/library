@@ -1032,6 +1032,43 @@ func TestGetPortExposure(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "Case 8: Wrong filter components",
+			wantMap: map[int]v1.EndpointExposure{},
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 3000,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstStringWrong": "firstStringValue",
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1040,9 +1077,13 @@ func TestGetPortExposure(t *testing.T) {
 					Components: tt.containerComponents,
 				},
 			}
-			mapCreated, _ := getPortExposure(devObj, tt.filterOptions)
-			if !reflect.DeepEqual(mapCreated, tt.wantMap) {
-				t.Errorf("Expected: %v, got %v", tt.wantMap, mapCreated)
+			mapCreated, err := getPortExposure(devObj, tt.filterOptions)
+			if !tt.wantErr && err != nil {
+				t.Errorf("TestGetPortExposure unexpected error: %v", err)
+			} else if tt.wantErr && err == nil {
+				t.Errorf("TestGetPortExposure expected error but got nil")
+			} else if !reflect.DeepEqual(mapCreated, tt.wantMap) {
+				t.Errorf("TestGetPortExposure Expected: %v, got %v", tt.wantMap, mapCreated)
 			}
 
 		})
