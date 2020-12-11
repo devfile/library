@@ -2,33 +2,53 @@ schemaVersion: 2.0.0
 metadata:
   name: nodejs
   version: 1.0.0
-parent:
-  uri: https://raw.githubusercontent.com/openshift/odo/master/tests/examples/source/devfiles/nodejs/devfileCompositeCommands.yaml
-  commands:
-  - id: buildAndMkdir
-    composite:
-         label: Build and Mkdir
-         commands:
-           - createfile
-           - install
-         parallel: false
-         group: 
-            kind: build
-            isDefault: true
-  components:
-  - name: runtime
-    container:
-      # image: registry.access.redhat.com/ubi8/nodejs-12:1-36
-      env:
-      - name: MEME
-        value: /mycustom/path/
+  alpha.build-dockerfile: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/build/Dockerfile
+  alpha.deployment-manifest: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/deploy/deployment-manifest.yaml
+starterProjects:
+- name: nodejs-starter
+  git:
+    remotes:
+      origin: https://github.com/odo-devfiles/nodejs-ex.git
+components:
+- name: runtime
+  container:
+    endpoints:
+    - name: http-3000
+      targetPort: 3000
+    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
+    memoryLimit: 1024Mi
+    mountSources: true
+    sourceMapping: /project
 commands:
-  - id: createfile
-    exec:
-      component: runtime
-      commandLine: touch /projects/testfile
-      workingDir: ${PROJECTS_ROOT}
-      group:
-        kind: build
-        isDefault: false
-  
+- exec:
+    commandLine: npm install
+    component: runtime
+    group:
+      isDefault: true
+      kind: build
+    workingDir: /project
+  id: install
+- exec:
+    commandLine: npm start
+    component: runtime
+    group:
+      isDefault: true
+      kind: run
+    workingDir: /project
+  id: run
+- exec:
+    commandLine: npm run debug
+    component: runtime
+    group:
+      isDefault: true
+      kind: debug
+    workingDir: /project
+  id: debug
+- exec:
+    commandLine: npm test
+    component: runtime
+    group:
+      isDefault: true
+      kind: test
+    workingDir: /project
+  id: test
