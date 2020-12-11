@@ -51,6 +51,8 @@ github.com/devfile/api v0.0.0-20201126204309-ec222215253e/go.mod h1:/aDiwWjDEW/f
 github.com/devfile/api v0.0.0-20201207181959-9c86a407ff76 h1:zXpN4o1q3+GJvmErCjsrv7DajFf2zAT8B1fc6K0bKHQ=
 github.com/devfile/api v0.0.0-20201208170158-4312e2a2642f h1:XDOQzW4WpBE+dXH7I7AnOheSjc6hHBipQn9whGDglaM=
 github.com/devfile/api v0.0.0-20201210141610-fb248c2367ba h1:+LpXC7ebW+H4fjQNCzjcR2FKrma2OsbMLn6Q7KLbO1I=
+github.com/devfile/api v0.0.0-20201211221100-a68230324c7e h1:Jy3C3ul05YvL4bJpAVhFwPZD8neOJUBZy7GuCcjc8nc=
+github.com/devfile/api v0.0.0-20201211221100-a68230324c7e/go.mod h1:/aDiwWjDEW/fY1/Ig8umVtmneAXKZImnLvWqzMlcfrY=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
