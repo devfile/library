@@ -18,6 +18,7 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 	// can exist in devfile
 	containerMap := make(map[string]bool)
 	volumeMap := make(map[string]bool)
+	pluginMap := make(map[string]bool)
 
 	for _, component := range d.Components {
 		if component.Volume != nil {
@@ -25,6 +26,9 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 		}
 		if component.Container != nil {
 			containerMap[component.Name] = true
+		}
+		if component.Plugin != nil {
+			pluginMap[component.Name] = true
 		}
 	}
 
@@ -40,6 +44,14 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 
 		if component.Container != nil {
 			if _, ok := containerMap[component.Name]; !ok {
+				d.Components = append(d.Components, component)
+			} else {
+				return &common.FieldAlreadyExistError{Name: component.Name, Field: "component"}
+			}
+		}
+
+		if component.Plugin != nil {
+			if _, ok := pluginMap[component.Name]; !ok {
 				d.Components = append(d.Components, component)
 			} else {
 				return &common.FieldAlreadyExistError{Name: component.Name, Field: "component"}

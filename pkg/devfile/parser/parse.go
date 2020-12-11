@@ -16,7 +16,7 @@ import (
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
-func parseDevfile(d DevfileObj) (DevfileObj, error) {
+func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 
 	// Validate devfile
 	err := d.Ctx.Validate()
@@ -36,25 +36,18 @@ func parseDevfile(d DevfileObj) (DevfileObj, error) {
 		return d, errors.Wrapf(err, "failed to decode devfile content")
 	}
 
-	if d.Data.GetParent() != nil {
-		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) && d.Data.GetParent().Uri != "" {
-			err = parseParent(d)
-			if err != nil {
-				return DevfileObj{}, err
-			}
+	if flattenedDevfile {
+		err = parseParentAndPlugin(d)
+		if err != nil {
+			return DevfileObj{}, err
 		}
-	}
-
-	err = parsePlugin(d)
-	if err != nil {
-		return DevfileObj{}, err
 	}
 
 	// Successful
 	return d, nil
 }
 
-// Parse func populates the devfile data, parses and validates the devfile integrity.
+// Parse func populates the flattened devfile data, parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func Parse(path string) (d DevfileObj, err error) {
 
@@ -66,7 +59,20 @@ func Parse(path string) (d DevfileObj, err error) {
 	if err != nil {
 		return d, err
 	}
-	return parseDevfile(d)
+	return parseDevfile(d, true)
+}
+
+// ParseRawDevfile populates the raw devfile data witout overring and merging
+func ParseRawDevfile(path string) (d DevfileObj, err error) {
+	// NewDevfileCtx
+	d.Ctx = devfileCtx.NewDevfileCtx(path)
+
+	// Fill the fields of DevfileCtx struct
+	err = d.Ctx.Populate()
+	if err != nil {
+		return d, err
+	}
+	return parseDevfile(d, false)
 }
 
 // ParseFromURL func parses and validates the devfile integrity.
@@ -79,7 +85,7 @@ func ParseFromURL(url string) (d DevfileObj, err error) {
 	if err != nil {
 		return d, err
 	}
-	return parseDevfile(d)
+	return parseDevfile(d, true)
 }
 
 // ParseFromData func parses and validates the devfile integrity.
@@ -95,64 +101,34 @@ func ParseFromData(data []byte) (d DevfileObj, err error) {
 		return d, err
 	}
 
-	return parseDevfile(d)
+	return parseDevfile(d, true)
 }
 
-func parseParent(d DevfileObj) error {
-	parent := d.Data.GetParent()
+func parseParentAndPlugin(d DevfileObj) (err error) {
+	flattenedParent := &v1.DevWorkspaceTemplateSpecContent{}
+	if d.Data.GetParent() != nil {
+		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) && d.Data.GetParent().Uri != "" {
+			parent := d.Data.GetParent()
 
-	parentData, err := ParseFromURL(parent.Uri)
-	if err != nil {
-		return err
+			parentData, err := ParseFromURL(parent.Uri)
+			if err != nil {
+				return err
+			}
+
+			parentWorkspaceContent := parentData.Data.GetDevfileWorkspace()
+			if !reflect.DeepEqual(parent.ParentOverrides, v1.ParentOverrides{}) {
+				flattenedParent, err = apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent.ParentOverrides)
+				if err != nil {
+					return err
+				}
+			} else {
+				flattenedParent = parentWorkspaceContent
+			}
+
+			klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
+		}
 	}
-
-	parentWorkspaceContent := parentData.Data.GetDevfileWorkspace()
-	result, err := apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent)
-	if err != nil {
-		return err
-	}
-
-	parentData.Data.SetDevfileWorkspace(*result)
-
-	klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
-
-	// since the parent's data has been overriden
-	// add the items back to the current devfile
-	// error indicates that the item has been defined again in the current devfile
-	commandsMap := parentData.Data.GetCommands()
-	commands := make([]v1.Command, 0, len(commandsMap))
-	for _, command := range commandsMap {
-		commands = append(commands, command)
-	}
-	err = d.Data.AddCommands(commands...)
-	if err != nil {
-		return errors.Wrapf(err, "error while adding commands from the parent devfiles")
-	}
-
-	err = d.Data.AddComponents(parentData.Data.GetComponents())
-	if err != nil {
-		return errors.Wrapf(err, "error while adding components from the parent devfiles")
-	}
-
-	err = d.Data.AddProjects(parentData.Data.GetProjects())
-	if err != nil {
-		return errors.Wrapf(err, "error while adding projects from the parent devfiles")
-	}
-
-	err = d.Data.AddStarterProjects(parentData.Data.GetStarterProjects())
-	if err != nil {
-		return errors.Wrapf(err, "error while adding starter projects from the parent devfiles")
-	}
-
-	err = d.Data.AddEvents(parentData.Data.GetEvents())
-	if err != nil {
-		return errors.Wrapf(err, "error while adding events from the parent devfiles")
-	}
-	return nil
-}
-
-func parsePlugin(d DevfileObj) (err error) {
-
+	plugins := []*v1.DevWorkspaceTemplateSpecContent{}
 	for _, component := range d.Data.GetComponents() {
 		if component.Plugin != nil && !reflect.DeepEqual(component.Plugin, &v1.PluginComponent{}) {
 			plugin := component.Plugin
@@ -164,39 +140,23 @@ func parsePlugin(d DevfileObj) (err error) {
 				}
 			}
 			pluginWorkspaceContent := pluginData.Data.GetDevfileWorkspace()
-			result, err := apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin)
-			if err != nil {
-				return err
+			result := pluginWorkspaceContent
+			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
+				result, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
+				if err != nil {
+					return err
+				}
 			}
-			pluginData.Data.SetDevfileWorkspace(*result)
-			klog.V(4).Infof("adding data of devfile with URI: %v", plugin.Uri)
-			// since the plugin's data has been overriden
-			// add the items back to the current devfile
-			// error indicates that the item has been defined again in the current devfile
-			commandsMap := pluginData.Data.GetCommands()
-			commands := make([]v1.Command, 0, len(commandsMap))
-			for _, command := range commandsMap {
-				commands = append(commands, command)
-			}
-
-			// plugin component contributes components, commands and events
-			err = d.Data.AddCommands(commands...)
-			if err != nil {
-				return errors.Wrapf(err, "error while adding commands from the plugin devfiles")
-			}
-
-			err = d.Data.AddComponents(pluginData.Data.GetComponents())
-			if err != nil {
-				return errors.Wrapf(err, "error while adding components from the plugin devfiles")
-			}
-
-			err = d.Data.AddEvents(pluginData.Data.GetEvents())
-			if err != nil {
-				return errors.Wrapf(err, "error while adding events from the plugin devfiles")
-			}
-			return nil
+			plugins = append(plugins, result)
 		}
 	}
-	return nil
+	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspace(), flattenedParent, plugins...)
+	if err != nil {
+		return err
+	}
+	d.Data.SetDevfileWorkspace(*mergedContent)
+	// remove parent from flatterned devfile
+	d.Data.SetParent(nil)
 
+	return nil
 }
