@@ -2,8 +2,8 @@ schemaVersion: 2.0.0
 metadata:
   name: nodejs
   version: 1.0.0
-  alpha.build-dockerfile: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/build/Dockerfile
-  alpha.deployment-manifest: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/deploy/deployment-manifest.yaml
+  attributes:
+    alpha.build-dockerfile: /relative/path/to/Dockerfile
 starterProjects:
 - name: nodejs-starter
   git:
@@ -11,6 +11,34 @@ starterProjects:
       origin: https://github.com/odo-devfiles/nodejs-ex.git
 components:
 - name: runtime
+  attributes:
+    tool: console-import
+    import:
+      strategy: Dockerfile
+  container:
+    endpoints:
+    - name: http-3000
+      targetPort: 3000
+    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
+    memoryLimit: 1024Mi
+    mountSources: true
+    sourceMapping: /project
+- name: runtime2
+  attributes:
+    tool: odo
+    cli:
+      usage: deploy
+  container:
+    endpoints:
+    - name: http-3000
+      targetPort: 3000
+    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
+    memoryLimit: 1024Mi
+    mountSources: true
+    sourceMapping: /project
+- name: runtime3
+  attributes:
+    tool: workspace-operator
   container:
     endpoints:
     - name: http-3000
@@ -28,6 +56,9 @@ commands:
       kind: build
     workingDir: /project
   id: install
+  attributes:
+    tool: odo
+    mandatory: false
 - exec:
     commandLine: npm start
     component: runtime
@@ -36,6 +67,9 @@ commands:
       kind: run
     workingDir: /project
   id: run
+  attributes:
+    tool: odo
+    mandatory: true
 - exec:
     commandLine: npm run debug
     component: runtime

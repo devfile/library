@@ -4,7 +4,7 @@ import (
 	"k8s.io/klog"
 )
 
-// ValidateDevfileData validates whether sections of devfile are odo compatible
+// ValidateDevfileData validates whether sections of devfile are compatible
 func ValidateDevfileData(data interface{}) error {
 
 	// Skipped

@@ -5,6 +5,7 @@ import (
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"k8s.io/klog"
 
 	"reflect"
@@ -129,7 +130,11 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 		}
 	}
 	plugins := []*v1.DevWorkspaceTemplateSpecContent{}
-	for _, component := range d.Data.GetComponents() {
+	components, err := d.Data.GetComponents(common.DevfileOptions{})
+	if err != nil {
+		return err
+	}
+	for _, component := range components {
 		if component.Plugin != nil && !reflect.DeepEqual(component.Plugin, &v1.PluginComponent{}) {
 			plugin := component.Plugin
 			var pluginData DevfileObj
