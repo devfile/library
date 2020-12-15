@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/devfile/api/pkg/attributes"
+	attriutespkg "github.com/devfile/api/pkg/attributes"
 )
 
 // DevfileOptions provides options for Devfile operations
@@ -19,7 +20,8 @@ func FilterDevfileObject(attributes attributes.Attributes, options DevfileOption
 	for key, value := range options.Filter {
 		currentFilterIn := false
 		attrValue := attributes.Get(key, &err)
-		if err != nil {
+		var keynotfound = &attriutespkg.KeyNotFoundError{Key: key}
+		if err != nil && err.Error() != keynotfound.Error() {
 			return false, err
 		} else if reflect.DeepEqual(attrValue, value) {
 			currentFilterIn = true

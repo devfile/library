@@ -56,7 +56,7 @@ func TestFilterDevfileObject(t *testing.T) {
 				},
 			},
 			wantFilter: false,
-			wantErr:    true,
+			wantErr:    false,
 		},
 	}
 
