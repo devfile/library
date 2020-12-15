@@ -44,13 +44,6 @@ github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7Do
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devfile/api v0.0.0-20201103130402-29b8738e196e h1:Ha6wyKs7VWqQTz2Fm1o4PAYpKX6SIiYjgWmGzNW8cBE=
-github.com/devfile/api v0.0.0-20201103130402-29b8738e196e/go.mod h1:hp5Lmob7ESmtSZXZ7xRN9o8vemsen9111+ASi2YuXs4=
-github.com/devfile/api v0.0.0-20201126204309-ec222215253e h1:NO6mS8ktVFjkVIKZKF2JjfL3ZxXw4VAtKIZWyp9e2kQ=
-github.com/devfile/api v0.0.0-20201126204309-ec222215253e/go.mod h1:/aDiwWjDEW/fY1/Ig8umVtmneAXKZImnLvWqzMlcfrY=
-github.com/devfile/api v0.0.0-20201207181959-9c86a407ff76 h1:zXpN4o1q3+GJvmErCjsrv7DajFf2zAT8B1fc6K0bKHQ=
-github.com/devfile/api v0.0.0-20201208170158-4312e2a2642f h1:XDOQzW4WpBE+dXH7I7AnOheSjc6hHBipQn9whGDglaM=
-github.com/devfile/api v0.0.0-20201210141610-fb248c2367ba h1:+LpXC7ebW+H4fjQNCzjcR2FKrma2OsbMLn6Q7KLbO1I=
 github.com/devfile/api v0.0.0-20201211221100-a68230324c7e h1:Jy3C3ul05YvL4bJpAVhFwPZD8neOJUBZy7GuCcjc8nc=
 github.com/devfile/api v0.0.0-20201211221100-a68230324c7e/go.mod h1:/aDiwWjDEW/fY1/Ig8umVtmneAXKZImnLvWqzMlcfrY=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
