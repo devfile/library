@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"testing"
 	"time"
 
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
@@ -35,6 +34,14 @@ const logToFileOnly = true // If set to false the log output will also be output
 var (
 	testLogger *log.Logger
 )
+
+type TestContent struct {
+	CommandTypes     []schema.CommandType
+	ComponentTypes   []schema.ComponentType
+	FileName         string
+	CreateWithParser bool
+	EditContent      bool
+}
 
 func init() {
 	if _, err := os.Stat(tmpDir); !os.IsNotExist(err) {
@@ -329,7 +336,7 @@ func (devfile TestDevfile) EditComponents() error {
 
 }
 
-func RunMultiThreadTest(testContent TestContent, t *testing.T) {
+func RunMultiThreadTest(testContent TestContent) {
 
 	LogMessage(fmt.Sprintf("Start Threaded test for %s", testContent.FileName))
 
@@ -337,10 +344,10 @@ func RunMultiThreadTest(testContent TestContent, t *testing.T) {
 	var i int
 	for i = 1; i < numThreads; i++ {
 		testContent.FileName = AddSuffixToFileName(devfileName, strconv.Itoa(i))
-		go RunTest(testContent, t)
+		go RunTest(testContent)
 	}
 	testContent.FileName = AddSuffixToFileName(devfileName, strconv.Itoa(i))
-	RunTest(testContent, t)
+	RunTest(testContent)
 
 	LogMessage(fmt.Sprintf("Sleep 2 seconds to allow all threads to complete : %s", devfileName))
 	time.Sleep(2 * time.Second)
@@ -348,7 +355,7 @@ func RunMultiThreadTest(testContent TestContent, t *testing.T) {
 
 }
 
-func RunTest(testContent TestContent, t *testing.T) {
+func RunTest(testContent TestContent) {
 
 	LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
 	testDevfile := GetDevfile(testContent.FileName)
@@ -371,27 +378,27 @@ func RunTest(testContent TestContent, t *testing.T) {
 
 	err := testDevfile.CreateDevfile(testContent.CreateWithParser)
 	if err != nil {
-		t.Fatalf(LogMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err)))
+		LogMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err))
 	}
 
 	if testContent.EditContent {
 		if len(testContent.CommandTypes) > 0 {
 			err = testDevfile.EditCommands()
 			if err != nil {
-				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
+				LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err))
 			}
 		}
 		if len(testContent.ComponentTypes) > 0 {
 			err = testDevfile.EditComponents()
 			if err != nil {
-				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
+				LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err))
 			}
 		}
 	}
 
 	err = testDevfile.Verify()
 	if err != nil {
-		t.Fatalf(LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err)))
+		LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err))
 	}
 
 }
