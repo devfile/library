@@ -36,11 +36,22 @@ jobs:
     - name: Run Go Tests
       run: make test
 
+    - name: Check format2
+      run: |
+        make gofmt2
+        if [[ ! -z $(git status -s) ]]
+        then
+          echo $(git status -s)
+          echo "not well formatted sources are found"
+          exit 1
+        fi
+
     - name: Check format
       run: |
         make gofmt
         if [[ ! -z $(git status -s) ]]
         then
+          echo $(git status -s)
           echo "not well formatted sources are found"
           exit 1
         fi
