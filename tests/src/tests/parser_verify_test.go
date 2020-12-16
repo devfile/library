@@ -2,10 +2,9 @@ package tests
 
 import (
 	"fmt"
-	"testing"
 )
 
-func Test_ExecCommand(t *testing.T) {
+func ExecCommand() {
 	FileName := "devfile.yaml"
 	LogMessage(fmt.Sprintf("Start test for %s", FileName))
 	testDevfile := GetDevfile(FileName)
