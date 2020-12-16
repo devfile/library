@@ -1,11 +1,9 @@
 package tests
 
-import (
-	"testing"
-)
+import "testing"
 
-func Test_execCommand(t *testing.T) {
+func TestGetRandomNumber(t *testing.T) {
 	if GetRandomNumber(10) > 10 {
-		t.Error("Randon mumber was bigger than 10")
+		t.Error("Random mumber was bigger than 10")
 	}
 }
