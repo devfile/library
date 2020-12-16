@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"fmt"
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
@@ -63,7 +64,7 @@ func Parse(path string) (d DevfileObj, err error) {
 	return parseDevfile(d, true)
 }
 
-// ParseRawDevfile populates the raw devfile data witout overring and merging
+// ParseRawDevfile populates the raw devfile data without overriding and merging
 func ParseRawDevfile(path string) (d DevfileObj, err error) {
 	// NewDevfileCtx
 	d.Ctx = devfileCtx.NewDevfileCtx(path)
@@ -108,15 +109,20 @@ func ParseFromData(data []byte) (d DevfileObj, err error) {
 func parseParentAndPlugin(d DevfileObj) (err error) {
 	flattenedParent := &v1.DevWorkspaceTemplateSpecContent{}
 	if d.Data.GetParent() != nil {
-		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) && d.Data.GetParent().Uri != "" {
-			parent := d.Data.GetParent()
+		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) {
 
-			parentData, err := ParseFromURL(parent.Uri)
-			if err != nil {
-				return err
+			parent := d.Data.GetParent()
+			var parentDevfileObj DevfileObj
+			if d.Data.GetParent().Uri != "" {
+				parentDevfileObj, err = ParseFromURL(parent.Uri)
+				if err != nil {
+					return err
+				}
+			} else {
+				return fmt.Errorf("parent URI undefined, currently only URI is suppported")
 			}
 
-			parentWorkspaceContent := parentData.Data.GetDevfileWorkspace()
+			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspace()
 			if !reflect.DeepEqual(parent.ParentOverrides, v1.ParentOverrides{}) {
 				flattenedParent, err = apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent.ParentOverrides)
 				if err != nil {
@@ -129,7 +135,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
 		}
 	}
-	plugins := []*v1.DevWorkspaceTemplateSpecContent{}
+	flattenedPlugins := []*v1.DevWorkspaceTemplateSpecContent{}
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
 		return err
@@ -137,25 +143,27 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 	for _, component := range components {
 		if component.Plugin != nil && !reflect.DeepEqual(component.Plugin, &v1.PluginComponent{}) {
 			plugin := component.Plugin
-			var pluginData DevfileObj
+			var pluginDevfileObj DevfileObj
 			if plugin.Uri != "" {
-				pluginData, err = ParseFromURL(plugin.Uri)
+				pluginDevfileObj, err = ParseFromURL(plugin.Uri)
 				if err != nil {
 					return err
 				}
+			} else {
+				return fmt.Errorf("parent URI undefined, currently only URI is suppported")
 			}
-			pluginWorkspaceContent := pluginData.Data.GetDevfileWorkspace()
-			result := pluginWorkspaceContent
+			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspace()
+			flattenedPlugin := pluginWorkspaceContent
 			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
-				result, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
+				flattenedPlugin, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
 				if err != nil {
 					return err
 				}
 			}
-			plugins = append(plugins, result)
+			flattenedPlugins = append(flattenedPlugins, flattenedPlugin)
 		}
 	}
-	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspace(), flattenedParent, plugins...)
+	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspace(), flattenedParent, flattenedPlugins...)
 	if err != nil {
 		return err
 	}

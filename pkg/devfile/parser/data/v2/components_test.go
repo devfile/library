@@ -36,12 +36,6 @@ func TestDevfile200_AddComponent(t *testing.T) {
 			},
 			newComponents: []v1.Component{
 				{
-					Name: "component2",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{},
-					},
-				},
-				{
 					Name: "component3",
 					ComponentUnion: v1.ComponentUnion{
 						Container: &v1.ContainerComponent{},
