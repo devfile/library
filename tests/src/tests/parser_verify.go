@@ -355,7 +355,7 @@ func RunMultiThreadTest(testContent TestContent) {
 
 }
 
-func RunTest(testContent TestContent) {
+func RunTest(testContent TestContent) error {
 
 	LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
 	testDevfile := GetDevfile(testContent.FileName)
@@ -379,26 +379,27 @@ func RunTest(testContent TestContent) {
 	err := testDevfile.CreateDevfile(testContent.CreateWithParser)
 	if err != nil {
 		LogMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err))
-	}
-
-	if testContent.EditContent {
-		if len(testContent.CommandTypes) > 0 {
-			err = testDevfile.EditCommands()
-			if err != nil {
-				LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err))
+	} else {
+		if testContent.EditContent {
+			if len(testContent.CommandTypes) > 0 {
+				err = testDevfile.EditCommands()
+				if err != nil {
+					LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err))
+				}
+			}
+			if len(testContent.ComponentTypes) > 0 {
+				err = testDevfile.EditComponents()
+				if err != nil {
+					LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err))
+				}
 			}
 		}
-		if len(testContent.ComponentTypes) > 0 {
-			err = testDevfile.EditComponents()
+		if err == nil {
+			err = testDevfile.Verify()
 			if err != nil {
-				LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err))
+				LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err))
 			}
 		}
 	}
-
-	err = testDevfile.Verify()
-	if err != nil {
-		LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err))
-	}
-
+	return err
 }

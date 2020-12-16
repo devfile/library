@@ -12,8 +12,11 @@ func Test_ExecCommand(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	// RunMultiThreadTest(testContent)
 }
 func Test_ExecCommandEdit(t *testing.T) {
 	testContent := TestContent{}
@@ -21,8 +24,11 @@ func Test_ExecCommandEdit(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ExecCommandParserCreate(t *testing.T) {
@@ -31,8 +37,11 @@ func Test_ExecCommandParserCreate(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ExecCommandEditParserCreate(t *testing.T) {
@@ -41,8 +50,11 @@ func Test_ExecCommandEditParserCreate(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_CompositeCommand(t *testing.T) {
@@ -51,8 +63,11 @@ func Test_CompositeCommand(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 func Test_CompositeCommandEdit(t *testing.T) {
 	testContent := TestContent{}
@@ -60,8 +75,11 @@ func Test_CompositeCommandEdit(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_CompositeCommandParserCreate(t *testing.T) {
@@ -70,8 +88,11 @@ func Test_CompositeCommandParserCreate(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_CompositeCommandEditParserCreate(t *testing.T) {
@@ -80,8 +101,11 @@ func Test_CompositeCommandEditParserCreate(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_MultiCommand(t *testing.T) {
@@ -90,8 +114,11 @@ func Test_MultiCommand(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ContainerComponent(t *testing.T) {
@@ -100,8 +127,11 @@ func Test_ContainerComponent(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ContainerComponentEdit(t *testing.T) {
@@ -110,8 +140,11 @@ func Test_ContainerComponentEdit(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ContainerComponentCreateWithParser(t *testing.T) {
@@ -120,8 +153,11 @@ func Test_ContainerComponentCreateWithParser(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_ContainerComponentEditCreateWithParser(t *testing.T) {
@@ -130,8 +166,11 @@ func Test_ContainerComponentEditCreateWithParser(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_VolumeComponent(t *testing.T) {
@@ -140,8 +179,11 @@ func Test_VolumeComponent(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_VolumeComponentEdit(t *testing.T) {
@@ -150,8 +192,11 @@ func Test_VolumeComponentEdit(t *testing.T) {
 	testContent.CreateWithParser = false
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_VolumeComponentCreateWithParser(t *testing.T) {
@@ -160,8 +205,11 @@ func Test_VolumeComponentCreateWithParser(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = false
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_VolumeComponentEditCreateWithParser(t *testing.T) {
@@ -170,8 +218,11 @@ func Test_VolumeComponentEditCreateWithParser(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_MultiComponent(t *testing.T) {
@@ -180,8 +231,11 @@ func Test_MultiComponent(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
 
 func Test_Everything(t *testing.T) {
@@ -191,6 +245,9 @@ func Test_Everything(t *testing.T) {
 	testContent.CreateWithParser = true
 	testContent.EditContent = true
 	testContent.FileName = GetDevFileName()
-	RunTest(testContent)
-	RunMultiThreadTest(testContent)
+	err := RunTest(testContent)
+	if err != nil {
+		t.Fatalf("ERROR : %v", err)
+	}
+	//RunMultiThreadTest(testContent)
 }
