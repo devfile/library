@@ -3,7 +3,7 @@ FILES := main
 default: bin
 
 .PHONY: all
-all:  gomod_tidy gofmt bin test
+all:  gomod_tidy gofmt2 gofmt bin test
 
 .PHONY: gomod_tidy
 gomod_tidy:
