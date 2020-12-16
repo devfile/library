@@ -13,6 +13,10 @@ gomod_tidy:
 gofmt:
 	go fmt -x ./...
 
+.PHONY: gofmt2
+gofmt2:
+	gofmt -d -e ./pkg/tests/parserv200/*.go
+
 .PHONY: bin
 bin:
 	 go build main.go
