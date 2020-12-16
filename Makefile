@@ -3,7 +3,7 @@ FILES := main
 default: bin
 
 .PHONY: all
-all:  gomod_tidy gofmt2 gofmt bin test
+all:  gomod_tidy gofmt bin test
 
 .PHONY: gomod_tidy
 gomod_tidy:
@@ -12,10 +12,6 @@ gomod_tidy:
 .PHONY: gofmt
 gofmt:
 	go fmt -x ./...
-
-.PHONY: gofmt2
-gofmt2:
-	gofmt -d -e ./pkg/tests/parserv200/*.go
 
 .PHONY: bin
 bin:
