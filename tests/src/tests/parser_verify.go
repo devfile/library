@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"testing"
 	"time"
 
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
@@ -20,6 +22,10 @@ import (
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"sigs.k8s.io/yaml"
 )
+
+const numThreads = 5     // Number of threads used by multi-thread tests
+const maxCommands = 10   // The maximum number of commands to include in a generated devfile
+const maxComponents = 10 // The maximum number of components to include in a generated devfile
 
 const tmpDir = "./tmp/"
 const logErrorOnly = false
@@ -320,5 +326,72 @@ func (devfile TestDevfile) EditComponents() error {
 		LogMessage(fmt.Sprintf(" ..... ERROR: from parser : %v", err))
 	}
 	return err
+
+}
+
+func RunMultiThreadTest(testContent TestContent, t *testing.T) {
+
+	LogMessage(fmt.Sprintf("Start Threaded test for %s", testContent.FileName))
+
+	devfileName := testContent.FileName
+	var i int
+	for i = 1; i < numThreads; i++ {
+		testContent.FileName = AddSuffixToFileName(devfileName, strconv.Itoa(i))
+		go RunTest(testContent, t)
+	}
+	testContent.FileName = AddSuffixToFileName(devfileName, strconv.Itoa(i))
+	RunTest(testContent, t)
+
+	LogMessage(fmt.Sprintf("Sleep 2 seconds to allow all threads to complete : %s", devfileName))
+	time.Sleep(2 * time.Second)
+	LogMessage(fmt.Sprintf("Sleep complete : %s", devfileName))
+
+}
+
+func RunTest(testContent TestContent, t *testing.T) {
+
+	LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
+	testDevfile := GetDevfile(testContent.FileName)
+
+	if len(testContent.CommandTypes) > 0 {
+		numCommands := GetRandomNumber(maxCommands)
+		for i := 0; i < numCommands; i++ {
+			commandIndex := GetRandomNumber(len(testContent.CommandTypes))
+			testDevfile.addCommand(testContent.CommandTypes[commandIndex-1])
+		}
+	}
+
+	if len(testContent.ComponentTypes) > 0 {
+		numComponents := GetRandomNumber(maxComponents)
+		for i := 0; i < numComponents; i++ {
+			componentIndex := GetRandomNumber(len(testContent.ComponentTypes))
+			testDevfile.AddComponent(testContent.ComponentTypes[componentIndex-1])
+		}
+	}
+
+	err := testDevfile.CreateDevfile(testContent.CreateWithParser)
+	if err != nil {
+		t.Fatalf(LogMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err)))
+	}
+
+	if testContent.EditContent {
+		if len(testContent.CommandTypes) > 0 {
+			err = testDevfile.EditCommands()
+			if err != nil {
+				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
+			}
+		}
+		if len(testContent.ComponentTypes) > 0 {
+			err = testDevfile.EditComponents()
+			if err != nil {
+				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
+			}
+		}
+	}
+
+	err = testDevfile.Verify()
+	if err != nil {
+		t.Fatalf(LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err)))
+	}
 
 }
