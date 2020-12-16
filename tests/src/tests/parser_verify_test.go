@@ -6,11 +6,7 @@ import (
 )
 
 func Test_ExecCommand(t *testing.T) {
-	runTest("devFile", t)
-}
-
-func runTest(FileName string, t *testing.T) {
-
+	FileName := "devfile.yaml"
 	LogMessage(fmt.Sprintf("Start test for %s", FileName))
 	testDevfile := GetDevfile(FileName)
 
@@ -18,5 +14,4 @@ func runTest(FileName string, t *testing.T) {
 	if err != nil {
 		LogMessage(fmt.Sprintf("End test for %s", FileName))
 	}
-
 }
