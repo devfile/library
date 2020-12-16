@@ -1,4 +1,4 @@
-package tests
+package parserV200
 
 import "testing"
 
