@@ -41,6 +41,6 @@ jobs:
         make gofmt
         if [[ ! -z $(git status -s) ]]
         then
-          echo "not well formatted sources are found"
+          echo "not well formatted sources are found : $(git status -s)"
           exit 1
         fi
