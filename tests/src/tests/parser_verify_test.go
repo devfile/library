@@ -6,7 +6,7 @@ import (
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
-func Test_ExecCommand(t *testing.T) {
+func TestExecCommand(t *testing.T) {
 	testContent := TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
 	testContent.CreateWithParser = false
