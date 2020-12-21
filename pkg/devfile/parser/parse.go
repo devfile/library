@@ -87,7 +87,7 @@ func ParseFromURL(url string) (d DevfileObj, err error) {
 	if _, exist := URLMap[url]; !exist {
 		URLMap[url] = true
 	} else {
-		return d, fmt.Errorf("URL is recursively referenced")
+		return d, fmt.Errorf("URI %v is recursively referenced", url)
 	}
 	d.Ctx = devfileCtx.NewURLDevfileCtx(url)
 	// Fill the fields of DevfileCtx struct

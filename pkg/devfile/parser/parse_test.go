@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -2179,4 +2180,218 @@ func Test_parseParentAndPlugin(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T) {
+	const uri1 = "127.0.0.1:8080"
+	const uri2 = "127.0.0.1:9090"
+	const uri3 = "127.0.0.1:8090"
+	const httpPrefix = "http://"
+
+	devFileObj := DevfileObj{
+		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					Parent: &v1.Parent{
+						ImportReference: v1.ImportReference{
+							ImportReferenceUnion: v1.ImportReferenceUnion{
+								Uri: httpPrefix + uri1,
+							},
+						},
+					},
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime2",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	parentDevfile1 := DevfileObj{
+		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					Parent: &v1.Parent{
+						ImportReference: v1.ImportReference{
+							ImportReferenceUnion: v1.ImportReferenceUnion{
+								Uri: httpPrefix + uri2,
+							},
+						},
+					},
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	parentDevfile2 := DevfileObj{
+		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "plugin",
+								ComponentUnion: v1.ComponentUnion{
+									Plugin: &v1.PluginComponent{
+										ImportReference: v1.ImportReference{
+											ImportReferenceUnion: v1.ImportReferenceUnion{
+												Uri: httpPrefix + uri3,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	parentDevfile3 := DevfileObj{
+		Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					Parent: &v1.Parent{
+						ImportReference: v1.ImportReference{
+							ImportReferenceUnion: v1.ImportReferenceUnion{
+								Uri: httpPrefix + uri1,
+							},
+						},
+					},
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "test",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testServer1 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, err := yaml.Marshal(parentDevfile1.Data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l1, err := net.Listen("tcp", uri1)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer1.Listener.Close()
+	testServer1.Listener = l1
+
+	testServer1.Start()
+	defer testServer1.Close()
+
+	testServer2 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, err := yaml.Marshal(parentDevfile2.Data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l2, err := net.Listen("tcp", uri2)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer2.Listener.Close()
+	testServer2.Listener = l2
+
+	testServer2.Start()
+	defer testServer2.Close()
+
+	testServer3 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, err := yaml.Marshal(parentDevfile3.Data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l3, err := net.Listen("tcp", uri3)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer3.Listener.Close()
+	testServer3.Listener = l3
+
+	testServer3.Start()
+	defer testServer3.Close()
+	t.Run("it should error out if URI is recursively referenced with multiple references", func(t *testing.T) {
+		err := parseParentAndPlugin(devFileObj)
+		expectedErr := fmt.Sprintf("URI %v%v is recursively referenced", httpPrefix, uri1)
+		// Unexpected error
+		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
+			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI() unexpected error = %v", err)
+			return
+		}
+
+	})
 }
