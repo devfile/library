@@ -16,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var URLMap = make(map[string]bool)
+
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
 func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
@@ -44,7 +46,9 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 			return DevfileObj{}, err
 		}
 	}
-
+	for url := range URLMap {
+		delete(URLMap, url)
+	}
 	// Successful
 	return d, nil
 }
@@ -80,8 +84,12 @@ func ParseRawDevfile(path string) (d DevfileObj, err error) {
 // ParseFromURL func parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func ParseFromURL(url string) (d DevfileObj, err error) {
+	if _, exist := URLMap[url]; !exist {
+		URLMap[url] = true
+	} else {
+		return d, fmt.Errorf("URL is recursively referenced")
+	}
 	d.Ctx = devfileCtx.NewURLDevfileCtx(url)
-
 	// Fill the fields of DevfileCtx struct
 	err = d.Ctx.PopulateFromURL()
 	if err != nil {

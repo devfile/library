@@ -2050,17 +2050,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
 					Data: &v2.DevfileV2{
-						Devfile: v1.Devfile{
-							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-								Parent: &v1.Parent{
-									ImportReference: v1.ImportReference{
-										ImportReferenceUnion: v1.ImportReferenceUnion{
-											Uri: "http://127.0.0.1:8080",
-										},
-									},
-								},
-							},
-						},
+						Devfile: v1.Devfile{},
 					},
 				},
 			},
@@ -2071,6 +2061,13 @@ func Test_parseParentAndPlugin(t *testing.T) {
 							SchemaVersion: schemaV200,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Uri: "http://127.0.0.1:8080",
+									},
+								},
+							},
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
 									{
