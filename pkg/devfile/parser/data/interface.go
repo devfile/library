@@ -47,8 +47,10 @@ type DevfileData interface {
 	DeleteVolume(name string) error
 	GetVolumeMountPath(name string) (string, error)
 
+	// workspace related methods
 	GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent
 	SetDevfileWorkspace(content v1.DevWorkspaceTemplateSpecContent)
+
 	//utils
 	GetDevfileContainerComponents(common.DevfileOptions) ([]v1.Component, error)
 	GetDevfileVolumeComponents(common.DevfileOptions) ([]v1.Component, error)

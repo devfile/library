@@ -150,7 +150,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 					return err
 				}
 			} else {
-				return fmt.Errorf("parent URI undefined, currently only URI is suppported")
+				return fmt.Errorf("plugin URI undefined, currently only URI is suppported")
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspace()
 			flattenedPlugin := pluginWorkspaceContent

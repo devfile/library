@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -18,17 +19,19 @@ const schemaV200 = "2.0.0"
 const devfileTempPath = "devfile.yaml"
 
 func Test_parseParentAndPlugin(t *testing.T) {
+
 	type args struct {
 		devFileObj DevfileObj
 	}
 	tests := []struct {
-		name           string
-		args           args
-		parentDevfile  DevfileObj
-		pluginDevfile  DevfileObj
-		pluginOverride v1.PluginOverrides
-		wantDevFile    DevfileObj
-		wantErr        bool
+		name                   string
+		args                   args
+		parentDevfile          DevfileObj
+		pluginDevfile          DevfileObj
+		pluginOverride         v1.PluginOverrides
+		wantDevFile            DevfileObj
+		wantErr                bool
+		testRecursiveReference bool
 	}{
 		{
 			name: "case 1: it should override the requested parent's data and add the local devfile's data",
@@ -662,7 +665,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 7: error out if the same project is defined again in the local devfile",
+			name: "case 7: error out if the parent project is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
@@ -922,7 +925,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 									},
 									Events: &v1.Events{
 										WorkspaceEvents: v1.WorkspaceEvents{
-											PostStop: []string{"post-stop"},
+											PostStop: []string{"post-stop-1"},
 										},
 									},
 									Projects: []v1.Project{
@@ -971,6 +974,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 								Events: &v1.Events{
 									WorkspaceEvents: v1.WorkspaceEvents{
 										PostStart: []string{"post-start-0"},
+										PostStop:  []string{"post-stop-2"},
 									},
 								},
 								Projects: []v1.Project{
@@ -1068,7 +1072,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 								Events: &v1.Events{
 									WorkspaceEvents: v1.WorkspaceEvents{
 										PostStart: []string{"post-start-0"},
-										PostStop:  []string{"post-stop"},
+										PostStop:  []string{"post-stop-1", "post-stop-2"},
 										PreStop:   []string{},
 										PreStart:  []string{},
 									},
@@ -1254,7 +1258,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 13: error out if the same project is defined again in the local devfile",
+			name: "case 13: error out if the plugin project is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
@@ -1363,7 +1367,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 14: error out if the same command is defined in both plugin devfile and parent devfile",
+			name: "case 15: error out if the same command is defined in both plugin devfile and parent devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
@@ -1439,7 +1443,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 15: error out if the same component is defined in both plugin devfile and parent devfile",
+			name: "case 16: error out if the same component is defined in both plugin devfile and parent devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
@@ -1521,7 +1525,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 16: it should override the requested parent's data and plugin's data, and add the local devfile's data",
+			name: "case 17: it should override the requested parent's data and plugin's data, and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
@@ -1775,6 +1779,322 @@ func Test_parseParentAndPlugin(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "case 18: error out if the plugin component is defined with a different component type in the local devfile",
+			args: args{
+				devFileObj: DevfileObj{
+					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
+							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+									Components: []v1.Component{
+										{
+											Name: "runtime",
+											ComponentUnion: v1.ComponentUnion{
+												Container: &v1.ContainerComponent{
+													Container: v1.Container{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pluginDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "case 19: it should override with no errors if the plugin component is defined with a different component type in the plugin override",
+			args: args{
+				devFileObj: DevfileObj{
+					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{},
+					},
+				},
+			},
+			pluginOverride: v1.PluginOverrides{
+				Components: []v1.ComponentPluginOverride{
+					{
+						Name: "runtime",
+						ComponentUnionPluginOverride: v1.ComponentUnionPluginOverride{
+							Container: &v1.ContainerComponentPluginOverride{
+								ContainerPluginOverride: v1.ContainerPluginOverride{
+									Image: "quay.io/nodejs-12",
+								},
+							},
+						},
+					},
+				},
+			},
+			pluginDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "case 20: error out if the parent component is defined with a different component type in the local devfile",
+			args: args{
+				devFileObj: DevfileObj{
+					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
+							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+									Components: []v1.Component{
+										{
+											Name: "runtime",
+											ComponentUnion: v1.ComponentUnion{
+												Container: &v1.ContainerComponent{
+													Container: v1.Container{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			parentDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "case 21: it should override with no errors if the parent component is defined with a different component type in the parent override",
+			args: args{
+				devFileObj: DevfileObj{
+					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
+							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+								Parent: &v1.Parent{
+									ParentOverrides: v1.ParentOverrides{
+										Components: []v1.ComponentParentOverride{
+											{
+												Name: "runtime",
+												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+													Container: &v1.ContainerComponentParentOverride{
+														ContainerParentOverride: v1.ContainerParentOverride{
+															Image: "quay.io/nodejs-12",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			parentDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "case 22: error out if the URI is recursively referenced",
+			args: args{
+				devFileObj: DevfileObj{
+					Ctx: devfileCtx.NewDevfileCtx(devfileTempPath),
+					Data: &v2.DevfileV2{
+						Devfile: v1.Devfile{
+							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+								Parent: &v1.Parent{
+									ImportReference: v1.ImportReference{
+										ImportReferenceUnion: v1.ImportReferenceUnion{
+											Uri: "http://127.0.0.1:8080",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pluginDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevfileHeader: devfilepkg.DevfileHeader{
+							SchemaVersion: schemaV200,
+						},
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{},
+			},
+			wantErr:                true,
+			testRecursiveReference: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1799,7 +2119,8 @@ func Test_parseParentAndPlugin(t *testing.T) {
 				tt.args.devFileObj.Data.SetParent(parent)
 			}
 			if !reflect.DeepEqual(tt.pluginDevfile, DevfileObj{}) {
-				testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+				testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					data, err := yaml.Marshal(tt.pluginDevfile.Data)
 					if err != nil {
 						t.Errorf("unexpected error: %v", err)
@@ -1809,7 +2130,21 @@ func Test_parseParentAndPlugin(t *testing.T) {
 						t.Errorf("unexpected error: %v", err)
 					}
 				}))
+				if tt.testRecursiveReference {
+					// create a listener with the desired port.
+					l, err := net.Listen("tcp", "127.0.0.1:8080")
+					if err != nil {
+						t.Errorf("unexpected error: %v", err)
+					}
+
+					// NewUnstartedServer creates a listener. Close that listener and replace
+					// with the one we created.
+					testServer.Listener.Close()
+					testServer.Listener = l
+				}
+				testServer.Start()
 				defer testServer.Close()
+
 				plugincomp := []v1.Component{
 					{
 						Name: "plugincomp",

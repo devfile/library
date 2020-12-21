@@ -21,6 +21,29 @@ func main() {
 			fmt.Printf("schema version: %s\n", d.SchemaVersion)
 		}
 
+		components, e := devfile.Data.GetComponents(common.DevfileOptions{})
+		if e != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		fmt.Printf("All component: \n")
+		for _, component := range components {
+			fmt.Printf("%s\n", component.Name)
+		}
+
+		fmt.Printf("All Exec commands: \n")
+		commands, e := devfile.Data.GetCommands(common.DevfileOptions{})
+		if e != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		for _, command := range commands {
+			if command.Exec != nil {
+				fmt.Printf("command %s is with kind: %s", command.Id, command.Exec.Group.Kind)
+				fmt.Printf("workingDir is: %s\n", command.Exec.WorkingDir)
+			}
+		}
+
+		fmt.Println("=========================================================")
+
 		compOptions := common.DevfileOptions{
 			Filter: map[string]interface{}{
 				"tool": "console-import",
@@ -30,14 +53,14 @@ func main() {
 			},
 		}
 
-		components, e := devfile.Data.GetComponents(compOptions)
+		components, e = devfile.Data.GetComponents(compOptions)
 		if e != nil {
 			fmt.Printf("err: %v\n", err)
 		}
-
+		fmt.Printf("Container components applied filter: \n")
 		for _, component := range components {
 			if component.Container != nil {
-				fmt.Printf("component container: %s\n", component.Name)
+				fmt.Printf("%s\n", component.Name)
 			}
 		}
 
@@ -47,13 +70,15 @@ func main() {
 			},
 		}
 
-		commands, e := devfile.Data.GetCommands(cmdOptions)
+		fmt.Printf("Exec commands applied filter: \n")
+		commands, e = devfile.Data.GetCommands(cmdOptions)
 		if e != nil {
 			fmt.Printf("err: %v\n", err)
 		}
 		for _, command := range commands {
 			if command.Exec != nil {
-				fmt.Printf("exec command kind: %s\n", command.Exec.Group.Kind)
+				fmt.Printf("command %s is with kind: %s", command.Id, command.Exec.Group.Kind)
+				fmt.Printf("workingDir is: %s\n", command.Exec.WorkingDir)
 			}
 		}
 
