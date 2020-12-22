@@ -215,6 +215,14 @@ func (d TestDevfileData) GetDevfileVolumeComponents(options common.DevfileOption
 	return components, nil
 }
 
+// GetDevfileWorkspace is a mock func to get the DevfileWorkspace in a test devfile
+func (d TestDevfileData) GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent {
+	return &v1.DevWorkspaceTemplateSpecContent{}
+}
+
+// SetDevfileWorkspace is a mock func to set the DevfileWorkspace in a test devfile
+func (d TestDevfileData) SetDevfileWorkspace(content v1.DevWorkspaceTemplateSpecContent) {}
+
 // Validate is a mock validation that always validates without error
 func (d TestDevfileData) Validate() error {
 	return nil

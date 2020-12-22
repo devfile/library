@@ -4,13 +4,24 @@ metadata:
   version: 1.0.0
   attributes:
     alpha.build-dockerfile: /relative/path/to/Dockerfile
+parent:
+  uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
+  commands:
+  - id: install
+    exec:
+      component: runtime
+      commandLine: npm install
+      workingDir: /project-starter
+      group:
+        kind: build
+        isDefault: true
 starterProjects:
-- name: nodejs-starter
+- name: nodejs-starter2
   git:
     remotes:
       origin: https://github.com/odo-devfiles/nodejs-ex.git
 components:
-- name: runtime
+- name: runtime2
   attributes:
     tool: console-import
     import:
@@ -23,7 +34,7 @@ components:
     memoryLimit: 1024Mi
     mountSources: true
     sourceMapping: /project
-- name: runtime2
+- name: runtime3
   attributes:
     tool: odo
     cli:
@@ -36,7 +47,7 @@ components:
     memoryLimit: 1024Mi
     mountSources: true
     sourceMapping: /project
-- name: runtime3
+- name: runtime4
   attributes:
     tool: workspace-operator
   container:
@@ -50,39 +61,39 @@ components:
 commands:
 - exec:
     commandLine: npm install
-    component: runtime
+    component: runtime2
     group:
       isDefault: true
       kind: build
     workingDir: /project
-  id: install
+  id: install2
   attributes:
     tool: odo
     mandatory: false
 - exec:
     commandLine: npm start
-    component: runtime
+    component: runtime2
     group:
       isDefault: true
       kind: run
     workingDir: /project
-  id: run
+  id: run2
   attributes:
     tool: odo
     mandatory: true
 - exec:
     commandLine: npm run debug
-    component: runtime
+    component: runtime2
     group:
       isDefault: true
       kind: debug
     workingDir: /project
-  id: debug
+  id: debug2
 - exec:
     commandLine: npm test
-    component: runtime
+    component: runtime2
     group:
       isDefault: true
       kind: test
     workingDir: /project
-  id: test
+  id: test2

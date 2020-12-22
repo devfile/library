@@ -3,7 +3,7 @@ module github.com/devfile/library
 go 1.13
 
 require (
-	github.com/devfile/api v0.0.0-20201126204309-ec222215253e
+	github.com/devfile/api v0.0.0-20201211221100-a68230324c7e
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3
