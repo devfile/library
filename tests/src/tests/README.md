@@ -10,7 +10,7 @@ The tests use the go language and are intended to test every apsect of the parse
     * Parser functions covered:
         * Read an existing devfile.
         * Write a new devfile.
-        * Modify Content of a devfile.
+        * Modify content of a devfile.
         * Multi-threaded access to the parser.
     * The tests use the devfile schema to create a structure containing expected content for a devfile. These structures are compared with those returned by the parser. 
     * sigs.k8s.io/yaml is used to write out devfiles.
@@ -87,6 +87,10 @@ There are also some constants which control execution of the tests:
 
 * Each devfile is created in a schema structure.
 * Which attributes are set and the values used are randomized.
+    * For example, the number of commands included in a devfile is randomly generated.
+    * For example, attribute values are set to randomized strings, numbers or binary.
+    * For example, a particular optional attribute has a 50% chance of being uncluded in a devfiles. 
+    * Repeated tests give more variety and wider coverage. 
 * Once the schema structure is complete it is written in one of two ways.
     * using the sigs.k8s.io/yaml.
     * using the parser.
@@ -124,10 +128,10 @@ For example add support for apply command to existing command support:
 
 1. In ```command-test-utils.go```
     * add functions:
-        * ```func createApplyCommand() *schema.ApplyCommand```
-            * creates the apply command object and calls setApplyCommandValues to add attribute values
         * ```func setApplyCommandValues(applyCommand *schema.ApplyCommand)``` 
             * randomly set attribute values in the provided apply command object
+        * ```func createApplyCommand() *schema.ApplyCommand```
+            * creates the apply command object and calls setApplyCommandValues to add attribute values
         * follow the implementation of other similar functions.
     * modify:
        * ```func generateCommand(command *schema.Command, genericCommand *GenericCommand)```
@@ -164,33 +168,33 @@ Using existing support for commands as an illustration, any new property support
             * sets random attributes into the provided object 
             * for example see: ```func setExecCommandValues(execCommand *schema.ExecCommand)```
     * Functions general to all commands  
+        * ```func generateCommand(command *schema.Command, genericCommand *GenericCommand)```
+            * includes logic to call the ```create<Command-Type>Command``` function for the command-Type of the supplied command object.
         * ```func (devfile *TestDevfile) addCommand(commandType schema.CommandType) string```
             * main entry point for a test to add a command
             * maintains the array of commands in the schema structure
             * calls generateCommand() 
-        * ```func generateCommand(command *schema.Command, genericCommand *GenericCommand)```
-            * includes logic to call the ```create<Command-Type>Command``` function for the command-Type of the supplied command object.
         * ```func (devfile *TestDevfile) UpdateCommand(command *schema.Command) error```
             * includes logic to call set<commad-type>CommandValues for each commandType.
         * ```func (devfile TestDevfile) VerifyCommands(parserCommands []schema.Command) error```
-            * Includes logic to compare the array of commands obtained from the parser with those created by the test. if the compare fails:
+            * includes logic to compare the array of commands obtained from the parser with those created by the test. if the compare fails:
                 * each individual command is compared.
                     * if a command compare fails, the parser version and test version of the command are oputput as yaml files  to the tmp directory 
                 * a check is made to determine if the parser returned a command not known to the test or the pasrer omitted a command expected by the test.
 1. ```test-utils.go```
     * ```func (devfile TestDevfile) Verify()``` 
-        * Includes code to get object from the paser and verify their content.
-        * For commands code is required to: 
+        * includes code to get object from the paser and verify their content.
+        * for commands code is required to: 
             1. Retrieve each command from the parser
-            1. Use command id to obtain the GenericCommand object which matches
-            1. compare the command structure returned by the parser with the command structure saved in the GenericCommand object.
+            1. Use command Id to obtain the GenericCommand object which matches
+            1. Compare the command structure returned by the parser with the command structure saved in the GenericCommand object.
     * ```func (devfile TestDevfile) EditCommands() error```
-        * Specific to command objects.
+        * specific to command objects.
             1. Ensure devfile is written to disk
-            1. use parser to read devfile and get all command object
-            1.  for each command call:
+            1. Use parser to read devfile and get all command object
+            1. For each command call:
                 *  ```func (devfile *TestDevfile) UpdateCommand(command *schema.Command) error``` 
-            1. when all commands have been updated, use parser to write the updated devfile to disk
+            1. When all commands have been updated, use parser to write the updated devfile to disk
 1. ```parser-v200-test.go```
     * ```type TestContent struct```
         * includes an array of command types: ```CommandTypes     []schema.CommandType``` 
@@ -200,12 +204,12 @@ Using existing support for commands as an illustration, any new property support
         1. Calls runTest for a single thread test
         1. Calls runMultiThreadTest for a multi-thread test.
     * See also
-        *```func Test_<string>ExecCommand(t *testing.T)``` 
-        *```func Test_MultiCommand(t *testing.T)```
-        *```func Test_Everything(t *testing.T)```
-    * add logic to ```func runTest(testContent TestContent, t *testing.T)``` includes logic
-        1. Add commands to the test
-        2. Starts edits of commands if required. 
+        * ```func Test_<string>ExecCommand(t *testing.T)``` 
+        * ```func Test_MultiCommand(t *testing.T)```
+        * ```func Test_Everything(t *testing.T)```
+    * Add logic to ```func runTest(testContent TestContent, t *testing.T)```
+        1. Add commands to the test.
+        2. Start edits of commands if required. 
 
 
 #### Code flow
@@ -215,7 +219,7 @@ Create, modify and verify an exec command:
     1. parser-v200-test.runTest
         1. command-test-utils.AddCommand
             1. command-test-utils.GenerateCommand
-                1.  command-test-utils.createExecCommand
+                1. command-test-utils.createExecCommand
                     1. command-test-utils.setExecCommandValues
         1. test-utils.CreateDevfile
         1. test-utils.EditCommands
