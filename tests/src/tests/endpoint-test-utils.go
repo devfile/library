@@ -8,16 +8,20 @@ import (
 
 var Exposures = [...]schema.EndpointExposure{schema.PublicEndpointExposure, schema.InternalEndpointExposure, schema.NoneEndpointExposure}
 
+// Get a random exposure value
 func GetRandomExposure() schema.EndpointExposure {
 	return Exposures[GetRandomNumber(len(Exposures))-1]
 }
 
+//var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.HTTPSEndpointProtocol, schema.WSEndpointProtocol, schema.WSSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.WSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 
+// Get a random protocol value
 func GetRandomProtocol() schema.EndpointProtocol {
 	return Protocols[GetRandomNumber(len(Protocols))-1]
 }
 
+// Create one or more endpoints in a schema structure
 func CreateEndpoints() []schema.Endpoint {
 
 	numEndpoints := GetRandomNumber(5)
@@ -28,27 +32,27 @@ func CreateEndpoints() []schema.Endpoint {
 		endpoint := schema.Endpoint{}
 
 		endpoint.Name = GetRandomString(GetRandomNumber(15)+5, false)
-		LogMessage(fmt.Sprintf("   ....... add endpoint %d name  : %s", i, endpoint.Name))
+		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d name  : %s", i, endpoint.Name))
 
 		endpoint.TargetPort = GetRandomNumber(9999)
-		LogMessage(fmt.Sprintf("   ....... add endpoint %d targetPort: %d", i, endpoint.TargetPort))
+		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d targetPort: %d", i, endpoint.TargetPort))
 
 		if GetBinaryDecision() {
 			endpoint.Exposure = GetRandomExposure()
-			LogMessage(fmt.Sprintf("   ....... add endpoint %d exposure: %s", i, endpoint.Exposure))
+			LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d exposure: %s", i, endpoint.Exposure))
 		}
 
 		if GetBinaryDecision() {
 			endpoint.Protocol = GetRandomProtocol()
-			LogMessage(fmt.Sprintf("   ....... add endpoint %d protocol: %s", i, endpoint.Protocol))
+			LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d protocol: %s", i, endpoint.Protocol))
 		}
 
 		endpoint.Secure = GetBinaryDecision()
-		LogMessage(fmt.Sprintf("   ....... add endpoint %d secure: %t", i, endpoint.Secure))
+		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d secure: %t", i, endpoint.Secure))
 
 		if GetBinaryDecision() {
 			endpoint.Path = "/Path_" + GetRandomString(GetRandomNumber(10)+3, false)
-			LogMessage(fmt.Sprintf("   ....... add endpoint %d path: %s", i, endpoint.Path))
+			LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d path: %s", i, endpoint.Path))
 		}
 
 		endpoints[i] = endpoint

@@ -252,27 +252,27 @@ func runTest(testContent TestContent, t *testing.T) {
 
 	err := testDevfile.CreateDevfile(testContent.CreateWithParser)
 	if err != nil {
-		t.Fatalf(LogMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err)))
+		t.Fatalf(LogErrorMessage(fmt.Sprintf("ERROR creating devfile :  %s : %v", testContent.FileName, err)))
 	}
 
 	if testContent.EditContent {
 		if len(testContent.CommandTypes) > 0 {
 			err = testDevfile.EditCommands()
 			if err != nil {
-				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
+				t.Fatalf(LogErrorMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
 			}
 		}
 		if len(testContent.ComponentTypes) > 0 {
 			err = testDevfile.EditComponents()
 			if err != nil {
-				t.Fatalf(LogMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
+				t.Fatalf(LogErrorMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
 			}
 		}
 	}
 
 	err = testDevfile.Verify()
 	if err != nil {
-		t.Fatalf(LogMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err)))
+		t.Fatalf(LogErrorMessage(fmt.Sprintf("ERROR verifying devfile content : %s : %v", testContent.FileName, err)))
 	}
 
 }

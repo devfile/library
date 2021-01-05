@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,6 +31,9 @@ var (
 	testLogger *log.Logger
 )
 
+// Creates:
+//    - the temporary directory used by the test to store logs and generated devfiles.
+//    - the log file
 func init() {
 	if _, err := os.Stat(tmpDir); !os.IsNotExist(err) {
 		os.RemoveAll(tmpDir)
@@ -50,6 +54,10 @@ func init() {
 	}
 }
 
+// Called from a test program.
+//  - determines the test program name
+// 	- creates a temproray directory for the test program
+// returns the name of the directory created.
 func GetTempDir() string {
 	_, fn, _, ok := runtime.Caller(1)
 	if !ok {
@@ -61,6 +69,8 @@ func GetTempDir() string {
 	return CreateTempDir(subdir)
 }
 
+// Creates a specified sub directory under the temp directory if it does not exists
+// Returns the name of the temp directory.
 func CreateTempDir(subdir string) string {
 	tempDir := tmpDir + subdir + "/"
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
@@ -69,6 +79,10 @@ func CreateTempDir(subdir string) string {
 	return tempDir
 }
 
+// Called from a test program.
+//   - ensure the temp directory for the test program exists
+//   - generates a devfile name badsed in the calling function name
+// Returns the devfile name
 func GetDevFileName() string {
 	pc, fn, _, ok := runtime.Caller(1)
 	if !ok {
@@ -84,21 +98,45 @@ func GetDevFileName() string {
 	pos1 := strings.LastIndex(callerName, "/tests.") + len("/tests.")
 	devfileName := destDir + callerName[pos1:len(callerName)] + ".yaml"
 
-	LogMessage(fmt.Sprintf("GetDevFileName : %s", devfileName))
+	LogInfoMessage(fmt.Sprintf("GetDevFileName : %s", devfileName))
 
 	return devfileName
 }
 
+// Adds a specified suffix to the name of a specified file.
+// For example if the file is devfile.yaml and the suffix 1 the result is devfile1.yaml
 func AddSuffixToFileName(fileName string, suffix string) string {
 	pos1 := strings.LastIndex(fileName, ".yaml")
 	newFileName := fileName[0:pos1] + suffix + ".yaml"
-	LogMessage(fmt.Sprintf("Add suffix %s to fileName %s : %s", suffix, fileName, newFileName))
+	LogInfoMessage(fmt.Sprintf("Add suffix %s to fileName %s : %s", suffix, fileName, newFileName))
 	return newFileName
 }
 
+// Log the specified message
+// Return the message logged
 func LogMessage(message string) string {
 	testLogger.Println(message)
 	return message
+}
+
+// Log the specified message as an Error
+// Return the message logged
+var errorPrefix = "..... ERROR : "
+
+func LogErrorMessage(message string) string {
+	var errMessage []string
+	errMessage = append(errMessage, errorPrefix, message)
+	return LogMessage(fmt.Sprint(errMessage))
+}
+
+// Log the specified message as Info
+// Return the message logged
+var infoPrefix = "INFO :"
+
+func LogInfoMessage(message string) string {
+	var infoMessage []string
+	infoMessage = append(infoMessage, infoPrefix, message)
+	return LogMessage(fmt.Sprint(infoMessage))
 }
 
 type TestDevfile struct {
@@ -112,11 +150,15 @@ var StringCount int = 0
 
 var RndSeed int64 = time.Now().UnixNano()
 
+// Return a unique random string which is n characters long.
+// An integer is appended to the name to ensure uniqueness
+// If lower is set to true a lower case string is returned.
 func GetRandomUniqueString(n int, lower bool) string {
 	StringCount++
 	return fmt.Sprintf("%s%04d", GetRandomString(n, lower), StringCount)
 }
 
+// Creates a unique seed for the randon generation.
 func setRandSeed() {
 	RndSeed++
 	rand.Seed(RndSeed)
@@ -124,6 +166,8 @@ func setRandSeed() {
 
 const schemaBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
+// Return a random string which is n characters long.
+// If lower is set to true a lower case string is returned.
 func GetRandomString(n int, lower bool) string {
 	setRandSeed()
 	b := make([]byte, n)
@@ -137,30 +181,32 @@ func GetRandomString(n int, lower bool) string {
 	return randomString
 }
 
-func GetGroupKinds() []schema.CommandGroupKind {
-	setRandSeed()
-	return []schema.CommandGroupKind{schema.BuildCommandGroupKind, schema.RunCommandGroupKind, schema.TestCommandGroupKind, schema.DebugCommandGroupKind}
-}
+var GroupKinds = [...]schema.CommandGroupKind{schema.BuildCommandGroupKind, schema.RunCommandGroupKind, schema.TestCommandGroupKind, schema.DebugCommandGroupKind}
 
+// Return random group kind. One of "build", "run", "test" or "debug"
 func GetRandomGroupKind() schema.CommandGroupKind {
-	setRandSeed()
-	return GetGroupKinds()[rand.Intn(len(GetGroupKinds()))]
+	return GroupKinds[GetRandomNumber(len(GroupKinds))-1]
 }
 
+// Randomly returns true or false
 func GetBinaryDecision() bool {
 	return GetRandomDecision(1, 1)
 }
 
+// Randomly returns true or false, but weighted to one or the other.
+// For example if success is set to 2 and failure to 1, true is twice as likely to be returned.
 func GetRandomDecision(success int, failure int) bool {
 	setRandSeed()
 	return rand.Intn(success+failure) > failure-1
 }
 
+// Randomly returns an integer between 1 and the number specified.
 func GetRandomNumber(max int) int {
 	setRandSeed()
 	return rand.Intn(max) + 1
 }
 
+// Return a structure used to represent a specific devfile in the tests
 func GetDevfile(fileName string) TestDevfile {
 	testDevfile := TestDevfile{}
 	testDevfile.SchemaDevFile = schema.Devfile{}
@@ -170,6 +216,9 @@ func GetDevfile(fileName string) TestDevfile {
 	return testDevfile
 }
 
+// Create a devifle on disk for use in the tests.
+// If useParser is true the parser is used to generate the file, otherwise "sigs.k8s.io/yaml" is used.
+// The TestDevfile structure specified contains the name of the devfile and its required content.
 func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 	var err error
 
@@ -179,10 +228,10 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 	}
 
 	if useParser {
-		LogMessage(fmt.Sprintf("   .......use Parser to write devfile %s", fileName))
+		LogInfoMessage(fmt.Sprintf("Use Parser to write devfile %s", fileName))
 		newDevfile, err := devfileData.NewDevfileData(devfile.SchemaDevFile.SchemaVersion)
 		if err != nil {
-			LogMessage(fmt.Sprintf(" ..... ERROR: creating new devfile : %v", err))
+			LogErrorMessage(fmt.Sprintf("Creating new devfile : %v", err))
 		} else {
 			newDevfile.SetSchemaVersion(devfile.SchemaDevFile.SchemaVersion)
 
@@ -197,7 +246,7 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 
 			err = ctx.SetAbsPath()
 			if err != nil {
-				LogMessage(fmt.Sprintf(" ..... ERROR: setting devfile path : %v", err))
+				LogErrorMessage(fmt.Sprintf("Setting devfile path : %v", err))
 			} else {
 				devObj := parser.DevfileObj{
 					Ctx:  ctx,
@@ -205,120 +254,141 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 				}
 				err = devObj.WriteYamlDevfile()
 				if err != nil {
-					LogMessage(fmt.Sprintf(" ..... ERROR: wriring devfile : %v", err))
+					LogErrorMessage(fmt.Sprintf("Writing devfile : %v", err))
+				} else {
+					devfile.SchemaParsed = false
 				}
 			}
 
 		}
 	} else {
-		LogMessage(fmt.Sprintf("   .......marshall and write devfile %s", devfile.FileName))
+		LogInfoMessage(fmt.Sprintf("Marshall and write devfile %s", devfile.FileName))
 		c, err := yaml.Marshal(&(devfile.SchemaDevFile))
 
-		if err == nil {
+		if err != nil {
+			LogErrorMessage(fmt.Sprintf("Marshall devfile %s : %v", devfile.FileName, err))
+		} else {
 			err = ioutil.WriteFile(fileName, c, 0644)
+			if err != nil {
+				LogErrorMessage(fmt.Sprintf("Write devfile %s : %v", devfile.FileName, err))
+			} else {
+				devfile.SchemaParsed = false
+			}
 		}
-	}
-	if err == nil {
-		devfile.SchemaParsed = false
 	}
 	return err
 }
 
+// Use the parser to parse a devfile on disk
 func (devfile *TestDevfile) ParseSchema() error {
 
 	var err error
 	if !devfile.SchemaParsed {
-		LogMessage(fmt.Sprintf(" -> Parse and Validate %s : ", devfile.FileName))
+		LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
 		devfile.ParsedSchemaObj, err = devfilepkg.ParseAndValidate(devfile.FileName)
 		if err != nil {
-			LogMessage(fmt.Sprintf(" ......ERROR from ParseAndValidate %v : ", err))
+			LogErrorMessage(fmt.Sprintf("From ParseAndValidate %v : ", err))
 		}
 		devfile.SchemaParsed = true
 	}
 	return err
 }
 
+// Verify the contents of the specified devfile match the expected content
 func (devfile TestDevfile) Verify() error {
 
-	LogMessage(fmt.Sprintf("Verify %s : ", devfile.FileName))
+	LogInfoMessage(fmt.Sprintf("Verify %s : ", devfile.FileName))
+
+	var errorString []string
 
 	err := devfile.ParseSchema()
 
-	if err == nil {
-		LogMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
+	if err != nil {
+		errorString = append(errorString, LogErrorMessage(fmt.Sprintf("parsing schema %s : %v", devfile.FileName, err)))
+	} else {
+		LogInfoMessage(fmt.Sprintf("Get commands %s : ", devfile.FileName))
 		commands, _ := devfile.ParsedSchemaObj.Data.GetCommands(common.DevfileOptions{})
 		if commands != nil && len(commands) > 0 {
 			err = devfile.VerifyCommands(commands)
+			if err != nil {
+				errorString = append(errorString, LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
+			}
 		} else {
-			LogMessage(fmt.Sprintf("  No command found in %s : ", devfile.FileName))
+			LogInfoMessage(fmt.Sprintf("No command found in %s : ", devfile.FileName))
 		}
 	}
 
 	if err == nil {
-		LogMessage(fmt.Sprintf(" -> Get components %s : ", devfile.FileName))
+		LogInfoMessage(fmt.Sprintf("Get components %s : ", devfile.FileName))
 		components, _ := devfile.ParsedSchemaObj.Data.GetComponents(common.DevfileOptions{})
 		if components != nil && len(components) > 0 {
 			err = devfile.VerifyComponents(components)
+			if err != nil {
+				errorString = append(errorString, LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
+			}
 		} else {
-			LogMessage(fmt.Sprintf("  No components found in %s : ", devfile.FileName))
+			LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
 		}
 	}
 
-	return err
+	var returnError error
+	if len(errorString) > 0 {
+		returnError = errors.New(fmt.Sprint(errorString))
+	}
+	return returnError
 
 }
 
+// Edit the commands in the specified devfile.
 func (devfile TestDevfile) EditCommands() error {
 
-	LogMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
+	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
 	err := devfile.ParseSchema()
-	if err == nil {
-		LogMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
+	if err != nil {
+		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
+	} else {
+		LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
 		commands, _ := devfile.ParsedSchemaObj.Data.GetCommands(common.DevfileOptions{})
 		for _, command := range commands {
 			err = devfile.UpdateCommand(&command)
 			if err != nil {
-				LogMessage(fmt.Sprintf(" ..... ERROR: updating command : %v", err))
+				LogErrorMessage(fmt.Sprintf("Updating command : %v", err))
 			} else {
-				LogMessage(fmt.Sprintf(" ..... Update command in Parser : %s", command.Id))
+				LogInfoMessage(fmt.Sprintf("Update command in Parser : %s", command.Id))
 				devfile.ParsedSchemaObj.Data.UpdateCommand(command)
 			}
 		}
-		LogMessage(fmt.Sprintf(" ..... Write updated file to yaml : %s", devfile.FileName))
+		LogInfoMessage(fmt.Sprintf("Write updated file to yaml : %s", devfile.FileName))
 		devfile.ParsedSchemaObj.WriteYamlDevfile()
 		devfile.SchemaParsed = false
-
-	} else {
-		LogMessage(fmt.Sprintf(" ..... ERROR: from parser : %v", err))
 	}
 	return err
-
 }
 
+// Edit the components in the specified devfile.
 func (devfile TestDevfile) EditComponents() error {
 
-	LogMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
+	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
 	err := devfile.ParseSchema()
-	if err == nil {
-		LogMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
+	if err != nil {
+		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
+	} else {
+		LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
 		components, _ := devfile.ParsedSchemaObj.Data.GetComponents(common.DevfileOptions{})
 		for _, component := range components {
 			err = devfile.UpdateComponent(&component)
 			if err != nil {
-				LogMessage(fmt.Sprintf(" ..... ERROR: updating component : %v", err))
+				LogErrorMessage(fmt.Sprintf("Updating component : %v", err))
 			} else {
-				LogMessage(fmt.Sprintf(" ..... Update component in Parser : %s", component.Name))
+				LogInfoMessage(fmt.Sprintf("Update component in Parser : %s", component.Name))
 				devfile.ParsedSchemaObj.Data.UpdateComponent(component)
 			}
 		}
-		LogMessage(fmt.Sprintf(" ..... Write updated file to yaml : %s", devfile.FileName))
+		LogInfoMessage(fmt.Sprintf("Write updated file to yaml : %s", devfile.FileName))
 		devfile.ParsedSchemaObj.WriteYamlDevfile()
 		devfile.SchemaParsed = false
-	} else {
-		LogMessage(fmt.Sprintf(" ..... ERROR: from parser : %v", err))
 	}
 	return err
-
 }
