@@ -108,8 +108,9 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          endpointsNames[0],
+					Name:          "8080-tcp",
 					ContainerPort: int32(endpointsPorts[0]),
+					Protocol:      "TCP",
 				},
 			},
 		},
@@ -127,12 +128,14 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          endpointsNames[0],
+					Name:          "8080-tcp",
 					ContainerPort: int32(endpointsPorts[0]),
+					Protocol:      "TCP",
 				},
 				{
-					Name:          endpointsNames[1],
+					Name:          "9090-tcp",
 					ContainerPort: int32(endpointsPorts[1]),
+					Protocol:      "TCP",
 				},
 			},
 		},

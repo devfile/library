@@ -46,6 +46,7 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/devfile/api v0.0.0-20201211221100-a68230324c7e h1:Jy3C3ul05YvL4bJpAVhFwPZD8neOJUBZy7GuCcjc8nc=
 github.com/devfile/api v0.0.0-20201211221100-a68230324c7e/go.mod h1:/aDiwWjDEW/fY1/Ig8umVtmneAXKZImnLvWqzMlcfrY=
+github.com/devfile/api v0.0.0-20201222180101-071eecafa93c h1:rAgQa1Vw0y8nLX+HoWWODNgMOBPVAMW+1KbfpyZJAUA=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
