@@ -1,4 +1,4 @@
-package tests
+package utils
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 var Exposures = [...]schema.EndpointExposure{schema.PublicEndpointExposure, schema.InternalEndpointExposure, schema.NoneEndpointExposure}
 
-// Get a random exposure value
+// GetRandomExposure returns a random exposure value
 func GetRandomExposure() schema.EndpointExposure {
 	return Exposures[GetRandomNumber(len(Exposures))-1]
 }
@@ -16,12 +16,12 @@ func GetRandomExposure() schema.EndpointExposure {
 //var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.HTTPSEndpointProtocol, schema.WSEndpointProtocol, schema.WSSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.WSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 
-// Get a random protocol value
+// GetRandomProtocol returns a random protocol value
 func GetRandomProtocol() schema.EndpointProtocol {
 	return Protocols[GetRandomNumber(len(Protocols))-1]
 }
 
-// Create one or more endpoints in a schema structure
+// CreateEndpoints createa and returns a randon numebr of endpoints in a schema structure
 func CreateEndpoints() []schema.Endpoint {
 
 	numEndpoints := GetRandomNumber(5)

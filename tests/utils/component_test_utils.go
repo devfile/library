@@ -1,4 +1,4 @@
-package tests
+package utils
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Return volumeMounts in a schema structure based on a specified number of volumes
+// AddVolume returns volumeMounts in a schema structure based on a specified number of volumes
 func AddVolume(numVols int) []schema.VolumeMount {
 	commandVols := make([]schema.VolumeMount, numVols)
 	for i := 0; i < numVols; i++ {
@@ -22,7 +22,7 @@ func AddVolume(numVols int) []schema.VolumeMount {
 	return commandVols
 }
 
-// Get a named components from an array of components
+// getSchemaComponent returns a named component from an array of components
 func getSchemaComponent(components []schema.Component, name string) (*schema.Component, bool) {
 	found := false
 	var schemaComponent schema.Component
@@ -36,14 +36,14 @@ func getSchemaComponent(components []schema.Component, name string) (*schema.Com
 	return &schemaComponent, found
 }
 
-// Add a component of the specified type
+// AddComponent adds a component of the specified type, with random attributes, to the devfile schema
 func (devfile *TestDevfile) AddComponent(componentType schema.ComponentType) string {
 	component := generateComponent(componentType)
 	devfile.SchemaDevFile.Components = append(devfile.SchemaDevFile.Components, component)
 	return component.Name
 }
 
-// Generate a component in a schema structure of the specified type
+// generateComponent generates a component in a schema structure of the specified type
 func generateComponent(componentType schema.ComponentType) schema.Component {
 
 	component := schema.Component{}
@@ -58,7 +58,7 @@ func generateComponent(componentType schema.ComponentType) schema.Component {
 	return component
 }
 
-// Create a container component and set its attribute values
+// createContainerComponent creates a container component and set its attribute values
 func createContainerComponent() *schema.ContainerComponent {
 
 	LogInfoMessage("Create a container component :")
@@ -70,7 +70,7 @@ func createContainerComponent() *schema.ContainerComponent {
 
 }
 
-// Create a volume component and set its attribute values
+// createVolumeComponent creates a volume component and set its attribute values
 func createVolumeComponent() *schema.VolumeComponent {
 
 	LogInfoMessage("Create a volume component :")
@@ -82,7 +82,7 @@ func createVolumeComponent() *schema.VolumeComponent {
 
 }
 
-// Set container component attribute values
+// setContainerComponentValues randomly sets container component attributes to random values
 func setContainerComponentValues(containerComponent *schema.ContainerComponent) {
 
 	containerComponent.Image = GetRandomUniqueString(8+GetRandomNumber(10), false)
@@ -142,7 +142,7 @@ func setContainerComponentValues(containerComponent *schema.ContainerComponent) 
 
 }
 
-// Set volume component attribute values
+// setVolumeComponentValues randomly sets volume component attributes to random values
 func setVolumeComponentValues(volumeComponent *schema.VolumeComponent) {
 
 	if GetRandomDecision(5, 1) {
@@ -152,7 +152,7 @@ func setVolumeComponentValues(volumeComponent *schema.VolumeComponent) {
 
 }
 
-// Update the attribute values of a specified component
+// UpdateComponent randomly updates the attribute values of a specified component
 func (devfile *TestDevfile) UpdateComponent(component *schema.Component) error {
 
 	var errorString []string
@@ -174,7 +174,7 @@ func (devfile *TestDevfile) UpdateComponent(component *schema.Component) error {
 	return err
 }
 
-// Verify components returned by the parser match with those saved in the schema
+// VerifyComponents verifies components returned by the parser are the same as those saved in the devfile schema
 func (devfile TestDevfile) VerifyComponents(parserComponents []schema.Component) error {
 
 	LogInfoMessage("Enter VerifyComponents")

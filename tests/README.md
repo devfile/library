@@ -4,7 +4,7 @@
 
 The tests use the go language and are intended to test every apsect of the parser for every schema attribute. Some basic aspects of the tests:
 
-* A first test (parser_v200_schema_test.go) feeds pre-created devfiles to the parser to ensure the parser can parse all attribues and return an approproate error when the devfile contains an error.
+* A first test (parser_v200_schema_test.go) feeds pre-created devfiles to the parser to ensure the parser can parse all attribues and return an appropriate error when the devfile contains an error. This test is not currently available. 
 * A second set of tests (parser_v200_verify_test.go) create devfile content at runtime:
     * Devfile content is randomly generated and as a result the tests are designed to run multiple times.
     * Parser functions covered:
@@ -18,7 +18,7 @@ The tests use the go language and are intended to test every apsect of the parse
 
 ## Current tests:
 
-The tests using pre-created devfiles are complete (but update in progress due to schema changes)
+The tests using pre-created devfiles are not currently available (update in progress due to schema changes)
 
 The tests which generate devfiles with random content at run time currently cover the following properties and items.
 

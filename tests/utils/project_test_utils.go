@@ -1,4 +1,4 @@
-package tests
+package utils
 
 import (
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"

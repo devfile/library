@@ -19,6 +19,6 @@ main
 .vscode/
 
 # File created running tests
-tests/src/tests/tmp/
+tests/tmp/
 
 .DS_Store

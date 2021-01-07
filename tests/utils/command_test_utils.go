@@ -1,4 +1,4 @@
-package tests
+package utils
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
-// Return a specifed number of env attributes in a schema structure
+// AddEnv creates and returns a specifed number of env attributes in a schema structure
 func AddEnv(numEnv int) []schema.EnvVar {
 	commandEnvs := make([]schema.EnvVar, numEnv)
 	for i := 0; i < numEnv; i++ {
@@ -22,7 +22,7 @@ func AddEnv(numEnv int) []schema.EnvVar {
 	return commandEnvs
 }
 
-// Return a specifed number of attributes in a schema structure
+// AddAttributes creates returns a specifed number of attributes in a schema structure
 func AddAttributes(numAtrributes int) map[string]string {
 	attributes := make(map[string]string)
 	for i := 0; i < numAtrributes; i++ {
@@ -33,7 +33,7 @@ func AddAttributes(numAtrributes int) map[string]string {
 	return attributes
 }
 
-// Create and return a group in a schema structure
+// addGroup creates and returns a group in a schema structure
 func addGroup() *schema.CommandGroup {
 
 	commandGroup := schema.CommandGroup{}
@@ -44,14 +44,14 @@ func addGroup() *schema.CommandGroup {
 	return &commandGroup
 }
 
-// Add a command of the specified type to the schema
-func (devfile *TestDevfile) addCommand(commandType schema.CommandType) string {
+// AddCommand adds a command of the specified type, with random attributes, to the devfile schema
+func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) string {
 	command := generateCommand(commandType)
 	devfile.SchemaDevFile.Commands = append(devfile.SchemaDevFile.Commands, command)
 	return command.Id
 }
 
-// Create  a command of a specified type in a schema structure
+// generateCommand creates a command of a specified type in a schema structure
 func generateCommand(commandType schema.CommandType) schema.Command {
 	command := schema.Command{}
 	command.Id = GetRandomUniqueString(8, true)
@@ -65,10 +65,10 @@ func generateCommand(commandType schema.CommandType) schema.Command {
 	return command
 }
 
-// Update the values of a specified command
+// UpdateCommand randomly updates attribute values of a specified command in the devfile schema
 func (devfile *TestDevfile) UpdateCommand(parserCommand *schema.Command) error {
 
-	var errorString []string
+	var err error
 	testCommand, found := getSchemaCommand(devfile.SchemaDevFile.Commands, parserCommand.Id)
 	if found {
 		LogInfoMessage(fmt.Sprintf("Updating command id: %s", parserCommand.Id))
@@ -79,17 +79,12 @@ func (devfile *TestDevfile) UpdateCommand(parserCommand *schema.Command) error {
 		}
 		devfile.replaceSchemaCommand(*parserCommand)
 	} else {
-		errorString = append(errorString, LogErrorMessage(fmt.Sprintf("Command not found in test : %s", parserCommand.Id)))
+		err = errors.New(LogErrorMessage(fmt.Sprintf("Command not found in test : %s", parserCommand.Id)))
 	}
-
-	var returnError error
-	if len(errorString) > 0 {
-		returnError = errors.New(fmt.Sprint(errorString))
-	}
-	return returnError
+	return err
 }
 
-// Create and return an exec command in a schema structure
+// createExecCommand creates and returns an exec command in a schema structure
 func createExecCommand() *schema.ExecCommand {
 
 	LogInfoMessage("Create an exec command :")
@@ -99,7 +94,7 @@ func createExecCommand() *schema.ExecCommand {
 
 }
 
-// Set the attribute values of an exec command
+// setExecCommandValues randomly sets exec command attribute to random values
 func setExecCommandValues(execCommand *schema.ExecCommand) {
 
 	execCommand.Component = GetRandomString(8, false)
@@ -139,7 +134,7 @@ func setExecCommandValues(execCommand *schema.ExecCommand) {
 
 }
 
-// Use the specified command to replace the command in the schema structure with the same Id.
+// replaceSchemaCommand uses the specified command to replace the command in the schema structure with the same Id.
 func (devfile TestDevfile) replaceSchemaCommand(command schema.Command) {
 	for i := 0; i < len(devfile.SchemaDevFile.Commands); i++ {
 		if devfile.SchemaDevFile.Commands[i].Id == command.Id {
@@ -149,7 +144,7 @@ func (devfile TestDevfile) replaceSchemaCommand(command schema.Command) {
 	}
 }
 
-// Get a command from the schema structure
+// getSchemaCommand get a command from the devfile schema structure
 func getSchemaCommand(commands []schema.Command, id string) (*schema.Command, bool) {
 	found := false
 	var schemaCommand schema.Command
@@ -163,7 +158,7 @@ func getSchemaCommand(commands []schema.Command, id string) (*schema.Command, bo
 	return &schemaCommand, found
 }
 
-// Create a composite command in a schema structure
+// createCompositeCommand creates a composite command in a schema structure
 func createCompositeCommand() *schema.CompositeCommand {
 
 	LogInfoMessage("Create a composite command :")
@@ -172,7 +167,7 @@ func createCompositeCommand() *schema.CompositeCommand {
 	return &compositeCommand
 }
 
-// Set the attribute values for a composite command
+// setCompositeCommandValues randomly sets composite command attribute to random values
 func setCompositeCommandValues(compositeCommand *schema.CompositeCommand) {
 	numCommands := GetRandomNumber(3)
 
@@ -197,7 +192,7 @@ func setCompositeCommandValues(compositeCommand *schema.CompositeCommand) {
 	}
 }
 
-// Verify commands returned by the parser match with those saved in the schema
+// VerifyCommands verifies commands returned by the parser are the same as those saved in the devfile schema
 func (devfile TestDevfile) VerifyCommands(parserCommands []schema.Command) error {
 
 	LogInfoMessage("Enter VerifyCommands")

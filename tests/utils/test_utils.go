@@ -1,4 +1,4 @@
-package tests
+package utils
 
 import (
 	"errors"
@@ -22,16 +22,19 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const tmpDir = "./tmp/"
-const logErrorOnly = false
-const logFileName = "test.log"
-const logToFileOnly = true // If set to false the log output will also be output to the console
+const (
+	tmpDir       = "../tmp/"
+	logErrorOnly = false
+	logFileName  = "test.log"
+	// logToFileOnly - If set to false the log output will also be output to the console
+	logToFileOnly = true // If set to false the log output will also be output to the console
+)
 
 var (
 	testLogger *log.Logger
 )
 
-// Creates:
+// init creates:
 //    - the temporary directory used by the test to store logs and generated devfiles.
 //    - the log file
 func init() {
@@ -52,26 +55,14 @@ func init() {
 		}
 		testLogger.Println("Test Starting:")
 	}
+
+	testError(true)
+	testError1(true)
 }
 
-// Called from a test program.
-//  - determines the test program name
-// 	- creates a temproray directory for the test program
-// returns the name of the directory created.
-func GetTempDir() string {
-	_, fn, _, ok := runtime.Caller(1)
-	if !ok {
-		return tmpDir
-	}
-	testFile := filepath.Base(fn)
-	testFileExtension := filepath.Ext(testFile)
-	subdir := testFile[0 : len(testFile)-len(testFileExtension)]
-	return CreateTempDir(subdir)
-}
-
-// Creates a specified sub directory under the temp directory if it does not exists
-// Returns the name of the temp directory.
-func CreateTempDir(subdir string) string {
+// createTempDir creates a specified sub directory under the temp directory if it does not exist.
+// Returns the name of the created directory.
+func createTempDir(subdir string) string {
 	tempDir := tmpDir + subdir + "/"
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
 		os.Mkdir(tempDir, 0755)
@@ -79,10 +70,8 @@ func CreateTempDir(subdir string) string {
 	return tempDir
 }
 
-// Called from a test program.
-//   - ensure the temp directory for the test program exists
-//   - generates a devfile name badsed in the calling function name
-// Returns the devfile name
+// GetDevFileName returns a qualified name of a devfile for use in a test.
+// The devfile will be in a temporary directory and is named using the calling function's name.
 func GetDevFileName() string {
 	pc, fn, _, ok := runtime.Caller(1)
 	if !ok {
@@ -92,10 +81,9 @@ func GetDevFileName() string {
 	testFile := filepath.Base(fn)
 	testFileExtension := filepath.Ext(testFile)
 	subdir := testFile[0 : len(testFile)-len(testFileExtension)]
-	destDir := CreateTempDir(subdir)
+	destDir := createTempDir(subdir)
 	callerName := runtime.FuncForPC(pc).Name()
-
-	pos1 := strings.LastIndex(callerName, "/tests.") + len("/tests.")
+	pos1 := strings.LastIndex(callerName, "/tests/api.") + len("/tests/api.")
 	devfileName := destDir + callerName[pos1:len(callerName)] + ".yaml"
 
 	LogInfoMessage(fmt.Sprintf("GetDevFileName : %s", devfileName))
@@ -103,8 +91,8 @@ func GetDevFileName() string {
 	return devfileName
 }
 
-// Adds a specified suffix to the name of a specified file.
-// For example if the file is devfile.yaml and the suffix 1 the result is devfile1.yaml
+// AddSuffixToFileName adds a specified suffix to the name of a specified file.
+// For example if the file is devfile.yaml and the suffix is 1, the result is devfile1.yaml
 func AddSuffixToFileName(fileName string, suffix string) string {
 	pos1 := strings.LastIndex(fileName, ".yaml")
 	newFileName := fileName[0:pos1] + suffix + ".yaml"
@@ -112,33 +100,30 @@ func AddSuffixToFileName(fileName string, suffix string) string {
 	return newFileName
 }
 
-// Log the specified message
-// Return the message logged
+// LogMessage logs the specified message and returns the message logged
 func LogMessage(message string) string {
 	testLogger.Println(message)
 	return message
 }
 
-// Log the specified message as an Error
-// Return the message logged
 var errorPrefix = "..... ERROR : "
+var infoPrefix = "INFO :"
 
+// LogErrorMessage logs the specified message as an error message and returns the message logged
 func LogErrorMessage(message string) string {
 	var errMessage []string
 	errMessage = append(errMessage, errorPrefix, message)
 	return LogMessage(fmt.Sprint(errMessage))
 }
 
-// Log the specified message as Info
-// Return the message logged
-var infoPrefix = "INFO :"
-
+// LogInfoMessage logs the specified message as an info message and returns the message logged
 func LogInfoMessage(message string) string {
 	var infoMessage []string
 	infoMessage = append(infoMessage, infoPrefix, message)
 	return LogMessage(fmt.Sprint(infoMessage))
 }
 
+// TestDevfile is a structure used to track a test devfile and its contents
 type TestDevfile struct {
 	SchemaDevFile   schema.Devfile
 	FileName        string
@@ -150,8 +135,7 @@ var StringCount int = 0
 
 var RndSeed int64 = time.Now().UnixNano()
 
-// Return a unique random string which is n characters long.
-// An integer is appended to the name to ensure uniqueness
+// GetRandomUniqueString returns a unique random string which is n characters long plus an integer to ensure uniqueness
 // If lower is set to true a lower case string is returned.
 func GetRandomUniqueString(n int, lower bool) string {
 	StringCount++
@@ -166,7 +150,7 @@ func setRandSeed() {
 
 const schemaBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-// Return a random string which is n characters long.
+// GetRandomString returns a random string which is n characters long.
 // If lower is set to true a lower case string is returned.
 func GetRandomString(n int, lower bool) string {
 	setRandSeed()
@@ -183,30 +167,30 @@ func GetRandomString(n int, lower bool) string {
 
 var GroupKinds = [...]schema.CommandGroupKind{schema.BuildCommandGroupKind, schema.RunCommandGroupKind, schema.TestCommandGroupKind, schema.DebugCommandGroupKind}
 
-// Return random group kind. One of "build", "run", "test" or "debug"
+// GetRandomGroupKind return random group kind. One of "build", "run", "test" or "debug"
 func GetRandomGroupKind() schema.CommandGroupKind {
 	return GroupKinds[GetRandomNumber(len(GroupKinds))-1]
 }
 
-// Randomly returns true or false
+// GetBinaryDecision randomly returns true or false
 func GetBinaryDecision() bool {
 	return GetRandomDecision(1, 1)
 }
 
-// Randomly returns true or false, but weighted to one or the other.
+// GetRandomDecision randomly returns true or false, but weighted to one or the other.
 // For example if success is set to 2 and failure to 1, true is twice as likely to be returned.
 func GetRandomDecision(success int, failure int) bool {
 	setRandSeed()
 	return rand.Intn(success+failure) > failure-1
 }
 
-// Randomly returns an integer between 1 and the number specified.
+// GetRandomNumber randomly returns an integer between 1 and the number specified.
 func GetRandomNumber(max int) int {
 	setRandSeed()
 	return rand.Intn(max) + 1
 }
 
-// Return a structure used to represent a specific devfile in the tests
+// GetDevfile returns a structure used to represent a specific devfile in a test
 func GetDevfile(fileName string) TestDevfile {
 	testDevfile := TestDevfile{}
 	testDevfile.SchemaDevFile = schema.Devfile{}
@@ -216,9 +200,8 @@ func GetDevfile(fileName string) TestDevfile {
 	return testDevfile
 }
 
-// Create a devifle on disk for use in the tests.
-// If useParser is true the parser is used to generate the file, otherwise "sigs.k8s.io/yaml" is used.
-// The TestDevfile structure specified contains the name of the devfile and its required content.
+// CreateDevfile create a devifle on disk for use in a test.
+// If useParser is true the parser library is used to generate the file, otherwise "sigs.k8s.io/yaml" is used.
 func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 	var err error
 
@@ -229,9 +212,9 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 
 	if useParser {
 		LogInfoMessage(fmt.Sprintf("Use Parser to write devfile %s", fileName))
-		newDevfile, err := devfileData.NewDevfileData(devfile.SchemaDevFile.SchemaVersion)
-		if err != nil {
-			LogErrorMessage(fmt.Sprintf("Creating new devfile : %v", err))
+		newDevfile, createErr := devfileData.NewDevfileData(devfile.SchemaDevFile.SchemaVersion)
+		if createErr != nil {
+			err = errors.New(LogErrorMessage(fmt.Sprintf("Creating new devfile : %v", createErr)))
 		} else {
 			newDevfile.SetSchemaVersion(devfile.SchemaDevFile.SchemaVersion)
 
@@ -263,10 +246,10 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 		}
 	} else {
 		LogInfoMessage(fmt.Sprintf("Marshall and write devfile %s", devfile.FileName))
-		c, err := yaml.Marshal(&(devfile.SchemaDevFile))
+		c, marshallErr := yaml.Marshal(&(devfile.SchemaDevFile))
 
-		if err != nil {
-			LogErrorMessage(fmt.Sprintf("Marshall devfile %s : %v", devfile.FileName, err))
+		if marshallErr != nil {
+			err = errors.New(LogErrorMessage(fmt.Sprintf("Marshall devfile %s : %v", devfile.FileName, marshallErr)))
 		} else {
 			err = ioutil.WriteFile(fileName, c, 0644)
 			if err != nil {
@@ -280,7 +263,7 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 }
 
 // Use the parser to parse a devfile on disk
-func (devfile *TestDevfile) ParseSchema() error {
+func (devfile *TestDevfile) parseSchema() error {
 
 	var err error
 	if !devfile.SchemaParsed {
@@ -294,14 +277,14 @@ func (devfile *TestDevfile) ParseSchema() error {
 	return err
 }
 
-// Verify the contents of the specified devfile match the expected content
+// Verify verifies the contents of the specified devfile with the expected content
 func (devfile TestDevfile) Verify() error {
 
 	LogInfoMessage(fmt.Sprintf("Verify %s : ", devfile.FileName))
 
 	var errorString []string
 
-	err := devfile.ParseSchema()
+	err := devfile.parseSchema()
 
 	if err != nil {
 		errorString = append(errorString, LogErrorMessage(fmt.Sprintf("parsing schema %s : %v", devfile.FileName, err)))
@@ -339,12 +322,12 @@ func (devfile TestDevfile) Verify() error {
 
 }
 
-// Edit the commands in the specified devfile.
+// EditCommands modifies random attributes for each of the commands in the devfile.
 func (devfile TestDevfile) EditCommands() error {
 
 	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
-	err := devfile.ParseSchema()
+	err := devfile.parseSchema()
 	if err != nil {
 		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
 	} else {
@@ -366,12 +349,12 @@ func (devfile TestDevfile) EditCommands() error {
 	return err
 }
 
-// Edit the components in the specified devfile.
+// EditComponents modifies random attributes for each of the components in the devfile.
 func (devfile TestDevfile) EditComponents() error {
 
 	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
-	err := devfile.ParseSchema()
+	err := devfile.parseSchema()
 	if err != nil {
 		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
 	} else {
@@ -391,4 +374,60 @@ func (devfile TestDevfile) EditComponents() error {
 		devfile.SchemaParsed = false
 	}
 	return err
+}
+
+func getError(message string) (string, error) {
+	return message, errors.New(message)
+}
+
+func testError(doit bool) {
+
+	var err error
+
+	message1, err := getError("Error21")
+	LogInfoMessage(fmt.Sprintf("Message1 : %s", message1))
+	LogInfoMessage(fmt.Sprintf("Error : %v", err))
+
+	if doit {
+		if err != nil {
+			message2, err := getError("Error22")
+			LogInfoMessage(fmt.Sprintf("Message2 : %s", message2))
+			LogInfoMessage(fmt.Sprintf("Error : %v", err))
+			if err != nil {
+				message3, err := getError("Error23")
+				LogInfoMessage(fmt.Sprintf("Message3 : %s", message3))
+				LogInfoMessage(fmt.Sprintf("Error : %v", err))
+			}
+		}
+	}
+
+	LogInfoMessage(fmt.Sprintf("At the end"))
+	LogInfoMessage(fmt.Sprintf("Error : %v", err))
+
+}
+func testError1(doit bool) {
+
+	var err error
+	var message string
+
+	message, err = getError("Message Var Error1")
+	LogInfoMessage(fmt.Sprintf("Message1 : %s", message))
+	LogInfoMessage(fmt.Sprintf("Error : %v", err))
+
+	if doit {
+		if err != nil {
+			message, err = getError("Message Var Error2")
+			LogInfoMessage(fmt.Sprintf("Message2 : %s", message))
+			LogInfoMessage(fmt.Sprintf("Error : %v", err))
+			if err != nil {
+				message, err = getError("Message Var Error3")
+				LogInfoMessage(fmt.Sprintf("Message1 : %s", message))
+				LogInfoMessage(fmt.Sprintf("Error : %v", err))
+			}
+		}
+	}
+
+	LogInfoMessage(fmt.Sprintf("At the end"))
+	LogInfoMessage(fmt.Sprintf("Error : %v", err))
+
 }
