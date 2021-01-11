@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/api/pkg/attributes"
-	devfilepkg "github.com/devfile/api/pkg/devfile"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
+	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 )
 
 func TestDevfile200_GetSchemaVersion(t *testing.T) {
