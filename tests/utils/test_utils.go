@@ -55,9 +55,6 @@ func init() {
 		}
 		testLogger.Println("Test Starting:")
 	}
-
-	testError(true)
-	testError1(true)
 }
 
 // createTempDir creates a specified sub directory under the temp directory if it does not exist.
@@ -299,9 +296,7 @@ func (devfile TestDevfile) Verify() error {
 		} else {
 			LogInfoMessage(fmt.Sprintf("No command found in %s : ", devfile.FileName))
 		}
-	}
 
-	if err == nil {
 		LogInfoMessage(fmt.Sprintf("Get components %s : ", devfile.FileName))
 		components, _ := devfile.ParsedSchemaObj.Data.GetComponents(common.DevfileOptions{})
 		if components != nil && len(components) > 0 {
@@ -313,7 +308,6 @@ func (devfile TestDevfile) Verify() error {
 			LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
 		}
 	}
-
 	var returnError error
 	if len(errorString) > 0 {
 		returnError = errors.New(fmt.Sprint(errorString))
@@ -378,56 +372,4 @@ func (devfile TestDevfile) EditComponents() error {
 
 func getError(message string) (string, error) {
 	return message, errors.New(message)
-}
-
-func testError(doit bool) {
-
-	var err error
-
-	message1, err := getError("Error21")
-	LogInfoMessage(fmt.Sprintf("Message1 : %s", message1))
-	LogInfoMessage(fmt.Sprintf("Error : %v", err))
-
-	if doit {
-		if err != nil {
-			message2, err := getError("Error22")
-			LogInfoMessage(fmt.Sprintf("Message2 : %s", message2))
-			LogInfoMessage(fmt.Sprintf("Error : %v", err))
-			if err != nil {
-				message3, err := getError("Error23")
-				LogInfoMessage(fmt.Sprintf("Message3 : %s", message3))
-				LogInfoMessage(fmt.Sprintf("Error : %v", err))
-			}
-		}
-	}
-
-	LogInfoMessage(fmt.Sprintf("At the end"))
-	LogInfoMessage(fmt.Sprintf("Error : %v", err))
-
-}
-func testError1(doit bool) {
-
-	var err error
-	var message string
-
-	message, err = getError("Message Var Error1")
-	LogInfoMessage(fmt.Sprintf("Message1 : %s", message))
-	LogInfoMessage(fmt.Sprintf("Error : %v", err))
-
-	if doit {
-		if err != nil {
-			message, err = getError("Message Var Error2")
-			LogInfoMessage(fmt.Sprintf("Message2 : %s", message))
-			LogInfoMessage(fmt.Sprintf("Error : %v", err))
-			if err != nil {
-				message, err = getError("Message Var Error3")
-				LogInfoMessage(fmt.Sprintf("Message1 : %s", message))
-				LogInfoMessage(fmt.Sprintf("Error : %v", err))
-			}
-		}
-	}
-
-	LogInfoMessage(fmt.Sprintf("At the end"))
-	LogInfoMessage(fmt.Sprintf("Error : %v", err))
-
 }

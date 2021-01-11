@@ -11,8 +11,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// AddVolume returns volumeMounts in a schema structure based on a specified number of volumes
-func AddVolume(numVols int) []schema.VolumeMount {
+// addVolume returns volumeMounts in a schema structure based on a specified number of volumes
+func addVolume(numVols int) []schema.VolumeMount {
 	commandVols := make([]schema.VolumeMount, numVols)
 	for i := 0; i < numVols; i++ {
 		commandVols[i].Name = "Name_" + GetRandomString(5, false)
@@ -125,13 +125,13 @@ func setContainerComponentValues(containerComponent *schema.ContainerComponent) 
 	}
 
 	if GetBinaryDecision() {
-		containerComponent.Env = AddEnv(GetRandomNumber(4))
+		containerComponent.Env = addEnv(GetRandomNumber(4))
 	} else {
 		containerComponent.Env = nil
 	}
 
 	if GetBinaryDecision() {
-		containerComponent.VolumeMounts = AddVolume(GetRandomNumber(4))
+		containerComponent.VolumeMounts = addVolume(GetRandomNumber(4))
 	} else {
 		containerComponent.VolumeMounts = nil
 	}

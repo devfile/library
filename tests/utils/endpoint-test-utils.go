@@ -8,16 +8,16 @@ import (
 
 var Exposures = [...]schema.EndpointExposure{schema.PublicEndpointExposure, schema.InternalEndpointExposure, schema.NoneEndpointExposure}
 
-// GetRandomExposure returns a random exposure value
-func GetRandomExposure() schema.EndpointExposure {
+// getRandomExposure returns a random exposure value
+func getRandomExposure() schema.EndpointExposure {
 	return Exposures[GetRandomNumber(len(Exposures))-1]
 }
 
 //var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.HTTPSEndpointProtocol, schema.WSEndpointProtocol, schema.WSSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 var Protocols = [...]schema.EndpointProtocol{schema.HTTPEndpointProtocol, schema.WSEndpointProtocol, schema.TCPEndpointProtocol, schema.UDPEndpointProtocol}
 
-// GetRandomProtocol returns a random protocol value
-func GetRandomProtocol() schema.EndpointProtocol {
+// getRandomProtocol returns a random protocol value
+func getRandomProtocol() schema.EndpointProtocol {
 	return Protocols[GetRandomNumber(len(Protocols))-1]
 }
 
@@ -38,12 +38,12 @@ func CreateEndpoints() []schema.Endpoint {
 		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d targetPort: %d", i, endpoint.TargetPort))
 
 		if GetBinaryDecision() {
-			endpoint.Exposure = GetRandomExposure()
+			endpoint.Exposure = getRandomExposure()
 			LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d exposure: %s", i, endpoint.Exposure))
 		}
 
 		if GetBinaryDecision() {
-			endpoint.Protocol = GetRandomProtocol()
+			endpoint.Protocol = getRandomProtocol()
 			LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d protocol: %s", i, endpoint.Protocol))
 		}
 

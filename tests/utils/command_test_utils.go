@@ -11,8 +11,8 @@ import (
 	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
 )
 
-// AddEnv creates and returns a specifed number of env attributes in a schema structure
-func AddEnv(numEnv int) []schema.EnvVar {
+// addEnv creates and returns a specifed number of env attributes in a schema structure
+func addEnv(numEnv int) []schema.EnvVar {
 	commandEnvs := make([]schema.EnvVar, numEnv)
 	for i := 0; i < numEnv; i++ {
 		commandEnvs[i].Name = "Name_" + GetRandomString(5, false)
@@ -22,8 +22,8 @@ func AddEnv(numEnv int) []schema.EnvVar {
 	return commandEnvs
 }
 
-// AddAttributes creates returns a specifed number of attributes in a schema structure
-func AddAttributes(numAtrributes int) map[string]string {
+// addAttributes creates returns a specifed number of attributes in a schema structure
+func addAttributes(numAtrributes int) map[string]string {
 	attributes := make(map[string]string)
 	for i := 0; i < numAtrributes; i++ {
 		AttributeName := "Name_" + GetRandomString(6, false)
@@ -127,7 +127,7 @@ func setExecCommandValues(execCommand *schema.ExecCommand) {
 	LogInfoMessage(fmt.Sprintf("....... HotReloadCapable: %t", execCommand.HotReloadCapable))
 
 	if GetBinaryDecision() {
-		execCommand.Env = AddEnv(GetRandomNumber(4))
+		execCommand.Env = addEnv(GetRandomNumber(4))
 	} else {
 		execCommand.Env = nil
 	}
