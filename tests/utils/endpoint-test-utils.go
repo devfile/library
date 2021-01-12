@@ -31,7 +31,7 @@ func CreateEndpoints() []schema.Endpoint {
 
 		endpoint := schema.Endpoint{}
 
-		endpoint.Name = GetRandomString(GetRandomNumber(15)+5, false)
+		endpoint.Name = GetRandomString(GetRandomNumber(15)+5, true)
 		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d name  : %s", i, endpoint.Name))
 
 		endpoint.TargetPort = GetRandomNumber(9999)

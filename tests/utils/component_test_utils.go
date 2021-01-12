@@ -15,7 +15,7 @@ import (
 func addVolume(numVols int) []schema.VolumeMount {
 	commandVols := make([]schema.VolumeMount, numVols)
 	for i := 0; i < numVols; i++ {
-		commandVols[i].Name = "Name_" + GetRandomString(5, false)
+		commandVols[i].Name = "name-" + GetRandomString(5, true)
 		commandVols[i].Path = "/Path_" + GetRandomString(5, false)
 		LogInfoMessage(fmt.Sprintf("....... Add Volume: %s", commandVols[i]))
 	}
