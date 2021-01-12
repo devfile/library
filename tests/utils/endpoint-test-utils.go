@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 var Exposures = [...]schema.EndpointExposure{schema.PublicEndpointExposure, schema.InternalEndpointExposure, schema.NoneEndpointExposure}

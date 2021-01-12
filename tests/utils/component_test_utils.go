@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
 )
