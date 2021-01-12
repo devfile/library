@@ -33,14 +33,14 @@ jobs:
     - name: Build Binary
       run: make bin
     
-    - name: Run Go Tests
-      run: make test
-
     - name: Check format
       run: |
         make gofmt
         if [[ ! -z $(git status -s) ]]
         then
-          echo "not well formatted sources are found"
+          echo "not well formatted sources are found : $(git status -s)"
           exit 1
         fi
+
+    - name: Run Go Tests
+      run: make test
