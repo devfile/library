@@ -44,15 +44,14 @@ func convertPorts(endpoints []v1.Endpoint) []corev1.ContainerPort {
 			portProtocol = corev1.ProtocolTCP
 		}
 		name := fmt.Sprintf("%d-%s", portNumber, strings.ToLower(string(portProtocol)))
-		if _, exist := portMap[name]; exist {
-			continue
+		if _, exist := portMap[name]; !exist {
+			portMap[name] = true
+			containerPorts = append(containerPorts, corev1.ContainerPort{
+				Name:          name,
+				ContainerPort: portNumber,
+				Protocol:      portProtocol,
+			})
 		}
-		portMap[name] = true
-		containerPorts = append(containerPorts, corev1.ContainerPort{
-			Name:          name,
-			ContainerPort: portNumber,
-			Protocol:      portProtocol,
-		})
 	}
 	return containerPorts
 }

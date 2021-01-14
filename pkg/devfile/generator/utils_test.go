@@ -115,7 +115,7 @@ func TestConvertPorts(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: Multiple env vars",
+			name: "Case 2: Multiple endpoints",
 			endpoints: []v1.Endpoint{
 				{
 					Name:       endpointsNames[0],
