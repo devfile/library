@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 var Exposures = [...]schema.EndpointExposure{schema.PublicEndpointExposure, schema.InternalEndpointExposure, schema.NoneEndpointExposure}
@@ -31,7 +31,7 @@ func CreateEndpoints() []schema.Endpoint {
 
 		endpoint := schema.Endpoint{}
 
-		endpoint.Name = GetRandomString(GetRandomNumber(15)+5, false)
+		endpoint.Name = GetRandomString(GetRandomNumber(15)+5, true)
 		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d name  : %s", i, endpoint.Name))
 
 		endpoint.TargetPort = GetRandomNumber(9999)

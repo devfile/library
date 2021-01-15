@@ -67,7 +67,7 @@ const (
 		],
 		"commands": [
 		   {
-			  "id": "download dependencies",
+			  "id": "download-dependencies",
 			  "exec": {
 				 "component": "nodejs",
 				 "commandLine": "npm install",
@@ -78,7 +78,7 @@ const (
 			  }
 		   },
 		   {
-			  "id": "run the app",
+			  "id": "run-the-app",
 			  "exec": {
 				 "component": "nodejs",
 				 "commandLine": "nodemon app.js",
@@ -90,7 +90,7 @@ const (
 			  }
 		   },
 		   {
-			  "id": "run the app (debugging enabled)", 
+			  "id": "run-the-app-debugging-enabled", 
 			  "exec": {
 				 "component": "nodejs",
 				 "commandLine": "nodemon --inspect app.js",
@@ -101,14 +101,14 @@ const (
 			  }
 		   },
 		   {
-			  "id": "stop the app",
+			  "id": "stop-the-app",
 			  "exec": {
 				 "component": "nodejs",
 				 "commandLine": "node_server_pids=$(pgrep -fx '.*nodemon (--inspect )?app.js' | tr \"\\\\n\" \" \") && echo \"Stopping node server with PIDs: ${node_server_pids}\" &&  kill -15 ${node_server_pids} &>/dev/null && echo 'Done.'"
 			  }
 		   },
 		   {
-			  "id": "Attach remote debugger", 
+			  "id": "attach-remote-debugger", 
 			  "vscodeLaunch": {
 				 "inlined": "{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"type\": \"node\",\n      \"request\": \"attach\",\n      \"name\": \"Attach to Remote\",\n      \"address\": \"localhost\",\n      \"port\": 9229,\n      \"localRoot\": \"${workspaceFolder}\",\n      \"remoteRoot\": \"${workspaceFolder}\"\n    }\n  ]\n}\n"
 			  }

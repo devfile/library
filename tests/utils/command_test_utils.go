@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 // addEnv creates and returns a specifed number of env attributes in a schema structure

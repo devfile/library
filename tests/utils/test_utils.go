@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	devfilepkg "github.com/devfile/library/pkg/devfile"
 	"github.com/devfile/library/pkg/devfile/parser"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"

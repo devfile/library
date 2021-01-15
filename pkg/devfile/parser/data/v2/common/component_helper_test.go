@@ -3,7 +3,7 @@ package common
 import (
 	"testing"
 
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 func TestIsContainer(t *testing.T) {

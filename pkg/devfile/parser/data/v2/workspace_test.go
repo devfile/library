@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 func TestDevfile200_SetDevfileWorkspace(t *testing.T) {

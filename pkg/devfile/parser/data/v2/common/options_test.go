@@ -3,7 +3,7 @@ package common
 import (
 	"testing"
 
-	"github.com/devfile/api/pkg/attributes"
+	"github.com/devfile/api/v2/pkg/attributes"
 )
 
 func TestFilterDevfileObject(t *testing.T) {

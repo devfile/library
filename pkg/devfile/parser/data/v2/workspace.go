@@ -1,7 +1,7 @@
 package v2
 
 import (
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
 // GetDevfileWorkspace returns the workspace content for the devfile

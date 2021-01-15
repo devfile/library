@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	schema "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
 )
@@ -15,7 +15,7 @@ import (
 func addVolume(numVols int) []schema.VolumeMount {
 	commandVols := make([]schema.VolumeMount, numVols)
 	for i := 0; i < numVols; i++ {
-		commandVols[i].Name = "Name_" + GetRandomString(5, false)
+		commandVols[i].Name = "name-" + GetRandomString(5, true)
 		commandVols[i].Path = "/Path_" + GetRandomString(5, false)
 		LogInfoMessage(fmt.Sprintf("....... Add Volume: %s", commandVols[i]))
 	}

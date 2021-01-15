@@ -3,8 +3,8 @@ package parser
 import (
 	"testing"
 
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
-	devfilepkg "github.com/devfile/api/pkg/devfile"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/testingutil/filesystem"

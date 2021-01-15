@@ -6,13 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/devfile/api/pkg/attributes"
+	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 	buildv1 "github.com/openshift/api/build/v1"
 
-	v1 "github.com/devfile/api/pkg/apis/workspaces/v1alpha2"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -108,13 +108,14 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          endpointsNames[0],
+					Name:          "8080-tcp",
 					ContainerPort: int32(endpointsPorts[0]),
+					Protocol:      "TCP",
 				},
 			},
 		},
 		{
-			name: "Case 2: Multiple env vars",
+			name: "Case 2: Multiple endpoints",
 			endpoints: []v1.Endpoint{
 				{
 					Name:       endpointsNames[0],
@@ -127,12 +128,14 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          endpointsNames[0],
+					Name:          "8080-tcp",
 					ContainerPort: int32(endpointsPorts[0]),
+					Protocol:      "TCP",
 				},
 				{
-					Name:          endpointsNames[1],
+					Name:          "9090-tcp",
 					ContainerPort: int32(endpointsPorts[1]),
+					Protocol:      "TCP",
 				},
 			},
 		},
