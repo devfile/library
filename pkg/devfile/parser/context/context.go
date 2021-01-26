@@ -1,12 +1,15 @@
 package parser
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
 	"k8s.io/klog"
 )
+
+var URIMap = make(map[string]bool)
 
 // DevfileCtx stores context info regarding devfile
 type DevfileCtx struct {
@@ -67,6 +70,10 @@ func (d *DevfileCtx) Populate() (err error) {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
+	if _, exist := URIMap[d.absPath]; exist {
+		return fmt.Errorf("URI %v is recursively referenced", d.absPath)
+	}
+	URIMap[d.absPath] = true
 	// Read and save devfile content
 	if err := d.SetDevfileContent(); err != nil {
 		return err
@@ -81,7 +88,10 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	if err != nil {
 		return err
 	}
-
+	if _, exist := URIMap[d.url]; exist {
+		return fmt.Errorf("URI %v is recursively referenced", d.url)
+	}
+	URIMap[d.url] = true
 	// Read and save devfile content
 	if err := d.SetDevfileContent(); err != nil {
 		return err
@@ -101,8 +111,14 @@ func (d *DevfileCtx) Validate() error {
 	return d.ValidateDevfileSchema()
 }
 
+// GetAbsPath func returns current devfile absolute path
 func (d *DevfileCtx) GetAbsPath() string {
 	return d.absPath
+}
+
+// GetURL func returns current devfile absolute URL address
+func (d *DevfileCtx) GetURL() string {
+	return d.url
 }
 
 // SetAbsPath sets absolute file path for devfile

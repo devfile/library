@@ -3,6 +3,9 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"path"
+	"strings"
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
@@ -16,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var URLMap = make(map[string]bool)
+
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
@@ -46,8 +49,8 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 			return DevfileObj{}, err
 		}
 	}
-	for url := range URLMap {
-		delete(URLMap, url)
+	for uri := range devfileCtx.URIMap {
+		delete(devfileCtx.URIMap, uri)
 	}
 	// Successful
 	return d, nil
@@ -84,11 +87,6 @@ func ParseRawDevfile(path string) (d DevfileObj, err error) {
 // ParseFromURL func parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func ParseFromURL(url string) (d DevfileObj, err error) {
-	if _, exist := URLMap[url]; !exist {
-		URLMap[url] = true
-	} else {
-		return d, fmt.Errorf("URI %v is recursively referenced", url)
-	}
 	d.Ctx = devfileCtx.NewURLDevfileCtx(url)
 	// Fill the fields of DevfileCtx struct
 	err = d.Ctx.PopulateFromURL()
@@ -122,7 +120,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			parent := d.Data.GetParent()
 			var parentDevfileObj DevfileObj
 			if d.Data.GetParent().Uri != "" {
-				parentDevfileObj, err = ParseFromURL(parent.Uri)
+				parentDevfileObj, err = parseFromURI(parent.Uri, d)
 				if err != nil {
 					return err
 				}
@@ -153,7 +151,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			plugin := component.Plugin
 			var pluginDevfileObj DevfileObj
 			if plugin.Uri != "" {
-				pluginDevfileObj, err = ParseFromURL(plugin.Uri)
+				pluginDevfileObj, err = parseFromURI(plugin.Uri, d)
 				if err != nil {
 					return err
 				}
@@ -180,4 +178,38 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 	d.Data.SetParent(nil)
 
 	return nil
+}
+
+
+
+func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error){
+	// validate URI
+
+	// absolute URL address
+	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
+		return ParseFromURL(uri)
+	}
+
+	// absolute path on disk
+	if strings.HasPrefix(uri, "file://") {
+		return Parse(strings.TrimPrefix(uri, "file://"))
+	}
+
+	// relative path on disk
+	if curDevfile.Ctx.GetAbsPath() != ""{
+		// parse uri receives a relative path and resolves abspath
+		return Parse(uri)
+	}
+
+	if curDevfile.Ctx.GetURL() != ""{
+		u, err := url.Parse(curDevfile.Ctx.GetURL())
+		if err!= nil {
+			return DevfileObj{}, err
+		}
+		u.Path = path.Join(u.Path, uri)
+		jointURL := u.String()
+		return ParseFromURL(jointURL)
+	}
+
+	return DevfileObj{}, fmt.Errorf("fail to parse from uri: %s", uri)
 }
