@@ -18,7 +18,7 @@ main
 # Files used for debugging
 .vscode/
 
-# File created running tests
-tests/tmp/
+# Files created running tests
+tests/**/tmp
 
 .DS_Store

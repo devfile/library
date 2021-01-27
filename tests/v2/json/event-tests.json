@@ -1,0 +1,29 @@
+{
+    "SchemaVersion" : "2.0.0",
+    "Tests" : [
+        { 
+            "FileName" : "allEvents.yaml",
+            "ExpectOutcome" : "PASS",
+            "Files": [ "devfiles/events/eventsStart.yaml",
+                        "devfiles/events/allEvents.yaml"] 
+        },
+        { 
+            "FileName" : "eventIvalid.yaml",
+            "ExpectOutcome" : "events: Additional property preStep is not allowed",
+            "Files": [ "devfiles/events/eventsStart.yaml",
+                        "devfiles/events/eventInvalid.yaml"] 
+        },
+        { 
+            "FileName" : "eventNoItemMid.yaml",
+            "ExpectOutcome" : "events.preStart: Invalid type. Expected: array, given: null",
+            "Files": ["devfiles/events/eventsStart.yaml",
+                        "devfiles/events/eventNoItemMid.yaml"] 
+        },
+        { 
+            "FileName" : "eventNoItemLast.yaml",
+            "ExpectOutcome" : "events.postStop: Invalid type. Expected: array, given: null",
+            "Files": ["devfiles/events/eventsStart.yaml",
+                        "devfiles/events/eventNoItemLast.yaml"] 
+        }
+    ]                             
+}

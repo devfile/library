@@ -1,0 +1,5 @@
+parent:
+  kubernetes: 
+    name: test-kubernetes
+    namespace: test-namespace
+  uri: "https://raw.githubusercontent.com/devfile/library/master/tests/v2/devfiles/samples/testParent.yaml"

@@ -1,0 +1,6 @@
+  - name: "testcontainer2"
+    container:
+      image: testImage
+      endpoints:
+        - name: this-invalid-container-endpoint-name-is-more-than-63-characters-long
+          targetPort: 1234

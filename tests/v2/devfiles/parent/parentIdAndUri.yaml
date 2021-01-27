@@ -1,0 +1,3 @@
+parent:
+  id: test-plugin1
+  uri: "https://raw.githubusercontent.com/devfile/library/master/tests/v2/devfiles/samples/testParent.yaml"

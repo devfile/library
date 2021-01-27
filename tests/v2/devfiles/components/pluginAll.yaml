@@ -1,0 +1,47 @@
+  - name: "testpluginuri"
+    plugin:
+      uri: "https://raw.githubusercontent.com/devfile/library/master/tests/v2/devfiles/samples/testParent.yaml"
+      registryUrl: "https://github.com/devfile/registry"
+      components:
+      - container:
+          args: [ Arg1,Arg2 ]
+          command: [ run1,run2 ]
+          dedicatedPod: true
+          image: "tester_replace"
+          memoryLimit: "128M"
+          mountSources: false
+          endpoints:
+            - name: test-endpoint
+              attributes:
+                test: Apply Test
+                scope: Api
+              exposure: public
+              path: test-path
+              protocol: http
+              secure: false
+              targetPort: 1234
+          volumeMounts:
+            - name: volume
+              path: mount
+          sourceMapping: sourceMapping
+          env:
+            - name: envName
+              value: envValue
+        name: "testcontainerparent1"
+      commands:
+      - id: testexecparent1
+        exec:
+          commandLine: 'echo "Hello updated ${GREETING} ${USER}"'
+          component: parserTest-tests
+          group:
+            isDefault: false
+            kind: run
+          hotReloadCapable: false
+          label: "Command Exec run"
+          env:
+            - name: "USER"
+              value: "Test Tester"
+            - name: "GREETING"
+              value: "Hello"
+          workingDir: That Directory
+

@@ -1,0 +1,4 @@
+  - name: "testplugin"
+    plugin:
+      kubernetes: test-kubernetes
+      uri: "https://raw.githubusercontent.com/devfile/library/master/tests/v2/devfiles/samples/testParent.yaml"

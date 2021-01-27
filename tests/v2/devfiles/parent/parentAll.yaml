@@ -1,0 +1,115 @@
+parent:
+  uri: "https://raw.githubusercontent.com/devfile/library/master/tests/v2/devfiles/samples/testParent.yaml"
+  registryUrl:  "https://github.com/devfile/registry"
+  commands:
+    - id: testexecparent1
+      exec:
+        commandLine: 'echo "Hello parent ${GREETING} ${USER}"'
+        component: schemaTest-tests
+        group:
+          isDefault: false
+          kind: run
+        hotReloadCapable: false
+        label: "Command Exec run"
+        env:
+          - name: "USER"
+            value: "Test Tester"
+          - name: "GREETING"
+            value: "Hello"
+        workingDir: That Directory
+    - id: testcompositeparent1
+      attributes:
+        test: Composite Test parent test
+        scope: Api
+      composite:
+        label: Composite Test
+        commands:
+          - runTest1
+          - runTest2
+        parallel: false
+        group:
+          isDefault: true
+          kind: test
+  components:
+    - container:
+        args: [ Arg1,Arg2 ]
+        command: [ run1,run2 ]
+        dedicatedPod: true
+        image: "tester"
+        memoryLimit: "128M"
+        mountSources: false
+        endpoints:
+          - name: test-endpoint-parent
+            attributes:
+              test: Apply Test
+              scope: Api
+            exposure: public
+            path: test-path
+            protocol: http
+            secure: false
+            targetPort: 1234
+        volumeMounts:
+          - name: volume
+            path: mount
+        sourceMapping: sourceMapping
+        env:
+          - name: envName
+            value: envValue
+      name: "testcontainerparent1"
+    - name: "testopenshiftparent1"
+      openshift:
+        uri: test-uri
+        endpoints:
+          - name: test-endpoint-parent
+            attributes:
+              test: Apply Test
+              scope: Api
+            exposure: public
+            path: test-path
+            protocol: http
+            secure: false
+            targetPort: 1234
+  projects:
+    - name: testparentproject1
+      git:
+        checkoutFrom:
+          remote: test-branch
+        remotes:
+          origin: test-origin
+      clonePath: /Users/test/projects
+      sparseCheckoutDirs: [Dir1, Dir2]
+    - name: testparentproject2
+      github:
+        checkoutFrom:
+          remote: test-branch
+        remotes:
+          origin: test-origin
+      clonePath: /Users/test/projects
+      sparseCheckoutDirs: [Dir3, Dir4]
+    - name: testparentproject3
+      zip:
+        location: git-repo.zip
+      clonePath: /Users/test/projects
+      sparseCheckoutDirs: [Dir5, Dir6]
+  starterProjects:
+    - name: testparentstarterproject1
+      git:
+        checkoutFrom:
+          remote: test-branch
+        remotes:
+          origin: test-origin
+      description: Test starter parent project
+      subDir: test-subdir-parent
+    - name: testparentstarterproject2
+      github:
+        checkoutFrom:
+          remote: test-branch-parent
+        remotes:
+          origin: test-origin
+      description: Test starter parent project
+      subDir: test-subdir
+    - name: testparentstarterproject3
+      zip:
+        location: git-repo=parent.zip
+      description: Test starter project
+      subDir: test-subdir

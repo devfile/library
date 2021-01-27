@@ -1,0 +1,15 @@
+{
+    "SchemaVersion" : "2.0.0",
+    "Tests" : [
+        { 
+            "FileName" : "metadataAll.yaml",
+            "ExpectOutcome" : "PASS",
+            "Files": ["devfiles/metadata/metadataAll.yaml"] 
+        }, 
+        { 
+            "FileName" : "metadataBadVersion.yaml",
+            "ExpectOutcome" : "metadata.version: Does not match pattern",
+            "Files": ["devfiles/metadata/metadataBadVersion.yaml"] 
+        }
+    ]                             
+}
