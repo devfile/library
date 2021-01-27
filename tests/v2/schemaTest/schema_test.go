@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	jsonDir = "../json/"
+	jsonDir      = "../json/"
 	logErrorOnly = false
 )
 
@@ -22,9 +22,9 @@ func Test_Schema(t *testing.T) {
 	skippedTests := 0
 
 	// Get all of the test defined in teh json file
-	testsToRun,failure := utils.GetAllTests(jsonDir)
+	testsToRun, failure := utils.GetAllTests(jsonDir)
 	if failure {
-		t.Error(utils.LogErrorMessage(fmt.Sprintf("At least one error occurred reading tests from %s, see log for details",jsonDir)))
+		t.Error(utils.LogErrorMessage(fmt.Sprintf("At least one error occurred reading tests from %s, see log for details", jsonDir)))
 		totalTests++
 	}
 
@@ -33,12 +33,12 @@ func Test_Schema(t *testing.T) {
 	}
 
 	// Run each test
-	for _,testToRun := range testsToRun {
+	for _, testToRun := range testsToRun {
 
 		totalTests++
 
 		// Test may be disabled pending changes to the schema
-		if (testToRun.Disabled) {
+		if testToRun.Disabled {
 			t.Log(utils.LogInfoMessage(fmt.Sprintf("SKIP : %s", testToRun.FileName)))
 			skippedTests++
 			continue
@@ -54,7 +54,7 @@ func Test_Schema(t *testing.T) {
 		utils.LogInfoMessage(fmt.Sprintf("Parse file : " + yamlFile))
 
 		// Parse and validate the devfile
-		_,err = devfilepkg.ParseAndValidate(yamlFile)
+		_, err = devfilepkg.ParseAndValidate(yamlFile)
 		if err != nil {
 			if testToRun.ExpectOutcome == "PASS" {
 				t.Error(utils.LogErrorMessage(fmt.Sprintf("  FAIL : %s : Validate failure : %v", yamlFile, err)))
@@ -81,7 +81,7 @@ func Test_Schema(t *testing.T) {
 	failedTests := totalTests - passTests - skippedTests
 
 	if failedTests > 0 {
-		t.Errorf(utils.LogMessage(fmt.Sprintf("OVERALL FAIL :  %d tests passed. %d test skipped. %d tests failed.", passTests, skippedTests,failedTests)))
+		t.Errorf(utils.LogMessage(fmt.Sprintf("OVERALL FAIL :  %d tests passed. %d test skipped. %d tests failed.", passTests, skippedTests, failedTests)))
 	} else {
 		t.Log(utils.LogMessage(fmt.Sprintf("OVERALL PASS : %d tests passed. %d test skipped.", totalTests, skippedTests)))
 	}
