@@ -18,7 +18,7 @@ func main() {
 	if len(os.Args) > 1 {
 		if strings.HasPrefix(os.Args[1], "http") {
 			devfile, err = devfilepkg.ParseFromURLAndValidate(os.Args[1])
-		} else{
+		} else {
 			devfile, err = ParseDevfile(os.Args[1])
 		}
 		fmt.Println("parsing devfile from " + os.Args[1])
