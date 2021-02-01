@@ -63,12 +63,14 @@ func (testJsonFile *TestJsonFile) GetTests() ([]TestToRun, error) {
 	var err error
 	if len(testJsonFile.Tests) < 1 {
 		// Open the json file which defines the tests to run
-		testJson, err := os.Open(filepath.Join(jsonDir, testJsonFile.FileInfo.Name()))
+		var testJson *os.File
+		testJson, err = os.Open(filepath.Join(jsonDir, testJsonFile.FileInfo.Name()))
 		if err != nil {
 			LogErrorMessage(fmt.Sprintf("Failed to open %s : %s", testJsonFile.FileInfo.Name(), err))
 		} else {
 			// Read contents of the json file which defines the tests to run
-			byteValue, err := ioutil.ReadAll(testJson)
+			var byteValue []byte
+			byteValue, err = ioutil.ReadAll(testJson)
 			if err != nil {
 				LogErrorMessage(fmt.Sprintf("Failed to read : %s : %v", testJsonFile.FileInfo.Name(), err))
 			} else {

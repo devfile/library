@@ -45,8 +45,7 @@
         },
         { 
             "FileName" : "componentContainerBadEndpointProtocol.yaml",
-            "ExpectOutcome" : "value must be one of \"http\", \"htpps\", \"ws\", \"wss\",\"tcp\"",
-            "Disabled" : true,
+            "ExpectOutcome" : "protocol must be one of the following: \"http\", \"https\", \"ws\", \"wss\", \"tcp\", \"udp\"",
             "Files": [ "devfiles/components/componentStart.yaml",
                         "devfiles/components/containerBadEndpointProtocol.yaml"] 
         },
@@ -136,8 +135,7 @@
         },
         { 
             "FileName" : "componentKubernetesBadEndpointProtocol.yaml",
-            "ExpectOutcome" : "value must be one of \"http\", \"htpps\", \"ws\", \"wss\",\"tcp\"",
-            "Disabled" : true,
+            "ExpectOutcome" : "protocol must be one of the following: \"http\", \"https\", \"ws\", \"wss\", \"tcp\", \"udp\"",
             "Files": ["devfiles/components/componentStart.yaml",
                         "devfiles/components/kubernetesBadEndpointProtocol.yaml"] 
         },
@@ -215,8 +213,7 @@
         },
         { 
             "FileName" : "componentOpenshiftBadEndpointProtocol.yaml",
-            "ExpectOutcome" : "value must be one of \"http\", \"htpps\", \"ws\", \"wss\",\"tcp\"",
-            "Disabled" : true,
+            "ExpectOutcome" : "protocol must be one of the following: \"http\", \"https\", \"ws\", \"wss\", \"tcp\", \"udp\"",
             "Files": ["devfiles/components/componentStart.yaml",
                         "devfiles/components/openshiftBadEndpointProtocol.yaml"] 
         },

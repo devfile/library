@@ -51,6 +51,9 @@ Note: each run of the test removes the existing contents of the ```./tmp``` dire
     1. If a test detects an error when comparing properties returned by the parser with expected properties
         *  ```./tmp/parser_v200_schema_test/Test_*_<property id>_Parser.yaml``` - property as returned by the parser
         *  ```./tmp/parser_v200_schema_test/Test_*_<property id>_Test.yaml``` - property as expected by the test
+    1. The test will report number of tests passed, skipped and failed.
+        * For example:  ```134 tests passed. 0 test skipped. 3 tests failed.```
+        * skipped test are marked as disabled in the xxxxxx-tests.json file (see below), usually indicating a valid test but pending an update to the schema.  
 
 Note: each run of the test removes the existing contents of the ```./tmp``` directory 
 
@@ -66,24 +69,35 @@ The API tests are intended to provide a comprehensive verification of the devfil
 
 ### Test structure
 
-- ```test/v2/devfiles``` : contains yaml snippets which are used to generate yaml files for the tests. The names of the sub-directories and files should reflect their purpose.
-- ```test/v2/schemaTest/schema-test.go``` : the go unit test program.
-- ```test/v2/json``` :  contains the json files which define the tests which the test program will run:
-    - ```test-xxxxxxx.json``` : these files are the top level json files, they define the schema to verify and the test files to run.
+- ```tests/v2/devfiles``` : contains yaml snippets which are used to generate yaml files for the tests. The names of the sub-directories and files should reflect their purpose.
+- ```tests/v2/schemaTest/schema-test.go``` : the go unit test program.
+- ```tests/v2/json``` :  contains the json files which define the tests which the test program will run:
+    - ```xxxxxxx-tests.json``` : these files are the top level json files, they define the schema to verify and the test files to run.
 
 ### Adding Tests
-
-#### Add a test for a new schema file
-
-1. Create a new ```test/v2/json/test-<schema name>.json``` file for the schema. In the json file  specify the location of the schema to test (relative to the root directory of the repository), and a list of the existing tests to use. If the generated yaml files require a schemaVersion attribute include its value in the json file. See - *link to sample schema to be added*
-1. Run the test
 
 #### Add a test for a schema changes
 
 1. Modify an existing yaml snippet from ``test/v2/devfiles``` or create a new one.
 1. If appropriate create a new snippet for any possible error cases, for example to omit a required attribute.
-1. If a new yaml snippet was created add a test which uses the snippet to the appropriate `json/xxxxxx-tests.json` file. Be careful to ensure the file name used for the test is unique for all tests - this is the name used for the yaml file which is generated for the test. For failure scenarios you may need to run the test first to set the outcome correctly.
-1. If a new  `json/xxxxxx-tests.json` file is created, any existing `test-xxxxxxx.json` files must be updated to use the new file.
+1. If a new yaml snippet was created add a test which uses the snippet to the appropriate `json/xxxxxx-tests.json` file. For example:
+```
+       {
+            "FileName" : "VsCodeTaskCommandMissingInlinedAndUri.yaml",
+            "ExpectOutcome" : "vscodeTask: uri is required",
+            "Disabled" : false
+            "Files": ["devfiles/commands/commandStart.yaml",
+                        "devfiles/commands/VsCodeTaskMissingInlinedAndUri.yaml"]    
+        }
+```
+  * Filename: the name used for the devfile file which is generated for the test.
+    * Be careful to ensure the file name used for the test is unique for all tests - this is the name used for the yaml file which is generated for the test.
+  * ExpectOutcome : the expected outcome for the test. 
+    * Set to "PASS" if the devfile is intended to be valid.
+    * Set to a partial string of the expected error message, if the devfile is intended to be invalid.
+  * Disabled : set to true if the test should be skipped. 
+    * Default is false.
+  * Files : the yaml snippets to be used to create the devfile.
 
 #### Add test for a new schema version
 
@@ -91,7 +105,6 @@ The API tests are intended to provide a comprehensive verification of the devfil
 1. Modify the copied tests as needed for the new version as decsribed above.
 1. Add `test/v21/schemaTest/tmp` to the .gitignore file.
 1. Run the test
-
 
 
 ## parser_api_test in detail 
