@@ -19,8 +19,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-
-
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
 func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
@@ -180,9 +178,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 	return nil
 }
 
-
-
-func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error){
+func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error) {
 	// validate URI
 
 	// absolute URL address
@@ -190,23 +186,19 @@ func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error){
 		return ParseFromURL(uri)
 	}
 
-	// absolute path on disk
-	if strings.HasPrefix(uri, "file://") {
-		return Parse(strings.TrimPrefix(uri, "file://"))
-	}
-
 	// relative path on disk
-	if curDevfile.Ctx.GetAbsPath() != ""{
-		// parse uri receives a relative path and resolves abspath
-		return Parse(uri)
+	if curDevfile.Ctx.GetAbsPath() != "" {
+
+		return Parse(path.Join(path.Dir(curDevfile.Ctx.GetAbsPath()), uri))
 	}
 
-	if curDevfile.Ctx.GetURL() != ""{
+	if curDevfile.Ctx.GetURL() != "" {
 		u, err := url.Parse(curDevfile.Ctx.GetURL())
-		if err!= nil {
+		if err != nil {
 			return DevfileObj{}, err
 		}
-		u.Path = path.Join(u.Path, uri)
+
+		u.Path = path.Join(path.Dir(u.Path), uri)
 		jointURL := u.String()
 		return ParseFromURL(jointURL)
 	}
