@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
+	"strings"
 
 	devfilepkg "github.com/devfile/library/pkg/devfile"
 	"github.com/devfile/library/pkg/devfile/parser"
@@ -11,7 +13,20 @@ import (
 )
 
 func main() {
-	devfile, err := ParseDevfile("./devfile.yaml")
+	var devfile parser.DevfileObj
+	var err error
+	if len(os.Args) > 1 {
+		if strings.HasPrefix(os.Args[1], "http") {
+			devfile, err = devfilepkg.ParseFromURLAndValidate(os.Args[1])
+		} else {
+			devfile, err = ParseDevfile(os.Args[1])
+		}
+		fmt.Println("parsing devfile from " + os.Args[1])
+
+	} else {
+		devfile, err = ParseDevfile("devfile.yaml")
+		fmt.Println("parsing devfile from " + devfile.Ctx.GetAbsPath())
+	}
 	if err != nil {
 		fmt.Println(err)
 	} else {

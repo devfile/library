@@ -1,10 +1,10 @@
-package version200
+package version210
 
-// https://raw.githubusercontent.com/devfile/api/2.0.x/schemas/latest/devfile.json
-const JsonSchema200 = `{
+// https://raw.githubusercontent.com/devfile/api/master/schemas/latest/devfile.json
+const JsonSchema210 = `{
   "description": "Devfile describes the structure of a cloud-native workspace and development environment.",
   "type": "object",
-  "title": "Devfile schema - Version 2.0.0",
+  "title": "Devfile schema - Version 2.1.0-alpha",
   "required": [
     "schemaVersion"
   ],
@@ -387,6 +387,12 @@ const JsonSchema200 = `{
                   "type": "string"
                 }
               },
+              "cpuLimit": {
+                "type": "string"
+              },
+              "cpuRequest": {
+                "type": "string"
+              },
               "dedicatedPod": {
                 "description": "Specify if a container should run in its own separated pod, instead of running as part of the main development environment pod.\n\nDefault value is 'false'",
                 "type": "boolean"
@@ -472,6 +478,9 @@ const JsonSchema200 = `{
                 "type": "string"
               },
               "memoryLimit": {
+                "type": "string"
+              },
+              "memoryRequest": {
                 "type": "string"
               },
               "mountSources": {
@@ -1052,6 +1061,12 @@ const JsonSchema200 = `{
                             "type": "string"
                           }
                         },
+                        "cpuLimit": {
+                          "type": "string"
+                        },
+                        "cpuRequest": {
+                          "type": "string"
+                        },
                         "dedicatedPod": {
                           "description": "Specify if a container should run in its own separated pod, instead of running as part of the main development environment pod.\n\nDefault value is 'false'",
                           "type": "boolean"
@@ -1133,6 +1148,9 @@ const JsonSchema200 = `{
                           "type": "string"
                         },
                         "memoryLimit": {
+                          "type": "string"
+                        },
+                        "memoryRequest": {
                           "type": "string"
                         },
                         "mountSources": {
@@ -1850,6 +1868,12 @@ const JsonSchema200 = `{
                       "type": "string"
                     }
                   },
+                  "cpuLimit": {
+                    "type": "string"
+                  },
+                  "cpuRequest": {
+                    "type": "string"
+                  },
                   "dedicatedPod": {
                     "description": "Specify if a container should run in its own separated pod, instead of running as part of the main development environment pod.\n\nDefault value is 'false'",
                     "type": "boolean"
@@ -1931,6 +1955,9 @@ const JsonSchema200 = `{
                     "type": "string"
                   },
                   "memoryLimit": {
+                    "type": "string"
+                  },
+                  "memoryRequest": {
                     "type": "string"
                   },
                   "mountSources": {
@@ -2504,6 +2531,12 @@ const JsonSchema200 = `{
                                 "type": "string"
                               }
                             },
+                            "cpuLimit": {
+                              "type": "string"
+                            },
+                            "cpuRequest": {
+                              "type": "string"
+                            },
                             "dedicatedPod": {
                               "description": "Specify if a container should run in its own separated pod, instead of running as part of the main development environment pod.\n\nDefault value is 'false'",
                               "type": "boolean"
@@ -2585,6 +2618,9 @@ const JsonSchema200 = `{
                               "type": "string"
                             },
                             "memoryLimit": {
+                              "type": "string"
+                            },
+                            "memoryRequest": {
                               "type": "string"
                             },
                             "mountSources": {
