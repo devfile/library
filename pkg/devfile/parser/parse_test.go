@@ -2404,6 +2404,7 @@ func Test_parseFromURI(t *testing.T) {
 	const httpPrefix = "http://"
 	const localRelativeURI = "testTmp/dir/devfile.yaml"
 	const notExistURI = "notexist/devfile.yaml"
+	const invalidURL = "http//invalid.com"
 	uri2 := path.Join(uri1, localRelativeURI)
 
 	localDevfile := DevfileObj{
@@ -2641,6 +2642,28 @@ func Test_parseFromURI(t *testing.T) {
 				},
 			},
 			uri:     notExistURI,
+			wantErr: true,
+		},
+		{
+			name: "case 6: should fail if with invalid URI format",
+			curDevfile: DevfileObj{
+				Ctx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Uri: invalidURL,
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			uri:     invalidURL,
 			wantErr: true,
 		},
 	}

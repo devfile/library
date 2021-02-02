@@ -16,6 +16,7 @@ import (
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiOverride "github.com/devfile/api/v2/pkg/utils/overriding"
+	"github.com/devfile/api/v2/pkg/validation"
 	"github.com/pkg/errors"
 )
 
@@ -180,6 +181,10 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 
 func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error) {
 	// validate URI
+	err := validation.ValidateURI(uri)
+	if err != nil {
+		return DevfileObj{}, err
+	}
 
 	// absolute URL address
 	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
@@ -188,7 +193,6 @@ func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error) {
 
 	// relative path on disk
 	if curDevfile.Ctx.GetAbsPath() != "" {
-
 		return Parse(path.Join(path.Dir(curDevfile.Ctx.GetAbsPath()), uri))
 	}
 
