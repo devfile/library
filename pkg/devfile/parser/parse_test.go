@@ -2456,6 +2456,9 @@ func Test_parseFromURI(t *testing.T) {
 		Ctx: devfileCtx.NewURLDevfileCtx(httpPrefix + uri1),
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
 						ImportReference: v1.ImportReference{
@@ -2546,144 +2549,61 @@ func Test_parseFromURI(t *testing.T) {
 	defer testServer.Close()
 
 	tests := []struct {
-		name        string
-		curDevfile  DevfileObj
-		uri         string
-		wantDevFile DevfileObj
-		wantErr     bool
+		name          string
+		curDevfileCtx devfileCtx.DevfileCtx
+		uri           string
+		wantDevFile   DevfileObj
+		wantErr       bool
 	}{
 		{
-			name: "case 1: should be able to parse from relative uri on local disk",
-			curDevfile: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: localRelativeURI,
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
-						},
-					},
-				},
-			},
-			wantDevFile: localDevfile,
-			uri:         localRelativeURI,
+			name:          "case 1: should be able to parse from relative uri on local disk",
+			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+			wantDevFile:   localDevfile,
+			uri:           localRelativeURI,
 		},
 		{
-			name:        "case 2: should be able to parse relative uri from URL",
-			curDevfile:  parentDevfile,
-			wantDevFile: relativeParentDevfile,
-			uri:         localRelativeURI,
+			name:          "case 2: should be able to parse relative uri from URL",
+			curDevfileCtx: parentDevfile.Ctx,
+			wantDevFile:   relativeParentDevfile,
+			uri:           localRelativeURI,
 		},
 		{
-			name: "case 3: should fail if no path or url has been set for devfile ctx",
-			curDevfile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: localRelativeURI,
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
-						},
-					},
-				},
-			},
-			wantErr: true,
+			name:          "case 3: should fail if no path or url has been set for devfile ctx",
+			curDevfileCtx: devfileCtx.DevfileCtx{},
+			wantErr:       true,
 		},
 		{
-			name: "case 4: should fail if file not exist",
-			curDevfile: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: "notexist/devfile.yaml",
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
-						},
-					},
-				},
-			},
-			uri:     "notexist/devfile.yaml",
-			wantErr: true,
+			name:          "case 4: should fail if file not exist",
+			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+			uri:           notExistURI,
+			wantErr:       true,
 		},
 		{
-			name: "case 5: should fail if url not exist",
-			curDevfile: DevfileObj{
-				Ctx: devfileCtx.NewURLDevfileCtx(httpPrefix + uri1),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: notExistURI,
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
-						},
-					},
-				},
-			},
-			uri:     notExistURI,
-			wantErr: true,
+			name:          "case 5: should fail if url not exist",
+			curDevfileCtx: devfileCtx.NewURLDevfileCtx(httpPrefix + uri1),
+			uri:           notExistURI,
+			wantErr:       true,
 		},
 		{
-			name: "case 6: should fail if with invalid URI format",
-			curDevfile: DevfileObj{
-				Ctx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: invalidURL,
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
-						},
-					},
-				},
-			},
-			uri:     invalidURL,
-			wantErr: true,
+			name:          "case 6: should fail if with invalid URI format",
+			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+			uri:           invalidURL,
+			wantErr:       true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// if the main devfile is from local, need to set absolute path
-			if tt.curDevfile.Ctx.GetURL() == "" {
-				err := tt.curDevfile.Ctx.SetAbsPath()
+			if tt.curDevfileCtx.GetURL() == "" {
+				err := tt.curDevfileCtx.SetAbsPath()
 				if err != nil {
 					t.Errorf("Test_parseFromURI() unexpected error = %v", err)
 					return
 				}
 			}
-			got, err := parseFromURI(tt.uri, tt.curDevfile)
-			if (err != nil) != tt.wantErr {
+			got, err := parseFromURI(tt.uri, tt.curDevfileCtx)
+			if tt.wantErr == (err == nil) {
 				t.Errorf("Test_parseFromURI() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if err != nil && tt.wantErr {
 				return
 			}
 

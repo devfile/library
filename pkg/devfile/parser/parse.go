@@ -119,7 +119,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			parent := d.Data.GetParent()
 			var parentDevfileObj DevfileObj
 			if d.Data.GetParent().Uri != "" {
-				parentDevfileObj, err = parseFromURI(parent.Uri, d)
+				parentDevfileObj, err = parseFromURI(parent.Uri, d.Ctx)
 				if err != nil {
 					return err
 				}
@@ -150,7 +150,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			plugin := component.Plugin
 			var pluginDevfileObj DevfileObj
 			if plugin.Uri != "" {
-				pluginDevfileObj, err = parseFromURI(plugin.Uri, d)
+				pluginDevfileObj, err = parseFromURI(plugin.Uri, d.Ctx)
 				if err != nil {
 					return err
 				}
@@ -179,7 +179,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 	return nil
 }
 
-func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error) {
+func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
 	// validate URI
 	err := validation.ValidateURI(uri)
 	if err != nil {
@@ -192,19 +192,19 @@ func parseFromURI(uri string, curDevfile DevfileObj) (DevfileObj, error) {
 	}
 
 	// relative path on disk
-	if curDevfile.Ctx.GetAbsPath() != "" {
-		return Parse(path.Join(path.Dir(curDevfile.Ctx.GetAbsPath()), uri))
+	if curDevfileCtx.GetAbsPath() != "" {
+		return Parse(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
 	}
 
-	if curDevfile.Ctx.GetURL() != "" {
-		u, err := url.Parse(curDevfile.Ctx.GetURL())
+	if curDevfileCtx.GetURL() != "" {
+		u, err := url.Parse(curDevfileCtx.GetURL())
 		if err != nil {
 			return DevfileObj{}, err
 		}
 
 		u.Path = path.Join(path.Dir(u.Path), uri)
-		jointURL := u.String()
-		return ParseFromURL(jointURL)
+		// u.String() is the joint absolute URL path
+		return ParseFromURL(u.String())
 	}
 
 	return DevfileObj{}, fmt.Errorf("fail to parse from uri: %s", uri)

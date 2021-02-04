@@ -70,7 +70,7 @@ func (d *DevfileCtx) Populate() (err error) {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
-	if _, exist := URIMap[d.absPath]; exist {
+	if URIMap[d.absPath] {
 		return fmt.Errorf("URI %v is recursively referenced", d.absPath)
 	}
 	URIMap[d.absPath] = true
@@ -88,7 +88,7 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	if err != nil {
 		return err
 	}
-	if _, exist := URIMap[d.url]; exist {
+	if URIMap[d.url] {
 		return fmt.Errorf("URI %v is recursively referenced", d.url)
 	}
 	URIMap[d.url] = true
