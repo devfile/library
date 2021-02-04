@@ -12,7 +12,7 @@ import (
 )
 
 // componentAdded adds a new component to the test schema data and to the parser data
-func (devfile *TestDevfile)componentAdded(component schema.Component) {
+func (devfile *TestDevfile) componentAdded(component schema.Component) {
 	LogInfoMessage(fmt.Sprintf("component added Name: %s", component.Name))
 	devfile.SchemaDevFile.Components = append(devfile.SchemaDevFile.Components, component)
 	devfile.ParserData.AddComponents([]schema.Component{component})
@@ -49,7 +49,6 @@ func getSchemaComponent(components []schema.Component, name string) (*schema.Com
 	}
 	return &schemaComponent, found
 }
-
 
 // AddComponent adds a component of the specified type, with random attributes, to the devfile schema
 func (devfile *TestDevfile) AddComponent(componentType schema.ComponentType) schema.Component {
@@ -94,23 +93,23 @@ func (devfile *TestDevfile) createVolumeComponent() schema.Component {
 // AddCommandToContainer adds a command id to a container, creating one if necessary.
 func (devfile *TestDevfile) AddCommandToContainer(commandId string) string {
 
-	LogInfoMessage(fmt.Sprintf("add command %s to a container.",commandId))
+	LogInfoMessage(fmt.Sprintf("add command %s to a container.", commandId))
 	componentName := ""
-	for _,currentComponent := range devfile.SchemaDevFile.Components {
+	for _, currentComponent := range devfile.SchemaDevFile.Components {
 		if currentComponent.Container != nil {
-			currentComponent.Container.Command = append(currentComponent.Container.Command,commandId)
+			currentComponent.Container.Command = append(currentComponent.Container.Command, commandId)
 			componentName = currentComponent.Name
-			LogInfoMessage(fmt.Sprintf("add command to existing container : %s",componentName))
+			LogInfoMessage(fmt.Sprintf("add command to existing container : %s", componentName))
 			devfile.componentUpdated(currentComponent)
-			break;
+			break
 		}
 	}
 
 	if componentName == "" {
 		component := devfile.createContainerComponent()
-		component.Container.Command = append(component.Container.Command,commandId)
+		component.Container.Command = append(component.Container.Command, commandId)
 		componentName = component.Name
-		LogInfoMessage(fmt.Sprintf("add command to a new container : %s",componentName))
+		LogInfoMessage(fmt.Sprintf("add command to a new container : %s", componentName))
 		devfile.componentUpdated(component)
 	}
 
@@ -127,9 +126,9 @@ func (devfile *TestDevfile) setContainerComponentValues(component *schema.Compon
 	if GetBinaryDecision() {
 		numCommands := GetRandomNumber(3)
 		for i := 0; i < numCommands; i++ {
-			commandId := GetRandomString(4+GetRandomNumber(10),true)
-			containerComponent.Command = append(containerComponent.Command,commandId)
-			LogInfoMessage(fmt.Sprintf("....... command %d added : %s", len(containerComponent.Command),commandId))
+			commandId := GetRandomString(4+GetRandomNumber(10), true)
+			containerComponent.Command = append(containerComponent.Command, commandId)
+			LogInfoMessage(fmt.Sprintf("....... command %d added : %s", len(containerComponent.Command), commandId))
 		}
 	}
 

@@ -122,12 +122,12 @@ func LogInfoMessage(message string) string {
 
 // TestDevfile is a structure used to track a test devfile and its contents
 type TestDevfile struct {
-	SchemaDevFile   schema.Devfile
-	FileName        string
-	ParserData      devfileData.DevfileData
-	SchemaParsed    bool
-	GroupDefaults   map[schema.CommandGroupKind]bool
-	UsedPorts       map[int]bool
+	SchemaDevFile schema.Devfile
+	FileName      string
+	ParserData    devfileData.DevfileData
+	SchemaParsed  bool
+	GroupDefaults map[schema.CommandGroupKind]bool
+	UsedPorts     map[int]bool
 }
 
 var StringCount int = 0
@@ -190,7 +190,7 @@ func GetRandomNumber(max int) int {
 }
 
 // GetDevfile returns a structure used to represent a specific devfile in a test
-func GetDevfile(fileName string) (TestDevfile,error) {
+func GetDevfile(fileName string) (TestDevfile, error) {
 
 	var err error
 	testDevfile := TestDevfile{}
@@ -199,16 +199,16 @@ func GetDevfile(fileName string) (TestDevfile,error) {
 	testDevfile.SchemaDevFile.SchemaVersion = "2.0.0"
 	testDevfile.SchemaParsed = false
 	testDevfile.GroupDefaults = make(map[schema.CommandGroupKind]bool)
-	for _,kind := range GroupKinds {
+	for _, kind := range GroupKinds {
 		testDevfile.GroupDefaults[kind] = false
 	}
 	testDevfile.ParserData, err = devfileData.NewDevfileData(testDevfile.SchemaDevFile.SchemaVersion)
-	if err!=nil {
-		return testDevfile,err
+	if err != nil {
+		return testDevfile, err
 	}
 	testDevfile.ParserData.SetSchemaVersion(testDevfile.SchemaDevFile.SchemaVersion)
 	testDevfile.UsedPorts = make(map[int]bool)
-	return testDevfile,err
+	return testDevfile, err
 }
 
 // WriteDevfile create a devifle on disk for use in a test.
@@ -242,7 +242,6 @@ func (devfile *TestDevfile) WriteDevfile(useParser bool) error {
 			}
 		}
 
-
 	} else {
 		LogInfoMessage(fmt.Sprintf("Marshall and write devfile %s", devfile.FileName))
 		c, marshallErr := yaml.Marshal(&(devfile.SchemaDevFile))
@@ -267,7 +266,7 @@ func (devfile *TestDevfile) parseSchema() error {
 	var err error
 	if !devfile.SchemaParsed {
 		err = devfile.WriteDevfile(true)
-		if err!= nil {
+		if err != nil {
 			LogErrorMessage(fmt.Sprintf("From WriteDevfile %v : ", err))
 		} else {
 			LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))

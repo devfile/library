@@ -21,25 +21,24 @@ func getRandomProtocol() schema.EndpointProtocol {
 	return Protocols[GetRandomNumber(len(Protocols))-1]
 }
 
-
 // getUniquePort return a port value not previously used in that same devfile
 func (devfile *TestDevfile) getUniquePort() int {
 
 	// max sure a lot of unique ports exist
-	maxPorts :=  len(devfile.UsedPorts) + 5000
+	maxPorts := len(devfile.UsedPorts) + 5000
 
 	var port int
 	used := true
 	for used {
 		port = GetRandomNumber(maxPorts)
-		_,used = devfile.UsedPorts[port]
+		_, used = devfile.UsedPorts[port]
 	}
 	devfile.UsedPorts[port] = true
 	return port
 }
 
 // CreateEndpoints creates and returns a randon number of endpoints in a schema structure
-func (devfile *TestDevfile)CreateEndpoints() []schema.Endpoint {
+func (devfile *TestDevfile) CreateEndpoints() []schema.Endpoint {
 
 	numEndpoints := GetRandomNumber(5)
 	endpoints := make([]schema.Endpoint, numEndpoints)

@@ -22,10 +22,10 @@ const (
 
 // TestContent - structure used by a test to configure the tests to run
 type TestContent struct {
-	CommandTypes     []schema.CommandType
-	ComponentTypes   []schema.ComponentType
-	FileName         string
-	EditContent      bool
+	CommandTypes   []schema.CommandType
+	ComponentTypes []schema.ComponentType
+	FileName       string
+	EditContent    bool
 }
 
 func Test_ExecCommand(t *testing.T) {
@@ -45,7 +45,6 @@ func Test_ExecCommandEdit(t *testing.T) {
 	runMultiThreadTest(testContent, t)
 }
 
-
 func Test_CompositeCommand(t *testing.T) {
 	testContent := TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
@@ -63,11 +62,10 @@ func Test_CompositeCommandEdit(t *testing.T) {
 	runMultiThreadTest(testContent, t)
 }
 
-
 func Test_MultiCommand(t *testing.T) {
 	testContent := TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType,
-													schema.CompositeCommandType}
+		schema.CompositeCommandType}
 	testContent.EditContent = true
 	testContent.FileName = utils.GetDevFileName()
 	runTest(testContent, t)
@@ -153,9 +151,9 @@ func runMultiThreadTest(testContent TestContent, t *testing.T) {
 func runTest(testContent TestContent, t *testing.T) {
 
 	utils.LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
-	testDevfile,err := utils.GetDevfile(testContent.FileName)
-	if err!=nil {
-		t.Fatalf(utils.LogMessage(fmt.Sprintf("Error creating devfile : %v",err)))
+	testDevfile, err := utils.GetDevfile(testContent.FileName)
+	if err != nil {
+		t.Fatalf(utils.LogMessage(fmt.Sprintf("Error creating devfile : %v", err)))
 	}
 
 	if len(testContent.CommandTypes) > 0 {

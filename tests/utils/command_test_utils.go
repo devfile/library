@@ -12,7 +12,7 @@ import (
 )
 
 // commandAdded adds a new command to the test schema data and to the parser data
-func (devfile *TestDevfile)commandAdded(command schema.Command) {
+func (devfile *TestDevfile) commandAdded(command schema.Command) {
 	LogInfoMessage(fmt.Sprintf("command added Id: %s", command.Id))
 	devfile.SchemaDevFile.Commands = append(devfile.SchemaDevFile.Commands, command)
 	devfile.ParserData.AddCommands(command)
@@ -47,11 +47,11 @@ func addAttributes(numAtrributes int) map[string]string {
 }
 
 // addGroup creates and returns a group in a schema structure
-func (devfile *TestDevfile)addGroup() *schema.CommandGroup {
+func (devfile *TestDevfile) addGroup() *schema.CommandGroup {
 
 	commandGroup := schema.CommandGroup{}
 	commandGroup.Kind = GetRandomGroupKind()
-	LogInfoMessage(fmt.Sprintf("group Kind: %s, default already set %t", commandGroup.Kind,devfile.GroupDefaults[commandGroup.Kind]))
+	LogInfoMessage(fmt.Sprintf("group Kind: %s, default already set %t", commandGroup.Kind, devfile.GroupDefaults[commandGroup.Kind]))
 	// Ensure only one and at least one of each type are labelled as default
 	if !devfile.GroupDefaults[commandGroup.Kind] {
 		devfile.GroupDefaults[commandGroup.Kind] = true
@@ -73,7 +73,7 @@ func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) schema.Co
 		// command must be mentioned by a container component
 		command.Exec.Component = devfile.AddCommandToContainer(command.Id)
 	} else if commandType == schema.CompositeCommandType {
-		command =devfile.createCompositeCommand()
+		command = devfile.createCompositeCommand()
 		devfile.setCompositeCommandValues(command)
 	}
 	return *command
@@ -150,7 +150,6 @@ func (devfile *TestDevfile) setExecCommandValues(command *schema.Command) {
 
 }
 
-
 // getSchemaCommand get a specified command from the devfile schema structure
 func getSchemaCommand(commands []schema.Command, id string) (*schema.Command, bool) {
 	found := false
@@ -185,8 +184,8 @@ func (devfile *TestDevfile) setCompositeCommandValues(command *schema.Command) {
 	numCommands := GetRandomNumber(3)
 
 	for i := 0; i < numCommands; i++ {
-		execCommand :=  devfile.AddCommand(schema.ExecCommandType)
-		compositeCommand.Commands = append(compositeCommand.Commands,execCommand.Id)
+		execCommand := devfile.AddCommand(schema.ExecCommandType)
+		compositeCommand.Commands = append(compositeCommand.Commands, execCommand.Id)
 		LogInfoMessage(fmt.Sprintf("....... command %d of %d : %s", i, numCommands, execCommand.Id))
 	}
 
