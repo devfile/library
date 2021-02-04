@@ -11,6 +11,19 @@ import (
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
+// commandAdded adds a new command to the test schema data and to the parser data
+func (devfile *TestDevfile)commandAdded(command schema.Command) {
+	LogInfoMessage(fmt.Sprintf("command added Id: %s", command.Id))
+	devfile.SchemaDevFile.Commands = append(devfile.SchemaDevFile.Commands, command)
+	devfile.ParserData.AddCommands(command)
+}
+
+// commandUpdated updates a command in the parser data
+func (devfile *TestDevfile) commandUpdated(command schema.Command) {
+	LogInfoMessage(fmt.Sprintf("command updated Id: %s", command.Id))
+	devfile.ParserData.UpdateCommand(command)
+}
+
 // addEnv creates and returns a specifed number of env attributes in a schema structure
 func addEnv(numEnv int) []schema.EnvVar {
 	commandEnvs := make([]schema.EnvVar, numEnv)
@@ -34,79 +47,81 @@ func addAttributes(numAtrributes int) map[string]string {
 }
 
 // addGroup creates and returns a group in a schema structure
-func addGroup() *schema.CommandGroup {
+func (devfile *TestDevfile)addGroup() *schema.CommandGroup {
 
 	commandGroup := schema.CommandGroup{}
 	commandGroup.Kind = GetRandomGroupKind()
-	LogInfoMessage(fmt.Sprintf("group Kind: %s", commandGroup.Kind))
-	commandGroup.IsDefault = GetBinaryDecision()
+	LogInfoMessage(fmt.Sprintf("group Kind: %s, default already set %t", commandGroup.Kind,devfile.GroupDefaults[commandGroup.Kind]))
+	// Ensure only one and at least one of each type are labelled as default
+	if !devfile.GroupDefaults[commandGroup.Kind] {
+		devfile.GroupDefaults[commandGroup.Kind] = true
+		commandGroup.IsDefault = true
+	} else {
+		commandGroup.IsDefault = false
+	}
 	LogInfoMessage(fmt.Sprintf("group isDefault: %t", commandGroup.IsDefault))
 	return &commandGroup
 }
 
-// AddCommand adds a command of the specified type, with random attributes, to the devfile schema
-func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) string {
-	command := generateCommand(commandType)
-	devfile.SchemaDevFile.Commands = append(devfile.SchemaDevFile.Commands, command)
-	return command.Id
-}
+// AddCommand creates a command of a specified type in a schema structure and pupulates it with random attributes
+func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) schema.Command {
 
-// generateCommand creates a command of a specified type in a schema structure
-func generateCommand(commandType schema.CommandType) schema.Command {
-	command := schema.Command{}
-	command.Id = GetRandomUniqueString(8, true)
-	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
-
+	var command *schema.Command
 	if commandType == schema.ExecCommandType {
-		command.Exec = createExecCommand()
+		command = devfile.createExecCommand()
+		devfile.setExecCommandValues(command)
+		// command must be mentioned by a container component
+		command.Exec.Component = devfile.AddCommandToContainer(command.Id)
 	} else if commandType == schema.CompositeCommandType {
-		command.Composite = createCompositeCommand()
+		command =devfile.createCompositeCommand()
+		devfile.setCompositeCommandValues(command)
 	}
-	return command
+	return *command
 }
 
 // UpdateCommand randomly updates attribute values of a specified command in the devfile schema
-func (devfile *TestDevfile) UpdateCommand(parserCommand *schema.Command) error {
+func (devfile *TestDevfile) UpdateCommand(commandId string) error {
 
 	var err error
-	testCommand, found := getSchemaCommand(devfile.SchemaDevFile.Commands, parserCommand.Id)
+	testCommand, found := getSchemaCommand(devfile.SchemaDevFile.Commands, commandId)
 	if found {
-		LogInfoMessage(fmt.Sprintf("Updating command id: %s", parserCommand.Id))
+		LogInfoMessage(fmt.Sprintf("Updating command id: %s", commandId))
 		if testCommand.Exec != nil {
-			setExecCommandValues(parserCommand.Exec)
+			devfile.setExecCommandValues(testCommand)
 		} else if testCommand.Composite != nil {
-			setCompositeCommandValues(parserCommand.Composite)
+			devfile.setCompositeCommandValues(testCommand)
 		}
-		devfile.replaceSchemaCommand(*parserCommand)
 	} else {
-		err = errors.New(LogErrorMessage(fmt.Sprintf("Command not found in test : %s", parserCommand.Id)))
+		err = errors.New(LogErrorMessage(fmt.Sprintf("Command not found in test : %s", commandId)))
 	}
 	return err
 }
 
-// createExecCommand creates and returns an exec command in a schema structure
-func createExecCommand() *schema.ExecCommand {
+// createExecCommand creates and returns an empty exec command in a schema structure
+func (devfile *TestDevfile) createExecCommand() *schema.Command {
 
 	LogInfoMessage("Create an exec command :")
-	execCommand := schema.ExecCommand{}
-	setExecCommandValues(&execCommand)
-	return &execCommand
+	command := schema.Command{}
+	command.Id = GetRandomUniqueString(8, true)
+	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
+	command.Exec = &schema.ExecCommand{}
+	devfile.commandAdded(command)
+	return &command
 
 }
 
 // setExecCommandValues randomly sets exec command attribute to random values
-func setExecCommandValues(execCommand *schema.ExecCommand) {
+func (devfile *TestDevfile) setExecCommandValues(command *schema.Command) {
 
-	execCommand.Component = GetRandomString(8, false)
-	LogInfoMessage(fmt.Sprintf("....... component: %s", execCommand.Component))
-
+	execCommand := command.Exec
 	execCommand.CommandLine = GetRandomString(4, false) + " " + GetRandomString(4, false)
 	LogInfoMessage(fmt.Sprintf("....... commandLine: %s", execCommand.CommandLine))
 
-	if GetRandomDecision(2, 1) {
-		execCommand.Group = addGroup()
-	} else {
-		execCommand.Group = nil
+	// If group already leave it to make sure defaults are not deleted or added
+	if execCommand.Group == nil {
+		if GetRandomDecision(2, 1) {
+			execCommand.Group = devfile.addGroup()
+		}
 	}
 
 	if GetBinaryDecision() {
@@ -131,20 +146,12 @@ func setExecCommandValues(execCommand *schema.ExecCommand) {
 	} else {
 		execCommand.Env = nil
 	}
+	devfile.commandUpdated(*command)
 
 }
 
-// replaceSchemaCommand uses the specified command to replace the command in the schema structure with the same Id.
-func (devfile TestDevfile) replaceSchemaCommand(command schema.Command) {
-	for i := 0; i < len(devfile.SchemaDevFile.Commands); i++ {
-		if devfile.SchemaDevFile.Commands[i].Id == command.Id {
-			devfile.SchemaDevFile.Commands[i] = command
-			break
-		}
-	}
-}
 
-// getSchemaCommand get a command from the devfile schema structure
+// getSchemaCommand get a specified command from the devfile schema structure
 func getSchemaCommand(commands []schema.Command, id string) (*schema.Command, bool) {
 	found := false
 	var schemaCommand schema.Command
@@ -158,27 +165,36 @@ func getSchemaCommand(commands []schema.Command, id string) (*schema.Command, bo
 	return &schemaCommand, found
 }
 
-// createCompositeCommand creates a composite command in a schema structure
-func createCompositeCommand() *schema.CompositeCommand {
+// createCompositeCommand creates an empty composite command in a schema structure
+func (devfile *TestDevfile) createCompositeCommand() *schema.Command {
 
 	LogInfoMessage("Create a composite command :")
-	compositeCommand := schema.CompositeCommand{}
-	setCompositeCommandValues(&compositeCommand)
-	return &compositeCommand
+	command := schema.Command{}
+	command.Id = GetRandomUniqueString(8, true)
+	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
+	command.Composite = &schema.CompositeCommand{}
+	devfile.commandAdded(command)
+
+	return &command
 }
 
 // setCompositeCommandValues randomly sets composite command attribute to random values
-func setCompositeCommandValues(compositeCommand *schema.CompositeCommand) {
+func (devfile *TestDevfile) setCompositeCommandValues(command *schema.Command) {
+
+	compositeCommand := command.Composite
 	numCommands := GetRandomNumber(3)
 
-	compositeCommand.Commands = make([]string, numCommands)
 	for i := 0; i < numCommands; i++ {
-		compositeCommand.Commands[i] = GetRandomUniqueString(8, false)
-		LogInfoMessage(fmt.Sprintf("....... command %d of %d : %s", i, numCommands, compositeCommand.Commands[i]))
+		execCommand :=  devfile.AddCommand(schema.ExecCommandType)
+		compositeCommand.Commands = append(compositeCommand.Commands,execCommand.Id)
+		LogInfoMessage(fmt.Sprintf("....... command %d of %d : %s", i, numCommands, execCommand.Id))
 	}
 
-	if GetRandomDecision(2, 1) {
-		compositeCommand.Group = addGroup()
+	// If group already exists - leave it to make sure defaults are not deleted or added
+	if compositeCommand.Group == nil {
+		if GetRandomDecision(2, 1) {
+			compositeCommand.Group = devfile.addGroup()
+		}
 	}
 
 	if GetBinaryDecision() {
@@ -190,10 +206,12 @@ func setCompositeCommandValues(compositeCommand *schema.CompositeCommand) {
 		compositeCommand.Parallel = true
 		LogInfoMessage(fmt.Sprintf("....... Parallel: %t", compositeCommand.Parallel))
 	}
+
+	devfile.commandUpdated(*command)
 }
 
 // VerifyCommands verifies commands returned by the parser are the same as those saved in the devfile schema
-func (devfile TestDevfile) VerifyCommands(parserCommands []schema.Command) error {
+func (devfile *TestDevfile) VerifyCommands(parserCommands []schema.Command) error {
 
 	LogInfoMessage("Enter VerifyCommands")
 	var errorString []string

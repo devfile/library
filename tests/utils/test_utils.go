@@ -124,8 +124,10 @@ func LogInfoMessage(message string) string {
 type TestDevfile struct {
 	SchemaDevFile   schema.Devfile
 	FileName        string
-	ParsedSchemaObj parser.DevfileObj
+	ParserData      devfileData.DevfileData
 	SchemaParsed    bool
+	GroupDefaults   map[schema.CommandGroupKind]bool
+	UsedPorts       map[int]bool
 }
 
 var StringCount int = 0
@@ -188,18 +190,30 @@ func GetRandomNumber(max int) int {
 }
 
 // GetDevfile returns a structure used to represent a specific devfile in a test
-func GetDevfile(fileName string) TestDevfile {
+func GetDevfile(fileName string) (TestDevfile,error) {
+
+	var err error
 	testDevfile := TestDevfile{}
 	testDevfile.SchemaDevFile = schema.Devfile{}
 	testDevfile.FileName = fileName
 	testDevfile.SchemaDevFile.SchemaVersion = "2.0.0"
 	testDevfile.SchemaParsed = false
-	return testDevfile
+	testDevfile.GroupDefaults = make(map[schema.CommandGroupKind]bool)
+	for _,kind := range GroupKinds {
+		testDevfile.GroupDefaults[kind] = false
+	}
+	testDevfile.ParserData, err = devfileData.NewDevfileData(testDevfile.SchemaDevFile.SchemaVersion)
+	if err!=nil {
+		return testDevfile,err
+	}
+	testDevfile.ParserData.SetSchemaVersion(testDevfile.SchemaDevFile.SchemaVersion)
+	testDevfile.UsedPorts = make(map[int]bool)
+	return testDevfile,err
 }
 
-// CreateDevfile create a devifle on disk for use in a test.
+// WriteDevfile create a devifle on disk for use in a test.
 // If useParser is true the parser library is used to generate the file, otherwise "sigs.k8s.io/yaml" is used.
-func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
+func (devfile *TestDevfile) WriteDevfile(useParser bool) error {
 	var err error
 
 	fileName := devfile.FileName
@@ -209,38 +223,26 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 
 	if useParser {
 		LogInfoMessage(fmt.Sprintf("Use Parser to write devfile %s", fileName))
-		newDevfile, createErr := devfileData.NewDevfileData(devfile.SchemaDevFile.SchemaVersion)
-		if createErr != nil {
-			err = errors.New(LogErrorMessage(fmt.Sprintf("Creating new devfile : %v", createErr)))
+
+		ctx := devfileCtx.NewDevfileCtx(fileName)
+
+		err = ctx.SetAbsPath()
+		if err != nil {
+			LogErrorMessage(fmt.Sprintf("Setting devfile path : %v", err))
 		} else {
-			newDevfile.SetSchemaVersion(devfile.SchemaDevFile.SchemaVersion)
-
-			// add the commands to new devfile
-			for _, command := range devfile.SchemaDevFile.Commands {
-				newDevfile.AddCommands(command)
+			devObj := parser.DevfileObj{
+				Ctx:  ctx,
+				Data: devfile.ParserData,
 			}
-			// add components to the new devfile
-			newDevfile.AddComponents(devfile.SchemaDevFile.Components)
-
-			ctx := devfileCtx.NewDevfileCtx(fileName)
-
-			err = ctx.SetAbsPath()
+			err = devObj.WriteYamlDevfile()
 			if err != nil {
-				LogErrorMessage(fmt.Sprintf("Setting devfile path : %v", err))
+				LogErrorMessage(fmt.Sprintf("Writing devfile : %v", err))
 			} else {
-				devObj := parser.DevfileObj{
-					Ctx:  ctx,
-					Data: newDevfile,
-				}
-				err = devObj.WriteYamlDevfile()
-				if err != nil {
-					LogErrorMessage(fmt.Sprintf("Writing devfile : %v", err))
-				} else {
-					devfile.SchemaParsed = false
-				}
+				devfile.SchemaParsed = false
 			}
-
 		}
+
+
 	} else {
 		LogInfoMessage(fmt.Sprintf("Marshall and write devfile %s", devfile.FileName))
 		c, marshallErr := yaml.Marshal(&(devfile.SchemaDevFile))
@@ -259,23 +261,30 @@ func (devfile *TestDevfile) CreateDevfile(useParser bool) error {
 	return err
 }
 
-// Use the parser to parse a devfile on disk
+// parseSchema uses the parser to parse a devfile on disk
 func (devfile *TestDevfile) parseSchema() error {
 
 	var err error
 	if !devfile.SchemaParsed {
-		LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
-		devfile.ParsedSchemaObj, err = devfilepkg.ParseAndValidate(devfile.FileName)
-		if err != nil {
-			LogErrorMessage(fmt.Sprintf("From ParseAndValidate %v : ", err))
+		err = devfile.WriteDevfile(true)
+		if err!= nil {
+			LogErrorMessage(fmt.Sprintf("From WriteDevfile %v : ", err))
+		} else {
+			LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
+			parsedSchemaObj, parse_err := devfilepkg.ParseAndValidate(devfile.FileName)
+			if parse_err != nil {
+				err = parse_err
+				LogErrorMessage(fmt.Sprintf("From ParseAndValidate %v : ", err))
+			}
+			devfile.SchemaParsed = true
+			devfile.ParserData = parsedSchemaObj.Data
 		}
-		devfile.SchemaParsed = true
 	}
 	return err
 }
 
 // Verify verifies the contents of the specified devfile with the expected content
-func (devfile TestDevfile) Verify() error {
+func (devfile *TestDevfile) Verify() error {
 
 	LogInfoMessage(fmt.Sprintf("Verify %s : ", devfile.FileName))
 
@@ -287,7 +296,7 @@ func (devfile TestDevfile) Verify() error {
 		errorString = append(errorString, LogErrorMessage(fmt.Sprintf("parsing schema %s : %v", devfile.FileName, err)))
 	} else {
 		LogInfoMessage(fmt.Sprintf("Get commands %s : ", devfile.FileName))
-		commands, _ := devfile.ParsedSchemaObj.Data.GetCommands(common.DevfileOptions{})
+		commands, _ := devfile.ParserData.GetCommands(common.DevfileOptions{})
 		if commands != nil && len(commands) > 0 {
 			err = devfile.VerifyCommands(commands)
 			if err != nil {
@@ -298,7 +307,7 @@ func (devfile TestDevfile) Verify() error {
 		}
 
 		LogInfoMessage(fmt.Sprintf("Get components %s : ", devfile.FileName))
-		components, _ := devfile.ParsedSchemaObj.Data.GetComponents(common.DevfileOptions{})
+		components, _ := devfile.ParserData.GetComponents(common.DevfileOptions{})
 		if components != nil && len(components) > 0 {
 			err = devfile.VerifyComponents(components)
 			if err != nil {
@@ -317,7 +326,7 @@ func (devfile TestDevfile) Verify() error {
 }
 
 // EditCommands modifies random attributes for each of the commands in the devfile.
-func (devfile TestDevfile) EditCommands() error {
+func (devfile *TestDevfile) EditCommands() error {
 
 	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
@@ -326,25 +335,19 @@ func (devfile TestDevfile) EditCommands() error {
 		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
 	} else {
 		LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
-		commands, _ := devfile.ParsedSchemaObj.Data.GetCommands(common.DevfileOptions{})
+		commands, _ := devfile.ParserData.GetCommands(common.DevfileOptions{})
 		for _, command := range commands {
-			err = devfile.UpdateCommand(&command)
+			err = devfile.UpdateCommand(command.Id)
 			if err != nil {
 				LogErrorMessage(fmt.Sprintf("Updating command : %v", err))
-			} else {
-				LogInfoMessage(fmt.Sprintf("Update command in Parser : %s", command.Id))
-				devfile.ParsedSchemaObj.Data.UpdateCommand(command)
 			}
 		}
-		LogInfoMessage(fmt.Sprintf("Write updated file to yaml : %s", devfile.FileName))
-		devfile.ParsedSchemaObj.WriteYamlDevfile()
-		devfile.SchemaParsed = false
 	}
 	return err
 }
 
 // EditComponents modifies random attributes for each of the components in the devfile.
-func (devfile TestDevfile) EditComponents() error {
+func (devfile *TestDevfile) EditComponents() error {
 
 	LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
@@ -353,23 +356,13 @@ func (devfile TestDevfile) EditComponents() error {
 		LogErrorMessage(fmt.Sprintf("From parser : %v", err))
 	} else {
 		LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
-		components, _ := devfile.ParsedSchemaObj.Data.GetComponents(common.DevfileOptions{})
+		components, _ := devfile.ParserData.GetComponents(common.DevfileOptions{})
 		for _, component := range components {
-			err = devfile.UpdateComponent(&component)
+			err = devfile.UpdateComponent(component.Name)
 			if err != nil {
 				LogErrorMessage(fmt.Sprintf("Updating component : %v", err))
-			} else {
-				LogInfoMessage(fmt.Sprintf("Update component in Parser : %s", component.Name))
-				devfile.ParsedSchemaObj.Data.UpdateComponent(component)
 			}
 		}
-		LogInfoMessage(fmt.Sprintf("Write updated file to yaml : %s", devfile.FileName))
-		devfile.ParsedSchemaObj.WriteYamlDevfile()
-		devfile.SchemaParsed = false
 	}
 	return err
-}
-
-func getError(message string) (string, error) {
-	return message, errors.New(message)
 }
