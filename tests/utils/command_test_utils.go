@@ -71,7 +71,7 @@ func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) schema.Co
 		command = devfile.createExecCommand()
 		devfile.setExecCommandValues(command)
 		// command must be mentioned by a container component
-		command.Exec.Component = devfile.AddCommandToContainer(command.Id)
+		command.Exec.Component = devfile.GetContainerName()
 	} else if commandType == schema.CompositeCommandType {
 		command = devfile.createCompositeCommand()
 		devfile.setCompositeCommandValues(command)

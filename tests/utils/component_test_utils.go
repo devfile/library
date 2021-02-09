@@ -90,27 +90,22 @@ func (devfile *TestDevfile) createVolumeComponent() schema.Component {
 
 }
 
-// AddCommandToContainer adds a command id to a container, creating one if necessary.
-func (devfile *TestDevfile) AddCommandToContainer(commandId string) string {
+// GetContainer returns the name of an existing, or newly created, container.
+func (devfile *TestDevfile) GetContainerName() string {
 
-	LogInfoMessage(fmt.Sprintf("add command %s to a container.", commandId))
 	componentName := ""
 	for _, currentComponent := range devfile.SchemaDevFile.Components {
 		if currentComponent.Container != nil {
-			currentComponent.Container.Command = append(currentComponent.Container.Command, commandId)
 			componentName = currentComponent.Name
-			LogInfoMessage(fmt.Sprintf("add command to existing container : %s", componentName))
-			devfile.componentUpdated(currentComponent)
+			LogInfoMessage(fmt.Sprintf("return existing container from GetContainerName  : %s", componentName))
 			break
 		}
 	}
 
 	if componentName == "" {
 		component := devfile.createContainerComponent()
-		component.Container.Command = append(component.Container.Command, commandId)
 		componentName = component.Name
-		LogInfoMessage(fmt.Sprintf("add command to a new container : %s", componentName))
-		devfile.componentUpdated(component)
+		LogInfoMessage(fmt.Sprintf("retrun new container from GetContainerName : %s", componentName))
 	}
 
 	return componentName
@@ -125,10 +120,10 @@ func (devfile *TestDevfile) setContainerComponentValues(component *schema.Compon
 
 	if GetBinaryDecision() {
 		numCommands := GetRandomNumber(3)
+		containerComponent.Command = make([]string, numCommands)
 		for i := 0; i < numCommands; i++ {
-			commandId := GetRandomString(4+GetRandomNumber(10), true)
-			containerComponent.Command = append(containerComponent.Command, commandId)
-			LogInfoMessage(fmt.Sprintf("....... command %d added : %s", len(containerComponent.Command), commandId))
+			containerComponent.Command[i] = GetRandomString(4+GetRandomNumber(10), false)
+			LogInfoMessage(fmt.Sprintf("....... command %d of %d : %s", i, numCommands, containerComponent.Command[i]))
 		}
 	}
 

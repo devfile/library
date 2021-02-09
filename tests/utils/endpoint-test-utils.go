@@ -43,6 +43,8 @@ func (devfile *TestDevfile) CreateEndpoints() []schema.Endpoint {
 	numEndpoints := GetRandomNumber(5)
 	endpoints := make([]schema.Endpoint, numEndpoints)
 
+	commonPort := devfile.getUniquePort()
+
 	for i := 0; i < numEndpoints; i++ {
 
 		endpoint := schema.Endpoint{}
@@ -50,7 +52,11 @@ func (devfile *TestDevfile) CreateEndpoints() []schema.Endpoint {
 		endpoint.Name = GetRandomUniqueString(GetRandomNumber(15)+5, true)
 		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d name  : %s", i, endpoint.Name))
 
-		endpoint.TargetPort = devfile.getUniquePort()
+		if GetBinaryDecision() {
+			endpoint.TargetPort = devfile.getUniquePort()
+		} else {
+			endpoint.TargetPort = commonPort
+		}
 		LogInfoMessage(fmt.Sprintf("   ....... add endpoint %d targetPort: %d", i, endpoint.TargetPort))
 
 		if GetBinaryDecision() {
