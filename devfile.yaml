@@ -28,12 +28,14 @@ components:
       strategy: Dockerfile
   container:
     endpoints:
-    - name: http-3000
-      targetPort: 3000
+    - name: http-8888
+      targetPort: 8888
     image: registry.access.redhat.com/ubi8/nodejs-12:1-45
     memoryLimit: 1024Mi
     mountSources: true
     sourceMapping: /project
+    command:
+      - npm install
 - name: runtime3
   attributes:
     tool: odo
@@ -41,8 +43,8 @@ components:
       usage: deploy
   container:
     endpoints:
-    - name: http-3000
-      targetPort: 3000
+    - name: http-8080
+      targetPort: 8080
     image: registry.access.redhat.com/ubi8/nodejs-12:1-45
     memoryLimit: 1024Mi
     mountSources: true
@@ -52,8 +54,8 @@ components:
     tool: workspace-operator
   container:
     endpoints:
-    - name: http-3000
-      targetPort: 3000
+    - name: http-9090
+      targetPort: 9090
     image: registry.access.redhat.com/ubi8/nodejs-12:1-45
     memoryLimit: 1024Mi
     mountSources: true
@@ -63,7 +65,7 @@ commands:
     commandLine: npm install
     component: runtime2
     group:
-      isDefault: true
+      isDefault: false
       kind: build
     workingDir: /project
   id: install2
@@ -74,7 +76,7 @@ commands:
     commandLine: npm start
     component: runtime2
     group:
-      isDefault: true
+      isDefault: false
       kind: run
     workingDir: /project
   id: run2
@@ -85,7 +87,7 @@ commands:
     commandLine: npm run debug
     component: runtime2
     group:
-      isDefault: true
+      isDefault: false
       kind: debug
     workingDir: /project
   id: debug2
@@ -93,7 +95,7 @@ commands:
     commandLine: npm test
     component: runtime2
     group:
-      isDefault: true
+      isDefault: false
       kind: test
     workingDir: /project
   id: test2

@@ -51,7 +51,6 @@ Each test in ```parser_v200_verify_test.go``` sets values in a test structure wh
 	    CommandTypes     []schema.CommandType
 	    ComponentTypes   []schema.ComponentType
 	    FileName         string
-	    CreateWithParser bool
 	    EditContent      bool
     }
 
@@ -68,7 +67,6 @@ An example test:
     func Test_MultiCommand(t *testing.T) {
 	    testContent := TestContent{}
 	    testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType}
-	    testContent.CreateWithParser = true
 	    testContent.EditContent = true
 	    testContent.FileName = GetDevFileName()
 	    runTest(testContent, t)
@@ -128,14 +126,14 @@ For example add support for apply command to existing command support:
 
 1. In ```command-test-utils.go```
     * add functions:
-        * ```func setApplyCommandValues(applyCommand *schema.ApplyCommand)``` 
-            * randomly set attribute values in the provided apply command object
-        * ```func createApplyCommand() *schema.ApplyCommand```
-            * creates the apply command object and calls setApplyCommandValues to add attribute values
+        * ```func (devfile *TestDevfile) setApplyCommandValues(applyCommand *schema.Command)``` 
+            * randomly sets attribute values in the provided apply command object
+        * ```func (devfile *TestDevfile) createApplyCommand() *schema.ApplyCommand```
+            * creates an empty apply command object and adds it to parser and test schema data
         * follow the implementation of other similar functions.
     * modify:
-       * ```func generateCommand(command *schema.Command, genericCommand *GenericCommand)```
-            * add logic to call createApplyCommand if commandType indicates such.
+       * ```func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) schema.Command```
+            * add logic to call createApplyCommand if commandType indicates such and call setApplyCommandValues
         * ```func (devfile *TestDevfile) UpdateCommand(command *schema.Command) error```
             * add logic to call setApplyCommandValues if commandType indicates such.
 1. In ```parser_v200_verify_test.go```
@@ -156,24 +154,21 @@ Using existing support for commands as an illustration, any new property support
     * Specific to commands
     * Commands require support for 5 different command types:
         * Exec
-        * Appy (to be implemented)
+        * Apply (to be implemented)
         * Composite
         * VSCodeLaunch (to be implemented)
         * VSCodeTask (to be implemented)
     * Each of these command-types have equivalent functions:    
-        * ```func create<command-type>Command() *schema.<command-type>```
+        * ```func (devfile *TestDevfile) create<command-type>Command() *schema.Command```
             * creates the command object and calls ```set<command-type>CommandValues``` to add attribute values
-            * for example see: ```func createExecCommand(execCommand *schema.ExecCommand)```
-        * ```func set<command-type>CommandValues(project-sourceProject *schema.<project-source>)```
+            * for example see: ```func (devfile *TestDevfile) createExecCommand() *schema.Command```
+        * ```func (devfile *TestDevfile) set<command-type>CommandValues(command *schema.Command)```
             * sets random attributes into the provided object 
-            * for example see: ```func setExecCommandValues(execCommand *schema.ExecCommand)```
+            * for example see: ```func (devfile *TestDevfile) setExecCommandValues(ommand *schema.Command)```
     * Functions general to all commands  
-        * ```func generateCommand(command *schema.Command, genericCommand *GenericCommand)```
+        * ```func addCommand(genericCommand *GenericCommand) schema.Command```
             * includes logic to call the ```create<Command-Type>Command``` function for the command-Type of the supplied command object.
-        * ```func (devfile *TestDevfile) addCommand(commandType schema.CommandType) string```
             * main entry point for a test to add a command
-            * maintains the array of commands in the schema structure
-            * calls generateCommand() 
         * ```func (devfile *TestDevfile) UpdateCommand(command *schema.Command) error```
             * includes logic to call set<commad-type>CommandValues for each commandType.
         * ```func (devfile TestDevfile) VerifyCommands(parserCommands []schema.Command) error```
@@ -218,10 +213,9 @@ Create, modify and verify an exec command:
 1. parser_v200_verify_test.Test_ExecCommand
     1. parser-v200-test.runTest
         1. command-test-utils.AddCommand
-            1. command-test-utils.GenerateCommand
-                1. command-test-utils.createExecCommand
-                    1. command-test-utils.setExecCommandValues
-        1. test-utils.CreateDevfile
+           1. command-test-utils.createExecCommand
+              1. command-test-utils.setExecCommandValues
+        1. test-utils.WriteDevfile
         1. test-utils.EditCommands
             1.  command-test-utils.UpdateCommand
                 1. command-test-utils.setExecCommandValues
