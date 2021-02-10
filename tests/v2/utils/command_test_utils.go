@@ -70,11 +70,18 @@ func (devfile *TestDevfile) AddCommand(commandType schema.CommandType) schema.Co
 	if commandType == schema.ExecCommandType {
 		command = devfile.createExecCommand()
 		devfile.setExecCommandValues(command)
-		// command must be mentioned by a container component
-		command.Exec.Component = devfile.GetContainerName()
 	} else if commandType == schema.CompositeCommandType {
 		command = devfile.createCompositeCommand()
 		devfile.setCompositeCommandValues(command)
+	} else if commandType == schema.ApplyCommandType {
+		command = devfile.createApplyCommand()
+		devfile.setApplyCommandValues(command)
+	} else if commandType == schema.VscodeTaskCommandType {
+		command = devfile.createVscodeTaskCommand()
+		devfile.setVscodeTaskCommandValues(command)
+	} else if commandType == schema.VscodeLaunchCommandType {
+		command = devfile.createVscodeLaunchCommand()
+		devfile.setVscodeLaunchCommandValues(command)
 	}
 	return *command
 }
@@ -90,6 +97,12 @@ func (devfile *TestDevfile) UpdateCommand(commandId string) error {
 			devfile.setExecCommandValues(testCommand)
 		} else if testCommand.Composite != nil {
 			devfile.setCompositeCommandValues(testCommand)
+		} else if testCommand.Apply != nil {
+			devfile.setApplyCommandValues(testCommand)
+		} else if testCommand.VscodeTask != nil {
+			devfile.setVscodeTaskCommandValues(testCommand)
+		} else if testCommand.VscodeLaunch != nil {
+			devfile.setVscodeLaunchCommandValues(testCommand)
 		}
 	} else {
 		err = errors.New(LogErrorMessage(fmt.Sprintf("Command not found in test : %s", commandId)))
@@ -114,6 +127,10 @@ func (devfile *TestDevfile) createExecCommand() *schema.Command {
 func (devfile *TestDevfile) setExecCommandValues(command *schema.Command) {
 
 	execCommand := command.Exec
+
+	// exec command must be mentioned by a container component
+	execCommand.Component = devfile.GetContainerName()
+
 	execCommand.CommandLine = GetRandomString(4, false) + " " + GetRandomString(4, false)
 	LogInfoMessage(fmt.Sprintf("....... commandLine: %s", execCommand.CommandLine))
 
@@ -207,6 +224,91 @@ func (devfile *TestDevfile) setCompositeCommandValues(command *schema.Command) {
 	}
 
 	devfile.commandUpdated(*command)
+}
+
+// createApplyCommand creates an apply command in a schema structure
+func (devfile *TestDevfile) createApplyCommand() *schema.Command {
+
+	LogInfoMessage("Create a apply command :")
+	command := schema.Command{}
+	command.Id = GetRandomUniqueString(8, true)
+	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
+	command.Apply = &schema.ApplyCommand{}
+	devfile.commandAdded(command)
+	return &command
+}
+
+// setApplyCommandValues randomly sets apply command attributes to random values
+func (devfile *TestDevfile) setApplyCommandValues(command *schema.Command) {
+	applyCommand := command.Apply
+
+	applyCommand.Component = devfile.GetContainerName()
+
+	if GetRandomDecision(2, 1) {
+		applyCommand.Group = devfile.addGroup()
+	}
+
+	if GetBinaryDecision() {
+		applyCommand.Label = GetRandomString(63, false)
+		LogInfoMessage(fmt.Sprintf("....... label: %s", applyCommand.Label))
+	}
+
+	devfile.commandUpdated(*command)
+}
+
+// createVscodeLaunchCommand creates an vscodeLaunch command in a schema structure
+func (devfile *TestDevfile) createVscodeLaunchCommand() *schema.Command {
+
+	LogInfoMessage("Create a vscode command :")
+	command := schema.Command{}
+	command.Id = GetRandomUniqueString(8, true)
+	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
+	command.VscodeLaunch = &schema.VscodeConfigurationCommand{}
+	devfile.commandAdded(command)
+	return &command
+}
+
+// createVscodeTaskCommand creates an vscodeTask command in a schema structure
+func (devfile *TestDevfile) createVscodeTaskCommand() *schema.Command {
+
+	LogInfoMessage("Create a vscode command :")
+	command := schema.Command{}
+	command.Id = GetRandomUniqueString(8, true)
+	LogInfoMessage(fmt.Sprintf("command Id: %s", command.Id))
+	command.VscodeTask = &schema.VscodeConfigurationCommand{}
+	devfile.commandAdded(command)
+	return &command
+}
+
+// setVscodeLaunchCommandValues andomly sets VscodeLaunch command attributes to random values
+func (devfile *TestDevfile) setVscodeLaunchCommandValues(command *schema.Command) {
+	devfile.setVscodeCommandValues(command.VscodeLaunch)
+	devfile.commandUpdated(*command)
+}
+
+// setVscodeTaskCommandValues andomly sets VscodeTask command attributes to random values
+func (devfile *TestDevfile) setVscodeTaskCommandValues(command *schema.Command) {
+	devfile.setVscodeCommandValues(command.VscodeTask)
+	devfile.commandUpdated(*command)
+}
+
+// setVscodeCommandValues randomly sets VscodeConfigurationCommand attributes to random values
+func (devfile *TestDevfile) setVscodeCommandValues(vscodeCommand *schema.VscodeConfigurationCommand) {
+
+	if GetRandomDecision(2, 1) {
+		vscodeCommand.Group = devfile.addGroup()
+	}
+
+	if GetBinaryDecision() {
+		vscodeCommand.Uri = "http://" + GetRandomString(GetRandomNumber(24), false)
+		LogInfoMessage(fmt.Sprintf("....... uri: %s", vscodeCommand.Uri))
+		vscodeCommand.Inlined = ""
+	} else {
+		vscodeCommand.Inlined = GetRandomString(GetRandomNumber(12), false)
+		LogInfoMessage(fmt.Sprintf("....... inlined: %s", vscodeCommand.Inlined))
+		vscodeCommand.Uri = ""
+	}
+
 }
 
 // VerifyCommands verifies commands returned by the parser are the same as those saved in the devfile schema

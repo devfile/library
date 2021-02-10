@@ -45,6 +45,60 @@ func Test_ExecCommandEdit(t *testing.T) {
 	runMultiThreadTest(testContent, t)
 }
 
+func Test_ApplyCommand(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
+	testContent.EditContent = false
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
+func Test_ApplyCommandEdit(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
+	testContent.EditContent = true
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
+func Test_VscodeLaunchCommand(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.VscodeLaunchCommandType}
+	testContent.EditContent = false
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
+func Test_VscodeLaunchCommandEdit(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.VscodeLaunchCommandType}
+	testContent.EditContent = true
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
+func Test_VscodeTaskCommand(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.VscodeTaskCommandType}
+	testContent.EditContent = false
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
+func Test_VscodeTaskCommandEdit(t *testing.T) {
+	testContent := TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.VscodeTaskCommandType}
+	testContent.EditContent = true
+	testContent.FileName = utils.GetDevFileName()
+	runTest(testContent, t)
+	runMultiThreadTest(testContent, t)
+}
+
 func Test_CompositeCommand(t *testing.T) {
 	testContent := TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
