@@ -67,13 +67,11 @@ func init() {
 // Returns the name of the created directory.
 func CreateTempDir(subdir string) string {
 	tempDir := tmpDir + subdir + "/"
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		if err = os.Mkdir(tempDir, 0755); err != nil {
-			LogErrorMessage(fmt.Sprintf("Failed to create temp directory %s will use %s : %v", tempDir, tmpDir, err))
-			// if cannot create subdirectory just use the base tmp directory
-			tempDir = tmpDir
-		}
-	} else if err != nil {
+	var err error
+	if _, err = os.Stat(tempDir); os.IsNotExist(err) {
+		err = os.Mkdir(tempDir, 0755)
+	}
+	if err != nil {
 		// if cannot create subdirectory just use the base tmp directory
 		LogErrorMessage(fmt.Sprintf("Failed to create temp directory %s will use %s : %v", tempDir, tmpDir, err))
 		tempDir = tmpDir
