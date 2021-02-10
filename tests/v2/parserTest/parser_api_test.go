@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devfile/library/tests/utils"
+	"github.com/devfile/library/tests/v2/utils"
 
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
