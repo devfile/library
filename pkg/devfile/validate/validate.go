@@ -23,10 +23,10 @@ func ValidateDevfileData(data devfileData.DevfileData) error {
 	if err != nil {
 		return err
 	}
-	//starterProjects, err := data.GetStarterProjects(common.DevfileOptions{})
-	//if err != nil {
-	//	return err
-	//}
+	starterProjects, err := data.GetStarterProjects(common.DevfileOptions{})
+	if err != nil {
+		return err
+	}
 
 	var errstrings []string
 	// validate components
@@ -51,10 +51,10 @@ func ValidateDevfileData(data devfileData.DevfileData) error {
 		errstrings = append(errstrings, err.Error())
 	}
 
-	//err = validation.ValidateStarterProjects(starterProjects)
-	//if err != nil {
-	//	errstrings = append(errstrings, err.Error())
-	//}
+	err = validation.ValidateStarterProjects(starterProjects)
+	if err != nil {
+		errstrings = append(errstrings, err.Error())
+	}
 
 	if len(errstrings) > 0 {
 		return fmt.Errorf(strings.Join(errstrings, "\n"))
