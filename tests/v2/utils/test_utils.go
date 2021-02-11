@@ -23,12 +23,14 @@ import (
 )
 
 const (
-	tmpDir       = "../tmp/"
-	logErrorOnly = false
-	logFileName  = "test.log"
+	defaultTempDir = "./tmp/"
+	logFileName    = "test.log"
 	// logToFileOnly - If set to false the log output will also be output to the console
 	logToFileOnly = true // If set to false the log output will also be output to the console
 )
+
+// tmpDir temporary directory in use
+var tmpDir string
 
 var (
 	testLogger *log.Logger
@@ -38,11 +40,14 @@ var (
 //    - the temporary directory used by the test to store logs and generated devfiles.
 //    - the log file
 func init() {
+	tmpDir = defaultTempDir
 	if _, err := os.Stat(tmpDir); !os.IsNotExist(err) {
 		os.RemoveAll(tmpDir)
 	}
-	os.Mkdir(tmpDir, 0755)
-
+	if err := os.Mkdir(tmpDir, 0755); err != nil {
+		fmt.Printf("Failed to create temp directory, will use current directory : %v ", err)
+		tmpDir = "./"
+	}
 	f, err := os.OpenFile(filepath.Join(tmpDir, logFileName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Printf("Error creating Log file : %v", err)
@@ -55,14 +60,21 @@ func init() {
 		}
 		testLogger.Println("Test Starting:")
 	}
+
 }
 
-// createTempDir creates a specified sub directory under the temp directory if it does not exist.
+// CreateTempDir creates a specified sub directory under the temp directory if it does not exist.
 // Returns the name of the created directory.
-func createTempDir(subdir string) string {
+func CreateTempDir(subdir string) string {
 	tempDir := tmpDir + subdir + "/"
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		os.Mkdir(tempDir, 0755)
+	var err error
+	if _, err = os.Stat(tempDir); os.IsNotExist(err) {
+		err = os.Mkdir(tempDir, 0755)
+	}
+	if err != nil {
+		// if cannot create subdirectory just use the base tmp directory
+		LogErrorMessage(fmt.Sprintf("Failed to create temp directory %s will use %s : %v", tempDir, tmpDir, err))
+		tempDir = tmpDir
 	}
 	return tempDir
 }
@@ -78,9 +90,9 @@ func GetDevFileName() string {
 	testFile := filepath.Base(fn)
 	testFileExtension := filepath.Ext(testFile)
 	subdir := testFile[0 : len(testFile)-len(testFileExtension)]
-	destDir := createTempDir(subdir)
+	destDir := CreateTempDir(subdir)
 	callerName := runtime.FuncForPC(pc).Name()
-	pos1 := strings.LastIndex(callerName, "/tests/api.") + len("/tests/api.")
+	pos1 := strings.LastIndex(callerName, "/parserTest.") + len("/parserTest.")
 	devfileName := destDir + callerName[pos1:len(callerName)] + ".yaml"
 
 	LogInfoMessage(fmt.Sprintf("GetDevFileName : %s", devfileName))
@@ -99,7 +111,11 @@ func AddSuffixToFileName(fileName string, suffix string) string {
 
 // LogMessage logs the specified message and returns the message logged
 func LogMessage(message string) string {
-	testLogger.Println(message)
+	if testLogger != nil {
+		testLogger.Println(message)
+	} else {
+		fmt.Printf("Logger not available: %s", message)
+	}
 	return message
 }
 
