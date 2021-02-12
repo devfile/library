@@ -2,8 +2,9 @@ package validate
 
 import (
 	"fmt"
-	"github.com/devfile/api/v2/pkg/validation"
+	v2Validation "github.com/devfile/api/v2/pkg/validation"
 	devfileData "github.com/devfile/library/pkg/devfile/parser/data"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"strings"
 )
@@ -29,31 +30,42 @@ func ValidateDevfileData(data devfileData.DevfileData) error {
 	}
 
 	var errstrings []string
-	// validate components
-	err = validation.ValidateComponents(components)
-	if err != nil {
-		errstrings = append(errstrings, err.Error())
-	}
+	switch d := data.(type) {
+	case *v2.DevfileV2:
+		// validate components
+		err = v2Validation.ValidateComponents(components)
+		if err != nil {
+			errstrings = append(errstrings, err.Error())
+		}
 
-	// validate commands
-	err = validation.ValidateCommands(commands, components)
-	if err != nil {
-		errstrings = append(errstrings, err.Error())
-	}
+		// validate commands
+		err = v2Validation.ValidateCommands(commands, components)
+		if err != nil {
+			errstrings = append(errstrings, err.Error())
+		}
 
-	err = validation.ValidateEvents(data.GetEvents(), commands)
-	if err != nil {
-		errstrings = append(errstrings, err.Error())
-	}
+		err = v2Validation.ValidateEvents(data.GetEvents(), commands)
+		if err != nil {
+			errstrings = append(errstrings, err.Error())
+		}
 
-	err = validation.ValidateProjects(projects)
-	if err != nil {
-		errstrings = append(errstrings, err.Error())
-	}
+		err = v2Validation.ValidateProjects(projects)
+		if err != nil {
+			errstrings = append(errstrings, err.Error())
+		}
 
-	err = validation.ValidateStarterProjects(starterProjects)
-	if err != nil {
-		errstrings = append(errstrings, err.Error())
+		err = v2Validation.ValidateStarterProjects(starterProjects)
+		if err != nil {
+			errstrings = append(errstrings, err.Error())
+		}
+
+		if len(errstrings) > 0 {
+			return fmt.Errorf(strings.Join(errstrings, "\n"))
+		} else {
+			return nil
+		}
+	default:
+		return fmt.Errorf("unknown devfile type %T", d)
 	}
 
 	if len(errstrings) > 0 {
@@ -61,5 +73,4 @@ func ValidateDevfileData(data devfileData.DevfileData) error {
 	} else {
 		return nil
 	}
-
 }

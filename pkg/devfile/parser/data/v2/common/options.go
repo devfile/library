@@ -14,9 +14,9 @@ type DevfileOptions struct {
 
 // FilterDevfileObject filters devfile attributes with the given options
 func FilterDevfileObject(attributes apiAttributes.Attributes, options DevfileOptions) (bool, error) {
-	var err error
 	filterIn := true
 	for key, value := range options.Filter {
+		var err error
 		currentFilterIn := false
 		attrValue := attributes.Get(key, &err)
 		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: key}
