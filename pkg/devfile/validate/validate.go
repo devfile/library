@@ -70,7 +70,7 @@ func ValidateDevfileData(data devfileData.DevfileData) error {
 
 	if len(errstrings) > 0 {
 		return fmt.Errorf(strings.Join(errstrings, "\n"))
-	} else {
-		return nil
 	}
+
+	return nil
 }
