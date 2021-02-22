@@ -8,6 +8,7 @@ import (
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 	buildv1 "github.com/openshift/api/build/v1"
@@ -747,8 +748,14 @@ func TestGetServiceSpec(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			devObj := parser.DevfileObj{
-				Data: &testingutil.TestDevfileData{
-					Components: tt.containerComponents,
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: tt.containerComponents,
+							},
+						},
+					},
 				},
 			}
 
@@ -1076,10 +1083,17 @@ func TestGetPortExposure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			devObj := parser.DevfileObj{
-				Data: &testingutil.TestDevfileData{
-					Components: tt.containerComponents,
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: tt.containerComponents,
+							},
+						},
+					},
 				},
 			}
+
 			mapCreated, err := getPortExposure(devObj, tt.filterOptions)
 			if !tt.wantErr && err != nil {
 				t.Errorf("TestGetPortExposure unexpected error: %v", err)

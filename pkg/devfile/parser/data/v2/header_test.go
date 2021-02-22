@@ -153,8 +153,7 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 	}
 	tests := []struct {
 		name              string
-		metadataName      string
-		metadataVersion   string
+		metadata          devfilepkg.DevfileMetadata
 		devfilev2         *DevfileV2
 		expectedDevfilev2 *DevfileV2
 	}{
@@ -165,8 +164,10 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 					DevfileHeader: devfilepkg.DevfileHeader{},
 				},
 			},
-			metadataName:    "nodejs",
-			metadataVersion: "2.0.0",
+			metadata: devfilepkg.DevfileMetadata{
+				Name:    "nodejs",
+				Version: "2.0.0",
+			},
 			expectedDevfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
@@ -187,15 +188,39 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 					},
 				},
 			},
-			metadataName:    "nodejs",
-			metadataVersion: "2.0.0",
+			metadata: devfilepkg.DevfileMetadata{
+				Name:    "nodejs",
+				Version: "2.1.0",
+				Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+					"xyz": "xyz",
+				}, nil),
+				DisplayName:       "display",
+				Description:       "decription",
+				Tags:              []string{"tag1"},
+				Icon:              "icon",
+				GlobalMemoryLimit: "globalmemorylimit",
+				ProjectType:       "projectype",
+				Language:          "language",
+				Website:           "website",
+			},
 			expectedDevfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
 						SchemaVersion: "2.0.0",
 						Metadata: devfilepkg.DevfileMetadata{
 							Name:    "nodejs",
-							Version: "2.0.0",
+							Version: "2.1.0",
+							Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+								"xyz": "xyz",
+							}, nil),
+							DisplayName:       "display",
+							Description:       "decription",
+							Tags:              []string{"tag1"},
+							Icon:              "icon",
+							GlobalMemoryLimit: "globalmemorylimit",
+							ProjectType:       "projectype",
+							Language:          "language",
+							Website:           "website",
 						},
 					},
 				},
@@ -204,7 +229,7 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.devfilev2.SetMetadata(tt.metadataName, tt.metadataVersion)
+			tt.devfilev2.SetMetadata(tt.metadata)
 			if !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
 				t.Errorf("TestDevfile200_SetSchemaVersion() expected %v, got %v", tt.expectedDevfilev2, tt.devfilev2)
 			}

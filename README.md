@@ -16,6 +16,16 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
     // To get all the components from the devfile
     components, err := devfile.Data.GetComponents(DevfileOptions{})
+
+     // To get all the components from the devfile with attributes tagged - tool: console-import & import: {strategy: Dockerfile}
+    components, err := devfile.Data.GetComponents(DevfileOptions{
+         Filter: map[string]interface{}{
+				"tool": "console-import",
+				"import": map[string]interface{}{
+					"strategy": "Dockerfile",
+				},
+			},
+    })
     ```
 2. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
    ```
