@@ -15,7 +15,7 @@ func TestGetGroup(t *testing.T) {
 		want    *v1.CommandGroup
 	}{
 		{
-			name: "Case 1: Exec command group",
+			name: "Exec command group",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -37,7 +37,7 @@ func TestGetGroup(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: Composite command group",
+			name: "Composite command group",
 			command: v1.Command{
 				Id: "composite1",
 				CommandUnion: v1.CommandUnion{
@@ -59,12 +59,12 @@ func TestGetGroup(t *testing.T) {
 			},
 		},
 		{
-			name:    "Case 3: Empty command",
+			name:    "Empty command",
 			command: v1.Command{},
 			want:    nil,
 		},
 		{
-			name: "Case 4: Apply command group",
+			name: "Apply command group",
 			command: v1.Command{
 				Id: "apply1",
 				CommandUnion: v1.CommandUnion{
@@ -86,47 +86,7 @@ func TestGetGroup(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 5: VscodeTaskcommand group",
-			command: v1.Command{
-				Id: "vscodetask1",
-				CommandUnion: v1.CommandUnion{
-					VscodeTask: &v1.VscodeConfigurationCommand{
-						BaseCommand: v1.BaseCommand{
-							Group: &v1.CommandGroup{
-								IsDefault: true,
-								Kind:      v1.TestCommandGroupKind,
-							},
-						},
-					},
-				},
-			},
-			want: &v1.CommandGroup{
-				IsDefault: true,
-				Kind:      v1.TestCommandGroupKind,
-			},
-		},
-		{
-			name: "Case 6: VscodeLaunchCommand group",
-			command: v1.Command{
-				Id: "vscodetask1",
-				CommandUnion: v1.CommandUnion{
-					VscodeLaunch: &v1.VscodeConfigurationCommand{
-						BaseCommand: v1.BaseCommand{
-							Group: &v1.CommandGroup{
-								IsDefault: true,
-								Kind:      v1.DebugCommandGroupKind,
-							},
-						},
-					},
-				},
-			},
-			want: &v1.CommandGroup{
-				IsDefault: true,
-				Kind:      v1.DebugCommandGroupKind,
-			},
-		},
-		{
-			name: "Case 7: Custom command group",
+			name: "Custom command group",
 			command: v1.Command{
 				Id: "custom1",
 				CommandUnion: v1.CommandUnion{

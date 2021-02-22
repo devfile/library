@@ -11,7 +11,7 @@ type DevfileData interface {
 	GetSchemaVersion() string
 	SetSchemaVersion(version string)
 	GetMetadata() devfilepkg.DevfileMetadata
-	SetMetadata(name, version string)
+	SetMetadata(metadata devfilepkg.DevfileMetadata)
 
 	// parent related methods
 	GetParent() *v1.Parent

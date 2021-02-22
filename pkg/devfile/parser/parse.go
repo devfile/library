@@ -113,12 +113,12 @@ func ParseFromData(data []byte) (d DevfileObj, err error) {
 
 func parseParentAndPlugin(d DevfileObj) (err error) {
 	flattenedParent := &v1.DevWorkspaceTemplateSpecContent{}
-	if d.Data.GetParent() != nil {
-		if !reflect.DeepEqual(d.Data.GetParent(), &v1.Parent{}) {
+	parent := d.Data.GetParent()
+	if parent != nil {
+		if !reflect.DeepEqual(parent, &v1.Parent{}) {
 
-			parent := d.Data.GetParent()
 			var parentDevfileObj DevfileObj
-			if d.Data.GetParent().Uri != "" {
+			if parent.Uri != "" {
 				parentDevfileObj, err = parseFromURI(parent.Uri, d.Ctx)
 				if err != nil {
 					return err
