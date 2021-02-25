@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,9 +15,8 @@ import (
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	devfileData "github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
-	"sigs.k8s.io/yaml"
 
-	commonUtils "github.com/devfile/library/tests/v2/utils/common"
+	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
 )
 
 const (
@@ -28,13 +26,10 @@ const (
 	numThreads = 5
 )
 
+// DevfileValidator struct for DevfileValidator interface defined in common utils.
 type DevfileValidator struct{}
 
-type DevfileFollower struct {
-	LibraryData devfileData.DevfileData
-}
-
-// WriteAndVerify implements Saved.DevfileValidator interface.
+// WriteAndValidate implements DevfileValidator interface.
 // writes to disk and validates the specified devfile
 func (devfileValidator DevfileValidator) WriteAndValidate(devfile *commonUtils.TestDevfile) error {
 	err := writeDevfile(devfile)
@@ -51,76 +46,95 @@ func (devfileValidator DevfileValidator) WriteAndValidate(devfile *commonUtils.T
 	return err
 }
 
+// DevfileFollower struct for DevfileFollower interface defined in common utils.
+type DevfileFollower struct {
+	LibraryData devfileData.DevfileData
+}
+
+// AddCommand adds the specified command to the library data
 func (devfileFollower DevfileFollower) AddCommand(command schema.Command) error {
 	return devfileFollower.LibraryData.AddCommands(command)
 }
 
+// UpdateCommand updates the specified command in the library data
 func (devfileFollower DevfileFollower) UpdateCommand(command schema.Command) {
 	devfileFollower.LibraryData.UpdateCommand(command)
 }
 
+// AddComponent adds the specified component to the library data
 func (devfileFollower DevfileFollower) AddComponent(component schema.Component) error {
 	var components []schema.Component
 	components = append(components, component)
 	return devfileFollower.LibraryData.AddComponents(components)
 }
 
+// UpdateComponent updates the specified component in the library data
 func (devfileFollower DevfileFollower) UpdateComponent(component schema.Component) {
 	devfileFollower.LibraryData.UpdateComponent(component)
 }
 
+// AddProject adds the specified project to the library data
 func (devfileFollower DevfileFollower) AddProject(project schema.Project) error {
 	var projects []schema.Project
 	projects = append(projects, project)
 	return devfileFollower.LibraryData.AddProjects(projects)
 }
 
-func (devfileFollower DevfileFollower)UpdateProject(project schema.Project) {
+// UpdateProject updates the specified project in the library data
+func (devfileFollower DevfileFollower) UpdateProject(project schema.Project) {
 	devfileFollower.LibraryData.UpdateProject(project)
 }
 
-func (devfileFollower DevfileFollower)AddStarterProject(starterProject schema.StarterProject) error {
+// AddStarterProject adds the specified starter project to the library data
+func (devfileFollower DevfileFollower) AddStarterProject(starterProject schema.StarterProject) error {
 	var starterProjects []schema.StarterProject
 	starterProjects = append(starterProjects, starterProject)
 	return devfileFollower.LibraryData.AddStarterProjects(starterProjects)
 }
 
-func (devfileFollower DevfileFollower)UpdateStarterProject(starterProject schema.StarterProject) {
+// UpdateStarterProject updates the specified starter project in the library data
+func (devfileFollower DevfileFollower) UpdateStarterProject(starterProject schema.StarterProject) {
 	devfileFollower.LibraryData.UpdateStarterProject(starterProject)
 }
 
-func (devfileFollower DevfileFollower)AddEvent(event schema.Events) error {
+// AddEvent adds the specified event to the library data
+func (devfileFollower DevfileFollower) AddEvent(event schema.Events) error {
 	return devfileFollower.LibraryData.AddEvents(event)
 }
 
-func (devfileFollower DevfileFollower)UpdateEvent(event schema.Events) {
-	devfileFollower.LibraryData.UpdateEvents(event.PreStart,event.PostStart,event.PreStop,event.PostStop)
+// UpdateEvent updates the specified event in the library data
+func (devfileFollower DevfileFollower) UpdateEvent(event schema.Events) {
+	devfileFollower.LibraryData.UpdateEvents(event.PreStart, event.PostStart, event.PreStop, event.PostStop)
 }
 
-func (devfileFollower DevfileFollower)SetParent(parent schema.Parent) error {
+// SetParent sets the specified parent in the library data
+func (devfileFollower DevfileFollower) SetParent(parent schema.Parent) error {
 	devfileFollower.LibraryData.SetParent(&parent)
 	return nil
 }
 
-func (devfileFollower DevfileFollower)UpdateParent(parent schema.Parent) {
+// UpdateParent updates the specified parent in the library data
+func (devfileFollower DevfileFollower) UpdateParent(parent schema.Parent) {
 	devfileFollower.LibraryData.SetParent(&parent)
 }
 
-func (devfileFollower DevfileFollower)SetMetaData(metaData header.DevfileMetadata) error {
-	devfileFollower.LibraryData.SetMetadata(metaData.Name,metaData.Version)
+// SetMetaData sets the specified metaData in the library data
+func (devfileFollower DevfileFollower) SetMetaData(metaData header.DevfileMetadata) error {
+	devfileFollower.LibraryData.SetMetadata(metaData)
 	return nil
 }
 
-func (devfileFollower DevfileFollower)UpdateMetaData(metadata header.DevfileMetadata) {
-	devfileFollower.LibraryData.SetMetadata(metadata.Name,metadata.Version)
+// UpdateMetaData updates the specified UpdateMetaData in the library data
+func (devfileFollower DevfileFollower) UpdateMetaData(updateMetaData header.DevfileMetadata) {
+	devfileFollower.LibraryData.SetMetadata(updateMetaData)
 }
 
-func (devfileFollower DevfileFollower)SetSchemaVersion(schemaVersion string) {
+// SetMetaData sets the specified schemaVersion in the library data
+func (devfileFollower DevfileFollower) SetSchemaVersion(schemaVersion string) {
 	devfileFollower.LibraryData.SetSchemaVersion(schemaVersion)
 }
 
-// WriteDevfile create a devifle on disk for use in a test.
-// If useParser is true the parser library is used to generate the file, otherwise "sigs.k8s.io/yaml" is used.
+// WriteDevfile uses the library to create a devfile on disk for use in a test.
 func writeDevfile(devfile *commonUtils.TestDevfile) error {
 	var err error
 
@@ -129,42 +143,28 @@ func writeDevfile(devfile *commonUtils.TestDevfile) error {
 		fileName += ".yaml"
 	}
 
-	if commonUtils.GetBinaryDecision() {
-		commonUtils.LogInfoMessage(fmt.Sprintf("Use Parser to write devfile %s", fileName))
+	commonUtils.LogInfoMessage(fmt.Sprintf("Use Parser to write devfile %s", fileName))
 
-		ctx := devfileCtx.NewDevfileCtx(fileName)
+	ctx := devfileCtx.NewDevfileCtx(fileName)
 
-		err = ctx.SetAbsPath()
-		if err != nil {
-			commonUtils.LogErrorMessage(fmt.Sprintf("Setting devfile path : %v", err))
-		} else {
-			devObj := parser.DevfileObj{
-				Ctx:  ctx,
-				Data: devfile.Follower.(DevfileFollower).LibraryData,
-			}
-			err = devObj.WriteYamlDevfile()
-			if err != nil {
-				commonUtils.LogErrorMessage(fmt.Sprintf("Writing devfile : %v", err))
-			}
-		}
-
+	err = ctx.SetAbsPath()
+	if err != nil {
+		commonUtils.LogErrorMessage(fmt.Sprintf("Setting devfile path : %v", err))
 	} else {
-		commonUtils.LogInfoMessage(fmt.Sprintf("Marshall and write devfile %s", devfile.FileName))
-		c, marshallErr := yaml.Marshal(&(devfile.SchemaDevFile))
-
-		if marshallErr != nil {
-			err = errors.New(commonUtils.LogErrorMessage(fmt.Sprintf("Marshall devfile %s : %v", devfile.FileName, marshallErr)))
-		} else {
-			err = ioutil.WriteFile(fileName, c, 0644)
-			if err != nil {
-				commonUtils.LogErrorMessage(fmt.Sprintf("Write devfile %s : %v", devfile.FileName, err))
-			}
+		devObj := parser.DevfileObj{
+			Ctx:  ctx,
+			Data: devfile.Follower.(DevfileFollower).LibraryData,
+		}
+		err = devObj.WriteYamlDevfile()
+		if err != nil {
+			commonUtils.LogErrorMessage(fmt.Sprintf("Writing devfile : %v", err))
 		}
 	}
+
 	return err
 }
 
-// parseSchema uses the parser to parse a devfile on disk
+// validateDevfile uses the library to parse and validate a devfile on disk
 func validateDevfile(devfile *commonUtils.TestDevfile) error {
 
 	var err error
@@ -189,10 +189,10 @@ func RunMultiThreadTest(testContent commonUtils.TestContent, t *testing.T) {
 	devfileName := testContent.FileName
 	var i int
 	for i = 1; i < numThreads; i++ {
-		testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, strconv.Itoa(i))
+		testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
 		go RunTest(testContent, t)
 	}
-	testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, strconv.Itoa(i))
+	testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
 	RunTest(testContent, t)
 
 	commonUtils.LogMessage(fmt.Sprintf("Sleep 3 seconds to allow all threads to complete : %s", devfileName))
@@ -248,7 +248,7 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 	}
 }
 
-// Verify verifies the contents of the specified devfile with the expected content
+// verify verifies the library contents of the specified devfile with the expected content
 func verify(devfile *commonUtils.TestDevfile) error {
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Verify %s : ", devfile.FileName))
@@ -286,7 +286,7 @@ func verify(devfile *commonUtils.TestDevfile) error {
 
 }
 
-// EditCommands modifies random attributes for each of the commands in the devfile.
+// editCommands modifies random attributes for each of the commands in the devfile.
 func editCommands(devfile *commonUtils.TestDevfile) error {
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
@@ -304,7 +304,7 @@ func editCommands(devfile *commonUtils.TestDevfile) error {
 	return err
 }
 
-// EditComponents modifies random attributes for each of the components in the devfile.
+// editComponents modifies random attributes for each of the components in the devfile.
 func editComponents(devfile *commonUtils.TestDevfile) error {
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))

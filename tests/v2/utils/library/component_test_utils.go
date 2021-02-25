@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	commonUtils "github.com/devfile/library/tests/v2/utils/common"
+	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
 )

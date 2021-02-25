@@ -4,17 +4,8 @@ import (
 	"testing"
 
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	commonUtils "github.com/devfile/library/tests/v2/utils/common"
+	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
 	libraryUtils "github.com/devfile/library/tests/v2/utils/library"
-)
-
-const (
-	// numThreads :  Number of threads used by multi-thread tests
-	numThreads = 5
-	// maxCommands : The maximum number of commands to include in a generated devfile
-	maxCommands = 10
-	// maxComponents : The maximum number of components to include in a generated devfile
-	maxComponents = 10
 )
 
 // TestContent - structure used by a test to configure the tests to run
@@ -135,7 +126,7 @@ func Test_MultiComponent(t *testing.T) {
 
 func Test_Everything(t *testing.T) {
 	testContent := commonUtils.TestContent{}
-	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType,schema.ApplyCommandType}
+	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
 	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
