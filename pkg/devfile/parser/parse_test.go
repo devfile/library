@@ -22,7 +22,7 @@ import (
 
 const schemaV200 = "2.0.0"
 
-func Test_parseParentAndPlugin(t *testing.T) {
+func Test_parseParentAndPluginFromURI(t *testing.T) {
 
 	type args struct {
 		devFileObj DevfileObj
@@ -38,7 +38,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 		testRecursiveReference bool
 	}{
 		{
-			name: "case 1: it should override the requested parent's data and add the local devfile's data",
+			name: "it should override the requested parent's data and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -253,7 +253,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 2: handle a parent'data without any local override and add the local devfile's data",
+			name: "handle a parent'data without any local override and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -436,7 +436,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 3: it should error out when the override is invalid",
+			name: "it should error out when the override is invalid",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -502,7 +502,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 4: error out if the same parent command is defined again in the local devfile",
+			name: "error out if the same parent command is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -555,7 +555,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 5: error out if the same parent component is defined again in the local devfile",
+			name: "error out if the same parent component is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -612,7 +612,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 6: should not have error if the same event is defined again in the local devfile",
+			name: "should not have error if the same event is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -669,7 +669,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 7: error out if the parent project is defined again in the local devfile",
+			name: "error out if the parent project is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -714,7 +714,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 8: it should merge the plugin's uri data and add the local devfile's data",
+			name: "it should merge the plugin's uri data and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -897,7 +897,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 9: it should override the plugin's data with local overrides and add the local devfile's data",
+			name: "it should override the plugin's data with local overrides and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1107,7 +1107,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 10: it should error out when the plugin devfile is invalid",
+			name: "it should error out when the plugin devfile is invalid",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1152,7 +1152,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 11: error out if the same plugin command is defined again in the local devfile",
+			name: "error out if the same plugin command is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1205,7 +1205,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 12: error out if the same plugin component is defined again in the local devfile",
+			name: "error out if the same plugin component is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1262,7 +1262,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 13: error out if the plugin project is defined again in the local devfile",
+			name: "error out if the plugin project is defined again in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1307,7 +1307,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 14: error out if the same project is defined in the both plugin devfile and parent",
+			name: "error out if the same project is defined in the both plugin devfile and parent",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1371,7 +1371,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 15: error out if the same command is defined in both plugin devfile and parent devfile",
+			name: "error out if the same command is defined in both plugin devfile and parent devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1447,7 +1447,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 16: error out if the same component is defined in both plugin devfile and parent devfile",
+			name: "error out if the same component is defined in both plugin devfile and parent devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1529,7 +1529,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 17: it should override the requested parent's data and plugin's data, and add the local devfile's data",
+			name: "it should override the requested parent's data and plugin's data, and add the local devfile's data",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1784,7 +1784,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			},
 		},
 		{
-			name: "case 18: error out if the plugin component is defined with a different component type in the local devfile",
+			name: "error out if the plugin component is defined with a different component type in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1841,7 +1841,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 19: it should override with no errors if the plugin component is defined with a different component type in the plugin override",
+			name: "it should override with no errors if the plugin component is defined with a different component type in the plugin override",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1914,7 +1914,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "case 20: error out if the parent component is defined with a different component type in the local devfile",
+			name: "error out if the parent component is defined with a different component type in the local devfile",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -1971,7 +1971,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "case 21: it should override with no errors if the parent component is defined with a different component type in the parent override",
+			name: "it should override with no errors if the parent component is defined with a different component type in the parent override",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -2049,7 +2049,7 @@ func Test_parseParentAndPlugin(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "case 22: error out if the URI is recursively referenced",
+			name: "error out if the URI is recursively referenced",
 			args: args{
 				devFileObj: DevfileObj{
 					Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -2399,6 +2399,489 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 	})
 }
 
+func Test_parseParentFromRegistry(t *testing.T) {
+	const validRegistry = "127.0.0.1:8080"
+	const invalidRegistry = "invalid-registry.io"
+	mountSource := true
+	parentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "parent-runtime",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		var data []byte
+		var err error
+		if strings.Contains(r.URL.Path, "/devfiles/nodejs") {
+			data, err = yaml.Marshal(parentDevfile.Data)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+			return
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l, err := net.Listen("tcp", validRegistry)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer.Listener.Close()
+	testServer.Listener = l
+
+	testServer.Start()
+	defer testServer.Close()
+
+	tests := []struct {
+		name                   string
+		mainDevfile            DevfileObj
+		registryURI            string
+		wantDevFile            DevfileObj
+		wantErr                bool
+		testRecursiveReference bool
+	}{
+		{
+			name: "it should override the requested parent's data from provided registry and add the local devfile's data",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									RegistryUrl: validRegistry,
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "nodejs",
+									},
+								},
+								ParentOverrides: v1.ParentOverrides{
+									Components: []v1.ComponentParentOverride{
+										{
+											Name: "parent-runtime",
+											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+												Container: &v1.ContainerComponentParentOverride{
+													ContainerParentOverride: v1.ContainerParentOverride{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+								Events: &v1.Events{
+									WorkspaceEvents: v1.WorkspaceEvents{
+										PostStop: []string{"post-stop"},
+									},
+								},
+								Projects: []v1.Project{
+									{
+										ClonePath: "/projects",
+										Name:      "nodejs-starter-build",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+								Events: &v1.Events{
+									WorkspaceEvents: v1.WorkspaceEvents{
+										PostStart: []string{},
+										PostStop:  []string{"post-stop"},
+										PreStop:   []string{},
+										PreStart:  []string{},
+									},
+								},
+								Projects: []v1.Project{
+									{
+										ClonePath: "/projects",
+										Name:      "nodejs-starter-build",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "it should override the requested parent's data from default registry and add the local devfile's data",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "nodejs",
+									},
+								},
+								ParentOverrides: v1.ParentOverrides{
+									Components: []v1.ComponentParentOverride{
+										{
+											Name: "runtime",
+											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+												Container: &v1.ContainerComponentParentOverride{
+													ContainerParentOverride: v1.ContainerParentOverride{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+								Events: &v1.Events{
+									WorkspaceEvents: v1.WorkspaceEvents{
+										PostStop: []string{"post-stop"},
+									},
+								},
+								Projects: []v1.Project{
+									{
+										ClonePath: "/projects",
+										Name:      "nodejs-starter-build",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "install",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												Component:   "runtime",
+												WorkingDir:  "/project",
+												CommandLine: "npm install",
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.BuildCommandGroupKind,
+															IsDefault: true,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Id: "run",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												Component:   "runtime",
+												WorkingDir:  "/project",
+												CommandLine: "npm start",
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.RunCommandGroupKind,
+															IsDefault: true,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Id: "debug",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												Component:   "runtime",
+												WorkingDir:  "/project",
+												CommandLine: "npm run debug",
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.DebugCommandGroupKind,
+															IsDefault: true,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Id: "test",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												Component:   "runtime",
+												WorkingDir:  "/project",
+												CommandLine: "npm test",
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.TestCommandGroupKind,
+															IsDefault: true,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Endpoints: []v1.Endpoint{
+													{
+														Name:       "http-3000",
+														TargetPort: 3000,
+													},
+												},
+												Container: v1.Container{
+													Image:         "quay.io/nodejs-12",
+													MemoryLimit:   "1024Mi",
+													MountSources:  &mountSource,
+													SourceMapping: "/project",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+								Events: &v1.Events{
+									WorkspaceEvents: v1.WorkspaceEvents{
+										PostStart: []string{},
+										PostStop:  []string{"post-stop"},
+										PreStop:   []string{},
+										PreStart:  []string{},
+									},
+								},
+								Projects: []v1.Project{
+									{
+										ClonePath: "/projects",
+										Name:      "nodejs-starter-build",
+									},
+								},
+								StarterProjects: []v1.StarterProject{
+									{
+										Name: "nodejs-starter",
+										ProjectSource: v1.ProjectSource{
+											Git: &v1.GitProjectSource{
+												GitLikeProjectSource: v1.GitLikeProjectSource{
+													Remotes: map[string]string{
+														"origin": "https://github.com/odo-devfiles/nodejs-ex.git",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "it should error out with invalid registry provided",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "nodejs",
+									},
+									RegistryUrl: invalidRegistry,
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "it should error out with non-exist registry id provided",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "not-exist",
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := parseParentAndPlugin(tt.mainDevfile)
+
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseParentAndPlugin() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Expected error and got an err
+			if tt.wantErr && err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(tt.mainDevfile.Data, tt.wantDevFile.Data) {
+				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile.Data, tt.mainDevfile.Data, pretty.Compare(tt.mainDevfile.Data, tt.wantDevFile.Data))
+			}
+
+		})
+	}
+}
+
 func Test_parseFromURI(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
 	const httpPrefix = "http://"
@@ -2556,36 +3039,36 @@ func Test_parseFromURI(t *testing.T) {
 		wantErr       bool
 	}{
 		{
-			name:          "case 1: should be able to parse from relative uri on local disk",
+			name:          "should be able to parse from relative uri on local disk",
 			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 			wantDevFile:   localDevfile,
 			uri:           localRelativeURI,
 		},
 		{
-			name:          "case 2: should be able to parse relative uri from URL",
+			name:          "should be able to parse relative uri from URL",
 			curDevfileCtx: parentDevfile.Ctx,
 			wantDevFile:   relativeParentDevfile,
 			uri:           localRelativeURI,
 		},
 		{
-			name:          "case 3: should fail if no path or url has been set for devfile ctx",
+			name:          "should fail if no path or url has been set for devfile ctx",
 			curDevfileCtx: devfileCtx.DevfileCtx{},
 			wantErr:       true,
 		},
 		{
-			name:          "case 4: should fail if file not exist",
+			name:          "should fail if file not exist",
 			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 			uri:           notExistURI,
 			wantErr:       true,
 		},
 		{
-			name:          "case 5: should fail if url not exist",
+			name:          "should fail if url not exist",
 			curDevfileCtx: devfileCtx.NewURLDevfileCtx(httpPrefix + uri1),
 			uri:           notExistURI,
 			wantErr:       true,
 		},
 		{
-			name:          "case 6: should fail if with invalid URI format",
+			name:          "should fail if with invalid URI format",
 			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
 			uri:           invalidURL,
 			wantErr:       true,

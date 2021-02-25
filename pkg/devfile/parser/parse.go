@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/devfile/library/pkg/util"
 	"net/url"
 	"path"
 	"strings"
@@ -19,6 +20,8 @@ import (
 	"github.com/devfile/api/v2/pkg/validation"
 	"github.com/pkg/errors"
 )
+
+const defaultRegistry = "preview-devfile-registry-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
@@ -123,8 +126,24 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 				if err != nil {
 					return err
 				}
+			} else if parent.Id != "" {
+				registry := defaultRegistry
+				if parent.RegistryUrl != "" {
+					registry = parent.RegistryUrl
+				}
+				param := util.HTTPRequestParams{
+					URL: fmt.Sprintf("http://%s/devfiles/%s", registry, parent.Id),
+				}
+				returnedVar, err := util.HTTPGetRequest(param, 0)
+				if err != nil {
+					return err
+				}
+				parentDevfileObj, err = ParseFromData(returnedVar)
+				if err != nil {
+					return err
+				}
 			} else {
-				return fmt.Errorf("parent URI undefined, currently only URI is suppported")
+				return fmt.Errorf("parent URI or registry id undefined, currently only URI and Id are suppported")
 			}
 
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspace()
