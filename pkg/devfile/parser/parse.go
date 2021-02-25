@@ -48,9 +48,7 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 			return DevfileObj{}, err
 		}
 	}
-	for uri := range devfileCtx.URIMap {
-		delete(devfileCtx.URIMap, uri)
-	}
+
 	// Successful
 	return d, nil
 }
@@ -191,9 +189,20 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		return ParseFromURL(uri)
 	}
 
+	// NewDevfileCtx
+	var d DevfileObj
 	// relative path on disk
 	if curDevfileCtx.GetAbsPath() != "" {
-		return Parse(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
+		d.Ctx = devfileCtx.NewDevfileCtx(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
+		d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
+
+		// Fill the fields of DevfileCtx struct
+		err = d.Ctx.Populate()
+		if err!= nil {
+			return DevfileObj{}, err
+		}
+		// return Parse(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
+		return parseDevfile(d, true)
 	}
 
 	if curDevfileCtx.GetURL() != "" {
@@ -203,8 +212,16 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		}
 
 		u.Path = path.Join(path.Dir(u.Path), uri)
+		d.Ctx = devfileCtx.NewURLDevfileCtx(u.String())
+		d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
+		// Fill the fields of DevfileCtx struct
+		err = d.Ctx.PopulateFromURL()
+		if err != nil {
+			return d, err
+		}
+		return parseDevfile(d, true)
 		// u.String() is the joint absolute URL path
-		return ParseFromURL(u.String())
+		// return ParseFromURL(u.String())
 	}
 
 	return DevfileObj{}, fmt.Errorf("fail to parse from uri: %s", uri)

@@ -2221,6 +2221,7 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 			},
 		},
 	}
+
 	parentDevfile1 := DevfileObj{
 		Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 		Data: &v2.DevfileV2{
