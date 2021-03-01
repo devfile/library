@@ -31,14 +31,10 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
 // if a command is already defined, error out
-func (d *DevfileV2) AddCommands(commands ...v1.Command) error {
-	devfileCommands, err := d.GetCommands(common.DevfileOptions{})
-	if err != nil {
-		return err
-	}
+func (d *DevfileV2) AddCommands(commands []v1.Command) error {
 
 	for _, command := range commands {
-		for _, devfileCommand := range devfileCommands {
+		for _, devfileCommand := range d.Commands {
 			if command.Id == devfileCommand.Id {
 				return &common.FieldAlreadyExistError{Name: command.Id, Field: "command"}
 			}

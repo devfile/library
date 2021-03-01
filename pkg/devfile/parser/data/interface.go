@@ -42,7 +42,7 @@ type DevfileData interface {
 
 	// command related methods
 	GetCommands(common.DevfileOptions) ([]v1.Command, error)
-	AddCommands(commands ...v1.Command) error
+	AddCommands(commands []v1.Command) error
 	UpdateCommand(command v1.Command)
 	DeleteCommand(id string) error
 

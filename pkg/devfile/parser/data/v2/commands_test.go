@@ -217,7 +217,7 @@ func TestDevfile200_AddCommands(t *testing.T) {
 				},
 			}
 
-			got := d.AddCommands(tt.newCommands...)
+			got := d.AddCommands(tt.newCommands)
 			if !tt.wantErr && got != nil {
 				t.Errorf("TestDevfile200_AddCommands() unexpected error - %v", got)
 			} else if tt.wantErr && got == nil {
