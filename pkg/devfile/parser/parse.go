@@ -183,14 +183,21 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 	if err != nil {
 		return DevfileObj{}, err
 	}
-
-	// absolute URL address
-	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
-		return ParseFromURL(uri)
-	}
-
 	// NewDevfileCtx
 	var d DevfileObj
+	// absolute URL address
+	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
+		// return ParseFromURL(uri)
+		d.Ctx = devfileCtx.NewURLDevfileCtx(uri)
+		d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
+		// Fill the fields of DevfileCtx struct
+		err = d.Ctx.PopulateFromURL()
+		if err != nil {
+			return DevfileObj{}, err
+		}
+		return parseDevfile(d, true)
+	}
+
 	// relative path on disk
 	if curDevfileCtx.GetAbsPath() != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
@@ -217,7 +224,7 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		// Fill the fields of DevfileCtx struct
 		err = d.Ctx.PopulateFromURL()
 		if err != nil {
-			return d, err
+			return DevfileObj{}, err
 		}
 		return parseDevfile(d, true)
 		// u.String() is the joint absolute URL path

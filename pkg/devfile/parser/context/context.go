@@ -95,6 +95,10 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	if d.uriMap == nil {
 		d.uriMap= make(map[string]bool)
 	}
+	fmt.Printf("uriMap length is: %v", len(d.uriMap))
+	for k,_ := range d.uriMap {
+		fmt.Printf("uriMap now contains: %s", k)
+	}
 	if d.uriMap[d.url] {
 		return fmt.Errorf("URI %v is recursively referenced", d.url)
 	}
