@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDevfile200_AddProjects(t *testing.T) {
@@ -186,6 +187,83 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDevfile200_DeleteProject(t *testing.T) {
+
+	tests := []struct {
+		name            string
+		projectToDelete string
+		projects        []v1.Project
+		wantProjects    []v1.Project
+		wantErr         bool
+	}{
+		{
+			name:            "Project successfully deleted",
+			projectToDelete: "nodejs",
+			projects: []v1.Project{
+				{
+					Name:      "nodejs",
+					ClonePath: "/project",
+				},
+				{
+					Name:      "java",
+					ClonePath: "/project2",
+				},
+			},
+			wantProjects: []v1.Project{
+				{
+					Name:      "java",
+					ClonePath: "/project2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:            "Project not found",
+			projectToDelete: "nodejs1",
+			projects: []v1.Project{
+				{
+					Name:      "nodejs",
+					ClonePath: "/project",
+				},
+				{
+					Name:      "java",
+					ClonePath: "/project2",
+				},
+			},
+			wantProjects: []v1.Project{
+				{
+					Name:      "java",
+					ClonePath: "/project2",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DevfileV2{
+				v1.Devfile{
+					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+							Projects: tt.projects,
+						},
+					},
+				},
+			}
+
+			err := d.DeleteProject(tt.projectToDelete)
+			if tt.wantErr && err == nil {
+				t.Errorf("Expected error from test but got nil")
+			} else if !tt.wantErr && err != nil {
+				t.Errorf("Got unexpected error: %s", err)
+			} else if err == nil {
+				assert.Equal(t, tt.wantProjects, d.Projects, "The two values should be the same.")
+			}
+		})
+	}
+
 }
 
 func TestDevfile200_AddStarterProjects(t *testing.T) {
@@ -369,4 +447,81 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDevfile200_DeleteStarterProject(t *testing.T) {
+
+	tests := []struct {
+		name                   string
+		starterProjectToDelete string
+		starterProjects        []v1.StarterProject
+		wantStarterProjects    []v1.StarterProject
+		wantErr                bool
+	}{
+		{
+			name:                   "Starter Project successfully deleted",
+			starterProjectToDelete: "nodejs",
+			starterProjects: []v1.StarterProject{
+				{
+					Name:   "nodejs",
+					SubDir: "/project",
+				},
+				{
+					Name:   "java",
+					SubDir: "/project2",
+				},
+			},
+			wantStarterProjects: []v1.StarterProject{
+				{
+					Name:   "java",
+					SubDir: "/project2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:                   "Starter Project not found",
+			starterProjectToDelete: "nodejs1",
+			starterProjects: []v1.StarterProject{
+				{
+					Name:   "nodejs",
+					SubDir: "/project",
+				},
+				{
+					Name:   "java",
+					SubDir: "/project2",
+				},
+			},
+			wantStarterProjects: []v1.StarterProject{
+				{
+					Name:   "java",
+					SubDir: "/project2",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DevfileV2{
+				v1.Devfile{
+					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+							StarterProjects: tt.starterProjects,
+						},
+					},
+				},
+			}
+
+			err := d.DeleteStarterProject(tt.starterProjectToDelete)
+			if tt.wantErr && err == nil {
+				t.Errorf("Expected error from test but got nil")
+			} else if !tt.wantErr && err != nil {
+				t.Errorf("Got unexpected error: %s", err)
+			} else if err == nil {
+				assert.Equal(t, tt.wantStarterProjects, d.StarterProjects, "The two values should be the same.")
+			}
+		})
+	}
+
 }

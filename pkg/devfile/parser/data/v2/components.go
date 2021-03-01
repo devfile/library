@@ -88,3 +88,32 @@ func (d *DevfileV2) UpdateComponent(component v1.Component) {
 		d.Components[index] = component
 	}
 }
+
+// DeleteComponent removes the specified component
+func (d *DevfileV2) DeleteComponent(name string) error {
+
+	found := false
+	for i := len(d.Components) - 1; i >= 0; i-- {
+		if d.Components[i].Container != nil && d.Components[i].Name != name {
+			var tmp []v1.VolumeMount
+			for _, volumeMount := range d.Components[i].Container.VolumeMounts {
+				if volumeMount.Name != name {
+					tmp = append(tmp, volumeMount)
+				}
+			}
+			d.Components[i].Container.VolumeMounts = tmp
+		} else if d.Components[i].Name == name {
+			found = true
+			d.Components = append(d.Components[:i], d.Components[i+1:]...)
+		}
+	}
+
+	if !found {
+		return &common.FieldNotFoundError{
+			Field: "component",
+			Name:  name,
+		}
+	}
+
+	return nil
+}

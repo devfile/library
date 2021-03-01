@@ -48,32 +48,8 @@ func (d *DevfileV2) AddVolume(volumeComponent v1.Component, path string) error {
 
 // DeleteVolume removes the volume from the devFile and removes all the related volume mounts
 func (d *DevfileV2) DeleteVolume(name string) error {
-	found := false
-	for i := len(d.Components) - 1; i >= 0; i-- {
-		if d.Components[i].Container != nil {
-			var tmp []v1.VolumeMount
-			for _, volumeMount := range d.Components[i].Container.VolumeMounts {
-				if volumeMount.Name != name {
-					tmp = append(tmp, volumeMount)
-				}
-			}
-			d.Components[i].Container.VolumeMounts = tmp
-		} else if d.Components[i].Volume != nil {
-			if d.Components[i].Name == name {
-				found = true
-				d.Components = append(d.Components[:i], d.Components[i+1:]...)
-			}
-		}
-	}
 
-	if !found {
-		return &common.FieldNotFoundError{
-			Field: "volume",
-			Name:  name,
-		}
-	}
-
-	return nil
+	return d.DeleteComponent(name)
 }
 
 // GetVolumeMountPath gets the mount path of the required volume

@@ -57,3 +57,32 @@ func (d *DevfileV2) UpdateCommand(command v1.Command) {
 		}
 	}
 }
+
+// DeleteCommand removes the specified command
+func (d *DevfileV2) DeleteCommand(id string) error {
+
+	found := false
+	for i := len(d.Commands) - 1; i >= 0; i-- {
+		if d.Commands[i].Composite != nil && d.Commands[i].Id != id {
+			var subCmd []string
+			for _, command := range d.Commands[i].Composite.Commands {
+				if command != id {
+					subCmd = append(subCmd, command)
+				}
+			}
+			d.Commands[i].Composite.Commands = subCmd
+		} else if d.Commands[i].Id == id {
+			found = true
+			d.Commands = append(d.Commands[:i], d.Commands[i+1:]...)
+		}
+	}
+
+	if !found {
+		return &common.FieldNotFoundError{
+			Field: "command",
+			Name:  id,
+		}
+	}
+
+	return nil
+}

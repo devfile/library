@@ -201,14 +201,11 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 	volume0 := "volume0"
 	volume1 := "volume1"
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name              string
 		currentComponents []v1.Component
 		wantComponents    []v1.Component
-		args              args
+		cmpName           string
 		wantErr           bool
 	}{
 		{
@@ -267,9 +264,7 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 					},
 				},
 			},
-			args: args{
-				name: volume0,
-			},
+			cmpName: volume0,
 			wantErr: false,
 		},
 		{
@@ -334,9 +329,7 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 				},
 				testingutil.GetFakeVolumeComponent(volume1, "5Gi"),
 			},
-			args: args{
-				name: volume0,
-			},
+			cmpName: volume0,
 			wantErr: false,
 		},
 		{
@@ -358,10 +351,8 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 				testingutil.GetFakeVolumeComponent(volume1, "5Gi"),
 			},
 			wantComponents: []v1.Component{},
-			args: args{
-				name: volume0,
-			},
-			wantErr: true,
+			cmpName:        volume0,
+			wantErr:        true,
 		},
 		{
 			name: "case 4: volume is present but not mounted to any component",
@@ -369,10 +360,8 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 				testingutil.GetFakeVolumeComponent(volume0, "5Gi"),
 			},
 			wantComponents: []v1.Component{},
-			args: args{
-				name: volume0,
-			},
-			wantErr: false,
+			cmpName:        volume0,
+			wantErr:        false,
 		},
 	}
 	for _, tt := range tests {
@@ -386,7 +375,7 @@ func TestDevfile200_DeleteVolume(t *testing.T) {
 					},
 				},
 			}
-			err := d.DeleteVolume(tt.args.name)
+			err := d.DeleteVolume(tt.cmpName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteVolume() error = %v, wantErr %v", err, tt.wantErr)
 			}
