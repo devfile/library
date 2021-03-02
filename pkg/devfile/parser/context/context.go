@@ -72,7 +72,7 @@ func (d *DevfileCtx) Populate() (err error) {
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
 	if d.uriMap == nil {
-		d.uriMap= make(map[string]bool)
+		d.uriMap = make(map[string]bool)
 	}
 	if d.uriMap[d.absPath] {
 		return fmt.Errorf("URI %v is recursively referenced", d.absPath)
@@ -93,11 +93,7 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 		return err
 	}
 	if d.uriMap == nil {
-		d.uriMap= make(map[string]bool)
-	}
-	fmt.Printf("uriMap length is: %v", len(d.uriMap))
-	for k,_ := range d.uriMap {
-		fmt.Printf("uriMap now contains: %s", k)
+		d.uriMap = make(map[string]bool)
 	}
 	if d.uriMap[d.url] {
 		return fmt.Errorf("URI %v is recursively referenced", d.url)
@@ -150,8 +146,6 @@ func (d *DevfileCtx) GetURIMap() map[string]bool {
 }
 
 // GetURIMap func returns current devfile uri map
-func (d *DevfileCtx) SetURIMap(uriMap map[string]bool){
+func (d *DevfileCtx) SetURIMap(uriMap map[string]bool) {
 	d.uriMap = uriMap
 }
-
-
