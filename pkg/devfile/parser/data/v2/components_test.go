@@ -454,6 +454,7 @@ func TestDeleteComponents(t *testing.T) {
 								VolumeMounts: []v1.VolumeMount{
 									testingutil.GetFakeVolumeMount("comp2", "/path"),
 									testingutil.GetFakeVolumeMount("comp2", "/path2"),
+									testingutil.GetFakeVolumeMount("comp3", "/path"),
 								},
 							},
 						},
@@ -463,51 +464,6 @@ func TestDeleteComponents(t *testing.T) {
 					Name: "comp2",
 					ComponentUnion: v1.ComponentUnion{
 						Volume: &v1.VolumeComponent{},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:              "Non Volume Component",
-			componentToDelete: "comp1",
-			components: []v1.Component{
-				{
-					Name: "comp1",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
-				{
-					Name: "comp3",
-					ComponentUnion: v1.ComponentUnion{
-						Kubernetes: &v1.KubernetesComponent{},
-					},
-				},
-			},
-			wantComponents: []v1.Component{
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
-				{
-					Name: "comp3",
-					ComponentUnion: v1.ComponentUnion{
-						Kubernetes: &v1.KubernetesComponent{},
 					},
 				},
 			},

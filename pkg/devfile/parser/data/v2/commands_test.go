@@ -347,52 +347,7 @@ func TestDeleteCommands(t *testing.T) {
 					Id: "command3",
 					CommandUnion: v1.CommandUnion{
 						Composite: &v1.CompositeCommand{
-							Commands: []string{"command2"},
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:            "Commands that do not belong to Composite Command",
-			commandToDelete: "command3",
-			commands: []v1.Command{
-				{
-					Id: "command1",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-				{
-					Id: "command2",
-					CommandUnion: v1.CommandUnion{
-						Composite: &v1.CompositeCommand{
-							Commands: []string{"command1"},
-						},
-					},
-				},
-				{
-					Id: "command3",
-					CommandUnion: v1.CommandUnion{
-						Composite: &v1.CompositeCommand{
-							Commands: []string{"command1"},
-						},
-					},
-				},
-			},
-			wantCommands: []v1.Command{
-				{
-					Id: "command1",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-				{
-					Id: "command2",
-					CommandUnion: v1.CommandUnion{
-						Composite: &v1.CompositeCommand{
-							Commands: []string{"command1"},
+							Commands: []string{"command1", "command2", "command1"},
 						},
 					},
 				},
