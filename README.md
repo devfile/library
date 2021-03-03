@@ -43,6 +43,17 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 	}
 	deployment := generator.GetDeployment(deployParams)
    ```
+   
+<br></br>
+Run `updateApi.sh` can update to use latest `github.com/devfile/api` and update the schema saved under `pkg/devfile/parser/data`
+
+The script also accepts version number as an argument to update devfile schema for a specific devfile version.
+For example, run the following command will update devfile schema for 2.0.0
+```
+./updateApi.sh 2.0.0
+```
+Running the script with no arguments will default to update the latest devfile version
+
 
 ## Usage
 
