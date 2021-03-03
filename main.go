@@ -13,6 +13,21 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "updateSchema" {
+		ReplaceSchemaFile()
+	} else {
+		parserTest()
+	}
+}
+
+//ParseDevfile to parse devfile from library
+func ParseDevfile(devfileLocation string) (parser.DevfileObj, error) {
+
+	devfile, err := devfilepkg.ParseAndValidate(devfileLocation)
+	return devfile, err
+}
+
+func parserTest() {
 	var devfile parser.DevfileObj
 	var err error
 	if len(os.Args) > 1 {
@@ -106,11 +121,4 @@ func main() {
 		fmt.Printf("dockerfilePath: %s\n", dockerfilePath)
 	}
 
-}
-
-//ParseDevfile to parse devfile from library
-func ParseDevfile(devfileLocation string) (parser.DevfileObj, error) {
-
-	devfile, err := devfilepkg.ParseAndValidate(devfileLocation)
-	return devfile, err
 }

@@ -15,7 +15,7 @@ gofmt:
 
 .PHONY: bin
 bin:
-	 go build main.go
+	 go build *.go
 
 .PHONY: test
 test:

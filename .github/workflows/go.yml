@@ -28,6 +28,7 @@ jobs:
         if [[ ! -z $(git status -s) ]]
         then
           echo "Go mod state is not clean"
+          git diff "$GITHUB_SHA"
           exit 1
         fi
     - name: Build Binary
