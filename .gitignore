@@ -18,6 +18,9 @@ main
 # Files used for debugging
 .vscode/
 
+# Files created by GoLand
+.idea/
+
 # File created running tests
 tests/**/tmp/
 
