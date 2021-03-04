@@ -12,14 +12,24 @@ func (d *DevfileV2) GetComponents(options common.DevfileOptions) ([]v1.Component
 	}
 
 	var components []v1.Component
-	for _, comp := range d.Components {
-		filterIn, err := common.FilterDevfileObject(comp.Attributes, options)
+	for _, component := range d.Components {
+
+		componentType, err := common.GetComponentType(component)
+		if err != nil {
+			return nil, err
+		}
+
+		if options.ComponentOptions.ComponentType != "" && componentType != options.ComponentOptions.ComponentType {
+			continue
+		}
+
+		filterIn, err := common.FilterDevfileObject(component.Attributes, options)
 		if err != nil {
 			return nil, err
 		}
 
 		if filterIn {
-			components = append(components, comp)
+			components = append(components, component)
 		}
 	}
 
