@@ -145,7 +145,7 @@ func (d *DevfileCtx) GetURIMap() map[string]bool {
 	return d.uriMap
 }
 
-// GetURIMap func returns current devfile uri map
+// SetURIMap set uri map in the devfile ctx
 func (d *DevfileCtx) SetURIMap(uriMap map[string]bool) {
 	d.uriMap = uriMap
 }
