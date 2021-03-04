@@ -47,7 +47,7 @@ Note: each run of the test removes the existing conents of the ```./tmp``` direc
 * From this repository
     - `test/v2/libraryTest/library-test.go`: The go unit test program
     - `test/v2/utils/library/*-utils.go` : utilites, used by the test, which contain functions uniqiue to the library tests. Mostly contain the code to modify and check devfile content.
-* From the api respository
+* From the [api respository](https://github.com/devfile/api/tree/master/test/v200/utils/common)
     - `test/v200/utils/common/*-utils.go` : utilites, used by the test, which are also used by the api tests. Mostly contain the code to generate valid devfile content.
 
 ## Running the tests
@@ -62,7 +62,6 @@ Note: each run of the test removes the existing conents of the ```./tmp``` direc
         *  ```./tmp/library_test/Test_*_<property id>_Test.yaml``` - property as expected by the test
 
 Note: each run of the test removes the existing conents of the ```./tmp``` directory
-
 
 
 
