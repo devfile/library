@@ -58,10 +58,11 @@ func (d *DevfileV2) UpdateCommand(command v1.Command) {
 func (d *DevfileV2) DeleteCommand(id string) error {
 
 	found := false
-	for i := len(d.Commands) - 1; i >= 0; i-- {
+	for i := range d.Commands {
 		if d.Commands[i].Id == id {
 			found = true
 			d.Commands = append(d.Commands[:i], d.Commands[i+1:]...)
+			break
 		}
 	}
 

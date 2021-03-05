@@ -89,10 +89,11 @@ func (d *DevfileV2) UpdateComponent(component v1.Component) {
 func (d *DevfileV2) DeleteComponent(name string) error {
 
 	found := false
-	for i := len(d.Components) - 1; i >= 0; i-- {
+	for i := range d.Components {
 		if d.Components[i].Name == name {
 			found = true
 			d.Components = append(d.Components[:i], d.Components[i+1:]...)
+			break
 		}
 	}
 

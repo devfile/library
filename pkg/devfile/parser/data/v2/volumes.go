@@ -8,23 +8,23 @@ import (
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
-// AddVolumeMount adds the volume mount to the specified container component
-func (d *DevfileV2) AddVolumeMount(componentName, name, path string) error {
+// AddVolumeMount adds the volume mounts to the specified container component
+func (d *DevfileV2) AddVolumeMount(componentName string, volumeMounts []v1.VolumeMount) error {
 	var pathErrorContainers []string
 	found := false
 	for _, component := range d.Components {
 		if component.Container != nil && component.Name == componentName {
 			found = true
-			for _, volumeMount := range component.Container.VolumeMounts {
-				if volumeMount.Path == path {
-					var err = fmt.Errorf("another volume, %s, is mounted to the same path: %s, in the container: %s", volumeMount.Name, path, component.Name)
-					pathErrorContainers = append(pathErrorContainers, err.Error())
+			for _, devfileVolumeMount := range component.Container.VolumeMounts {
+				for _, volumeMount := range volumeMounts {
+					if devfileVolumeMount.Path == volumeMount.Path {
+						pathErrorContainers = append(pathErrorContainers, fmt.Sprintf("unable to mount volume %s, as another volume %s is mounted to the same path %s in the container %s", volumeMount.Name, devfileVolumeMount.Name, volumeMount.Path, component.Name))
+					}
 				}
 			}
-			component.Container.VolumeMounts = append(component.Container.VolumeMounts, v1.VolumeMount{
-				Name: name,
-				Path: path,
-			})
+			if len(pathErrorContainers) == 0 {
+				component.Container.VolumeMounts = append(component.Container.VolumeMounts, volumeMounts...)
+			}
 		}
 	}
 

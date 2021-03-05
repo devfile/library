@@ -407,44 +407,52 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 
 func TestDeleteComponents(t *testing.T) {
 
-	tests := []struct {
-		name              string
-		componentToDelete string
-		components        []v1.Component
-		wantComponents    []v1.Component
-		wantErr           bool
-	}{
-		{
-			name:              "Volume Component with mounts",
-			componentToDelete: "comp3",
-			components: []v1.Component{
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
-									testingutil.GetFakeVolumeMount("comp2", "/path2"),
-									testingutil.GetFakeVolumeMount("comp3", "/path"),
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Components: []v1.Component{
+						{
+							Name: "comp2",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										VolumeMounts: []v1.VolumeMount{
+											testingutil.GetFakeVolumeMount("comp2", "/path"),
+											testingutil.GetFakeVolumeMount("comp2", "/path2"),
+											testingutil.GetFakeVolumeMount("comp3", "/path"),
+										},
+									},
 								},
+							},
+						},
+						{
+							Name: "comp2",
+							ComponentUnion: v1.ComponentUnion{
+								Volume: &v1.VolumeComponent{},
+							},
+						},
+						{
+							Name: "comp3",
+							ComponentUnion: v1.ComponentUnion{
+								Volume: &v1.VolumeComponent{},
 							},
 						},
 					},
 				},
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
-				{
-					Name: "comp3",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
 			},
+		},
+	}
+
+	tests := []struct {
+		name              string
+		componentToDelete string
+		wantComponents    []v1.Component
+		wantErr           bool
+	}{
+		{
+			name:              "Successfully delete a Component",
+			componentToDelete: "comp3",
 			wantComponents: []v1.Component{
 				{
 					Name: "comp2",
@@ -472,43 +480,17 @@ func TestDeleteComponents(t *testing.T) {
 		{
 			name:              "Missing Component",
 			componentToDelete: "comp12",
-			components: []v1.Component{
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
-			},
-			wantComponents: []v1.Component{
-				{
-					Name: "comp2",
-					ComponentUnion: v1.ComponentUnion{
-						Volume: &v1.VolumeComponent{},
-					},
-				},
-			},
-			wantErr: true,
+			wantErr:           true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &DevfileV2{
-				v1.Devfile{
-					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Components: tt.components,
-						},
-					},
-				},
+			err := d.DeleteComponent(tt.componentToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteComponent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			err := d.DeleteComponent(tt.componentToDelete)
-			if tt.wantErr && err == nil {
-				t.Errorf("Expected error from test but got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Got unexpected error: %s", err)
-			} else if err == nil {
+			if err == nil && !tt.wantErr {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})

@@ -19,8 +19,7 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 
 	type args struct {
 		componentName string
-		name          string
-		path          string
+		volumeMounts  []v1.VolumeMount
 	}
 	tests := []struct {
 		name              string
@@ -60,8 +59,9 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 				},
 			},
 			args: args{
-				name:          volume0,
-				path:          "/path0",
+				volumeMounts: []v1.VolumeMount{
+					testingutil.GetFakeVolumeMount(volume0, "/path0"),
+				},
 				componentName: container0,
 			},
 			wantComponents: []v1.Component{
@@ -104,7 +104,8 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 							Container: v1.Container{
 								Image: image0,
 								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount(volume1, "/data"),
+									testingutil.GetFakeVolumeMount(volume0, "/data0"),
+									testingutil.GetFakeVolumeMount(volume1, "/data1"),
 								},
 							},
 						},
@@ -112,8 +113,10 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 				},
 			},
 			args: args{
-				name:          volume0,
-				path:          "/data",
+				volumeMounts: []v1.VolumeMount{
+					testingutil.GetFakeVolumeMount(volume0, "/data1"),
+					testingutil.GetFakeVolumeMount(volume1, "/data0"),
+				},
 				componentName: container0,
 			},
 			wantErr: true,
@@ -136,8 +139,9 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 				},
 			},
 			args: args{
-				name:          volume0,
-				path:          "/data",
+				volumeMounts: []v1.VolumeMount{
+					testingutil.GetFakeVolumeMount(volume0, "/data"),
+				},
 				componentName: container1,
 			},
 			wantErr: true,
@@ -155,12 +159,12 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 				},
 			}
 
-			err := d.AddVolumeMount(tt.args.componentName, tt.args.name, tt.args.path)
-			if tt.wantErr && err == nil {
-				t.Errorf("Expected error from test but got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Got unexpected error: %s", err)
-			} else if err == nil {
+			err := d.AddVolumeMount(tt.args.componentName, tt.args.volumeMounts)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AddVolumeMount() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.wantErr {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})
@@ -169,44 +173,53 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 
 func TestDevfile200_DeleteVolumeMounts(t *testing.T) {
 
-	tests := []struct {
-		name             string
-		volMountToDelete string
-		components       []v1.Component
-		wantComponents   []v1.Component
-		wantErr          bool
-	}{
-		{
-			name:             "Volume Component with mounts",
-			volMountToDelete: "comp2",
-			components: []v1.Component{
-				{
-					Name: "comp1",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
-									testingutil.GetFakeVolumeMount("comp2", "/path2"),
-									testingutil.GetFakeVolumeMount("comp3", "/path"),
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Components: []v1.Component{
+						{
+							Name: "comp1",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										VolumeMounts: []v1.VolumeMount{
+											testingutil.GetFakeVolumeMount("comp2", "/path"),
+											testingutil.GetFakeVolumeMount("comp2", "/path2"),
+											testingutil.GetFakeVolumeMount("comp3", "/path"),
+											testingutil.GetFakeVolumeMount("comp2", "/path3"),
+										},
+									},
 								},
 							},
 						},
-					},
-				},
-				{
-					Name: "comp4",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
+						{
+							Name: "comp4",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										VolumeMounts: []v1.VolumeMount{
+											testingutil.GetFakeVolumeMount("comp2", "/path"),
+										},
+									},
 								},
 							},
 						},
 					},
 				},
 			},
+		},
+	}
+
+	tests := []struct {
+		name             string
+		volMountToDelete string
+		wantComponents   []v1.Component
+		wantErr          bool
+	}{
+		{
+			name:             "Volume Component with mounts",
+			volMountToDelete: "comp2",
 			wantComponents: []v1.Component{
 				{
 					Name: "comp1",
@@ -236,55 +249,17 @@ func TestDevfile200_DeleteVolumeMounts(t *testing.T) {
 		{
 			name:             "Missing mount name",
 			volMountToDelete: "comp1",
-			components: []v1.Component{
-				{
-					Name: "comp4",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
-								},
-							},
-						},
-					},
-				},
-			},
-			wantComponents: []v1.Component{
-				{
-					Name: "comp4",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount("comp2", "/path"),
-								},
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
+			wantErr:          true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &DevfileV2{
-				v1.Devfile{
-					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Components: tt.components,
-						},
-					},
-				},
+			err := d.DeleteVolumeMount(tt.volMountToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteVolumeMount() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			err := d.DeleteVolumeMount(tt.volMountToDelete)
-			if tt.wantErr && err == nil {
-				t.Errorf("Expected error from test but got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Got unexpected error: %s", err)
-			} else if err == nil {
+			if err == nil && !tt.wantErr {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})
@@ -378,11 +353,11 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 				},
 			}
 			gotPath, err := d.GetVolumeMountPath(tt.mountName, tt.componentName)
-			if tt.wantErr && err == nil {
-				t.Errorf("Expected error from test but got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Got unexpected error: %s", err)
-			} else if err == nil {
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetVolumeMountPath() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.wantErr {
 				assert.Equal(t, tt.wantPath, gotPath, "The two values should be the same.")
 			}
 		})

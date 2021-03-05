@@ -304,38 +304,46 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 
 func TestDeleteCommands(t *testing.T) {
 
-	tests := []struct {
-		name            string
-		commandToDelete string
-		commands        []v1.Command
-		wantCommands    []v1.Command
-		wantErr         bool
-	}{
-		{
-			name:            "Commands that belong to Composite Command",
-			commandToDelete: "command1",
-			commands: []v1.Command{
-				{
-					Id: "command1",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-				{
-					Id: "command2",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-				{
-					Id: "command3",
-					CommandUnion: v1.CommandUnion{
-						Composite: &v1.CompositeCommand{
-							Commands: []string{"command1", "command2", "command1"},
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Commands: []v1.Command{
+						{
+							Id: "command1",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{},
+							},
+						},
+						{
+							Id: "command2",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{},
+							},
+						},
+						{
+							Id: "command3",
+							CommandUnion: v1.CommandUnion{
+								Composite: &v1.CompositeCommand{
+									Commands: []string{"command1", "command2", "command1"},
+								},
+							},
 						},
 					},
 				},
 			},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		commandToDelete string
+		wantCommands    []v1.Command
+		wantErr         bool
+	}{
+		{
+			name:            "Successfully delete command",
+			commandToDelete: "command1",
 			wantCommands: []v1.Command{
 				{
 					Id: "command2",
@@ -357,43 +365,17 @@ func TestDeleteCommands(t *testing.T) {
 		{
 			name:            "Missing Command",
 			commandToDelete: "command34",
-			commands: []v1.Command{
-				{
-					Id: "command1",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-			},
-			wantCommands: []v1.Command{
-				{
-					Id: "command1",
-					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
-					},
-				},
-			},
-			wantErr: true,
+			wantErr:         true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &DevfileV2{
-				v1.Devfile{
-					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Commands: tt.commands,
-						},
-					},
-				},
+			err := d.DeleteCommand(tt.commandToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			err := d.DeleteCommand(tt.commandToDelete)
-			if tt.wantErr && err == nil {
-				t.Errorf("Expected error from test but got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Got unexpected error: %s", err)
-			} else if err == nil {
+			if err == nil && !tt.wantErr {
 				assert.Equal(t, tt.wantCommands, d.Commands, "The two values should be the same.")
 			}
 		})

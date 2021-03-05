@@ -59,10 +59,11 @@ func (d *DevfileV2) UpdateProject(project v1.Project) {
 func (d *DevfileV2) DeleteProject(name string) error {
 
 	found := false
-	for i := len(d.Projects) - 1; i >= 0; i-- {
+	for i := range d.Projects {
 		if d.Projects[i].Name == name {
 			found = true
 			d.Projects = append(d.Projects[:i], d.Projects[i+1:]...)
+			break
 		}
 	}
 
@@ -128,10 +129,11 @@ func (d *DevfileV2) UpdateStarterProject(project v1.StarterProject) {
 func (d *DevfileV2) DeleteStarterProject(name string) error {
 
 	found := false
-	for i := len(d.StarterProjects) - 1; i >= 0; i-- {
+	for i := range d.StarterProjects {
 		if d.StarterProjects[i].Name == name {
 			found = true
 			d.StarterProjects = append(d.StarterProjects[:i], d.StarterProjects[i+1:]...)
+			break
 		}
 	}
 
