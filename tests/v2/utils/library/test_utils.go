@@ -55,7 +55,7 @@ type DevfileFollower struct {
 
 // AddCommand adds the specified command to the library data
 func (devfileFollower DevfileFollower) AddCommand(command schema.Command) error {
-	return devfileFollower.LibraryData.AddCommands(command)
+	return devfileFollower.LibraryData.AddCommands([]schema.Command{command})
 }
 
 // UpdateCommand updates the specified command in the library data
