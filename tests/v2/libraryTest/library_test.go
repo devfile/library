@@ -124,12 +124,34 @@ func Test_MultiComponent(t *testing.T) {
 	libraryUtils.RunMultiThreadTest(testContent, t)
 }
 
-func Test_Everything(t *testing.T) {
+func Test_Projects(t *testing.T) {
 	testContent := commonUtils.TestContent{}
-	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
-	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
+	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	testContent.EditContent = true
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_StarterProjects(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
 	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_Everything(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
+	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+
 }
