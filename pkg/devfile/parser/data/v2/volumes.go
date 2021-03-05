@@ -8,8 +8,8 @@ import (
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
-// AddVolumeMount adds the volume mounts to the specified container component
-func (d *DevfileV2) AddVolumeMount(componentName string, volumeMounts []v1.VolumeMount) error {
+// AddVolumeMounts adds the volume mounts to the specified container component
+func (d *DevfileV2) AddVolumeMounts(componentName string, volumeMounts []v1.VolumeMount) error {
 	var pathErrorContainers []string
 	found := false
 	for _, component := range d.Components {

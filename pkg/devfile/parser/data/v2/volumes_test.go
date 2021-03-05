@@ -159,9 +159,9 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 				},
 			}
 
-			err := d.AddVolumeMount(tt.args.componentName, tt.args.volumeMounts)
+			err := d.AddVolumeMounts(tt.args.componentName, tt.args.volumeMounts)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddVolumeMount() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddVolumeMounts() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if err == nil && !tt.wantErr {
