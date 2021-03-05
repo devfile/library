@@ -25,23 +25,11 @@ The tests which generate devfiles with random content at run time currently cove
 * Commands: 
     * Exec
     * Composite
+    * Apply
 * Components 
     * Container
     * Volume
-
-## Running the tests
-
-1. Go to directory /tests/v2/libraryTest
-1. Run ```go test``` or ```go test -v```
-1. The test creates the following files: 
-    1. ```./tmp/test.log``` contains log output from the tests.
-    1. ```./tmp/library_test/Test_*.yaml``` are the devfiles which are randomly generated at runtime. The file name matches the name of the test function which resulted in them being created.
-    1. If a test detects an error when comparing properties returned by the parser with expected properties
-        *  ```./tmp/library_test/Test_*_<property id>_Parser.yaml``` - property as returned by the parser
-        *  ```./tmp/library_test/Test_*_<property id>_Test.yaml``` - property as expected by the test
-
-Note: each run of the test removes the existing conents of the ```./tmp``` directory 
-
+    
 ## Test structure
 
 * From this repository

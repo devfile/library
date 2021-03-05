@@ -26,7 +26,8 @@ const (
 	numThreads = 5
 )
 
-// DevfileValidator struct for DevfileValidator interface defined in common utils.
+// DevfileValidator struct for DevfileValidator interface.
+// The DevfileValidator interface is test/v200/utils/common/test_utils.go of the devfile/api repository.
 type DevfileValidator struct{}
 
 // WriteAndValidate implements DevfileValidator interface.
@@ -46,7 +47,8 @@ func (devfileValidator DevfileValidator) WriteAndValidate(devfile *commonUtils.T
 	return err
 }
 
-// DevfileFollower struct for DevfileFollower interface defined in common utils.
+// DevfileFollower struct for DevfileFollower interface.
+// The DevfileFollower interface is defined in test/v200/utils/common/test_utils.go of the devfile/api repository
 type DevfileFollower struct {
 	LibraryData devfileData.DevfileData
 }
@@ -257,25 +259,33 @@ func verify(devfile *commonUtils.TestDevfile) error {
 
 	libraryData := devfile.Follower.(DevfileFollower).LibraryData
 	commonUtils.LogInfoMessage(fmt.Sprintf("Get commands %s : ", devfile.FileName))
-	commands, _ := libraryData.GetCommands(common.DevfileOptions{})
-	if commands != nil && len(commands) > 0 {
-		err := VerifyCommands(devfile, commands)
-		if err != nil {
-			errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
-		}
+	commands, err := libraryData.GetCommands(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Commands from library : %s : %v", devfile.FileName, err)))
 	} else {
-		commonUtils.LogInfoMessage(fmt.Sprintf("No command found in %s : ", devfile.FileName))
+		if commands != nil && len(commands) > 0 {
+			err := VerifyCommands(devfile, commands)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No commands found in %s : ", devfile.FileName))
+		}
 	}
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Get components %s : ", devfile.FileName))
-	components, _ := libraryData.GetComponents(common.DevfileOptions{})
-	if components != nil && len(components) > 0 {
-		err := VerifyComponents(devfile, components)
-		if err != nil {
-			errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
-		}
+	components, err := libraryData.GetComponents(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Components from library : %s : %v", devfile.FileName, err)))
 	} else {
-		commonUtils.LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
+		if components != nil && len(components) > 0 {
+			err := VerifyComponents(devfile, components)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Components %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
+		}
 	}
 
 	var returnError error
@@ -291,16 +301,18 @@ func editCommands(devfile *commonUtils.TestDevfile) error {
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
-	var err error
 	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
-	commands, _ := devfile.Follower.(DevfileFollower).LibraryData.GetCommands(common.DevfileOptions{})
-	for _, command := range commands {
-		err = UpdateCommand(devfile, command.Id)
-		if err != nil {
-			commonUtils.LogErrorMessage(fmt.Sprintf("Updating command : %v", err))
+	commands, err := devfile.Follower.(DevfileFollower).LibraryData.GetCommands(common.DevfileOptions{})
+	if err != nil {
+		commonUtils.LogErrorMessage(fmt.Sprintf("Getting commands from library : %s : %v", devfile.FileName, err))
+	} else {
+		for _, command := range commands {
+			err = UpdateCommand(devfile, command.Id)
+			if err != nil {
+				commonUtils.LogErrorMessage(fmt.Sprintf("Updating command : %s : %v", devfile.FileName, err))
+			}
 		}
 	}
-
 	return err
 }
 
@@ -309,13 +321,16 @@ func editComponents(devfile *commonUtils.TestDevfile) error {
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
-	var err error
-	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
-	components, _ := devfile.Follower.(DevfileFollower).LibraryData.GetComponents(common.DevfileOptions{})
-	for _, component := range components {
-		err = UpdateComponent(devfile, component.Name)
-		if err != nil {
-			commonUtils.LogErrorMessage(fmt.Sprintf("Updating component : %v", err))
+	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get components %s : ", devfile.FileName))
+	components, err := devfile.Follower.(DevfileFollower).LibraryData.GetComponents(common.DevfileOptions{})
+	if err != nil {
+		commonUtils.LogErrorMessage(fmt.Sprintf("Getting components from library : %s : %v", devfile.FileName, err))
+	} else {
+		for _, component := range components {
+			err = UpdateComponent(devfile, component.Name)
+			if err != nil {
+				commonUtils.LogErrorMessage(fmt.Sprintf("Updating component : %s : %v", devfile.FileName, err))
+			}
 		}
 	}
 	return err
