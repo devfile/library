@@ -47,6 +47,10 @@ func (d *DevfileV2) DeleteVolumeMount(name string) error {
 	found := false
 	for i := range d.Components {
 		if d.Components[i].Container != nil && d.Components[i].Name != name {
+			// Volume Mounts can have multiple instances of a volume mounted at different paths
+			// As arrays are rearraged/shifted for deletion, we lose one element every time there is a match
+			// Looping backward is efficient, otherwise we would have to manually decrement counter
+			// if we looped forward
 			for j := len(d.Components[i].Container.VolumeMounts) - 1; j >= 0; j-- {
 				if d.Components[i].Container.VolumeMounts[j].Name == name {
 					found = true
@@ -68,17 +72,14 @@ func (d *DevfileV2) DeleteVolumeMount(name string) error {
 
 // GetVolumeMountPath gets the mount path of the specified volume mount from the specified container component
 func (d *DevfileV2) GetVolumeMountPath(mountName, componentName string) (string, error) {
-	mountFound := false
 	componentFound := false
-	var path string
 
 	for _, component := range d.Components {
 		if component.Container != nil && component.Name == componentName {
 			componentFound = true
 			for _, volumeMount := range component.Container.VolumeMounts {
 				if volumeMount.Name == mountName {
-					mountFound = true
-					path = volumeMount.Path
+					return volumeMount.Path, nil
 				}
 			}
 		}
@@ -89,9 +90,7 @@ func (d *DevfileV2) GetVolumeMountPath(mountName, componentName string) (string,
 			Field: "container component",
 			Name:  componentName,
 		}
-	} else if !mountFound {
-		return "", fmt.Errorf("volume %s not mounted to component %s", mountName, componentName)
 	}
 
-	return path, nil
+	return "", fmt.Errorf("volume %s not mounted to component %s", mountName, componentName)
 }

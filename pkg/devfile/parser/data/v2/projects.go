@@ -58,23 +58,17 @@ func (d *DevfileV2) UpdateProject(project v1.Project) {
 // DeleteProject removes the specified project
 func (d *DevfileV2) DeleteProject(name string) error {
 
-	found := false
 	for i := range d.Projects {
 		if d.Projects[i].Name == name {
-			found = true
 			d.Projects = append(d.Projects[:i], d.Projects[i+1:]...)
-			break
+			return nil
 		}
 	}
 
-	if !found {
-		return &common.FieldNotFoundError{
-			Field: "project",
-			Name:  name,
-		}
+	return &common.FieldNotFoundError{
+		Field: "project",
+		Name:  name,
 	}
-
-	return nil
 }
 
 //GetStarterProjects returns the DevfileStarterProject parsed from devfile
@@ -128,21 +122,15 @@ func (d *DevfileV2) UpdateStarterProject(project v1.StarterProject) {
 // DeleteStarterProject removes the specified starter project
 func (d *DevfileV2) DeleteStarterProject(name string) error {
 
-	found := false
 	for i := range d.StarterProjects {
 		if d.StarterProjects[i].Name == name {
-			found = true
 			d.StarterProjects = append(d.StarterProjects[:i], d.StarterProjects[i+1:]...)
-			break
+			return nil
 		}
 	}
 
-	if !found {
-		return &common.FieldNotFoundError{
-			Field: "starter project",
-			Name:  name,
-		}
+	return &common.FieldNotFoundError{
+		Field: "starter project",
+		Name:  name,
 	}
-
-	return nil
 }

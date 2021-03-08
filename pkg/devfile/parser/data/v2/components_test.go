@@ -488,9 +488,7 @@ func TestDeleteComponents(t *testing.T) {
 			err := d.DeleteComponent(tt.componentToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteComponent() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})

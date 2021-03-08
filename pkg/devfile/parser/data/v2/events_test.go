@@ -68,10 +68,8 @@ func TestDevfile200_AddEvents(t *testing.T) {
 
 			err := d.AddEvents(tt.newEvents)
 
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestDevfile200_AddEvents() unexpected error - %+v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestDevfile200_AddEvents() expected error but got nil")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 		})

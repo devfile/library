@@ -57,21 +57,15 @@ func (d *DevfileV2) UpdateCommand(command v1.Command) {
 // DeleteCommand removes the specified command
 func (d *DevfileV2) DeleteCommand(id string) error {
 
-	found := false
 	for i := range d.Commands {
 		if d.Commands[i].Id == id {
-			found = true
 			d.Commands = append(d.Commands[:i], d.Commands[i+1:]...)
-			break
+			return nil
 		}
 	}
 
-	if !found {
-		return &common.FieldNotFoundError{
-			Field: "command",
-			Name:  id,
-		}
+	return &common.FieldNotFoundError{
+		Field: "command",
+		Name:  id,
 	}
-
-	return nil
 }

@@ -238,9 +238,7 @@ func TestDevfile200_DeleteProject(t *testing.T) {
 			err := d.DeleteProject(tt.projectToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteProject() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantProjects, d.Projects, "The two values should be the same.")
 			}
 		})
@@ -480,9 +478,7 @@ func TestDevfile200_DeleteStarterProject(t *testing.T) {
 			err := d.DeleteStarterProject(tt.starterProjectToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteStarterProject() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantStarterProjects, d.StarterProjects, "The two values should be the same.")
 			}
 		})

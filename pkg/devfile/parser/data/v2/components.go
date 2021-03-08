@@ -88,21 +88,15 @@ func (d *DevfileV2) UpdateComponent(component v1.Component) {
 // DeleteComponent removes the specified component
 func (d *DevfileV2) DeleteComponent(name string) error {
 
-	found := false
 	for i := range d.Components {
 		if d.Components[i].Name == name {
-			found = true
 			d.Components = append(d.Components[:i], d.Components[i+1:]...)
-			break
+			return nil
 		}
 	}
 
-	if !found {
-		return &common.FieldNotFoundError{
-			Field: "component",
-			Name:  name,
-		}
+	return &common.FieldNotFoundError{
+		Field: "component",
+		Name:  name,
 	}
-
-	return nil
 }

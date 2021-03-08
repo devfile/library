@@ -162,9 +162,7 @@ func TestDevfile200_AddVolumeMount(t *testing.T) {
 			err := d.AddVolumeMounts(tt.args.componentName, tt.args.volumeMounts)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddVolumeMounts() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})
@@ -257,9 +255,7 @@ func TestDevfile200_DeleteVolumeMounts(t *testing.T) {
 			err := d.DeleteVolumeMount(tt.volMountToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteVolumeMount() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})
@@ -355,9 +351,7 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 			gotPath, err := d.GetVolumeMountPath(tt.mountName, tt.componentName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetVolumeMountPath() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+			} else if err == nil {
 				assert.Equal(t, tt.wantPath, gotPath, "The two values should be the same.")
 			}
 		})

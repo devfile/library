@@ -373,9 +373,8 @@ func TestDeleteCommands(t *testing.T) {
 			err := d.DeleteCommand(tt.commandToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if err == nil && !tt.wantErr {
+				return
+			} else if err == nil {
 				assert.Equal(t, tt.wantCommands, d.Commands, "The two values should be the same.")
 			}
 		})
