@@ -254,23 +254,24 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 }
 
 func parseFromRegistry(registryId, registryURL string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
-	var err error
-	var devfileContent []byte
 	if registryURL != "" {
-		devfileContent, err = getDevfileFromRegistry(registryId, registryURL)
+		devfileContent, err := getDevfileFromRegistry(registryId, registryURL)
+		if err != nil {
+			return DevfileObj{}, err
+		}
+		return ParseDevfile(ParserArgs{data: devfileContent, registryURLs: curDevfileCtx.GetRegistryURLs()})
 	} else if curDevfileCtx.GetRegistryURLs() != nil {
 		for _, registry := range curDevfileCtx.GetRegistryURLs() {
-			devfileContent, err = getDevfileFromRegistry(registryId, registry)
+			devfileContent, err := getDevfileFromRegistry(registryId, registry)
+			if devfileContent != nil && err == nil {
+				return ParseDevfile(ParserArgs{data: devfileContent, registryURLs: curDevfileCtx.GetRegistryURLs()})
+			}
 		}
 	} else {
 		return DevfileObj{}, fmt.Errorf("failed to parse from registry, registry URL is not provided")
 	}
 
-	if err != nil {
-		return DevfileObj{}, err
-	}
-
-	return ParseDevfile(ParserArgs{data: devfileContent, registryURLs: curDevfileCtx.GetRegistryURLs()})
+	return DevfileObj{}, fmt.Errorf("failed to get registry id: %s from registry URLs provided", registryId)
 }
 
 func getDevfileFromRegistry(registryId, registryURL string) ([]byte, error) {
