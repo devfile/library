@@ -244,6 +244,18 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
 				}
 			}
+			if len(testContent.ProjectTypes) > 0 {
+				err = editProjects(&testDevfile)
+				if err != nil {
+					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing projects :  %s : %v", testContent.FileName, err)))
+				}
+			}
+			if len(testContent.StarterProjectTypes) > 0 {
+				err = editStarterProjects(&testDevfile)
+				if err != nil {
+					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing starter projects :  %s : %v", testContent.FileName, err)))
+				}
+			}
 
 			validator.WriteAndValidate(&testDevfile)
 		}
@@ -266,7 +278,7 @@ func verify(devfile *commonUtils.TestDevfile) error {
 		if commands != nil && len(commands) > 0 {
 			err := VerifyCommands(devfile, commands)
 			if err != nil {
-				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Commands %s : %v", devfile.FileName, err)))
 			}
 		} else {
 			commonUtils.LogInfoMessage(fmt.Sprintf("No commands found in %s : ", devfile.FileName))
@@ -281,10 +293,40 @@ func verify(devfile *commonUtils.TestDevfile) error {
 		if components != nil && len(components) > 0 {
 			err := VerifyComponents(devfile, components)
 			if err != nil {
-				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Components %s : %v", devfile.FileName, err)))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Components %s : %v", devfile.FileName, err)))
 			}
 		} else {
 			commonUtils.LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
+		}
+	}
+
+	commonUtils.LogInfoMessage(fmt.Sprintf("Get projects %s : ", devfile.FileName))
+	projects, err := libraryData.GetProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Projects from library : %s : %v", devfile.FileName, err)))
+	} else {
+		if projects != nil && len(projects) > 0 {
+			err := VerifyProjects(devfile, projects)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Projects %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No projects found in %s : ", devfile.FileName))
+		}
+	}
+
+	commonUtils.LogInfoMessage(fmt.Sprintf("Get projects %s : ", devfile.FileName))
+	starterProjects, err := libraryData.GetStarterProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Starter Projects from library : %s : %v", devfile.FileName, err)))
+	} else {
+		if starterProjects != nil && len(starterProjects) > 0 {
+			err := VerifyStarterProjects(devfile, starterProjects)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Starter Projects %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No starter projects found in %s : ", devfile.FileName))
 		}
 	}
 
