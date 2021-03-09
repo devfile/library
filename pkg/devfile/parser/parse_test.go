@@ -2403,7 +2403,6 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 func Test_parseParentFromRegistry(t *testing.T) {
 	const validRegistry = "127.0.0.1:8080"
 	const invalidRegistry = "invalid-registry.io"
-	mountSource := true
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -2463,6 +2462,123 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	testServer.Start()
 	defer testServer.Close()
 
+	mainDevfileContent := v1.Devfile{
+		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+			Parent: &v1.Parent{
+				ImportReference: v1.ImportReference{
+					RegistryUrl: validRegistry,
+					ImportReferenceUnion: v1.ImportReferenceUnion{
+						Id: "nodejs",
+					},
+				},
+				ParentOverrides: v1.ParentOverrides{
+					Components: []v1.ComponentParentOverride{
+						{
+							Name: "parent-runtime",
+							ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+								Container: &v1.ContainerComponentParentOverride{
+									ContainerParentOverride: v1.ContainerParentOverride{
+										Image: "quay.io/nodejs-12",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+				Commands: []v1.Command{
+					{
+						Id: "devbuild",
+						CommandUnion: v1.CommandUnion{
+							Exec: &v1.ExecCommand{
+								WorkingDir: "/projects/nodejs-starter",
+							},
+						},
+					},
+				},
+				Components: []v1.Component{
+					{
+						Name: "runtime2",
+						ComponentUnion: v1.ComponentUnion{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
+									Image: "quay.io/nodejs-12",
+								},
+							},
+						},
+					},
+				},
+				Events: &v1.Events{
+					WorkspaceEvents: v1.WorkspaceEvents{
+						PostStop: []string{"post-stop"},
+					},
+				},
+				Projects: []v1.Project{
+					{
+						ClonePath: "/projects",
+						Name:      "nodejs-starter-build",
+					},
+				},
+			},
+		},
+	}
+	wantDevfileContent := v1.Devfile{
+		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+			DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+				Commands: []v1.Command{
+					{
+						Id: "devbuild",
+						CommandUnion: v1.CommandUnion{
+							Exec: &v1.ExecCommand{
+								WorkingDir: "/projects/nodejs-starter",
+							},
+						},
+					},
+				},
+				Components: []v1.Component{
+					{
+						Name: "parent-runtime",
+						ComponentUnion: v1.ComponentUnion{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
+									Image: "quay.io/nodejs-12",
+								},
+							},
+						},
+					},
+					{
+						Name: "runtime2",
+						ComponentUnion: v1.ComponentUnion{
+							Container: &v1.ContainerComponent{
+								Container: v1.Container{
+									Image: "quay.io/nodejs-12",
+								},
+							},
+						},
+					},
+				},
+				Events: &v1.Events{
+					WorkspaceEvents: v1.WorkspaceEvents{
+						PostStart: []string{},
+						PostStop:  []string{"post-stop"},
+						PreStop:   []string{},
+						PreStart:  []string{},
+					},
+				},
+				Projects: []v1.Project{
+					{
+						ClonePath: "/projects",
+						Name:      "nodejs-starter-build",
+					},
+				},
+			},
+		},
+	}
+
+	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
+	ctxWithRegistry.SetRegistryURLs([]string{validRegistry})
+
 	tests := []struct {
 		name                   string
 		mainDevfile            DevfileObj
@@ -2472,346 +2588,30 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		testRecursiveReference bool
 	}{
 		{
-			name: "it should override the requested parent's data from provided registry and add the local devfile's data",
+			name: "it should override the requested parent's data from provided registryURL and add the local devfile's data",
 			mainDevfile: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									RegistryUrl: validRegistry,
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Id: "nodejs",
-									},
-								},
-								ParentOverrides: v1.ParentOverrides{
-									Components: []v1.ComponentParentOverride{
-										{
-											Name: "parent-runtime",
-											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-												Container: &v1.ContainerComponentParentOverride{
-													ContainerParentOverride: v1.ContainerParentOverride{
-														Image: "quay.io/nodejs-12",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
-										PostStop: []string{"post-stop"},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/projects",
-										Name:      "nodejs-starter-build",
-									},
-								},
-							},
-						},
-					},
+					Devfile: mainDevfileContent,
 				},
 			},
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "parent-runtime",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
-										PostStart: []string{},
-										PostStop:  []string{"post-stop"},
-										PreStop:   []string{},
-										PreStart:  []string{},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/projects",
-										Name:      "nodejs-starter-build",
-									},
-								},
-							},
-						},
-					},
+					Devfile: wantDevfileContent,
 				},
 			},
 		},
 		{
-			name: "it should override the requested parent's data from default registry and add the local devfile's data",
+			name: "it should override the requested parent's data from registryURLs set in context and add the local devfile's data",
 			mainDevfile: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Ctx: ctxWithRegistry,
 				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Id: "nodejs",
-									},
-								},
-								ParentOverrides: v1.ParentOverrides{
-									Components: []v1.ComponentParentOverride{
-										{
-											Name: "runtime",
-											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-												Container: &v1.ContainerComponentParentOverride{
-													ContainerParentOverride: v1.ContainerParentOverride{
-														Image: "quay.io/nodejs-12",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
-										PostStop: []string{"post-stop"},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/projects",
-										Name:      "nodejs-starter-build",
-									},
-								},
-							},
-						},
-					},
+					Devfile: mainDevfileContent,
 				},
 			},
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "install",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												Component:   "runtime",
-												WorkingDir:  "/project",
-												CommandLine: "npm install",
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Group: &v1.CommandGroup{
-															Kind:      v1.BuildCommandGroupKind,
-															IsDefault: true,
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Id: "run",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												Component:   "runtime",
-												WorkingDir:  "/project",
-												CommandLine: "npm start",
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Group: &v1.CommandGroup{
-															Kind:      v1.RunCommandGroupKind,
-															IsDefault: true,
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Id: "debug",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												Component:   "runtime",
-												WorkingDir:  "/project",
-												CommandLine: "npm run debug",
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Group: &v1.CommandGroup{
-															Kind:      v1.DebugCommandGroupKind,
-															IsDefault: true,
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Id: "test",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												Component:   "runtime",
-												WorkingDir:  "/project",
-												CommandLine: "npm test",
-												LabeledCommand: v1.LabeledCommand{
-													BaseCommand: v1.BaseCommand{
-														Group: &v1.CommandGroup{
-															Kind:      v1.TestCommandGroupKind,
-															IsDefault: true,
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "runtime",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Endpoints: []v1.Endpoint{
-													{
-														Name:       "http-3000",
-														TargetPort: 3000,
-													},
-												},
-												Container: v1.Container{
-													Image:         "quay.io/nodejs-12",
-													MemoryLimit:   "1024Mi",
-													MountSources:  &mountSource,
-													SourceMapping: "/project",
-												},
-											},
-										},
-									},
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
-										PostStart: []string{},
-										PostStop:  []string{"post-stop"},
-										PreStop:   []string{},
-										PreStart:  []string{},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/projects",
-										Name:      "nodejs-starter-build",
-									},
-								},
-								StarterProjects: []v1.StarterProject{
-									{
-										Name: "nodejs-starter",
-										ProjectSource: v1.ProjectSource{
-											Git: &v1.GitProjectSource{
-												GitLikeProjectSource: v1.GitLikeProjectSource{
-													Remotes: map[string]string{
-														"origin": "https://github.com/odo-devfiles/nodejs-ex.git",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+					Devfile: wantDevfileContent,
 				},
 			},
 		},

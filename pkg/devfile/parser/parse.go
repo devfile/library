@@ -21,8 +21,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const defaultRegistry = "preview-devfile-registry-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
-
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
 func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
@@ -56,60 +54,99 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 	return d, nil
 }
 
+type ParserArgs struct {
+	path             string
+	url              string
+	data             []byte
+	flattenedDevfile *bool // default to true
+	registryURLs     []string
+}
+
+// ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
+// Creates devfile context and runtime objects
+func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
+	if args.data != nil {
+		d.Ctx = devfileCtx.DevfileCtx{}
+		err = d.Ctx.SetDevfileContentFromBytes(args.data)
+		if err != nil {
+			return d, errors.Wrap(err, "failed to set devfile content from bytes")
+		}
+	} else if args.path != "" {
+		d.Ctx = devfileCtx.NewDevfileCtx(args.path)
+	} else if args.url != "" {
+		d.Ctx = devfileCtx.NewURLDevfileCtx(args.url)
+	} else {
+		return d, errors.Wrap(err, "the devfile source is not provided")
+	}
+
+	if args.registryURLs != nil {
+		d.Ctx.SetRegistryURLs(args.registryURLs)
+	}
+
+	flattenedDevfile := true
+	if args.flattenedDevfile != nil {
+		flattenedDevfile = *args.flattenedDevfile
+	}
+
+	return populateAndParseDevfile(d, flattenedDevfile)
+}
+
+func populateAndParseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
+	var err error
+
+	// Fill the fields of DevfileCtx struct
+	if d.Ctx.GetURL() != "" {
+		err = d.Ctx.PopulateFromURL()
+	} else if d.Ctx.GetDevfileContent() != nil {
+		err = d.Ctx.PopulateFromRaw()
+	} else {
+		err = d.Ctx.Populate()
+	}
+	if err != nil {
+		return d, err
+	}
+
+	return parseDevfile(d, flattenedDevfile)
+}
+
 // Parse func populates the flattened devfile data, parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
+// Deprecated, use ParseDevfile() instead
 func Parse(path string) (d DevfileObj, err error) {
 
 	// NewDevfileCtx
 	d.Ctx = devfileCtx.NewDevfileCtx(path)
 
-	// Fill the fields of DevfileCtx struct
-	err = d.Ctx.Populate()
-	if err != nil {
-		return d, err
-	}
-	return parseDevfile(d, true)
+	return populateAndParseDevfile(d, true)
 }
 
 // ParseRawDevfile populates the raw devfile data without overriding and merging
+// Deprecated, use ParseDevfile() instead
 func ParseRawDevfile(path string) (d DevfileObj, err error) {
 	// NewDevfileCtx
 	d.Ctx = devfileCtx.NewDevfileCtx(path)
 
-	// Fill the fields of DevfileCtx struct
-	err = d.Ctx.Populate()
-	if err != nil {
-		return d, err
-	}
-	return parseDevfile(d, false)
+	return populateAndParseDevfile(d, false)
 }
 
 // ParseFromURL func parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
+// Deprecated, use ParseDevfile() instead
 func ParseFromURL(url string) (d DevfileObj, err error) {
 	d.Ctx = devfileCtx.NewURLDevfileCtx(url)
-	// Fill the fields of DevfileCtx struct
-	err = d.Ctx.PopulateFromURL()
-	if err != nil {
-		return d, err
-	}
-	return parseDevfile(d, true)
+	return populateAndParseDevfile(d, true)
 }
 
 // ParseFromData func parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
+// Deprecated, use ParseDevfile() instead
 func ParseFromData(data []byte) (d DevfileObj, err error) {
 	d.Ctx = devfileCtx.DevfileCtx{}
 	err = d.Ctx.SetDevfileContentFromBytes(data)
 	if err != nil {
 		return d, errors.Wrap(err, "failed to set devfile content from bytes")
 	}
-	err = d.Ctx.PopulateFromRaw()
-	if err != nil {
-		return d, err
-	}
-
-	return parseDevfile(d, true)
+	return populateAndParseDevfile(d, true)
 }
 
 func parseParentAndPlugin(d DevfileObj) (err error) {
@@ -125,18 +162,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 					return err
 				}
 			} else if parent.Id != "" {
-				registry := defaultRegistry
-				if parent.RegistryUrl != "" {
-					registry = parent.RegistryUrl
-				}
-				param := util.HTTPRequestParams{
-					URL: fmt.Sprintf("http://%s/devfiles/%s", registry, parent.Id),
-				}
-				returnedVar, err := util.HTTPGetRequest(param, 0)
-				if err != nil {
-					return err
-				}
-				parentDevfileObj, err = ParseFromData(returnedVar)
+				parentDevfileObj, err = parseFromRegistry(parent.Id, parent.RegistryUrl, d.Ctx)
 				if err != nil {
 					return err
 				}
@@ -157,6 +183,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			klog.V(4).Infof("adding data of devfile with URI: %v", parent.Uri)
 		}
 	}
+
 	flattenedPlugins := []*v1.DevWorkspaceTemplateSpecContent{}
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
@@ -185,6 +212,7 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			flattenedPlugins = append(flattenedPlugins, flattenedPlugin)
 		}
 	}
+
 	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspace(), flattenedParent, flattenedPlugins...)
 	if err != nil {
 		return err
@@ -209,20 +237,11 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 	// relative path on disk
 	if !absoluteURL && curDevfileCtx.GetAbsPath() != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
-		d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
-
-		// Fill the fields of DevfileCtx struct
-		err = d.Ctx.Populate()
-		if err != nil {
-			return DevfileObj{}, err
-		}
-		return parseDevfile(d, true)
-	}
-
-	// absolute URL address
-	if absoluteURL {
+	} else if absoluteURL {
+		// absolute URL address
 		d.Ctx = devfileCtx.NewURLDevfileCtx(uri)
 	} else if curDevfileCtx.GetURL() != "" {
+		// relative path to a URL
 		u, err := url.Parse(curDevfileCtx.GetURL())
 		if err != nil {
 			return DevfileObj{}, err
@@ -231,11 +250,35 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		d.Ctx = devfileCtx.NewURLDevfileCtx(u.String())
 	}
 	d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
-	// Fill the fields of DevfileCtx struct
-	err = d.Ctx.PopulateFromURL()
+	return populateAndParseDevfile(d, true)
+}
+
+func parseFromRegistry(registryId, registryURL string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+	var err error
+	var devfileContent []byte
+	if registryURL != "" {
+		devfileContent, err = getDevfileFromRegistry(registryId, registryURL)
+	} else if curDevfileCtx.GetRegistryURLs() != nil {
+		for _, registry := range curDevfileCtx.GetRegistryURLs() {
+			devfileContent, err = getDevfileFromRegistry(registryId, registry)
+		}
+	} else {
+		return DevfileObj{}, fmt.Errorf("failed to parse from registry, registry URL is not provided")
+	}
+
 	if err != nil {
 		return DevfileObj{}, err
 	}
-	return parseDevfile(d, true)
 
+	return ParseDevfile(ParserArgs{data: devfileContent, registryURLs: curDevfileCtx.GetRegistryURLs()})
+}
+
+func getDevfileFromRegistry(registryId, registryURL string) ([]byte, error) {
+	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
+		registryURL = fmt.Sprintf("http://%s", registryURL)
+	}
+	param := util.HTTPRequestParams{
+		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, registryId),
+	}
+	return util.HTTPGetRequest(param, 0)
 }
