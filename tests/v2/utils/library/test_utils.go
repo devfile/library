@@ -315,7 +315,7 @@ func verify(devfile *commonUtils.TestDevfile) error {
 		}
 	}
 
-	commonUtils.LogInfoMessage(fmt.Sprintf("Get projects %s : ", devfile.FileName))
+	commonUtils.LogInfoMessage(fmt.Sprintf("Get starter projects %s : ", devfile.FileName))
 	starterProjects, err := libraryData.GetStarterProjects(common.DevfileOptions{})
 	if err != nil {
 		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Starter Projects from library : %s : %v", devfile.FileName, err)))

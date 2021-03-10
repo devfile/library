@@ -130,7 +130,6 @@ func Test_Projects(t *testing.T) {
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
-	testContent.EditContent = true
 	libraryUtils.RunMultiThreadTest(testContent, t)
 }
 
