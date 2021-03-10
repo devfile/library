@@ -244,6 +244,18 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
 				}
 			}
+			if len(testContent.ProjectTypes) > 0 {
+				err = editProjects(&testDevfile)
+				if err != nil {
+					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing projects :  %s : %v", testContent.FileName, err)))
+				}
+			}
+			if len(testContent.StarterProjectTypes) > 0 {
+				err = editStarterProjects(&testDevfile)
+				if err != nil {
+					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing starter projects :  %s : %v", testContent.FileName, err)))
+				}
+			}
 
 			validator.WriteAndValidate(&testDevfile)
 		}
@@ -266,7 +278,7 @@ func verify(devfile *commonUtils.TestDevfile) error {
 		if commands != nil && len(commands) > 0 {
 			err := VerifyCommands(devfile, commands)
 			if err != nil {
-				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Commands %s : %v", devfile.FileName, err)))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Commands %s : %v", devfile.FileName, err)))
 			}
 		} else {
 			commonUtils.LogInfoMessage(fmt.Sprintf("No commands found in %s : ", devfile.FileName))
@@ -281,10 +293,40 @@ func verify(devfile *commonUtils.TestDevfile) error {
 		if components != nil && len(components) > 0 {
 			err := VerifyComponents(devfile, components)
 			if err != nil {
-				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verfify Components %s : %v", devfile.FileName, err)))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Components %s : %v", devfile.FileName, err)))
 			}
 		} else {
 			commonUtils.LogInfoMessage(fmt.Sprintf("No components found in %s : ", devfile.FileName))
+		}
+	}
+
+	commonUtils.LogInfoMessage(fmt.Sprintf("Get projects %s : ", devfile.FileName))
+	projects, err := libraryData.GetProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Projects from library : %s : %v", devfile.FileName, err)))
+	} else {
+		if projects != nil && len(projects) > 0 {
+			err := VerifyProjects(devfile, projects)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Projects %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No projects found in %s : ", devfile.FileName))
+		}
+	}
+
+	commonUtils.LogInfoMessage(fmt.Sprintf("Get starter projects %s : ", devfile.FileName))
+	starterProjects, err := libraryData.GetStarterProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting Starter Projects from library : %s : %v", devfile.FileName, err)))
+	} else {
+		if starterProjects != nil && len(starterProjects) > 0 {
+			err := VerifyStarterProjects(devfile, starterProjects)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Verify Starter Projects %s : %v", devfile.FileName, err)))
+			}
+		} else {
+			commonUtils.LogInfoMessage(fmt.Sprintf("No starter projects found in %s : ", devfile.FileName))
 		}
 	}
 
@@ -299,19 +341,25 @@ func verify(devfile *commonUtils.TestDevfile) error {
 // editCommands modifies random attributes for each of the commands in the devfile.
 func editCommands(devfile *commonUtils.TestDevfile) error {
 
+	var errorString []string
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
 	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get commands %s : ", devfile.FileName))
 	commands, err := devfile.Follower.(DevfileFollower).LibraryData.GetCommands(common.DevfileOptions{})
 	if err != nil {
-		commonUtils.LogErrorMessage(fmt.Sprintf("Getting commands from library : %s : %v", devfile.FileName, err))
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting commands from library : %s : %v", devfile.FileName, err)))
+	} else if len(commands) < 1 {
+		errorString = append(errorString, commonUtils.LogErrorMessage("Updating commands : No commands returned"))
 	} else {
 		for _, command := range commands {
 			err = UpdateCommand(devfile, command.Id)
 			if err != nil {
-				commonUtils.LogErrorMessage(fmt.Sprintf("Updating command : %s : %v", devfile.FileName, err))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Updating command : %s : %v", devfile.FileName, err)))
 			}
 		}
+	}
+	if len(errorString) > 0 {
+		err = errors.New(fmt.Sprint(errorString))
 	}
 	return err
 }
@@ -319,17 +367,71 @@ func editCommands(devfile *commonUtils.TestDevfile) error {
 // editComponents modifies random attributes for each of the components in the devfile.
 func editComponents(devfile *commonUtils.TestDevfile) error {
 
+	var errorString []string
 	commonUtils.LogInfoMessage(fmt.Sprintf("Edit %s : ", devfile.FileName))
 
 	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get components %s : ", devfile.FileName))
 	components, err := devfile.Follower.(DevfileFollower).LibraryData.GetComponents(common.DevfileOptions{})
 	if err != nil {
-		commonUtils.LogErrorMessage(fmt.Sprintf("Getting components from library : %s : %v", devfile.FileName, err))
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting components from library : %s : %v", devfile.FileName, err)))
+	} else if len(components) < 1 {
+		errorString = append(errorString, commonUtils.LogErrorMessage("Updating components : No components returned"))
 	} else {
 		for _, component := range components {
 			err = UpdateComponent(devfile, component.Name)
 			if err != nil {
-				commonUtils.LogErrorMessage(fmt.Sprintf("Updating component : %s : %v", devfile.FileName, err))
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Updating component : %s : %v", devfile.FileName, err)))
+			}
+		}
+	}
+	if len(errorString) > 0 {
+		err = errors.New(fmt.Sprint(errorString))
+	}
+	return err
+}
+
+// editProjects modifies random attributes for each of the projects in the devfile.
+func editProjects(devfile *commonUtils.TestDevfile) error {
+
+	var errorString []string
+	commonUtils.LogInfoMessage(fmt.Sprintf("Edit project %s : ", devfile.FileName))
+
+	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get projects %s : ", devfile.FileName))
+	projects, err := devfile.Follower.(DevfileFollower).LibraryData.GetProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting projects from library : %s : %v", devfile.FileName, err)))
+	} else if len(projects) < 1 {
+		errorString = append(errorString, commonUtils.LogErrorMessage("Updating projects : No projects returned"))
+	} else {
+		commonUtils.LogInfoMessage(fmt.Sprintf("Updating projects : %d projects found.", len(projects)))
+		for _, project := range projects {
+			err = UpdateProject(devfile, project.Name)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Updating project : %v", err)))
+			}
+		}
+	}
+	return err
+}
+
+// editStarterProjects modifies random attributes for each of the starter projects in the devfile.
+func editStarterProjects(devfile *commonUtils.TestDevfile) error {
+
+	var errorString []string
+	commonUtils.LogInfoMessage(fmt.Sprintf("Edit starter project %s : ", devfile.FileName))
+
+	commonUtils.LogInfoMessage(fmt.Sprintf(" -> Get starter projects %s : ", devfile.FileName))
+	starterProjects, err := devfile.Follower.(DevfileFollower).LibraryData.GetStarterProjects(common.DevfileOptions{})
+	if err != nil {
+		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Getting starter projects from library : %s : %v", devfile.FileName, err)))
+	} else if len(starterProjects) < 1 {
+		errorString = append(errorString, commonUtils.LogErrorMessage("Updating starter projects : No starter projects returned"))
+	} else {
+		commonUtils.LogInfoMessage(fmt.Sprintf("Updating starter projects : %d starter projects found.", len(starterProjects)))
+		for _, starterProject := range starterProjects {
+			err = UpdateStarterProject(devfile, starterProject.Name)
+			if err != nil {
+				errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Updating starter project : %v", err)))
 			}
 		}
 	}

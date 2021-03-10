@@ -29,6 +29,8 @@ The tests which generate devfiles with random content at run time currently cove
 * Components 
     * Container
     * Volume
+* Projects
+* Starter Projects
     
 ## Test structure
 
