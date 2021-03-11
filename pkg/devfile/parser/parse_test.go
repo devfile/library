@@ -2897,3 +2897,138 @@ func Test_parseFromURI(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseFromRegistry(t *testing.T) {
+	const (
+		registry        = "127.0.0.1:8080"
+		httpPrefix      = "http://"
+		notExistId      = "notexist"
+		invalidRegistry = "http//invalid.com"
+		registryId      = "nodejs"
+	)
+
+	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
+	ctxWithRegistry.SetRegistryURLs([]string{registry})
+
+	parentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime2",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var data []byte
+		var err error
+		if strings.Contains(r.URL.Path, "/devfiles/"+registryId) {
+			data, err = yaml.Marshal(parentDevfile.Data)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+			return
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l, err := net.Listen("tcp", registry)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer.Listener.Close()
+	testServer.Listener = l
+
+	testServer.Start()
+	defer testServer.Close()
+
+	tests := []struct {
+		name          string
+		curDevfileCtx devfileCtx.DevfileCtx
+		registryUrl   string
+		registryId    string
+		wantDevFile   DevfileObj
+		wantErr       bool
+	}{
+		{
+			name:          "should be able to parse from provided registryUrl without prefix",
+			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+			wantDevFile:   parentDevfile,
+			registryUrl:   registry,
+			registryId:    registryId,
+		},
+		{
+			name:          "should be able to parse from provided registryUrl with prefix",
+			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+			wantDevFile:   parentDevfile,
+			registryUrl:   httpPrefix + registry,
+			registryId:    registryId,
+		},
+		{
+			name:          "should be able to parse from registry URL defined in ctx",
+			curDevfileCtx: ctxWithRegistry,
+			wantDevFile:   parentDevfile,
+			registryId:    registryId,
+		},
+		{
+			name:          "should fail if registryId does not exist",
+			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+			registryUrl:   registry,
+			registryId:    notExistId,
+			wantErr:       true,
+		},
+		{
+			name:          "should fail if registryUrl is not provided, and no registry URLs has been set in ctx",
+			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+			registryId:    registryId,
+			wantErr:       true,
+		},
+		{
+			name:          "should fail if registryUrl is invalid",
+			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+			registryUrl:   invalidRegistry,
+			registryId:    registryId,
+			wantErr:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseFromRegistry(tt.registryId, tt.registryUrl, tt.curDevfileCtx)
+			if tt.wantErr == (err == nil) {
+				t.Errorf("Test_parseFromRegistry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
+				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
+			}
+		})
+	}
+}
