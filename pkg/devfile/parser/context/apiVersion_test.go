@@ -9,36 +9,38 @@ import (
 func TestSetDevfileAPIVersion(t *testing.T) {
 
 	const (
-		apiVersion          = "2.0.0"
-		validJson           = `{"apiVersion": "2.0.0"}`
-		emptyJson           = "{}"
-		emptyApiVersionJson = `{"apiVersion": ""}`
+		schemaVersion          = "2.0.0"
+		validJson              = `{"schemaVersion": "2.0.0"}`
+		emptyJson              = "{}"
+		emptySchemaVersionJson = `{"schemaVersion": ""}`
+		devfilePath            = "/testpath/devfile.yaml"
+		devfileURL             = "http://server/devfile.yaml"
 	)
 
 	// test table
 	tests := []struct {
-		name    string
-		rawJson []byte
-		want    string
-		wantErr error
+		name       string
+		devfileCtx DevfileCtx
+		want       string
+		wantErr    error
 	}{
 		{
-			name:    "valid apiVersion",
-			rawJson: []byte(validJson),
-			want:    apiVersion,
-			wantErr: nil,
+			name:       "valid schemaVersion",
+			devfileCtx: DevfileCtx{rawContent: []byte(validJson), absPath: devfilePath},
+			want:       schemaVersion,
+			wantErr:    nil,
 		},
 		{
-			name:    "apiVersion not present",
-			rawJson: []byte(emptyJson),
-			want:    "",
-			wantErr: fmt.Errorf("apiVersion or schemaVersion not present in devfile"),
+			name:       "schemaVersion not present",
+			devfileCtx: DevfileCtx{rawContent: []byte(emptyJson), absPath: devfilePath},
+			want:       "",
+			wantErr:    fmt.Errorf("schemaVersion not present in devfile: %s", devfilePath),
 		},
 		{
-			name:    "apiVersion empty",
-			rawJson: []byte(emptyApiVersionJson),
-			want:    "",
-			wantErr: fmt.Errorf("apiVersion in devfile cannot be empty"),
+			name:       "schemaVersion empty",
+			devfileCtx: DevfileCtx{rawContent: []byte(emptySchemaVersionJson), url: devfileURL},
+			want:       "",
+			wantErr:    fmt.Errorf("schemaVersion in devfile: %s cannot be empty", devfileURL),
 		},
 	}
 
@@ -46,7 +48,7 @@ func TestSetDevfileAPIVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// new devfile context object
-			d := DevfileCtx{rawContent: tt.rawJson}
+			d := tt.devfileCtx
 
 			// SetDevfileAPIVersion
 			gotErr := d.SetDevfileAPIVersion()
@@ -66,7 +68,7 @@ func TestSetDevfileAPIVersion(t *testing.T) {
 func TestGetApiVersion(t *testing.T) {
 
 	const (
-		apiVersion = "1.0.0"
+		apiVersion = "2.0.0"
 	)
 
 	t.Run("get apiVersion", func(t *testing.T) {

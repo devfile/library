@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDevfile200_AddProjects(t *testing.T) {
@@ -186,6 +187,63 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDevfile200_DeleteProject(t *testing.T) {
+
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Projects: []v1.Project{
+						{
+							Name:      "nodejs",
+							ClonePath: "/project",
+						},
+						{
+							Name:      "java",
+							ClonePath: "/project2",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		projectToDelete string
+		wantProjects    []v1.Project
+		wantErr         bool
+	}{
+		{
+			name:            "Project successfully deleted",
+			projectToDelete: "nodejs",
+			wantProjects: []v1.Project{
+				{
+					Name:      "java",
+					ClonePath: "/project2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:            "Project not found",
+			projectToDelete: "nodejs1",
+			wantErr:         true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := d.DeleteProject(tt.projectToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteProject() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				assert.Equal(t, tt.wantProjects, d.Projects, "The two values should be the same.")
+			}
+		})
+	}
+
 }
 
 func TestDevfile200_AddStarterProjects(t *testing.T) {
@@ -369,4 +427,61 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDevfile200_DeleteStarterProject(t *testing.T) {
+
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					StarterProjects: []v1.StarterProject{
+						{
+							Name:   "nodejs",
+							SubDir: "/project",
+						},
+						{
+							Name:   "java",
+							SubDir: "/project2",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name                   string
+		starterProjectToDelete string
+		wantStarterProjects    []v1.StarterProject
+		wantErr                bool
+	}{
+		{
+			name:                   "Starter Project successfully deleted",
+			starterProjectToDelete: "nodejs",
+			wantStarterProjects: []v1.StarterProject{
+				{
+					Name:   "java",
+					SubDir: "/project2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:                   "Starter Project not found",
+			starterProjectToDelete: "nodejs1",
+			wantErr:                true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := d.DeleteStarterProject(tt.starterProjectToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteStarterProject() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				assert.Equal(t, tt.wantStarterProjects, d.StarterProjects, "The two values should be the same.")
+			}
+		})
+	}
+
 }

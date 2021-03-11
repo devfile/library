@@ -11,13 +11,13 @@ func TestDevfile200_AddEvents(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		currentEvents v1.Events
+		currentEvents *v1.Events
 		newEvents     v1.Events
 		wantErr       bool
 	}{
 		{
-			name: "case 1: successfully add the events",
-			currentEvents: v1.Events{
+			name: "successfully add the events",
+			currentEvents: &v1.Events{
 				WorkspaceEvents: v1.WorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
@@ -30,8 +30,18 @@ func TestDevfile200_AddEvents(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "case 2: event already present",
-			currentEvents: v1.Events{
+			name:          "successfully add the events to empty devfile event",
+			currentEvents: nil,
+			newEvents: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
+					PostStart: []string{"postStart1"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "event already present",
+			currentEvents: &v1.Events{
 				WorkspaceEvents: v1.WorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
@@ -50,18 +60,16 @@ func TestDevfile200_AddEvents(t *testing.T) {
 				v1.Devfile{
 					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Events: &tt.currentEvents,
+							Events: tt.currentEvents,
 						},
 					},
 				},
 			}
 
-			got := d.AddEvents(tt.newEvents)
+			err := d.AddEvents(tt.newEvents)
 
-			if !tt.wantErr && got != nil {
-				t.Errorf("TestDevfile200_AddEvents() unexpected error - %+v", got)
-			} else if tt.wantErr && got == nil {
-				t.Errorf("TestDevfile200_AddEvents() expected error but got nil")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 		})
@@ -72,16 +80,39 @@ func TestDevfile200_UpdateEvents(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		currentEvents v1.Events
+		currentEvents *v1.Events
 		newEvents     v1.Events
 	}{
 		{
-			name: "case 1: successfully add the events",
-			currentEvents: v1.Events{
+			name: "successfully add/update the events",
+			currentEvents: &v1.Events{
 				WorkspaceEvents: v1.WorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
 			},
+			newEvents: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
+					PreStart:  []string{"preStart2"},
+					PostStart: []string{"postStart2"},
+				},
+			},
+		},
+		{
+			name: "successfully update the events to empty",
+			currentEvents: &v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
+					PreStart: []string{"preStart1"},
+				},
+			},
+			newEvents: v1.Events{
+				WorkspaceEvents: v1.WorkspaceEvents{
+					PreStart: []string{""},
+				},
+			},
+		},
+		{
+			name:          "successfully add the events to empty devfile events",
+			currentEvents: nil,
 			newEvents: v1.Events{
 				WorkspaceEvents: v1.WorkspaceEvents{
 					PreStart:  []string{"preStart2"},
@@ -96,7 +127,7 @@ func TestDevfile200_UpdateEvents(t *testing.T) {
 				v1.Devfile{
 					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Events: &tt.currentEvents,
+							Events: tt.currentEvents,
 						},
 					},
 				},

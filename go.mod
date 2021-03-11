@@ -3,7 +3,7 @@ module github.com/devfile/library
 go 1.13
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20210223145532-81859eaef987
+	github.com/devfile/api/v2 v2.0.0-20210304212617-bfc3f501616b
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3
@@ -15,7 +15,7 @@ require (
 	github.com/openshift/api v0.0.0-20200930075302-db52bc4ef99f
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.2.2
-	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/stretchr/testify v1.6.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	k8s.io/api v0.19.0
 	k8s.io/apimachinery v0.19.0
