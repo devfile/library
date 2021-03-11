@@ -8,6 +8,7 @@ import (
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDevfile200_AddComponent(t *testing.T) {
@@ -398,6 +399,97 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 				t.Errorf("TestGetDevfileVolumeComponents expected error but got nil")
 			} else if len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
+			}
+		})
+	}
+
+}
+
+func TestDeleteComponents(t *testing.T) {
+
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Components: []v1.Component{
+						{
+							Name: "comp2",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										VolumeMounts: []v1.VolumeMount{
+											testingutil.GetFakeVolumeMount("comp2", "/path"),
+											testingutil.GetFakeVolumeMount("comp2", "/path2"),
+											testingutil.GetFakeVolumeMount("comp3", "/path"),
+										},
+									},
+								},
+							},
+						},
+						{
+							Name: "comp2",
+							ComponentUnion: v1.ComponentUnion{
+								Volume: &v1.VolumeComponent{},
+							},
+						},
+						{
+							Name: "comp3",
+							ComponentUnion: v1.ComponentUnion{
+								Volume: &v1.VolumeComponent{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name              string
+		componentToDelete string
+		wantComponents    []v1.Component
+		wantErr           bool
+	}{
+		{
+			name:              "Successfully delete a Component",
+			componentToDelete: "comp3",
+			wantComponents: []v1.Component{
+				{
+					Name: "comp2",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								VolumeMounts: []v1.VolumeMount{
+									testingutil.GetFakeVolumeMount("comp2", "/path"),
+									testingutil.GetFakeVolumeMount("comp2", "/path2"),
+									testingutil.GetFakeVolumeMount("comp3", "/path"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "comp2",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:              "Missing Component",
+			componentToDelete: "comp12",
+			wantErr:           true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := d.DeleteComponent(tt.componentToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteComponent() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				assert.Equal(t, tt.wantComponents, d.Components, "The two values should be the same.")
 			}
 		})
 	}

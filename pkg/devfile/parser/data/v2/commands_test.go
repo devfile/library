@@ -7,6 +7,7 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDevfile200_GetCommands(t *testing.T) {
@@ -216,7 +217,7 @@ func TestDevfile200_AddCommands(t *testing.T) {
 				},
 			}
 
-			got := d.AddCommands(tt.newCommands...)
+			got := d.AddCommands(tt.newCommands)
 			if !tt.wantErr && got != nil {
 				t.Errorf("TestDevfile200_AddCommands() unexpected error - %v", got)
 			} else if tt.wantErr && got == nil {
@@ -299,4 +300,84 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteCommands(t *testing.T) {
+
+	d := &DevfileV2{
+		v1.Devfile{
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Commands: []v1.Command{
+						{
+							Id: "command1",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{},
+							},
+						},
+						{
+							Id: "command2",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{},
+							},
+						},
+						{
+							Id: "command3",
+							CommandUnion: v1.CommandUnion{
+								Composite: &v1.CompositeCommand{
+									Commands: []string{"command1", "command2", "command1"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		commandToDelete string
+		wantCommands    []v1.Command
+		wantErr         bool
+	}{
+		{
+			name:            "Successfully delete command",
+			commandToDelete: "command1",
+			wantCommands: []v1.Command{
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command3",
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{
+							Commands: []string{"command1", "command2", "command1"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:            "Missing Command",
+			commandToDelete: "command34",
+			wantErr:         true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := d.DeleteCommand(tt.commandToDelete)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			} else if err == nil {
+				assert.Equal(t, tt.wantCommands, d.Commands, "The two values should be the same.")
+			}
+		})
+	}
+
 }
