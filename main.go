@@ -20,28 +20,27 @@ func main() {
 	}
 }
 
-//ParseDevfile to parse devfile from library
-func ParseDevfile(devfileLocation string) (parser.DevfileObj, error) {
-
-	devfile, err := devfilepkg.ParseAndValidate(devfileLocation)
-	return devfile, err
-}
-
 func parserTest() {
-	var devfile parser.DevfileObj
-	var err error
+	var args parser.ParserArgs
 	if len(os.Args) > 1 {
 		if strings.HasPrefix(os.Args[1], "http") {
-			devfile, err = devfilepkg.ParseFromURLAndValidate(os.Args[1])
+			args = parser.ParserArgs{
+				URL: os.Args[1],
+			}
 		} else {
-			devfile, err = ParseDevfile(os.Args[1])
+			args = parser.ParserArgs{
+				Path: os.Args[1],
+			}
 		}
 		fmt.Println("parsing devfile from " + os.Args[1])
 
 	} else {
-		devfile, err = ParseDevfile("devfile.yaml")
-		fmt.Println("parsing devfile from " + devfile.Ctx.GetAbsPath())
+		args = parser.ParserArgs{
+			Path: "devfile.yaml",
+		}
+		fmt.Println("parsing devfile from ./devfile.yaml")
 	}
+	devfile, err := devfilepkg.ParseDevfileAndValidate(args)
 	if err != nil {
 		fmt.Println(err)
 	} else {
