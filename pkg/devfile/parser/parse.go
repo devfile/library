@@ -56,17 +56,19 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 
 // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
 // It accepts devfile path, devfile URL or devfile content in []byte format.
-// Path is a relative or absolute devfile path.
-// URL is the URL address of the specific devfile.
-// Data is the devfile content in []byte format.
-// FlattenedDevfile defines if the returned devfileObj is flattened content (true) or raw content (false), the value is default to be true.
-// RegistryURLs is a list of registry hosts which parser should pull parent devfile from. If registryUrl is defined in devfile, this list will be ignored.
 type ParserArgs struct {
-	Path             string
-	URL              string
-	Data             []byte
-	FlattenedDevfile *bool // default to true
-	RegistryURLs     []string
+	// Path is a relative or absolute devfile path.
+	Path string
+	// URL is the URL address of the specific devfile.
+	URL string
+	// Data is the devfile content in []byte format.
+	Data []byte
+	// FlattenedDevfile defines if the returned devfileObj is flattened content (true) or raw content (false).
+	// The value is default to be true.
+	FlattenedDevfile *bool
+	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
+	// If registryUrl is defined in devfile, this list will be ignored.
+	RegistryURLs []string
 }
 
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
@@ -275,7 +277,7 @@ func parseFromRegistry(parentId, registryURL string, curDevfileCtx devfileCtx.De
 			}
 		}
 	} else {
-		return DevfileObj{}, fmt.Errorf("failed to parse from registry, registry URL is not provided")
+		return DevfileObj{}, fmt.Errorf("failed to fetch from registry, registry URL is not provided")
 	}
 
 	return DevfileObj{}, fmt.Errorf("failed to get parent Id: %s from registry URLs provided", parentId)
