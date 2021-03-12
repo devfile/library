@@ -35,6 +35,9 @@ type DevfileCtx struct {
 
 	// trace of all url referenced
 	uriMap map[string]bool
+
+	// registry URLs list
+	registryURLs []string
 }
 
 // NewDevfileCtx returns a new DevfileCtx type object
@@ -148,4 +151,14 @@ func (d *DevfileCtx) GetURIMap() map[string]bool {
 // SetURIMap set uri map in the devfile ctx
 func (d *DevfileCtx) SetURIMap(uriMap map[string]bool) {
 	d.uriMap = uriMap
+}
+
+// GetRegistryURLs func returns current devfile registry URLs
+func (d *DevfileCtx) GetRegistryURLs() []string {
+	return d.registryURLs
+}
+
+// SetRegistryURLs set registry URLs in the devfile ctx
+func (d *DevfileCtx) SetRegistryURLs(registryURLs []string) {
+	d.registryURLs = registryURLs
 }

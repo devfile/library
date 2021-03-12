@@ -5,7 +5,9 @@ metadata:
   attributes:
     alpha.build-dockerfile: /relative/path/to/Dockerfile
 parent:
-  uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
+  # uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
+  id: nodejs
+  registryUrl: "https://registry.devfile.io"
   commands:
   - id: install
     exec:
