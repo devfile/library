@@ -256,3 +256,80 @@ func TestGetExecWorkingDir(t *testing.T) {
 	}
 
 }
+
+func TestGetCommandType(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		command     v1.Command
+		wantErr     bool
+		commandType v1.CommandType
+	}{
+		{
+			name: "Exec command",
+			command: v1.Command{
+				Id: "exec1",
+				CommandUnion: v1.CommandUnion{
+					Exec: &v1.ExecCommand{},
+				},
+			},
+			commandType: v1.ExecCommandType,
+			wantErr:     false,
+		},
+		{
+			name: "Composite command",
+			command: v1.Command{
+				Id: "comp1",
+				CommandUnion: v1.CommandUnion{
+					Composite: &v1.CompositeCommand{},
+				},
+			},
+			commandType: v1.CompositeCommandType,
+			wantErr:     false,
+		},
+		{
+			name: "Apply command",
+			command: v1.Command{
+				Id: "apply1",
+				CommandUnion: v1.CommandUnion{
+					Apply: &v1.ApplyCommand{},
+				},
+			},
+			commandType: v1.ApplyCommandType,
+			wantErr:     false,
+		},
+		{
+			name: "Custom command",
+			command: v1.Command{
+				Id: "custom",
+				CommandUnion: v1.CommandUnion{
+					Custom: &v1.CustomCommand{},
+				},
+			},
+			commandType: v1.CustomCommandType,
+			wantErr:     false,
+		},
+		{
+			name: "Unknown command",
+			command: v1.Command{
+				Id:           "unknown",
+				CommandUnion: v1.CommandUnion{},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetCommandType(tt.command)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetCommandType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.commandType {
+				t.Errorf("TestGetCommandType error: command type mismatch, expected: %v got: %v", tt.commandType, got)
+			}
+		})
+	}
+
+}

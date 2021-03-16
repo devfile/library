@@ -117,3 +117,65 @@ func TestGitLikeProjectSource_GetDefaultSource(t *testing.T) {
 		})
 	}
 }
+
+func TestGetProjectSrcType(t *testing.T) {
+
+	tests := []struct {
+		name           string
+		projectSrc     v1.ProjectSource
+		wantErr        bool
+		projectSrcType v1.ProjectSourceType
+	}{
+		{
+			name: "Git project",
+			projectSrc: v1.ProjectSource{
+				Git: &v1.GitProjectSource{},
+			},
+			projectSrcType: v1.GitProjectSourceType,
+			wantErr:        false,
+		},
+		{
+			name: "Github project",
+			projectSrc: v1.ProjectSource{
+				Github: &v1.GithubProjectSource{},
+			},
+			projectSrcType: v1.GitHubProjectSourceType,
+			wantErr:        false,
+		},
+		{
+			name: "Zip project",
+			projectSrc: v1.ProjectSource{
+				Zip: &v1.ZipProjectSource{},
+			},
+			projectSrcType: v1.ZipProjectSourceType,
+			wantErr:        false,
+		},
+		{
+			name: "Custom project",
+			projectSrc: v1.ProjectSource{
+				Custom: &v1.CustomProjectSource{},
+			},
+			projectSrcType: v1.CustomProjectSourceType,
+			wantErr:        false,
+		},
+		{
+			name:       "Unknown project",
+			projectSrc: v1.ProjectSource{},
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetProjectSourceType(tt.projectSrc)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetProjectSrcType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.projectSrcType {
+				t.Errorf("TestGetProjectSrcType error: project src type mismatch, expected: %v got: %v", tt.projectSrcType, got)
+			}
+		})
+	}
+
+}

@@ -37,10 +37,8 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 			continue
 		}
 
-		if filterIn {
-			command.Id = strings.ToLower(command.Id)
-			commands = append(commands, command)
-		}
+		command.Id = strings.ToLower(command.Id)
+		commands = append(commands, command)
 	}
 
 	return commands, nil

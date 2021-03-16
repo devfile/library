@@ -9,7 +9,7 @@ import (
 
 // DevfileOptions provides options for Devfile operations
 type DevfileOptions struct {
-	// Filter is a map that lets you filter devfile object against their attributes. Interface can be string, float, boolean or a map
+	// Filter is a map that lets filter devfile object against their attributes. Interface can be string, float, boolean or a map
 	Filter map[string]interface{}
 
 	// CommandOptions specifies the various options available to filter commands
@@ -17,22 +17,32 @@ type DevfileOptions struct {
 
 	// ComponentOptions specifies the various options available to filter components
 	ComponentOptions ComponentOptions
+
+	// ProjectOptions specifies the various options available to filter projects/starterProjects
+	ProjectOptions ProjectOptions
 }
 
 // CommandOptions specifies the various options available to filter commands
 type CommandOptions struct {
-	// CommandGroupKind is an option that allows you to filter command based on their kind
+	// CommandGroupKind is an option that allows to filter command based on their kind
 	CommandGroupKind v1.CommandGroupKind
 
-	// CommandType is an option that allows you to filter command based on their type
+	// CommandType is an option that allows to filter command based on their type
 	CommandType v1.CommandType
 }
 
 // ComponentOptions specifies the various options available to filter components
 type ComponentOptions struct {
 
-	// ComponentType is an option that allows you to filter component based on their type
+	// ComponentType is an option that allows to filter component based on their type
 	ComponentType v1.ComponentType
+}
+
+// ProjectOptions specifies the various options available to filter projects/starterProjects
+type ProjectOptions struct {
+
+	// ProjectSourceType is an option that allows to filter project based on their source type
+	ProjectSourceType v1.ProjectSourceType
 }
 
 // FilterDevfileObject filters devfile attributes with the given options

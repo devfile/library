@@ -63,6 +63,6 @@ func GetCommandType(command v1.Command) (v1.CommandType, error) {
 		return v1.CustomCommandType, nil
 
 	default:
-		return "", fmt.Errorf("unknown component type")
+		return "", fmt.Errorf("unknown command type")
 	}
 }
