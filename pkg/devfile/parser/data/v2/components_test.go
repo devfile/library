@@ -170,42 +170,22 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 	}
 }
 
-func TestGetDevfileContainerComponents(t *testing.T) {
+func TestGetDevfileComponents(t *testing.T) {
 
 	tests := []struct {
-		name                 string
-		component            []v1.Component
-		expectedMatchesCount int
-		filterOptions        common.DevfileOptions
-		wantErr              bool
+		name           string
+		component      []v1.Component
+		wantComponents []string
+		filterOptions  common.DevfileOptions
+		wantErr        bool
 	}{
-		// {
-		// 	name:                 "Case 1: Invalid devfile",
-		// 	component:            []v1.Component{},
-		// 	expectedMatchesCount: 0,
-		// },
-		// {
-		// 	name: "Case 2: Valid devfile with wrong component type (Openshift)",
-		// 	component: []v1.Component{
-		// 		{
-		// 			ComponentUnion: v1.ComponentUnion{
-		// 				Openshift: &v1.OpenshiftComponent{},
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedMatchesCount: 0,
-		// },
-		// {
-		// 	name: "Case 3 : Valid devfile with correct component type (Container)",
-		// 	component: []v1.Component{
-		// 		testingutil.GetFakeContainerComponent("comp1"),
-		// 		testingutil.GetFakeContainerComponent("comp2"),
-		// 	},
-		// 	expectedMatchesCount: 2,
-		// 	filterOptions:        common.DevfileOptions{},
-		// },
 		{
-			name: "Case 4 : Get Container component with the specified filter",
+			name:           "Invalid devfile",
+			component:      []v1.Component{},
+			wantComponents: nil,
+		},
+		{
+			name: "Get component with the specified filter",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -250,46 +230,52 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstString": "firstStringValue",
-					// "secondString": "secondStringValue",
+				},
+				CommandOptions: common.CommandOptions{
+					CommandGroupKind: v1.BuildCommandGroupKind,
+					CommandType:      v1.CompositeCommandType,
 				},
 				ComponentOptions: common.ComponentOptions{
 					ComponentType: v1.VolumeComponentType,
 				},
 			},
-			expectedMatchesCount: 1,
+			wantComponents: []string{"comp3"},
 		},
-		// {
-		// 	name: "Case 5 : Get Container component with the wrong specified filter",
-		// 	component: []v1.Component{
-		// 		{
-		// 			Name: "comp1",
-		// 			Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
-		// 				"firstString":  "firstStringValue",
-		// 				"secondString": "secondStringValue",
-		// 			}),
-		// 			ComponentUnion: v1.ComponentUnion{
-		// 				Container: &v1.ContainerComponent{},
-		// 			},
-		// 		},
-		// 		{
-		// 			Name: "comp2",
-		// 			Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
-		// 				"firstString": "firstStringValue",
-		// 				"thirdString": "thirdStringValue",
-		// 			}),
-		// 			ComponentUnion: v1.ComponentUnion{
-		// 				Container: &v1.ContainerComponent{},
-		// 			},
-		// 		},
-		// 	},
-		// 	filterOptions: common.DevfileOptions{
-		// 		Filter: map[string]interface{}{
-		// 			"firstStringIsWrong": "firstStringValue",
-		// 		},
-		// 	},
-		// 	expectedMatchesCount: 0,
-		// 	wantErr:              false,
-		// },
+		{
+			name: "Get component with the wrong specified filter",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstStringIsWrong": "firstStringValue",
+				},
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			},
+			wantComponents: []string{""},
+			wantErr:        false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -303,19 +289,30 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 				},
 			}
 
-			devfileComponents, err := d.GetComponents(tt.filterOptions)
-			t.Logf(">>> err is %+v", err)
-			for _, comp := range devfileComponents {
-				t.Logf("comp name is %+v", comp.Name)
+			components, err := d.GetComponents(tt.filterOptions)
+
+			if !tt.wantErr && err != nil {
+				t.Errorf("TestGetDevfileComponents() unexpected error - %v", err)
+				return
+			} else if tt.wantErr && err == nil {
+				t.Errorf("TestGetDevfileComponents() expected an error but got nil %v", components)
+				return
+			} else if tt.wantErr && err != nil {
+				return
 			}
 
-			// if !tt.wantErr && err != nil {
-			// 	t.Errorf("TestGetDevfileContainerComponents unexpected error: %v", err)
-			// } else if tt.wantErr && err == nil {
-			// 	t.Errorf("TestGetDevfileContainerComponents expected error but got nil")
-			// } else if len(devfileComponents) != tt.expectedMatchesCount {
-			// 	t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
-			// }
+			for _, devfileComponent := range components {
+				matched := false
+				for _, wantComponent := range tt.wantComponents {
+					if wantComponent == devfileComponent.Name {
+						matched = true
+					}
+				}
+
+				if !matched {
+					t.Errorf("TestGetDevfileComponents() error - component %s not found in the expected list", devfileComponent.Name)
+				}
+			}
 		})
 	}
 

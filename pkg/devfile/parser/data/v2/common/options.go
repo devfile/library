@@ -21,8 +21,8 @@ type DevfileOptions struct {
 
 // CommandOptions specifies the various options available to filter commands
 type CommandOptions struct {
-	// CommandKind is an option that allows you to filter command based on their kind
-	CommandKind v1.CommandGroupKind
+	// CommandGroupKind is an option that allows you to filter command based on their kind
+	CommandGroupKind v1.CommandGroupKind
 
 	// CommandType is an option that allows you to filter command based on their type
 	CommandType v1.CommandType

@@ -7,25 +7,24 @@ import (
 
 // GetComponents returns the slice of Component objects parsed from the Devfile
 func (d *DevfileV2) GetComponents(options common.DevfileOptions) ([]v1.Component, error) {
-	if len(options.Filter) == 0 {
-		return d.Components, nil
-	}
 
 	var components []v1.Component
 	for _, component := range d.Components {
+		// Filter Component Attributes
+		filterIn, err := common.FilterDevfileObject(component.Attributes, options)
+		if err != nil {
+			return nil, err
+		} else if !filterIn {
+			continue
+		}
 
+		// Filter Component Type - Container, Volume, etc.
 		componentType, err := common.GetComponentType(component)
 		if err != nil {
 			return nil, err
 		}
-
 		if options.ComponentOptions.ComponentType != "" && componentType != options.ComponentOptions.ComponentType {
 			continue
-		}
-
-		filterIn, err := common.FilterDevfileObject(component.Attributes, options)
-		if err != nil {
-			return nil, err
 		}
 
 		if filterIn {

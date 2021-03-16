@@ -22,26 +22,26 @@ func TestDevfile200_GetCommands(t *testing.T) {
 		wantCommands    []string
 		wantErr         bool
 	}{
-		// {
-		// 	name: "case 1: get the necessary commands",
-		// 	currentCommands: []v1.Command{
-		// 		{
-		// 			Id: "command1",
-		// 			CommandUnion: v1.CommandUnion{
-		// 				Exec: &v1.ExecCommand{},
-		// 			},
-		// 		},
-		// 		{
-		// 			Id: "command2",
-		// 			CommandUnion: v1.CommandUnion{
-		// 				Composite: &v1.CompositeCommand{},
-		// 			},
-		// 		},
-		// 	},
-		// 	filterOptions: common.DevfileOptions{},
-		// 	wantCommands:  []string{"command1", "command2"},
-		// 	wantErr:       false,
-		// },
+		{
+			name: "case 1: get the necessary commands",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{},
+			wantCommands:  []string{"command1", "command2"},
+			wantErr:       false,
+		},
 		{
 			name: "case 2: get the filtered commands",
 			currentCommands: []v1.Command{
@@ -91,51 +91,68 @@ func TestDevfile200_GetCommands(t *testing.T) {
 						},
 					},
 				},
+				{
+					Id: "command4",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Apply: &v1.ApplyCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.BuildCommandGroupKind,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstString": "firstStringValue",
-					// "secondString": "secondStringValue",
 				},
 				CommandOptions: common.CommandOptions{
-					CommandKind: v1.BuildCommandGroupKind,
+					CommandGroupKind: v1.BuildCommandGroupKind,
+					CommandType:      v1.CompositeCommandType,
 				},
 			},
-			wantCommands: []string{"command1"},
+			wantCommands: []string{"command3"},
 			wantErr:      false,
 		},
-		// {
-		// 	name: "case 3: get the wrong filtered commands",
-		// 	currentCommands: []v1.Command{
-		// 		{
-		// 			Id: "command1",
-		// 			Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
-		// 				"firstString":  "firstStringValue",
-		// 				"secondString": "secondStringValue",
-		// 			}),
-		// 			CommandUnion: v1.CommandUnion{
-		// 				Exec: &v1.ExecCommand{},
-		// 			},
-		// 		},
-		// 		{
-		// 			Id: "command2",
-		// 			Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
-		// 				"firstString": "firstStringValue",
-		// 				"thirdString": "thirdStringValue",
-		// 			}),
-		// 			CommandUnion: v1.CommandUnion{
-		// 				Composite: &v1.CompositeCommand{},
-		// 			},
-		// 		},
-		// 	},
-		// 	filterOptions: common.DevfileOptions{
-		// 		Filter: map[string]interface{}{
-		// 			"firstStringIsWrong": "firstStringValue",
-		// 		},
-		// 	},
-		// 	wantCommands: []string{},
-		// 	wantErr:      false,
-		// },
+		{
+			name: "case 3: get the wrong filtered commands",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstStringIsWrong": "firstStringValue",
+				},
+			},
+			wantCommands: []string{},
+			wantErr:      false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -150,32 +167,28 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			}
 
 			commands, err := d.GetCommands(tt.filterOptions)
-			t.Logf(">>> err is %+v", err)
-			for _, cmd := range commands {
-				t.Logf("cmd id is %+v", cmd.Id)
+			if !tt.wantErr && err != nil {
+				t.Errorf("TestDevfile200_GetCommands() unexpected error - %v", err)
+				return
+			} else if tt.wantErr && err == nil {
+				t.Errorf("TestDevfile200_GetCommands() expected an error but got nil %v", commands)
+				return
+			} else if tt.wantErr && err != nil {
+				return
 			}
-			// if !tt.wantErr && err != nil {
-			// 	t.Errorf("TestDevfile200_GetCommands() unexpected error - %v", err)
-			// 	return
-			// } else if tt.wantErr && err == nil {
-			// 	t.Errorf("TestDevfile200_GetCommands() expected an error but got nil %v", commands)
-			// 	return
-			// } else if tt.wantErr && err != nil {
-			// 	return
-			// }
 
-			// for _, wantCommand := range tt.wantCommands {
-			// 	matched := false
-			// 	for _, devfileCommand := range commands {
-			// 		if wantCommand == devfileCommand.Id {
-			// 			matched = true
-			// 		}
-			// 	}
+			for _, devfileCommand := range commands {
+				matched := false
+				for _, wantCommand := range tt.wantCommands {
+					if wantCommand == devfileCommand.Id {
+						matched = true
+					}
+				}
 
-			// 	if !matched {
-			// 		t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the devfile", wantCommand)
-			// 	}
-			// }
+				if !matched {
+					t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the expected list", devfileCommand.Id)
+				}
+			}
 		})
 	}
 }

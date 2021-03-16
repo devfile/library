@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"fmt"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -10,33 +9,31 @@ import (
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
 func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, error) {
-	if len(options.Filter) == 0 {
-		return d.Commands, nil
-	}
 
 	var commands []v1.Command
 	for _, command := range d.Commands {
-		// Filter Attributes
+		// Filter Command Attributes
 		filterIn, err := common.FilterDevfileObject(command.Attributes, options)
 		if err != nil {
 			return nil, err
+		} else if !filterIn {
+			continue
 		}
 
+		// Filter Command Type - Exec, Composite, etc.
 		commandType, err := common.GetCommandType(command)
 		if err != nil {
 			return nil, err
 		}
-
 		if options.CommandOptions.CommandType != "" && commandType != options.CommandOptions.CommandType {
 			continue
 		}
 
-		// Filter Command Group Kind
+		// Filter Command Group Kind - Run, Build, etc.
 		commandGroup := common.GetGroup(command)
-		fmt.Printf(">>> cmd id is %s, commandGroup is %+v, options.CommandOptions.CommandKind is %+v\n", command.Id, commandGroup, options.CommandOptions.CommandKind)
-		if commandGroup != nil && options.CommandOptions.CommandKind != "" && options.CommandOptions.CommandKind != commandGroup.Kind {
-			// fmt.Printf(">>> cmd id is %s, commandGroup.Kind is %+v, options.CommandOptions.CommandKind is %+v\n", command.Id, commandGroup.Kind, options.CommandOptions.CommandKind)
-			// filterIn = filterIn && true
+		if commandGroup != nil && options.CommandOptions.CommandGroupKind != "" && options.CommandOptions.CommandGroupKind != commandGroup.Kind {
+			continue
+		} else if commandGroup == nil && options.CommandOptions.CommandGroupKind != "" {
 			continue
 		}
 
