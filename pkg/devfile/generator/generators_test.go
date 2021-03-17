@@ -4,11 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
 
@@ -27,20 +25,6 @@ func TestGetContainers(t *testing.T) {
 	containerImages := []string{"image1", "image2"}
 	trueMountSources := true
 	falseMountSources := false
-
-	project := v1alpha2.Project{
-		ClonePath: "test-project/",
-		Name:      "project0",
-		ProjectSource: v1.ProjectSource{
-			Git: &v1.GitProjectSource{
-				GitLikeProjectSource: v1.GitLikeProjectSource{
-					Remotes: map[string]string{
-						"origin": "repo",
-					},
-				},
-			},
-		},
-	}
 
 	tests := []struct {
 		name                  string
@@ -184,17 +168,8 @@ func TestGetContainers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			devObj := parser.DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: tt.containerComponents,
-								Projects: []v1alpha2.Project{
-									project,
-								},
-							},
-						},
-					},
+				Data: &testingutil.TestDevfileData{
+					Components: tt.containerComponents,
 				},
 			}
 
