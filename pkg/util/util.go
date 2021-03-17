@@ -1030,6 +1030,10 @@ func DownloadFileInMemory(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// We have a non 1xx / 2xx status, return an error
+	if (resp.StatusCode - 300) > 0 {
+		return nil, errors.Errorf("fail to retrive %s: %s", url, http.StatusText(resp.StatusCode))
+	}
 	defer resp.Body.Close()
 
 	return ioutil.ReadAll(resp.Body)
