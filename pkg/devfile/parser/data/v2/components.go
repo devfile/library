@@ -1,12 +1,18 @@
 package v2
 
 import (
+	"reflect"
+
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 // GetComponents returns the slice of Component objects parsed from the Devfile
 func (d *DevfileV2) GetComponents(options common.DevfileOptions) ([]v1.Component, error) {
+
+	if reflect.DeepEqual(options, common.DevfileOptions{}) {
+		return d.Components, nil
+	}
 
 	var components []v1.Component
 	for _, component := range d.Components {
@@ -33,7 +39,8 @@ func (d *DevfileV2) GetComponents(options common.DevfileOptions) ([]v1.Component
 	return components, nil
 }
 
-// GetDevfileContainerComponents iterates through the components in the devfile and returns a list of devfile container components. Deprecated, use GetComponents() with the DevfileOptions.
+// GetDevfileContainerComponents iterates through the components in the devfile and returns a list of devfile container components.
+// Deprecated, use GetComponents() with the DevfileOptions.
 func (d *DevfileV2) GetDevfileContainerComponents(options common.DevfileOptions) ([]v1.Component, error) {
 	var components []v1.Component
 	devfileComponents, err := d.GetComponents(options)
@@ -48,7 +55,8 @@ func (d *DevfileV2) GetDevfileContainerComponents(options common.DevfileOptions)
 	return components, nil
 }
 
-// GetDevfileVolumeComponents iterates through the components in the devfile and returns a list of devfile volume components. Deprecated, use GetComponents() with the DevfileOptions.
+// GetDevfileVolumeComponents iterates through the components in the devfile and returns a list of devfile volume components.
+// Deprecated, use GetComponents() with the DevfileOptions.
 func (d *DevfileV2) GetDevfileVolumeComponents(options common.DevfileOptions) ([]v1.Component, error) {
 	var components []v1.Component
 	devfileComponents, err := d.GetComponents(options)

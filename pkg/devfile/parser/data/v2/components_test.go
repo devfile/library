@@ -278,8 +278,16 @@ func TestGetDevfileComponents(t *testing.T) {
 			name: "Wrong component type",
 			component: []v1.Component{
 				{
-					Name:           "comp1",
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
 					ComponentUnion: v1.ComponentUnion{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
 				},
 			},
 			wantErr: true,

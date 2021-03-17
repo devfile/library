@@ -111,11 +111,19 @@ func TestDevfile200_GetProjects(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong project type",
+			name: "Wrong project src type",
 			currentProjects: []v1.Project{
 				{
-					Name:          "project1",
+					Name: "project1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
 					ProjectSource: v1.ProjectSource{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
 				},
 			},
 			wantErr: true,
@@ -493,11 +501,19 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong starter project type",
+			name: "Wrong starter project src type",
 			currentStarterProjects: []v1.StarterProject{
 				{
-					Name:          "project1",
+					Name: "project1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
 					ProjectSource: v1.ProjectSource{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
 				},
 			},
 			wantErr: true,

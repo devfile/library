@@ -153,8 +153,16 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			name: "Wrong command type",
 			currentCommands: []v1.Command{
 				{
-					Id:           "command1",
+					Id: "command1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
 					CommandUnion: v1.CommandUnion{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
 				},
 			},
 			wantErr: true,

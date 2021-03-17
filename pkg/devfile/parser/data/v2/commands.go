@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -9,6 +10,10 @@ import (
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
 func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, error) {
+
+	if reflect.DeepEqual(options, common.DevfileOptions{}) {
+		return d.Commands, nil
+	}
 
 	var commands []v1.Command
 	for _, command := range d.Commands {
@@ -37,7 +42,6 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 			continue
 		}
 
-		command.Id = strings.ToLower(command.Id)
 		commands = append(commands, command)
 	}
 

@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -9,8 +10,12 @@ import (
 
 // GetProjects returns the Project Object parsed from devfile
 func (d *DevfileV2) GetProjects(options common.DevfileOptions) ([]v1.Project, error) {
-	var projects []v1.Project
 
+	if reflect.DeepEqual(options, common.DevfileOptions{}) {
+		return d.Projects, nil
+	}
+
+	var projects []v1.Project
 	for _, project := range d.Projects {
 		// Filter Project Attributes
 		filterIn, err := common.FilterDevfileObject(project.Attributes, options)
@@ -80,8 +85,12 @@ func (d *DevfileV2) DeleteProject(name string) error {
 
 //GetStarterProjects returns the DevfileStarterProject parsed from devfile
 func (d *DevfileV2) GetStarterProjects(options common.DevfileOptions) ([]v1.StarterProject, error) {
-	var starterProjects []v1.StarterProject
 
+	if reflect.DeepEqual(options, common.DevfileOptions{}) {
+		return d.StarterProjects, nil
+	}
+
+	var starterProjects []v1.StarterProject
 	for _, starterProject := range d.StarterProjects {
 		// Filter Starter Project Attributes
 		filterIn, err := common.FilterDevfileObject(starterProject.Attributes, options)
