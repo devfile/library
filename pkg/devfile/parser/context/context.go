@@ -73,16 +73,16 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 
 // Populate fills the DevfileCtx struct with relevant context info
 func (d *DevfileCtx) Populate() (err error) {
-	if !strings.HasSuffix(d.relPath, ".yaml"){
-			if _, err := os.Stat(filepath.Join(d.relPath, "devfile.yaml")); os.IsNotExist(err) {
-				if _, err := os.Stat(filepath.Join(d.relPath, ".devfile.yaml")); os.IsNotExist(err) {
-					return fmt.Errorf("the provided path is not a valid yaml filepath, and no devfile.yaml or .devfile.yaml under provided path: %s", d.relPath)
-				} else {
-					d.relPath = filepath.Join(d.relPath, ".devfile.yaml")
-				}
+	if !strings.HasSuffix(d.relPath, ".yaml") {
+		if _, err := os.Stat(filepath.Join(d.relPath, "devfile.yaml")); os.IsNotExist(err) {
+			if _, err := os.Stat(filepath.Join(d.relPath, ".devfile.yaml")); os.IsNotExist(err) {
+				return fmt.Errorf("the provided path is not a valid yaml filepath, and no devfile.yaml or .devfile.yaml under provided path: %s", d.relPath)
 			} else {
-				d.relPath = filepath.Join(d.relPath, "devfile.yaml")
+				d.relPath = filepath.Join(d.relPath, ".devfile.yaml")
 			}
+		} else {
+			d.relPath = filepath.Join(d.relPath, "devfile.yaml")
+		}
 	}
 	if err := d.SetAbsPath(); err != nil {
 		return err
@@ -108,8 +108,8 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	if err != nil {
 		return err
 	}
-	if !strings.HasSuffix(d.url, ".yaml"){
-		u.Path = path.Join(u.Path,"devfile.yaml")
+	if !strings.HasSuffix(d.url, ".yaml") {
+		u.Path = path.Join(u.Path, "devfile.yaml")
 		param := util.HTTPRequestParams{
 			URL: u.String(),
 		}
