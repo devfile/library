@@ -76,7 +76,7 @@ func (d *DevfileCtx) Populate() (err error) {
 	if !strings.HasSuffix(d.relPath, ".yaml") {
 		if _, err := os.Stat(filepath.Join(d.relPath, "devfile.yaml")); os.IsNotExist(err) {
 			if _, err := os.Stat(filepath.Join(d.relPath, ".devfile.yaml")); os.IsNotExist(err) {
-				return fmt.Errorf("the provided path is not a valid yaml filepath, and no devfile.yaml or .devfile.yaml under provided path: %s", d.relPath)
+				return fmt.Errorf("the provided path is not a valid yaml filepath, and devfile.yaml or .devfile.yaml not found in the provided path : %s", d.relPath)
 			} else {
 				d.relPath = filepath.Join(d.relPath, ".devfile.yaml")
 			}
@@ -110,14 +110,10 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 	}
 	if !strings.HasSuffix(d.url, ".yaml") {
 		u.Path = path.Join(u.Path, "devfile.yaml")
-		param := util.HTTPRequestParams{
-			URL: u.String(),
-		}
-		if _, err = util.HTTPGetRequest(param, 0); err != nil {
-			u.Path = path.Join(u.Path, ".devfile.yaml")
-			param.URL = u.String()
-			if _, err = util.HTTPGetRequest(param, 0); err != nil {
-				return fmt.Errorf("the provided url is not a valid yaml filepath, and no devfile.yaml or .devfile.yaml under provided url: %s", d.url)
+		if _, err = util.DownloadFileInMemory(u.String()); err != nil {
+			u.Path = path.Join(path.Dir(u.Path), ".devfile.yaml")
+			if _, err = util.DownloadFileInMemory(u.String()); err != nil {
+				return fmt.Errorf("the provided url is not a valid yaml filepath, and devfile.yaml or .devfile.yaml not found in the provided path : %s", d.url)
 			}
 		}
 		d.url = u.String()
