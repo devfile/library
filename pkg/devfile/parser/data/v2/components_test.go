@@ -170,6 +170,196 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 	}
 }
 
+func TestGetDevfileComponents(t *testing.T) {
+
+	tests := []struct {
+		name           string
+		component      []v1.Component
+		wantComponents []string
+		filterOptions  common.DevfileOptions
+		wantErr        bool
+	}{
+		{
+			name:      "Invalid devfile",
+			component: []v1.Component{},
+		},
+		{
+			name: "Get all the components",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"fourthString": "fourthStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			wantComponents: []string{"comp1", "comp2"},
+		},
+		{
+			name: "Get component with the specified filter",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp3",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"fourthString": "fourthStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+				{
+					Name: "comp4",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"fourthString": "fourthStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+				CommandOptions: common.CommandOptions{
+					CommandGroupKind: v1.BuildCommandGroupKind,
+					CommandType:      v1.CompositeCommandType,
+				},
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.VolumeComponentType,
+				},
+			},
+			wantComponents: []string{"comp3"},
+		},
+		{
+			name: "Wrong filter for component",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstStringIsWrong": "firstStringValue",
+				},
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Invalid component type",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DevfileV2{
+				v1.Devfile{
+					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+							Components: tt.component,
+						},
+					},
+				},
+			}
+
+			components, err := d.GetComponents(tt.filterOptions)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetDevfileComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				// confirm the length of actual vs expected
+				if len(components) != len(tt.wantComponents) {
+					t.Errorf("TestGetDevfileComponents() error - length of expected components is not the same as the length of actual components")
+					return
+				}
+
+				// compare the component slices for content
+				for _, wantComponent := range tt.wantComponents {
+					matched := false
+					for _, component := range components {
+						if wantComponent == component.Name {
+							matched = true
+						}
+					}
+
+					if !matched {
+						t.Errorf("TestGetDevfileComponents() error - component %s not found in the devfile", wantComponent)
+					}
+				}
+			}
+		})
+	}
+
+}
+
 func TestGetDevfileContainerComponents(t *testing.T) {
 
 	tests := []struct {

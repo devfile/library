@@ -55,7 +55,7 @@ type DevfileData interface {
 	GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent
 	SetDevfileWorkspace(content v1.DevWorkspaceTemplateSpecContent)
 
-	//utils
+	// utils
 	GetDevfileContainerComponents(common.DevfileOptions) ([]v1.Component, error)
 	GetDevfileVolumeComponents(common.DevfileOptions) ([]v1.Component, error)
 }

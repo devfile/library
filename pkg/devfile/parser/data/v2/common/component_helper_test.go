@@ -91,13 +91,13 @@ func TestIsVolume(t *testing.T) {
 func TestGetComponentType(t *testing.T) {
 
 	tests := []struct {
-		name         string
-		component    v1.Component
-		wantErr      bool
-		componentype v1.ComponentType
+		name          string
+		component     v1.Component
+		wantErr       bool
+		componentType v1.ComponentType
 	}{
 		{
-			name: "Case 1: Volume component",
+			name: "Volume component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
@@ -106,66 +106,66 @@ func TestGetComponentType(t *testing.T) {
 					},
 				},
 			},
-			componentype: v1.VolumeComponentType,
-			wantErr:      false,
+			componentType: v1.VolumeComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 2: Openshift component",
+			name: "Openshift component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
 					Openshift: &v1.OpenshiftComponent{},
 				},
 			},
-			componentype: v1.OpenshiftComponentType,
-			wantErr:      false,
+			componentType: v1.OpenshiftComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 3: Kubernetes component",
+			name: "Kubernetes component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
 					Kubernetes: &v1.KubernetesComponent{},
 				},
 			},
-			componentype: v1.KubernetesComponentType,
-			wantErr:      false,
+			componentType: v1.KubernetesComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 4: Container component",
+			name: "Container component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
 					Container: &v1.ContainerComponent{},
 				},
 			},
-			componentype: v1.ContainerComponentType,
-			wantErr:      false,
+			componentType: v1.ContainerComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 5: Plugin component",
+			name: "Plugin component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
 					Plugin: &v1.PluginComponent{},
 				},
 			},
-			componentype: v1.PluginComponentType,
-			wantErr:      false,
+			componentType: v1.PluginComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 6: Custom component",
+			name: "Custom component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
 					Custom: &v1.CustomComponent{},
 				},
 			},
-			componentype: v1.CustomComponentType,
-			wantErr:      false,
+			componentType: v1.CustomComponentType,
+			wantErr:       false,
 		},
 		{
-			name: "Case 6: unknown component",
+			name: "Unknown component",
 			component: v1.Component{
 				Name:           "name",
 				ComponentUnion: v1.ComponentUnion{},
@@ -181,8 +181,8 @@ func TestGetComponentType(t *testing.T) {
 				t.Errorf("TestGetComponentType() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.componentype {
-				t.Errorf("TestGetComponentType error: component type mismatch, expected: %v got: %v", tt.componentype, got)
+			if got != tt.componentType {
+				t.Errorf("TestGetComponentType error: component type mismatch, expected: %v got: %v", tt.componentType, got)
 			}
 		})
 	}

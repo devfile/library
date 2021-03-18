@@ -1,4 +1,4 @@
-# Devfile Parser Library
+# Devfile Library
 
 ## About
 
@@ -8,25 +8,43 @@ The Devfile Parser library is a Golang module that:
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
 
+## Usage
+
 The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/github.com/devfile/library). 
 1. To parse a devfile, visit pkg/devfile/parse.go 
-    ```
-    // Parses the devfile and validates the devfile data
-    devfile, err := devfilePkg.ParseAndValidate(devfileLocation)
+   ```
+   // Parses the devfile and validates the devfile data
+   devfile, err := devfilePkg.ParseAndValidate(devfileLocation)
 
-    // To get all the components from the devfile
-    components, err := devfile.Data.GetComponents(DevfileOptions{})
+   // To get all the components from the devfile
+   components, err := devfile.Data.GetComponents(DevfileOptions{})
 
-     // To get all the components from the devfile with attributes tagged - tool: console-import & import: {strategy: Dockerfile}
-    components, err := devfile.Data.GetComponents(DevfileOptions{
-         Filter: map[string]interface{}{
-				"tool": "console-import",
-				"import": map[string]interface{}{
-					"strategy": "Dockerfile",
-				},
+   // To get all the components from the devfile with attributes tagged - tool: console-import
+   // & import: {strategy: Dockerfile}
+   components, err := devfile.Data.GetComponents(DevfileOptions{
+      Filter: map[string]interface{}{
+			"tool": "console-import",
+			"import": map[string]interface{}{
+				"strategy": "Dockerfile",
 			},
-    })
-    ```
+		},
+   })
+
+   // To get all the volume components
+   components, err := devfile.Data.GetComponents(DevfileOptions{
+		ComponentOptions: ComponentOptions{
+			ComponentType: v1.VolumeComponentType,
+		},
+   })
+
+   // To get all the exec commands that belong to the build group
+   commands, err := devfile.Data.GetCommands(DevfileOptions{
+		CommandOptions: CommandOptions{
+			CommandType: v1.ExecCommandType,
+			CommandGroupKind: v1.BuildCommandGroupKind,
+		},
+   })
+   ```
 2. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
    ```
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
@@ -43,8 +61,9 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 	}
 	deployment := generator.GetDeployment(deployParams)
    ```
-   
-<br></br>
+
+## Updating Library Schema
+
 Run `updateApi.sh` can update to use latest `github.com/devfile/api` and update the schema saved under `pkg/devfile/parser/data`
 
 The script also accepts version number as an argument to update devfile schema for a specific devfile version.
@@ -54,15 +73,19 @@ For example, run the following command will update devfile schema for 2.0.0
 ```
 Running the script with no arguments will default to update the latest devfile version
 
+## Projects using devfile/library
 
-## Usage
+The following projects are consuming this library as a Golang dependency
 
-In the future, the following projects will be consuming this library as a Golang dependency
-
-* [Workspace Operator](https://github.com/devfile/devworkspace-operator)
 * [odo](https://github.com/openshift/odo)
 * [OpenShift Console](https://github.com/openshift/console)
+
+In the future, [Workspace Operator](https://github.com/devfile/devworkspace-operator) will be the next consumer of devfile/library.
 
 ## Issues
 
 Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo with the label [area/library](https://github.com/devfile/api/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%2Flibrary) 
+
+## Releases
+
+For devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).

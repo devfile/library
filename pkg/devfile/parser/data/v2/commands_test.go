@@ -12,9 +12,6 @@ import (
 
 func TestDevfile200_GetCommands(t *testing.T) {
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name            string
 		currentCommands []v1.Command
@@ -23,7 +20,7 @@ func TestDevfile200_GetCommands(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "case 1: get the necessary commands",
+			name: "Get all the commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -38,12 +35,11 @@ func TestDevfile200_GetCommands(t *testing.T) {
 					},
 				},
 			},
-			filterOptions: common.DevfileOptions{},
-			wantCommands:  []string{"command1", "command2"},
-			wantErr:       false,
+			wantCommands: []string{"command1", "command2"},
+			wantErr:      false,
 		},
 		{
-			name: "case 2: get the filtered commands",
+			name: "Get the filtered commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -52,7 +48,15 @@ func TestDevfile200_GetCommands(t *testing.T) {
 						"secondString": "secondStringValue",
 					}),
 					CommandUnion: v1.CommandUnion{
-						Exec: &v1.ExecCommand{},
+						Exec: &v1.ExecCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.BuildCommandGroupKind,
+									},
+								},
+							},
+						},
 					},
 				},
 				{
@@ -65,18 +69,74 @@ func TestDevfile200_GetCommands(t *testing.T) {
 						Composite: &v1.CompositeCommand{},
 					},
 				},
+				{
+					Id: "command3",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.BuildCommandGroupKind,
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Id: "command4",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Apply: &v1.ApplyCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.BuildCommandGroupKind,
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Id: "command5",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.RunCommandGroupKind,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
-					"firstString":  "firstStringValue",
-					"secondString": "secondStringValue",
+					"firstString": "firstStringValue",
+				},
+				CommandOptions: common.CommandOptions{
+					CommandGroupKind: v1.BuildCommandGroupKind,
+					CommandType:      v1.CompositeCommandType,
 				},
 			},
-			wantCommands: []string{"command1"},
+			wantCommands: []string{"command3"},
 			wantErr:      false,
 		},
 		{
-			name: "case 3: get the wrong filtered commands",
+			name: "Wrong filter for commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -104,8 +164,25 @@ func TestDevfile200_GetCommands(t *testing.T) {
 					"firstStringIsWrong": "firstStringValue",
 				},
 			},
-			wantCommands: []string{},
-			wantErr:      false,
+			wantErr: false,
+		},
+		{
+			name: "Invalid command type",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				Filter: map[string]interface{}{
+					"firstString": "firstStringValue",
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -121,26 +198,27 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			}
 
 			commands, err := d.GetCommands(tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestDevfile200_GetCommands() unexpected error - %v", err)
-				return
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestDevfile200_GetCommands() expected an error but got nil %v", commands)
-				return
-			} else if tt.wantErr && err != nil {
-				return
-			}
-
-			for _, wantCommand := range tt.wantCommands {
-				matched := false
-				for _, devfileCommand := range commands {
-					if wantCommand == devfileCommand.Id {
-						matched = true
-					}
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_GetCommands() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				// confirm the length of actual vs expected
+				if len(commands) != len(tt.wantCommands) {
+					t.Errorf("TestDevfile200_GetCommands() error - length of expected commands is not the same as the length of actual commands")
+					return
 				}
 
-				if !matched {
-					t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the devfile", wantCommand)
+				// compare the command slices for content
+				for _, wantCommand := range tt.wantCommands {
+					matched := false
+					for _, command := range commands {
+						if wantCommand == command.Id {
+							matched = true
+						}
+					}
+
+					if !matched {
+						t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the devfile", wantCommand)
+					}
 				}
 			}
 		})
