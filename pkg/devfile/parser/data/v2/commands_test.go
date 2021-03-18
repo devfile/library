@@ -20,7 +20,7 @@ func TestDevfile200_GetCommands(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "Get the necessary commands",
+			name: "Get all the commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -35,9 +35,8 @@ func TestDevfile200_GetCommands(t *testing.T) {
 					},
 				},
 			},
-			filterOptions: common.DevfileOptions{},
-			wantCommands:  []string{"command1", "command2"},
-			wantErr:       false,
+			wantCommands: []string{"command1", "command2"},
+			wantErr:      false,
 		},
 		{
 			name: "Get the filtered commands",
@@ -105,6 +104,24 @@ func TestDevfile200_GetCommands(t *testing.T) {
 						},
 					},
 				},
+				{
+					Id: "command5",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{
+							LabeledCommand: v1.LabeledCommand{
+								BaseCommand: v1.BaseCommand{
+									Group: &v1.CommandGroup{
+										Kind: v1.RunCommandGroupKind,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
@@ -119,7 +136,7 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			wantErr:      false,
 		},
 		{
-			name: "Get the wrong filtered commands",
+			name: "Wrong filter for commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -150,7 +167,7 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong command type",
+			name: "Invalid command type",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -183,20 +200,24 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			commands, err := d.GetCommands(tt.filterOptions)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_GetCommands() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			} else if err == nil {
-				assert.Equal(t, len(tt.wantCommands), len(commands), "expected length not the same as returned length")
+				// confirm the length of actual vs expected
+				if len(commands) != len(tt.wantCommands) {
+					t.Errorf("TestDevfile200_GetCommands() error - length of expected commands is not the same as the length of actual commands")
+					return
+				}
 
-				for _, devfileCommand := range commands {
+				// compare the command slices for content
+				for _, wantCommand := range tt.wantCommands {
 					matched := false
-					for _, wantCommand := range tt.wantCommands {
-						if wantCommand == devfileCommand.Id {
+					for _, command := range commands {
+						if wantCommand == command.Id {
 							matched = true
 						}
 					}
 
 					if !matched {
-						t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the expected list", devfileCommand.Id)
+						t.Errorf("TestDevfile200_GetCommands() error - command %s not found in the devfile", wantCommand)
 					}
 				}
 			}

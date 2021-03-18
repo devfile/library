@@ -184,6 +184,32 @@ func TestGetDevfileComponents(t *testing.T) {
 			component: []v1.Component{},
 		},
 		{
+			name: "Get all the components",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"secondString": "secondStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString":  "firstStringValue",
+						"fourthString": "fourthStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			wantComponents: []string{"comp1", "comp2"},
+		},
+		{
 			name: "Get component with the specified filter",
 			component: []v1.Component{
 				{
@@ -241,7 +267,7 @@ func TestGetDevfileComponents(t *testing.T) {
 			wantComponents: []string{"comp3"},
 		},
 		{
-			name: "Get component with the wrong specified filter",
+			name: "Wrong filter for component",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -275,7 +301,7 @@ func TestGetDevfileComponents(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong component type",
+			name: "Invalid component type",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -308,20 +334,24 @@ func TestGetDevfileComponents(t *testing.T) {
 			components, err := d.GetComponents(tt.filterOptions)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetDevfileComponents() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			} else if err == nil {
-				assert.Equal(t, len(tt.wantComponents), len(components), "expected length not the same as returned length")
+				// confirm the length of actual vs expected
+				if len(components) != len(tt.wantComponents) {
+					t.Errorf("TestGetDevfileComponents() error - length of expected components is not the same as the length of actual components")
+					return
+				}
 
-				for _, devfileComponent := range components {
+				// compare the component slices for content
+				for _, wantComponent := range tt.wantComponents {
 					matched := false
-					for _, wantComponent := range tt.wantComponents {
-						if wantComponent == devfileComponent.Name {
+					for _, component := range components {
+						if wantComponent == component.Name {
 							matched = true
 						}
 					}
 
 					if !matched {
-						t.Errorf("TestGetDevfileComponents() error - component %s not found in the expected list", devfileComponent.Name)
+						t.Errorf("TestGetDevfileComponents() error - component %s not found in the devfile", wantComponent)
 					}
 				}
 			}

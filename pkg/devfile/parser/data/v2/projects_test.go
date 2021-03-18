@@ -21,7 +21,7 @@ func TestDevfile200_GetProjects(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "Get the necessary projects",
+			name: "Get all the projects",
 			currentProjects: []v1.Project{
 				{
 					Name: "project1",
@@ -78,7 +78,7 @@ func TestDevfile200_GetProjects(t *testing.T) {
 			wantErr:      false,
 		},
 		{
-			name: "Get the wrong filtered projects",
+			name: "Wrong filter for projects",
 			currentProjects: []v1.Project{
 				{
 					Name: "project1",
@@ -111,7 +111,7 @@ func TestDevfile200_GetProjects(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong project src type",
+			name: "Invalid project src type",
 			currentProjects: []v1.Project{
 				{
 					Name: "project1",
@@ -144,20 +144,24 @@ func TestDevfile200_GetProjects(t *testing.T) {
 			projects, err := d.GetProjects(tt.filterOptions)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_GetProjects() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			} else if err == nil {
-				assert.Equal(t, len(tt.wantProjects), len(projects), "expected length not the same as returned length")
+				// confirm the length of actual vs expected
+				if len(projects) != len(tt.wantProjects) {
+					t.Errorf("TestDevfile200_GetProjects() error - length of expected projects is not the same as the length of actual projects")
+					return
+				}
 
-				for _, devfileProject := range projects {
+				// compare the project slices for content
+				for _, wantProject := range tt.wantProjects {
 					matched := false
-					for _, wantProject := range tt.wantProjects {
-						if wantProject == devfileProject.Name {
+					for _, project := range projects {
+						if wantProject == project.Name {
 							matched = true
 						}
 					}
 
 					if !matched {
-						t.Errorf("TestDevfile200_GetProjects() error - project %s not found in the expected list", devfileProject.Name)
+						t.Errorf("TestDevfile200_GetProjects() error - project %s not found in the devfile", wantProject)
 					}
 				}
 			}
@@ -412,7 +416,7 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 		wantErr                bool
 	}{
 		{
-			name: "Get the necessary projects",
+			name: "Get all the starter projects",
 			currentStarterProjects: []v1.StarterProject{
 				{
 					Name: "project1",
@@ -470,7 +474,7 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 			wantErr:             false,
 		},
 		{
-			name: "Get the wrong filtered starter projects",
+			name: "Wrong filter for starter projects",
 			currentStarterProjects: []v1.StarterProject{
 				{
 					Name: "project1",
@@ -501,7 +505,7 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong starter project src type",
+			name: "Invalid starter project src type",
 			currentStarterProjects: []v1.StarterProject{
 				{
 					Name: "project1",
@@ -531,23 +535,28 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 				},
 			}
 
-			projects, err := d.GetStarterProjects(tt.filterOptions)
+			starterProjects, err := d.GetStarterProjects(tt.filterOptions)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_GetStarterProjects() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			} else if err == nil {
-				assert.Equal(t, len(tt.wantStarterProjects), len(projects), "expected length not the same as returned length")
+				// confirm the length of actual vs expected
+				if len(starterProjects) != len(tt.wantStarterProjects) {
+					t.Errorf("TestDevfile200_GetStarterProjects() error - length of expected starter projects is not the same as the length of actual starter projects")
+					return
+				}
 
-				for _, devfileProject := range projects {
+				// compare the starter project slices for content
+				for _, wantProject := range tt.wantStarterProjects {
 					matched := false
-					for _, wantProject := range tt.wantStarterProjects {
-						if wantProject == devfileProject.Name {
+
+					for _, starterProject := range starterProjects {
+						if wantProject == starterProject.Name {
 							matched = true
 						}
 					}
 
 					if !matched {
-						t.Errorf("TestDevfile200_GetStarterProjects() error - project %s not found in the expected list", devfileProject.Name)
+						t.Errorf("TestDevfile200_GetStarterProjects() error - starter project %s not found in the devfile", wantProject)
 					}
 				}
 			}

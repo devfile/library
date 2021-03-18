@@ -36,9 +36,10 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 
 		// Filter Command Group Kind - Run, Build, etc.
 		commandGroup := common.GetGroup(command)
-		if commandGroup != nil && options.CommandOptions.CommandGroupKind != "" && options.CommandOptions.CommandGroupKind != commandGroup.Kind {
-			continue
-		} else if commandGroup == nil && options.CommandOptions.CommandGroupKind != "" {
+		// exclude conditions:
+		// 1. options group is present and command group is present but does not match
+		// 2. options group is present and command group is not present
+		if options.CommandOptions.CommandGroupKind != "" && ((commandGroup != nil && options.CommandOptions.CommandGroupKind != commandGroup.Kind) || commandGroup == nil) {
 			continue
 		}
 
