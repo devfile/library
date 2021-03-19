@@ -19,14 +19,14 @@ import (
 	"testing"
 
 	dw "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/devworkspace-operator/pkg/config"
-	"github.com/devfile/devfile/library/pkg/flatten/network"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/devfile/library/pkg/flatten/network"
 )
 
+// WorkspaceTemplateDiffOpts are used to compare test output against the expected result.
 var WorkspaceTemplateDiffOpts = cmp.Options{
 	cmpopts.SortSlices(func(a, b dw.Component) bool {
 		return strings.Compare(a.Key(), b.Key()) > 0
@@ -34,31 +34,20 @@ var WorkspaceTemplateDiffOpts = cmp.Options{
 	cmpopts.SortSlices(func(a, b string) bool {
 		return strings.Compare(a, b) > 0
 	}),
-	// TODO: Devworkspace overriding results in empty []string instead of nil
+	// TODO: Devfile overriding results in empty []string instead of nil
 	cmpopts.IgnoreFields(dw.WorkspaceEvents{}, "PostStart", "PreStop", "PostStop"),
 }
 
-var testControllerCfg = &corev1.ConfigMap{
-	Data: map[string]string{
-		"devworkspace.default_dockerimage.redhat-developer.web-terminal": `
-name: default-web-terminal-tooling
-container:
-  name: default-web-terminal-tooling-container
-  image: test-image
-`,
-	},
-}
-
-func SetupControllerCfg() {
-	config.SetupConfigForTesting(testControllerCfg)
-}
-
+// TestCase describes a single test case for the library.
 type TestCase struct {
-	Name   string     `json:"name"`
+	// Name is a descriptive name of what is being tested
+	Name string `json:"name"`
+	// Input describes the test inputs
 	Input  TestInput  `json:"input"`
 	Output TestOutput `json:"output"`
 }
 
+// TestInput defines the inputs required for a test case.
 type TestInput struct {
 	Workspace dw.DevWorkspaceTemplateSpec `json:"workspace,omitempty"`
 	// Plugins is a map of plugin "name" to devworkspace template; namespace is ignored.
@@ -69,6 +58,7 @@ type TestInput struct {
 	Errors map[string]TestPluginError `json:"errors,omitempty"`
 }
 
+// TestPluginError describes an expected error.
 type TestPluginError struct {
 	// IsNotFound marks this error as a kubernetes NotFoundError
 	IsNotFound bool `json:"isNotFound"`
@@ -78,11 +68,14 @@ type TestPluginError struct {
 	Message string `json:"message"`
 }
 
+// TestOutput describes expected test outputs. If errRegexp is not empty, it is compared to the returned error as a regular
+// expression. Otherwise, the output Workspace is compared with the output of the function call.
 type TestOutput struct {
 	Workspace *dw.DevWorkspaceTemplateSpec `json:"workspace,omitempty"`
 	ErrRegexp *string                      `json:"errRegexp,omitempty"`
 }
 
+// LoadTestCaseOrPanic loads the test file at testFilepath.
 func LoadTestCaseOrPanic(t *testing.T, testFilepath string) TestCase {
 	bytes, err := ioutil.ReadFile(testFilepath)
 	if err != nil {
@@ -95,6 +88,7 @@ func LoadTestCaseOrPanic(t *testing.T, testFilepath string) TestCase {
 	return test
 }
 
+// LoadAllTestsOrPanic loads all yaml files in fromDir as test cases.
 func LoadAllTestsOrPanic(t *testing.T, fromDir string) []TestCase {
 	files, err := ioutil.ReadDir(fromDir)
 	if err != nil {
