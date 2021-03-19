@@ -60,9 +60,17 @@ func recursiveResolve(workspace *devfile.DevWorkspaceTemplateSpec, tooling Resol
 	if DevWorkspaceIsFlattened(workspace) {
 		return workspace.DeepCopy(), nil
 	}
+	resolvedParent := &devfile.DevWorkspaceTemplateSpecContent{}
 	if workspace.Parent != nil {
-		// TODO: Add support for flattening DevWorkspace parents
-		return nil, fmt.Errorf("DevWorkspace parent is unsupported")
+		resolvedParentSpec, err := resolveParentComponent(workspace.Parent, tooling)
+		if err != nil {
+			return nil, err
+		}
+		if !DevWorkspaceIsFlattened(resolvedParentSpec) {
+			// TODO: implemenent this
+			return nil, fmt.Errorf("parents containing plugins or parents are not supported")
+		}
+		resolvedParent = &resolvedParentSpec.DevWorkspaceTemplateSpecContent
 	}
 
 	resolvedContent := &devfile.DevWorkspaceTemplateSpecContent{}
@@ -96,7 +104,7 @@ func recursiveResolve(workspace *devfile.DevWorkspaceTemplateSpec, tooling Resol
 		}
 	}
 
-	resolvedContent, err := overriding.MergeDevWorkspaceTemplateSpec(resolvedContent, nil, pluginSpecContents...)
+	resolvedContent, err := overriding.MergeDevWorkspaceTemplateSpec(resolvedContent, resolvedParent, pluginSpecContents...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge DevWorkspace parents/plugins: %w", err)
 	}
@@ -104,6 +112,36 @@ func recursiveResolve(workspace *devfile.DevWorkspaceTemplateSpec, tooling Resol
 	return &devfile.DevWorkspaceTemplateSpec{
 		DevWorkspaceTemplateSpecContent: *resolvedContent,
 	}, nil
+}
+
+// resolveParentComponent resolves the parent DevWorkspaceTemplateSpec that a parent reference refers to.
+func resolveParentComponent(parent *devfile.Parent, tooling ResolverTools) (resolvedParent *devfile.DevWorkspaceTemplateSpec, err error) {
+	switch {
+	case parent.Kubernetes != nil:
+		// Search in default namespace if namespace ref is unset
+		if parent.Kubernetes.Namespace == "" {
+			parent.Kubernetes.Namespace = tooling.DefaultNamespace
+		}
+		resolvedParent, err = resolveElementByKubernetesImport("parent", parent.Kubernetes, tooling)
+	case parent.Uri != "":
+		resolvedParent, err = resolveElementByURI("parent", parent.Uri, tooling)
+	case parent.Id != "":
+		resolvedParent, err = resolveElementById("parent", parent.Id, parent.RegistryUrl, tooling)
+	default:
+		err = fmt.Errorf("devfile parent does not define any resources")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if parent.Components != nil || parent.Commands != nil || parent.Projects != nil || parent.StarterProjects != nil {
+		overrideSpec, err := overriding.OverrideDevWorkspaceTemplateSpec(&resolvedParent.DevWorkspaceTemplateSpecContent, parent.ParentOverrides)
+
+		if err != nil {
+			return nil, err
+		}
+		resolvedParent.DevWorkspaceTemplateSpecContent = *overrideSpec
+	}
+	return resolvedParent, nil
 }
 
 // resolvePluginComponent resolves the DevWorkspaceTemplateSpec that a plugin component refers to. The name parameter is
