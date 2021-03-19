@@ -30,6 +30,8 @@ import (
 type ResolverTools struct {
 	// DefaultNamespace is the default namespace to use for resolving Kubernetes ImportReferences that do not include one
 	DefaultNamespace string
+	// DefaultRegistryURL is the default registry URL to use when a component specifies an id but not registryURL
+	DefaultRegistryURL string
 	// Context is the context used for making Kubernetes or HTTP requests
 	Context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
@@ -116,11 +118,11 @@ func resolvePluginComponent(
 		if plugin.Kubernetes.Namespace == "" {
 			plugin.Kubernetes.Namespace = tooling.DefaultNamespace
 		}
-		resolvedPlugin, err = resolvePluginComponentByKubernetesReference(name, plugin, tooling)
+		resolvedPlugin, err = resolveElementByKubernetesImport(name, plugin.Kubernetes, tooling)
 	case plugin.Uri != "":
-		resolvedPlugin, err = resolvePluginComponentByURI(name, plugin, tooling)
+		resolvedPlugin, err = resolveElementByURI(name, plugin.Uri, tooling)
 	case plugin.Id != "":
-		resolvedPlugin, err = resolvePluginComponentById(name, plugin, tooling)
+		resolvedPlugin, err = resolveElementById(name, plugin.Id, plugin.RegistryUrl, tooling)
 	default:
 		err = fmt.Errorf("plugin %s does not define any resources", name)
 	}
@@ -142,17 +144,17 @@ func resolvePluginComponent(
 	return resolvedPlugin, nil
 }
 
-// resolvePluginComponentByKubernetesReference resolves a plugin specified by a Kubernetes reference.
+// resolveElementByKubernetesImport resolves a plugin specified by a Kubernetes reference.
 // The name parameter is used to construct meaningful error messages (e.g. issue resolving plugin 'name')
-func resolvePluginComponentByKubernetesReference(
+func resolveElementByKubernetesImport(
 	name string,
-	plugin *devfile.PluginComponent,
+	kubeReference *devfile.KubernetesCustomResourceImportReference,
 	tooling ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
 
 	var dwTemplate devfile.DevWorkspaceTemplate
 	namespacedName := types.NamespacedName{
-		Name:      plugin.Kubernetes.Name,
-		Namespace: plugin.Kubernetes.Namespace,
+		Name:      kubeReference.Name,
+		Namespace: kubeReference.Namespace,
 	}
 	err = tooling.K8sClient.Get(tooling.Context, namespacedName, &dwTemplate)
 	if err != nil {
@@ -164,37 +166,42 @@ func resolvePluginComponentByKubernetesReference(
 	return &dwTemplate.Spec, nil
 }
 
-// resolvePluginComponentById resolves a plugin specified by plugin ID and registry URL. The name parameter is used to
-// construct meaningful error messages (e.g. issue resolving plugin 'name')
-func resolvePluginComponentById(
+// resolveElementById resolves a component specified by ID and registry URL. The name parameter is used to
+// construct meaningful error messages (e.g. issue resolving plugin 'name'). When registry URL is empty,
+// the DefaultRegistryURL from tools is used.
+func resolveElementById(
 	name string,
-	plugin *devfile.PluginComponent,
+	id string,
+	registryUrl string,
 	tools ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
 
 	// TODO: Default registry when empty
-	pluginURL, err := url.Parse(plugin.RegistryUrl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse registry URL for plugin %s: %w", name, err)
+	if registryUrl == "" {
+		registryUrl = tools.DefaultRegistryURL
 	}
-	pluginURL.Path = path.Join(pluginURL.Path, "plugins", plugin.Id)
+	pluginURL, err := url.Parse(registryUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse registry URL for component %s: %w", name, err)
+	}
+	pluginURL.Path = path.Join(pluginURL.Path, id)
 
 	dwt, err := network.FetchDevWorkspaceTemplate(pluginURL.String(), tools.HttpClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve plugin %s from registry %s: %w", name, plugin.RegistryUrl, err)
+		return nil, fmt.Errorf("failed to resolve component %s from registry %s: %w", name, registryUrl, err)
 	}
 	return dwt, nil
 }
 
-// resolvePluginComponentByURI resolves a plugin defined by URI. The name parameter is used to construct meaningful
+// resolveElementByURI resolves a plugin defined by URI. The name parameter is used to construct meaningful
 // error messages (e.g. issue resolving plugin 'name')
-func resolvePluginComponentByURI(
+func resolveElementByURI(
 	name string,
-	plugin *devfile.PluginComponent,
+	uri string,
 	tools ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
 
-	dwt, err := network.FetchDevWorkspaceTemplate(plugin.Uri, tools.HttpClient)
+	dwt, err := network.FetchDevWorkspaceTemplate(uri, tools.HttpClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve plugin %s by URI: %w", name, err)
+		return nil, fmt.Errorf("failed to resolve component %s by URI: %w", name, err)
 	}
 	return dwt, nil
 }
