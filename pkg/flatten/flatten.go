@@ -187,14 +187,26 @@ func resolvePluginComponent(
 func resolveElementByKubernetesImport(
 	name string,
 	kubeReference *devfile.KubernetesCustomResourceImportReference,
-	tooling ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
+	tools ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
+
+	if tools.K8sClient == nil {
+		return nil, fmt.Errorf("cannot resolve resources by kubernetes reference: no kubernetes client provided")
+	}
+
+	namespace := kubeReference.Namespace
+	if namespace == "" {
+		if tools.DefaultNamespace == "" {
+			return nil, fmt.Errorf("'%s' specifies a kubernetes reference without namespace and a default is not provided", name)
+		}
+		namespace = tools.DefaultNamespace
+	}
 
 	var dwTemplate devfile.DevWorkspaceTemplate
 	namespacedName := types.NamespacedName{
 		Name:      kubeReference.Name,
-		Namespace: kubeReference.Namespace,
+		Namespace: namespace,
 	}
-	err = tooling.K8sClient.Get(tooling.Context, namespacedName, &dwTemplate)
+	err = tools.K8sClient.Get(tools.Context, namespacedName, &dwTemplate)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, fmt.Errorf("plugin for component %s not found", name)
@@ -213,8 +225,14 @@ func resolveElementById(
 	registryUrl string,
 	tools ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
 
-	// TODO: Default registry when empty
+	if tools.HttpClient == nil {
+		return nil, fmt.Errorf("cannot resolve resources by id: no HTTP client provided")
+	}
+
 	if registryUrl == "" {
+		if tools.DefaultRegistryURL == "" {
+			return nil, fmt.Errorf("'%s' specifies id but has no registryUrl and a default is not provided", name)
+		}
 		registryUrl = tools.DefaultRegistryURL
 	}
 	pluginURL, err := url.Parse(registryUrl)
@@ -236,6 +254,10 @@ func resolveElementByURI(
 	name string,
 	uri string,
 	tools ResolverTools) (resolvedPlugin *devfile.DevWorkspaceTemplateSpec, err error) {
+
+	if tools.HttpClient == nil {
+		return nil, fmt.Errorf("cannot resolve resources by URI: no HTTP client provided")
+	}
 
 	dwt, err := network.FetchDevWorkspaceTemplate(uri, tools.HttpClient)
 	if err != nil {
