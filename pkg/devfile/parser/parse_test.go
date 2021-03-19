@@ -2390,7 +2390,7 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 	defer testServer3.Close()
 	t.Run("it should error out if URI is recursively referenced with multiple references", func(t *testing.T) {
 		err := parseParentAndPlugin(devFileObj)
-		expectedErr := fmt.Sprintf("URI %v%v is recursively referenced", httpPrefix, uri1)
+		expectedErr := fmt.Sprintf("URI %v%v/devfile.yaml is recursively referenced", httpPrefix, uri1)
 		// Unexpected error
 		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
 			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI() unexpected error = %v", err)
