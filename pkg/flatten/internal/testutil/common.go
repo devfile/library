@@ -22,8 +22,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"sigs.k8s.io/yaml"
-
-	"github.com/devfile/library/pkg/flatten/network"
 )
 
 // WorkspaceTemplateDiffOpts are used to compare test output against the expected result.
@@ -53,7 +51,7 @@ type TestInput struct {
 	// Plugins is a map of plugin "name" to devworkspace template; namespace is ignored.
 	Plugins map[string]dw.DevWorkspaceTemplate `json:"plugins,omitempty"`
 	// DevfilePlugins is a map of plugin "name" to devfile
-	DevfilePlugins map[string]network.Devfile `json:"devfilePlugins,omitempty"`
+	DevfilePlugins map[string]dw.Devfile `json:"devfilePlugins,omitempty"`
 	// Errors is a map of plugin name to the error that should be returned when attempting to retrieve it.
 	Errors map[string]TestPluginError `json:"errors,omitempty"`
 }
