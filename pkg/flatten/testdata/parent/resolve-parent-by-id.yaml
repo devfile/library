@@ -33,6 +33,8 @@ output:
   workspace:
     components:
       - name: parent-component
+        attributes:
+          library.devfile.io/imported-by: parent
         container:
           image: test-img
           env:
