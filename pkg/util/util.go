@@ -768,7 +768,7 @@ func HTTPGetRequest(request HTTPRequestParams, cacheFor int) ([]byte, error) {
 
 	// We have a non 1xx / 2xx status, return an error
 	if (resp.StatusCode - 300) > 0 {
-		return nil, errors.Errorf("fail to retrive %s, status code: %s", request.URL, http.StatusText(resp.StatusCode))
+		return nil, errors.Errorf("fail to retrive %s, %v: %s", request.URL, resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 
 	// Process http response
@@ -1032,7 +1032,7 @@ func DownloadFileInMemory(url string) ([]byte, error) {
 	}
 	// We have a non 1xx / 2xx status, return an error
 	if (resp.StatusCode - 300) > 0 {
-		return nil, errors.Errorf("fail to retrive %s, status code: %s", url, http.StatusText(resp.StatusCode))
+		return nil, errors.Errorf("fail to retrive %s, %v: %s", url, resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 	defer resp.Body.Close()
 
