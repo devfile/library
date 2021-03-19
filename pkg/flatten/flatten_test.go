@@ -58,8 +58,9 @@ func TestResolveDevWorkspacePluginRegistry(t *testing.T) {
 			// sanity check: input defines components
 			assert.True(t, len(tt.Input.Workspace.Components) > 0, "Test case defines workspace with no components")
 			testHttpGetter := &testutil.FakeHTTPGetter{
-				Plugins: tt.Input.DevfilePlugins,
-				Errors:  tt.Input.Errors,
+				DevfilePlugins:      tt.Input.DevfilePlugins,
+				DevWorkspacePlugins: tt.Input.Plugins,
+				Errors:              tt.Input.Errors,
 			}
 			testResolverTools := ResolverTools{
 				Context:    context.Background(),
@@ -87,8 +88,9 @@ func TestResolveDevWorkspacePluginURI(t *testing.T) {
 			// sanity check: input defines components
 			assert.True(t, len(tt.Input.Workspace.Components) > 0, "Test case defines workspace with no components")
 			testHttpGetter := &testutil.FakeHTTPGetter{
-				Plugins: tt.Input.DevfilePlugins,
-				Errors:  tt.Input.Errors,
+				DevfilePlugins:      tt.Input.DevfilePlugins,
+				DevWorkspacePlugins: tt.Input.Plugins,
+				Errors:              tt.Input.Errors,
 			}
 			testResolverTools := ResolverTools{
 				Context:    context.Background(),

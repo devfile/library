@@ -26,8 +26,9 @@ import (
 )
 
 type FakeHTTPGetter struct {
-	Plugins map[string]dw.Devfile
-	Errors  map[string]TestPluginError
+	DevfilePlugins      map[string]dw.Devfile
+	DevWorkspacePlugins map[string]dw.DevWorkspaceTemplate
+	Errors              map[string]TestPluginError
 }
 
 var _ network.HTTPGetter = (*FakeHTTPGetter)(nil)
@@ -39,7 +40,18 @@ type fakeRespBody struct {
 func (_ *fakeRespBody) Close() error { return nil }
 
 func (reg *FakeHTTPGetter) Get(location string) (*http.Response, error) {
-	if plugin, ok := reg.Plugins[location]; ok {
+	if plugin, ok := reg.DevfilePlugins[location]; ok {
+		yamlBytes, err := yaml.Marshal(plugin)
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling plugin in test: %w", err)
+		}
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       &fakeRespBody{bytes.NewBuffer(yamlBytes)},
+		}
+		return resp, nil
+	}
+	if plugin, ok := reg.DevWorkspacePlugins[location]; ok {
 		yamlBytes, err := yaml.Marshal(plugin)
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling plugin in test: %w", err)
