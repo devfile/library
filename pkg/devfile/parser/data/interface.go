@@ -47,9 +47,9 @@ type DevfileData interface {
 	DeleteCommand(id string) error
 
 	// volume mount related methods
-	AddVolumeMounts(componentName string, volumeMounts []v1.VolumeMount) error
+	AddVolumeMounts(containerName string, volumeMounts []v1.VolumeMount) error
 	DeleteVolumeMount(name string) error
-	GetVolumeMountPaths(mountName, componentName string) ([]string, error)
+	GetVolumeMountPaths(mountName, containerName string) ([]string, error)
 
 	// workspace related methods
 	GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent
