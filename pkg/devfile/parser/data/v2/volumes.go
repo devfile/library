@@ -70,27 +70,33 @@ func (d *DevfileV2) DeleteVolumeMount(name string) error {
 	return nil
 }
 
-// GetVolumeMountPath gets the mount path of the specified volume mount from the specified container component
-func (d *DevfileV2) GetVolumeMountPath(mountName, componentName string) (string, error) {
+// GetVolumeMountPaths gets all the mount paths of the specified volume mount from the specified container component.
+// A container can mount at different paths for a given volume.
+func (d *DevfileV2) GetVolumeMountPaths(mountName, componentName string) ([]string, error) {
 	componentFound := false
+	var mountPaths []string
 
 	for _, component := range d.Components {
 		if component.Container != nil && component.Name == componentName {
 			componentFound = true
 			for _, volumeMount := range component.Container.VolumeMounts {
 				if volumeMount.Name == mountName {
-					return volumeMount.Path, nil
+					mountPaths = append(mountPaths, volumeMount.Path)
 				}
 			}
 		}
 	}
 
 	if !componentFound {
-		return "", &common.FieldNotFoundError{
+		return mountPaths, &common.FieldNotFoundError{
 			Field: "container component",
 			Name:  componentName,
 		}
 	}
 
-	return "", fmt.Errorf("volume %s not mounted to component %s", mountName, componentName)
+	if len(mountPaths) == 0 {
+		return mountPaths, fmt.Errorf("volume %s not mounted to component %s", mountName, componentName)
+	}
+
+	return mountPaths, nil
 }

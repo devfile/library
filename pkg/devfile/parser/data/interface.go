@@ -49,7 +49,7 @@ type DevfileData interface {
 	// volume mount related methods
 	AddVolumeMounts(componentName string, volumeMounts []v1.VolumeMount) error
 	DeleteVolumeMount(name string) error
-	GetVolumeMountPath(mountName, componentName string) (string, error)
+	GetVolumeMountPaths(mountName, componentName string) ([]string, error)
 
 	// workspace related methods
 	GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent
