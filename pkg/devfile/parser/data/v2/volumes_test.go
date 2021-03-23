@@ -263,16 +263,14 @@ func TestDevfile200_DeleteVolumeMounts(t *testing.T) {
 
 }
 
-func TestDevfile200_GetVolumeMountPath(t *testing.T) {
-	volume1 := "volume1"
-	component1 := "component1"
+func TestDevfile200_GetVolumeMountPaths(t *testing.T) {
 
 	tests := []struct {
 		name              string
 		currentComponents []v1.Component
 		mountName         string
 		componentName     string
-		wantPath          string
+		wantPaths         []string
 		wantErr           bool
 	}{
 		{
@@ -283,17 +281,18 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Container: v1.Container{
 								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount(volume1, "/path"),
+									testingutil.GetFakeVolumeMount("volume1", "/path"),
+									testingutil.GetFakeVolumeMount("volume1", "/path2"),
 								},
 							},
 						},
 					},
-					Name: component1,
+					Name: "component1",
 				},
 			},
-			wantPath:      "/path",
-			mountName:     volume1,
-			componentName: component1,
+			wantPaths:     []string{"/path", "/path2"},
+			mountName:     "volume1",
+			componentName: "component1",
 			wantErr:       false,
 		},
 		{
@@ -304,16 +303,16 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Container: v1.Container{
 								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount(volume1, "/path"),
+									testingutil.GetFakeVolumeMount("volume1", "/path"),
 								},
 							},
 						},
 					},
-					Name: component1,
+					Name: "component1",
 				},
 			},
 			mountName:     "volume2",
-			componentName: component1,
+			componentName: "component1",
 			wantErr:       true,
 		},
 		{
@@ -324,15 +323,15 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Container: v1.Container{
 								VolumeMounts: []v1.VolumeMount{
-									testingutil.GetFakeVolumeMount(volume1, "/path"),
+									testingutil.GetFakeVolumeMount("volume1", "/path"),
 								},
 							},
 						},
 					},
-					Name: component1,
+					Name: "component1",
 				},
 			},
-			mountName:     volume1,
+			mountName:     "volume1",
 			componentName: "component2",
 			wantErr:       true,
 		},
@@ -348,11 +347,26 @@ func TestDevfile200_GetVolumeMountPath(t *testing.T) {
 					},
 				},
 			}
-			gotPath, err := d.GetVolumeMountPath(tt.mountName, tt.componentName)
+			gotPaths, err := d.GetVolumeMountPaths(tt.mountName, tt.componentName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetVolumeMountPath() error = %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
-				assert.Equal(t, tt.wantPath, gotPath, "The two values should be the same.")
+				if len(gotPaths) != len(tt.wantPaths) {
+					t.Error("expected mount paths length not the same as actual mount paths length")
+				}
+
+				for _, wantPath := range tt.wantPaths {
+					matched := false
+					for _, gotPath := range gotPaths {
+						if wantPath == gotPath {
+							matched = true
+						}
+					}
+
+					if !matched {
+						t.Errorf("unable to find the wanted mount path %s in the actual mount paths slice", wantPath)
+					}
+				}
 			}
 		})
 	}
