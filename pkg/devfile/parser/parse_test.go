@@ -2466,7 +2466,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 			Parent: &v1.Parent{
 				ImportReference: v1.ImportReference{
-					RegistryUrl: validRegistry,
+					RegistryUrl: "http://" + validRegistry,
 					ImportReferenceUnion: v1.ImportReferenceUnion{
 						Id: "nodejs",
 					},
@@ -2577,7 +2577,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	}
 
 	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
-	ctxWithRegistry.SetRegistryURLs([]string{validRegistry})
+	ctxWithRegistry.SetRegistryURLs([]string{"http://" + validRegistry})
 
 	tests := []struct {
 		name                   string
@@ -2908,7 +2908,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	)
 
 	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
-	ctxWithRegistry.SetRegistryURLs([]string{registry})
+	ctxWithRegistry.SetRegistryURLs([]string{"http://" + registry})
 
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
@@ -2983,6 +2983,7 @@ func Test_parseFromRegistry(t *testing.T) {
 			wantDevFile:   parentDevfile,
 			registryUrl:   registry,
 			registryId:    registryId,
+			wantErr:       true,
 		},
 		{
 			name:          "should be able to parse from provided registryUrl with prefix",
@@ -3026,7 +3027,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
+			if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
 			}
 		})
