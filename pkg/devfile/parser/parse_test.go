@@ -2978,7 +2978,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		wantErr       bool
 	}{
 		{
-			name:          "should be able to parse from provided registryUrl without prefix",
+			name:          "should fail if provided registryUrl does not have protocol prefix",
 			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 			wantDevFile:   parentDevfile,
 			registryUrl:   registry,
