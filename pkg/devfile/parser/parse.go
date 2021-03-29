@@ -1,11 +1,16 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/devfile/library/pkg/util"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
 	"net/url"
 	"path"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
@@ -165,17 +170,20 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 		if !reflect.DeepEqual(parent, &v1.Parent{}) {
 
 			var parentDevfileObj DevfileObj
-			if parent.Uri != "" {
+			switch {
+			case parent.Uri != "":
 				parentDevfileObj, err = parseFromURI(parent.Uri, d.Ctx)
 				if err != nil {
 					return err
 				}
-			} else if parent.Id != "" {
+			case parent.Id != "":
 				parentDevfileObj, err = parseFromRegistry(parent.Id, parent.RegistryUrl, d.Ctx)
 				if err != nil {
 					return err
 				}
-			} else {
+			case parent.Kubernetes != nil:
+				parentDevfileObj, err = parseFromKubeCRD(parent.Kubernetes.Namespace, parent.Kubernetes.Name, d.Ctx)
+			default:
 				return fmt.Errorf("parent URI or parent Id undefined, currently only URI and Id are suppported")
 			}
 
@@ -202,13 +210,21 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 		if component.Plugin != nil && !reflect.DeepEqual(component.Plugin, &v1.PluginComponent{}) {
 			plugin := component.Plugin
 			var pluginDevfileObj DevfileObj
-			if plugin.Uri != "" {
+			switch {
+			case plugin.Uri != "":
 				pluginDevfileObj, err = parseFromURI(plugin.Uri, d.Ctx)
 				if err != nil {
 					return err
 				}
-			} else {
-				return fmt.Errorf("plugin URI undefined, currently only URI is suppported")
+			case plugin.Id != "":
+				pluginDevfileObj, err = parseFromRegistry(plugin.Id, plugin.RegistryUrl, d.Ctx)
+				if err != nil {
+					return err
+				}
+			case plugin.Kubernetes != nil:
+				pluginDevfileObj, err = parseFromKubeCRD(plugin.Kubernetes.Namespace, plugin.Kubernetes.Name, d.Ctx)
+			default:
+				return fmt.Errorf("plugin URI or plugin Id undefined, currently only URI and Id are suppported")
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspace()
 			flattenedPlugin := pluginWorkspaceContent
@@ -262,16 +278,16 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 	return populateAndParseDevfile(d, true)
 }
 
-func parseFromRegistry(parentId, registryURL string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+func parseFromRegistry(Id, registryURL string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(parentId, registryURL)
+		devfileContent, err := getDevfileFromRegistry(Id, registryURL)
 		if err != nil {
 			return DevfileObj{}, err
 		}
 		return ParseDevfile(ParserArgs{Data: devfileContent, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
 	} else if curDevfileCtx.GetRegistryURLs() != nil {
 		for _, registry := range curDevfileCtx.GetRegistryURLs() {
-			devfileContent, err := getDevfileFromRegistry(parentId, registry)
+			devfileContent, err := getDevfileFromRegistry(Id, registry)
 			if devfileContent != nil && err == nil {
 				return ParseDevfile(ParserArgs{Data: devfileContent, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
 			}
@@ -280,15 +296,64 @@ func parseFromRegistry(parentId, registryURL string, curDevfileCtx devfileCtx.De
 		return DevfileObj{}, fmt.Errorf("failed to fetch from registry, registry URL is not provided")
 	}
 
-	return DevfileObj{}, fmt.Errorf("failed to get parent Id: %s from registry URLs provided", parentId)
+	return DevfileObj{}, fmt.Errorf("failed to get Id: %s from registry URLs provided", Id)
 }
 
-func getDevfileFromRegistry(parentId, registryURL string) ([]byte, error) {
+func getDevfileFromRegistry(Id, registryURL string) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
 	}
 	param := util.HTTPRequestParams{
-		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, parentId),
+		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, Id),
 	}
 	return util.HTTPGetRequest(param, 0)
+}
+
+func parseFromKubeCRD(providedNamespace, name string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+
+	kclient, namespace, err := getDevfileFromKubeCRD(providedNamespace)
+	if err != nil {
+		return DevfileObj{}, err
+	}
+
+	var dwTemplate v1.DevWorkspaceTemplate
+	namespacedName := types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}
+	err = kclient.Get(context.TODO(), namespacedName, &dwTemplate)
+
+	if err != nil {
+		return DevfileObj{}, err
+	}
+	data, err := json.Marshal(dwTemplate)
+	if err != nil {
+		return DevfileObj{}, err
+	}
+
+	return ParseDevfile(ParserArgs{Data: data, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
+}
+
+func getDevfileFromKubeCRD(namespace string) (client.Client, string, error) {
+	cfg, err := config.GetConfig()
+	if err != nil {
+		return nil, "", err
+	}
+	// Instantiate an instance of conroller-runtime client
+	controllerClient, err := client.New(cfg, client.Options{})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if namespace == "" {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+		namespace, _, err = config.Namespace()
+		if err != nil {
+			return nil, "", fmt.Errorf("kubernetes namespace is not provided, and cannot get current running cluster's namespace: %v", err)
+		}
+	}
+
+	return controllerClient, namespace, nil
 }
