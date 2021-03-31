@@ -6,7 +6,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
+	"context"
 
 	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
@@ -42,6 +44,15 @@ type DevfileCtx struct {
 
 	// registry URLs list
 	registryURLs []string
+
+	// default namespace to resolve kubernetes import reference
+	defaultNameSpace string
+
+	// kubeContext is the context used for making Kubernetes requests
+	kubeContext context.Context
+
+	// k8sClient is the Kubernetes client instance used for interacting with a cluster
+	k8sClient client.Client
 }
 
 // NewDevfileCtx returns a new DevfileCtx type object
@@ -184,4 +195,34 @@ func (d *DevfileCtx) GetRegistryURLs() []string {
 // SetRegistryURLs set registry URLs in the devfile ctx
 func (d *DevfileCtx) SetRegistryURLs(registryURLs []string) {
 	d.registryURLs = registryURLs
+}
+
+// GetDefaultNameSpace func returns current devfile default namespace
+func (d *DevfileCtx) GetDefaultNameSpace() string {
+	return d.defaultNameSpace
+}
+
+// SetDefaultNameSpace set default namespace in the devfile ctx
+func (d *DevfileCtx) SetDefaultNameSpace(defaultNameSpace string) {
+	d.defaultNameSpace = defaultNameSpace
+}
+
+// SetKubeContext set context in the devfile ctx
+func (d *DevfileCtx) SetKubeContext(kubeContext context.Context) {
+	d.kubeContext = kubeContext
+}
+
+// GetKubeContext func returns current devfile context to make Kubernetes request
+func (d *DevfileCtx) GetKubeContext() context.Context {
+	return d.kubeContext
+}
+
+// SetKubeContext set Kubernetes client instance in the devfile ctx
+func (d *DevfileCtx) SetK8sClient(k8sClient client.Client) {
+	d.k8sClient = k8sClient
+}
+
+// GetK8sClient func returns current devfile Kubernetes client instance to interact with a cluster
+func (d *DevfileCtx) GetK8sClient() client.Client {
+	return d.k8sClient
 }

@@ -74,11 +74,19 @@ type ParserArgs struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	RegistryURLs []string
+	// DefaultNamespace is the default namespace to use
+	// If namespace is defined under ImportReferences.Kubernetes, this namespace will be ignored.
+	DefaultNameSpace string
+	// Context is the context used for making Kubernetes requests
+	Context context.Context
+	// K8sClient is the Kubernetes client instance used for interacting with a cluster
+	K8sClient client.Client
 }
 
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
+	resolutionCtx := &resolutionContextTree{}
 	if args.Data != nil {
 		d.Ctx = devfileCtx.DevfileCtx{}
 		err = d.Ctx.SetDevfileContentFromBytes(args.Data)
@@ -87,8 +95,10 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		}
 	} else if args.Path != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(args.Path)
+		resolutionCtx.importReference.Uri = args.Path
 	} else if args.URL != "" {
 		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
+		resolutionCtx.importReference.Uri = args.URL
 	} else {
 		return d, errors.Wrap(err, "the devfile source is not provided")
 	}
@@ -96,16 +106,25 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	if args.RegistryURLs != nil {
 		d.Ctx.SetRegistryURLs(args.RegistryURLs)
 	}
+	if args.DefaultNameSpace != "" {
+		d.Ctx.SetDefaultNameSpace(args.DefaultNameSpace)
+	}
+	if args.Context != nil {
+		d.Ctx.SetKubeContext(args.Context)
+	}
+	if args.K8sClient != nil {
+		d.Ctx.SetK8sClient(args.K8sClient)
+	}
 
 	flattenedDevfile := true
 	if args.FlattenedDevfile != nil {
 		flattenedDevfile = *args.FlattenedDevfile
 	}
 
-	return populateAndParseDevfile(d, flattenedDevfile)
+	return populateAndParseDevfile(d,resolutionCtx, flattenedDevfile)
 }
 
-func populateAndParseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
+func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, flattenedDevfile bool) (DevfileObj, error) {
 	var err error
 
 	// Fill the fields of DevfileCtx struct
@@ -275,6 +294,11 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		d.Ctx = devfileCtx.NewURLDevfileCtx(u.String())
 	}
 	d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
+	d.Ctx.SetKubeContext(curDevfileCtx.GetKubeContext())
+	d.Ctx.SetRegistryURLs(curDevfileCtx.GetRegistryURLs())
+	d.Ctx.SetK8sClient(curDevfileCtx.GetK8sClient())
+	d.Ctx.SetDefaultNameSpace(curDevfileCtx.GetDefaultNameSpace())
+
 	return populateAndParseDevfile(d, true)
 }
 
@@ -284,12 +308,23 @@ func parseFromRegistry(Id, registryURL string, curDevfileCtx devfileCtx.DevfileC
 		if err != nil {
 			return DevfileObj{}, err
 		}
-		return ParseDevfile(ParserArgs{Data: devfileContent, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
+
+		return ParseDevfile( ParserArgs{
+			Data: devfileContent,
+			RegistryURLs: curDevfileCtx.GetRegistryURLs(),
+			DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
+			Context: curDevfileCtx.GetKubeContext(),
+			K8sClient:curDevfileCtx.GetK8sClient()} )
 	} else if curDevfileCtx.GetRegistryURLs() != nil {
 		for _, registry := range curDevfileCtx.GetRegistryURLs() {
 			devfileContent, err := getDevfileFromRegistry(Id, registry)
 			if devfileContent != nil && err == nil {
-				return ParseDevfile(ParserArgs{Data: devfileContent, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
+				return ParseDevfile( ParserArgs{
+					Data: devfileContent,
+					RegistryURLs: curDevfileCtx.GetRegistryURLs(),
+					DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
+					Context: curDevfileCtx.GetKubeContext(),
+					K8sClient:curDevfileCtx.GetK8sClient()} )
 			}
 		}
 	} else {
@@ -331,7 +366,12 @@ func parseFromKubeCRD(providedNamespace, name string, curDevfileCtx devfileCtx.D
 		return DevfileObj{}, err
 	}
 
-	return ParseDevfile(ParserArgs{Data: data, RegistryURLs: curDevfileCtx.GetRegistryURLs()})
+	return ParseDevfile( ParserArgs{
+		Data: data,
+		RegistryURLs: curDevfileCtx.GetRegistryURLs(),
+		DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
+		Context: curDevfileCtx.GetKubeContext(),
+		K8sClient:curDevfileCtx.GetK8sClient()} )
 }
 
 func getDevfileFromKubeCRD(namespace string) (client.Client, string, error) {
