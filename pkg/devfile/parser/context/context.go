@@ -6,9 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
-	"context"
 
 	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
@@ -38,21 +36,6 @@ type DevfileCtx struct {
 
 	// filesystem for devfile
 	fs filesystem.Filesystem
-
-	// trace of all url referenced
-	uriMap map[string]bool
-
-	// registry URLs list
-	registryURLs []string
-
-	// default namespace to resolve kubernetes import reference
-	defaultNameSpace string
-
-	// kubeContext is the context used for making Kubernetes requests
-	kubeContext context.Context
-
-	// k8sClient is the Kubernetes client instance used for interacting with a cluster
-	k8sClient client.Client
 }
 
 // NewDevfileCtx returns a new DevfileCtx type object
@@ -99,13 +82,6 @@ func (d *DevfileCtx) Populate() (err error) {
 		return err
 	}
 	klog.V(4).Infof("absolute devfile path: '%s'", d.absPath)
-	if d.uriMap == nil {
-		d.uriMap = make(map[string]bool)
-	}
-	if d.uriMap[d.absPath] {
-		return fmt.Errorf("URI %v is recursively referenced", d.absPath)
-	}
-	d.uriMap[d.absPath] = true
 	// Read and save devfile content
 	if err := d.SetDevfileContent(); err != nil {
 		return err
@@ -129,13 +105,6 @@ func (d *DevfileCtx) PopulateFromURL() (err error) {
 		}
 		d.url = u.String()
 	}
-	if d.uriMap == nil {
-		d.uriMap = make(map[string]bool)
-	}
-	if d.uriMap[d.url] {
-		return fmt.Errorf("URI %v is recursively referenced", d.url)
-	}
-	d.uriMap[d.url] = true
 	// Read and save devfile content
 	if err := d.SetDevfileContent(); err != nil {
 		return err
@@ -175,54 +144,4 @@ func (d *DevfileCtx) SetAbsPath() (err error) {
 
 	return nil
 
-}
-
-// GetURIMap func returns current devfile uri map
-func (d *DevfileCtx) GetURIMap() map[string]bool {
-	return d.uriMap
-}
-
-// SetURIMap set uri map in the devfile ctx
-func (d *DevfileCtx) SetURIMap(uriMap map[string]bool) {
-	d.uriMap = uriMap
-}
-
-// GetRegistryURLs func returns current devfile registry URLs
-func (d *DevfileCtx) GetRegistryURLs() []string {
-	return d.registryURLs
-}
-
-// SetRegistryURLs set registry URLs in the devfile ctx
-func (d *DevfileCtx) SetRegistryURLs(registryURLs []string) {
-	d.registryURLs = registryURLs
-}
-
-// GetDefaultNameSpace func returns current devfile default namespace
-func (d *DevfileCtx) GetDefaultNameSpace() string {
-	return d.defaultNameSpace
-}
-
-// SetDefaultNameSpace set default namespace in the devfile ctx
-func (d *DevfileCtx) SetDefaultNameSpace(defaultNameSpace string) {
-	d.defaultNameSpace = defaultNameSpace
-}
-
-// SetKubeContext set context in the devfile ctx
-func (d *DevfileCtx) SetKubeContext(kubeContext context.Context) {
-	d.kubeContext = kubeContext
-}
-
-// GetKubeContext func returns current devfile context to make Kubernetes request
-func (d *DevfileCtx) GetKubeContext() context.Context {
-	return d.kubeContext
-}
-
-// SetKubeContext set Kubernetes client instance in the devfile ctx
-func (d *DevfileCtx) SetK8sClient(k8sClient client.Client) {
-	d.k8sClient = k8sClient
-}
-
-// GetK8sClient func returns current devfile Kubernetes client instance to interact with a cluster
-func (d *DevfileCtx) GetK8sClient() client.Client {
-	return d.k8sClient
 }

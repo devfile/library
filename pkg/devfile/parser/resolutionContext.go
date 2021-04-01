@@ -14,8 +14,8 @@ type resolutionContextTree struct {
 	parentNode      *resolutionContextTree
 }
 
-// addPlugin adds a plugin component to the resolution context.
-func (t *resolutionContextTree) addPlugin(name string, importReference v1.ImportReference) *resolutionContextTree {
+// appendNode adds a new node to the resolution context.
+func (t *resolutionContextTree) appendNode(importReference v1.ImportReference) *resolutionContextTree {
 	newNode := &resolutionContextTree{
 		importReference: importReference,
 		parentNode:      t,
@@ -30,7 +30,7 @@ func (t *resolutionContextTree) hasCycle() error {
 	for currNode.parentNode != nil {
 		for _, seenRef := range seenRefs {
 			if reflect.DeepEqual(seenRef, currNode.importReference) {
-				return fmt.Errorf("devfile has an cycle in references: %v", currNode.importReference)
+				return fmt.Errorf("devfile has an cycle in references: %v", formatImportCycle(t))
 			}
 		}
 		seenRefs = append(seenRefs, currNode.importReference)
@@ -39,16 +39,29 @@ func (t *resolutionContextTree) hasCycle() error {
 	return nil
 }
 
-//// formatImportCycle is a utility method for formatting a cycle that has been detected. Output is formatted as
-//// plugin1 -> plugin2 -> plugin3 -> plugin1, where pluginX are component names.
-//func formatImportCycle(end *resolutionContextTree) string {
-//	cycle := fmt.Sprintf("%v", end.importReference)
-//	for end.parentNode != nil {
-//		end = end.parentNode
-//		if end.parentNode == nil {
-//			end.componentName = "devfile"
-//		}
-//		cycle = fmt.Sprintf("%s -> %s", end.componentName, cycle)
-//	}
-//	return cycle
-//}
+// formatImportCycle is a utility method for formatting a cycle that has been detected. Output is formatted as
+// plugin1 -> plugin2 -> plugin3 -> plugin1, where pluginX are component names.
+func formatImportCycle(end *resolutionContextTree) string {
+	cycle := resolveImportReference(end.importReference)
+	for end.parentNode != nil {
+		end = end.parentNode
+		cycle = fmt.Sprintf("%s -> %s", resolveImportReference(end.importReference), cycle)
+	}
+	return cycle
+}
+
+func resolveImportReference(importReference v1.ImportReference) string {
+	if !reflect.DeepEqual(importReference, v1.ImportReference{}) {
+		switch {
+		case importReference.Uri != "":
+			return fmt.Sprintf("uri: %s", importReference.Uri)
+		case importReference.Id != "":
+			return fmt.Sprintf("id: %s, registryURL: %s", importReference.Id, importReference.RegistryUrl)
+		case importReference.Kubernetes != nil:
+			return fmt.Sprintf("name: %s, namespace: %s", importReference.Kubernetes.Name, importReference.Kubernetes.Namespace)
+		}
+
+	}
+	// the first node
+	return "main devfile"
+}

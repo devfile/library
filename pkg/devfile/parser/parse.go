@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
 
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
@@ -28,7 +27,7 @@ import (
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
-func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
+func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
 
 	// Validate devfile
 	err := d.Ctx.Validate()
@@ -49,7 +48,7 @@ func parseDevfile(d DevfileObj, flattenedDevfile bool) (DevfileObj, error) {
 	}
 
 	if flattenedDevfile {
-		err = parseParentAndPlugin(d)
+		err = parseParentAndPlugin(d, resolveCtx, tool)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -86,7 +85,6 @@ type ParserArgs struct {
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
-	resolutionCtx := &resolutionContextTree{}
 	if args.Data != nil {
 		d.Ctx = devfileCtx.DevfileCtx{}
 		err = d.Ctx.SetDevfileContentFromBytes(args.Data)
@@ -95,25 +93,17 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		}
 	} else if args.Path != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(args.Path)
-		resolutionCtx.importReference.Uri = args.Path
 	} else if args.URL != "" {
 		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
-		resolutionCtx.importReference.Uri = args.URL
 	} else {
 		return d, errors.Wrap(err, "the devfile source is not provided")
 	}
 
-	if args.RegistryURLs != nil {
-		d.Ctx.SetRegistryURLs(args.RegistryURLs)
-	}
-	if args.DefaultNameSpace != "" {
-		d.Ctx.SetDefaultNameSpace(args.DefaultNameSpace)
-	}
-	if args.Context != nil {
-		d.Ctx.SetKubeContext(args.Context)
-	}
-	if args.K8sClient != nil {
-		d.Ctx.SetK8sClient(args.K8sClient)
+	tool := resolverTools{
+		defaultNamespace: args.DefaultNameSpace,
+		registryURLs:     args.RegistryURLs,
+		context:          args.Context,
+		k8sClient:        args.K8sClient,
 	}
 
 	flattenedDevfile := true
@@ -121,12 +111,27 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		flattenedDevfile = *args.FlattenedDevfile
 	}
 
-	return populateAndParseDevfile(d,resolutionCtx, flattenedDevfile)
+	return populateAndParseDevfile(d, &resolutionContextTree{}, tool, flattenedDevfile)
 }
 
-func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, flattenedDevfile bool) (DevfileObj, error) {
-	var err error
+// resolverTools contains required structs and data for resolving remote components of a devfile (plugins and parents)
+type resolverTools struct {
+	// DefaultNamespace is the default namespace to use for resolving Kubernetes ImportReferences that do not include one
+	defaultNamespace string
+	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
+	// If registryUrl is defined in devfile, this list will be ignored.
+	registryURLs []string
+	// Context is the context used for making Kubernetes or HTTP requests
+	context context.Context
+	// K8sClient is the Kubernetes client instance used for interacting with a cluster
+	k8sClient client.Client
+}
 
+func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
+	var err error
+	if err = resolveCtx.hasCycle(); err != nil {
+		return DevfileObj{}, err
+	}
 	// Fill the fields of DevfileCtx struct
 	if d.Ctx.GetURL() != "" {
 		err = d.Ctx.PopulateFromURL()
@@ -139,7 +144,7 @@ func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, fl
 		return d, err
 	}
 
-	return parseDevfile(d, flattenedDevfile)
+	return parseDevfile(d, resolveCtx, tool, flattenedDevfile)
 }
 
 // Parse func populates the flattened devfile data, parses and validates the devfile integrity.
@@ -149,8 +154,7 @@ func Parse(path string) (d DevfileObj, err error) {
 
 	// NewDevfileCtx
 	d.Ctx = devfileCtx.NewDevfileCtx(path)
-
-	return populateAndParseDevfile(d, true)
+	return populateAndParseDevfile(d, &resolutionContextTree{}, resolverTools{}, true)
 }
 
 // ParseRawDevfile populates the raw devfile data without overriding and merging
@@ -158,8 +162,7 @@ func Parse(path string) (d DevfileObj, err error) {
 func ParseRawDevfile(path string) (d DevfileObj, err error) {
 	// NewDevfileCtx
 	d.Ctx = devfileCtx.NewDevfileCtx(path)
-
-	return populateAndParseDevfile(d, false)
+	return populateAndParseDevfile(d, &resolutionContextTree{}, resolverTools{}, false)
 }
 
 // ParseFromURL func parses and validates the devfile integrity.
@@ -167,7 +170,7 @@ func ParseRawDevfile(path string) (d DevfileObj, err error) {
 // Deprecated, use ParseDevfile() instead
 func ParseFromURL(url string) (d DevfileObj, err error) {
 	d.Ctx = devfileCtx.NewURLDevfileCtx(url)
-	return populateAndParseDevfile(d, true)
+	return populateAndParseDevfile(d, &resolutionContextTree{}, resolverTools{}, true)
 }
 
 // ParseFromData func parses and validates the devfile integrity.
@@ -179,10 +182,10 @@ func ParseFromData(data []byte) (d DevfileObj, err error) {
 	if err != nil {
 		return d, errors.Wrap(err, "failed to set devfile content from bytes")
 	}
-	return populateAndParseDevfile(d, true)
+	return populateAndParseDevfile(d, &resolutionContextTree{}, resolverTools{}, true)
 }
 
-func parseParentAndPlugin(d DevfileObj) (err error) {
+func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools) (err error) {
 	flattenedParent := &v1.DevWorkspaceTemplateSpecContent{}
 	parent := d.Data.GetParent()
 	if parent != nil {
@@ -191,17 +194,17 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			var parentDevfileObj DevfileObj
 			switch {
 			case parent.Uri != "":
-				parentDevfileObj, err = parseFromURI(parent.Uri, d.Ctx)
+				parentDevfileObj, err = parseFromURI(parent.ImportReference, d.Ctx, resolveCtx, tool)
 				if err != nil {
 					return err
 				}
 			case parent.Id != "":
-				parentDevfileObj, err = parseFromRegistry(parent.Id, parent.RegistryUrl, d.Ctx)
+				parentDevfileObj, err = parseFromRegistry(parent.ImportReference, resolveCtx, tool)
 				if err != nil {
 					return err
 				}
 			case parent.Kubernetes != nil:
-				parentDevfileObj, err = parseFromKubeCRD(parent.Kubernetes.Namespace, parent.Kubernetes.Name, d.Ctx)
+				parentDevfileObj, err = parseFromKubeCRD(parent.ImportReference, resolveCtx, tool)
 			default:
 				return fmt.Errorf("parent URI or parent Id undefined, currently only URI and Id are suppported")
 			}
@@ -231,17 +234,17 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 			var pluginDevfileObj DevfileObj
 			switch {
 			case plugin.Uri != "":
-				pluginDevfileObj, err = parseFromURI(plugin.Uri, d.Ctx)
+				pluginDevfileObj, err = parseFromURI(plugin.ImportReference, d.Ctx, resolveCtx, tool)
 				if err != nil {
 					return err
 				}
 			case plugin.Id != "":
-				pluginDevfileObj, err = parseFromRegistry(plugin.Id, plugin.RegistryUrl, d.Ctx)
+				pluginDevfileObj, err = parseFromRegistry(plugin.ImportReference, resolveCtx, tool)
 				if err != nil {
 					return err
 				}
 			case plugin.Kubernetes != nil:
-				pluginDevfileObj, err = parseFromKubeCRD(plugin.Kubernetes.Namespace, plugin.Kubernetes.Name, d.Ctx)
+				pluginDevfileObj, err = parseFromKubeCRD(plugin.ImportReference, resolveCtx, tool)
 			default:
 				return fmt.Errorf("plugin URI or plugin Id undefined, currently only URI and Id are suppported")
 			}
@@ -268,7 +271,8 @@ func parseParentAndPlugin(d DevfileObj) (err error) {
 	return nil
 }
 
-func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.DevfileCtx, resolveCtx *resolutionContextTree, tool resolverTools) (DevfileObj, error) {
+	uri := importReference.Uri
 	// validate URI
 	err := validation.ValidateURI(uri)
 	if err != nil {
@@ -277,13 +281,16 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 	// NewDevfileCtx
 	var d DevfileObj
 	absoluteURL := strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://")
+	var newUri string
 
 	// relative path on disk
 	if !absoluteURL && curDevfileCtx.GetAbsPath() != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
+		newUri = path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri)
 	} else if absoluteURL {
 		// absolute URL address
 		d.Ctx = devfileCtx.NewURLDevfileCtx(uri)
+		newUri = uri
 	} else if curDevfileCtx.GetURL() != "" {
 		// relative path to a URL
 		u, err := url.Parse(curDevfileCtx.GetURL())
@@ -292,39 +299,43 @@ func parseFromURI(uri string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, 
 		}
 		u.Path = path.Join(path.Dir(u.Path), uri)
 		d.Ctx = devfileCtx.NewURLDevfileCtx(u.String())
+		newUri = u.String()
 	}
-	d.Ctx.SetURIMap(curDevfileCtx.GetURIMap())
-	d.Ctx.SetKubeContext(curDevfileCtx.GetKubeContext())
-	d.Ctx.SetRegistryURLs(curDevfileCtx.GetRegistryURLs())
-	d.Ctx.SetK8sClient(curDevfileCtx.GetK8sClient())
-	d.Ctx.SetDefaultNameSpace(curDevfileCtx.GetDefaultNameSpace())
+	importReference.Uri = newUri
+	newCtx := resolveCtx.appendNode(importReference)
 
-	return populateAndParseDevfile(d, true)
+	return populateAndParseDevfile(d, newCtx, tool, true)
 }
 
-func parseFromRegistry(Id, registryURL string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
+	d.Ctx = devfileCtx.DevfileCtx{}
+	Id := importReference.Id
+	registryURL := importReference.RegistryUrl
 	if registryURL != "" {
 		devfileContent, err := getDevfileFromRegistry(Id, registryURL)
 		if err != nil {
 			return DevfileObj{}, err
 		}
+		err = d.Ctx.SetDevfileContentFromBytes(devfileContent)
+		if err != nil {
+			return d, errors.Wrap(err, "failed to set devfile content from bytes")
+		}
+		newCtx := resolveCtx.appendNode(importReference)
 
-		return ParseDevfile( ParserArgs{
-			Data: devfileContent,
-			RegistryURLs: curDevfileCtx.GetRegistryURLs(),
-			DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
-			Context: curDevfileCtx.GetKubeContext(),
-			K8sClient:curDevfileCtx.GetK8sClient()} )
-	} else if curDevfileCtx.GetRegistryURLs() != nil {
-		for _, registry := range curDevfileCtx.GetRegistryURLs() {
+		return populateAndParseDevfile(d, newCtx, tool, true)
+
+	} else if tool.registryURLs != nil {
+		for _, registry := range tool.registryURLs {
 			devfileContent, err := getDevfileFromRegistry(Id, registry)
 			if devfileContent != nil && err == nil {
-				return ParseDevfile( ParserArgs{
-					Data: devfileContent,
-					RegistryURLs: curDevfileCtx.GetRegistryURLs(),
-					DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
-					Context: curDevfileCtx.GetKubeContext(),
-					K8sClient:curDevfileCtx.GetK8sClient()} )
+				err = d.Ctx.SetDevfileContentFromBytes(devfileContent)
+				if err != nil {
+					return d, errors.Wrap(err, "failed to set devfile content from bytes")
+				}
+				importReference.RegistryUrl = registry
+				newCtx := resolveCtx.appendNode(importReference)
+
+				return populateAndParseDevfile(d, newCtx, tool, true)
 			}
 		}
 	} else {
@@ -344,19 +355,32 @@ func getDevfileFromRegistry(Id, registryURL string) ([]byte, error) {
 	return util.HTTPGetRequest(param, 0)
 }
 
-func parseFromKubeCRD(providedNamespace, name string, curDevfileCtx devfileCtx.DevfileCtx) (DevfileObj, error) {
+func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 
-	kclient, namespace, err := getDevfileFromKubeCRD(providedNamespace)
-	if err != nil {
-		return DevfileObj{}, err
+	if tool.k8sClient == nil || tool.context == nil {
+		return DevfileObj{}, fmt.Errorf("Kubernetes client and context are required to parse from Kubernetes CRD")
 	}
-
+	namespace := importReference.Kubernetes.Namespace
+	// if namespace is not set in devfile, use default namespace provided in by consumer
+	if namespace == "" {
+		namespace = tool.defaultNamespace
+	}
+	// use current namespace if namespace is not set in devfile and not provided by consumer
+	if namespace == "" {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+		namespace, _, err = config.Namespace()
+		if err != nil {
+			return DevfileObj{}, fmt.Errorf("kubernetes namespace is not provided, and cannot get current running cluster's namespace: %v", err)
+		}
+	}
 	var dwTemplate v1.DevWorkspaceTemplate
 	namespacedName := types.NamespacedName{
-		Name:      name,
+		Name:      importReference.Kubernetes.Name,
 		Namespace: namespace,
 	}
-	err = kclient.Get(context.TODO(), namespacedName, &dwTemplate)
+	err = tool.k8sClient.Get(tool.context, namespacedName, &dwTemplate)
 
 	if err != nil {
 		return DevfileObj{}, err
@@ -365,35 +389,13 @@ func parseFromKubeCRD(providedNamespace, name string, curDevfileCtx devfileCtx.D
 	if err != nil {
 		return DevfileObj{}, err
 	}
-
-	return ParseDevfile( ParserArgs{
-		Data: data,
-		RegistryURLs: curDevfileCtx.GetRegistryURLs(),
-		DefaultNameSpace: curDevfileCtx.GetDefaultNameSpace(),
-		Context: curDevfileCtx.GetKubeContext(),
-		K8sClient:curDevfileCtx.GetK8sClient()} )
-}
-
-func getDevfileFromKubeCRD(namespace string) (client.Client, string, error) {
-	cfg, err := config.GetConfig()
+	err = d.Ctx.SetDevfileContentFromBytes(data)
 	if err != nil {
-		return nil, "", err
+		return d, errors.Wrap(err, "failed to set devfile content from bytes")
 	}
-	// Instantiate an instance of conroller-runtime client
-	controllerClient, err := client.New(cfg, client.Options{})
-	if err != nil {
-		return nil, "", err
-	}
+	importReference.Kubernetes.Namespace = namespace
+	newCtx := resolveCtx.appendNode(importReference)
 
-	if namespace == "" {
-		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-		configOverrides := &clientcmd.ConfigOverrides{}
-		config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-		namespace, _, err = config.Namespace()
-		if err != nil {
-			return nil, "", fmt.Errorf("kubernetes namespace is not provided, and cannot get current running cluster's namespace: %v", err)
-		}
-	}
+	return populateAndParseDevfile(d, newCtx, tool, true)
 
-	return controllerClient, namespace, nil
 }

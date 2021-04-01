@@ -2164,7 +2164,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				tt.args.devFileObj.Data.AddComponents(plugincomp)
 
 			}
-			err := parseParentAndPlugin(tt.args.devFileObj)
+			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{})
 
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
@@ -2389,8 +2389,10 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 	testServer3.Start()
 	defer testServer3.Close()
 	t.Run("it should error out if URI is recursively referenced with multiple references", func(t *testing.T) {
-		err := parseParentAndPlugin(devFileObj)
-		expectedErr := fmt.Sprintf("URI %v%v/devfile.yaml is recursively referenced", httpPrefix, uri1)
+		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, resolverTools{})
+		// devfile has an cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> uri: http://127.0.0.1:9090 -> uri: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
+		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> uri: %s%s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1,
+			httpPrefix, uri2, httpPrefix, uri3, httpPrefix, uri1)
 		// Unexpected error
 		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
 			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI() unexpected error = %v", err)
@@ -2403,6 +2405,9 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 func Test_parseParentFromRegistry(t *testing.T) {
 	const validRegistry = "127.0.0.1:8080"
 	const invalidRegistry = "invalid-registry.io"
+	tool := resolverTools{
+		registryURLs: []string{"http://" + validRegistry},
+	}
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -2576,9 +2581,6 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		},
 	}
 
-	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
-	ctxWithRegistry.SetRegistryURLs([]string{"http://" + validRegistry})
-
 	tests := []struct {
 		name                   string
 		mainDevfile            DevfileObj
@@ -2604,7 +2606,6 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		{
 			name: "it should override the requested parent's data from registryURLs set in context and add the local devfile's data",
 			mainDevfile: DevfileObj{
-				Ctx: ctxWithRegistry,
 				Data: &v2.DevfileV2{
 					Devfile: mainDevfileContent,
 				},
@@ -2662,7 +2663,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := parseParentAndPlugin(tt.mainDevfile)
+			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
 
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
@@ -2833,23 +2834,31 @@ func Test_parseFromURI(t *testing.T) {
 	defer testServer.Close()
 
 	tests := []struct {
-		name          string
-		curDevfileCtx devfileCtx.DevfileCtx
-		uri           string
-		wantDevFile   DevfileObj
-		wantErr       bool
+		name            string
+		curDevfileCtx   devfileCtx.DevfileCtx
+		importReference v1.ImportReference
+		wantDevFile     DevfileObj
+		wantErr         bool
 	}{
 		{
 			name:          "should be able to parse from relative uri on local disk",
 			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 			wantDevFile:   localDevfile,
-			uri:           localRelativeURI,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: localRelativeURI,
+				},
+			},
 		},
 		{
 			name:          "should be able to parse relative uri from URL",
 			curDevfileCtx: parentDevfile.Ctx,
 			wantDevFile:   relativeParentDevfile,
-			uri:           localRelativeURI,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: localRelativeURI,
+				},
+			},
 		},
 		{
 			name:          "should fail if no path or url has been set for devfile ctx",
@@ -2859,20 +2868,32 @@ func Test_parseFromURI(t *testing.T) {
 		{
 			name:          "should fail if file not exist",
 			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-			uri:           notExistURI,
-			wantErr:       true,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: notExistURI,
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name:          "should fail if url not exist",
 			curDevfileCtx: devfileCtx.NewURLDevfileCtx(httpPrefix + uri1),
-			uri:           notExistURI,
-			wantErr:       true,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: notExistURI,
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name:          "should fail if with invalid URI format",
 			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
-			uri:           invalidURL,
-			wantErr:       true,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: invalidURL,
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -2885,7 +2906,7 @@ func Test_parseFromURI(t *testing.T) {
 					return
 				}
 			}
-			got, err := parseFromURI(tt.uri, tt.curDevfileCtx)
+			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
 			if tt.wantErr == (err == nil) {
 				t.Errorf("Test_parseFromURI() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -2906,9 +2927,6 @@ func Test_parseFromRegistry(t *testing.T) {
 		invalidRegistry = "http//invalid.com"
 		registryId      = "nodejs"
 	)
-
-	ctxWithRegistry := devfileCtx.NewDevfileCtx(OutputDevfileYamlPath)
-	ctxWithRegistry.SetRegistryURLs([]string{"http://" + registry})
 
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
@@ -2970,58 +2988,79 @@ func Test_parseFromRegistry(t *testing.T) {
 	defer testServer.Close()
 
 	tests := []struct {
-		name          string
-		curDevfileCtx devfileCtx.DevfileCtx
-		registryUrl   string
-		registryId    string
-		wantDevFile   DevfileObj
-		wantErr       bool
+		name            string
+		curDevfileCtx   devfileCtx.DevfileCtx
+		importReference v1.ImportReference
+		tool            resolverTools
+		wantDevFile     DevfileObj
+		wantErr         bool
 	}{
 		{
-			name:          "should fail if provided registryUrl does not have protocol prefix",
-			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-			wantDevFile:   parentDevfile,
-			registryUrl:   registry,
-			registryId:    registryId,
-			wantErr:       true,
+			name:        "should fail if provided registryUrl does not have protocol prefix",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				RegistryUrl: registry,
+			},
+			wantErr: true,
 		},
 		{
-			name:          "should be able to parse from provided registryUrl with prefix",
-			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-			wantDevFile:   parentDevfile,
-			registryUrl:   httpPrefix + registry,
-			registryId:    registryId,
+			name:        "should be able to parse from provided registryUrl with prefix",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				RegistryUrl: httpPrefix + registry,
+			},
 		},
 		{
-			name:          "should be able to parse from registry URL defined in ctx",
-			curDevfileCtx: ctxWithRegistry,
-			wantDevFile:   parentDevfile,
-			registryId:    registryId,
+			name:        "should be able to parse from registry URL defined in tool",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+			},
+			tool: resolverTools{
+				registryURLs: []string{"http://" + registry},
+			},
 		},
 		{
-			name:          "should fail if registryId does not exist",
-			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
-			registryUrl:   registry,
-			registryId:    notExistId,
-			wantErr:       true,
+			name: "should fail if registryId does not exist",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: notExistId,
+				},
+				RegistryUrl: httpPrefix + registry,
+			},
+			wantErr: true,
 		},
 		{
-			name:          "should fail if registryUrl is not provided, and no registry URLs has been set in ctx",
-			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
-			registryId:    registryId,
-			wantErr:       true,
+			name: "should fail if registryUrl is not provided, and no registry URLs has been set in tool",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+			},
+			wantErr: true,
 		},
 		{
-			name:          "should fail if registryUrl is invalid",
-			curDevfileCtx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
-			registryUrl:   invalidRegistry,
-			registryId:    registryId,
-			wantErr:       true,
+			name: "should fail if registryUrl is invalid",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: notExistId,
+				},
+				RegistryUrl: httpPrefix + invalidRegistry,
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseFromRegistry(tt.registryId, tt.registryUrl, tt.curDevfileCtx)
+			got, err := parseFromRegistry(tt.importReference, &resolutionContextTree{}, tt.tool)
 			if tt.wantErr == (err == nil) {
 				t.Errorf("Test_parseFromRegistry() error = %v, wantErr %v", err, tt.wantErr)
 				return
