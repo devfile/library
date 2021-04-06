@@ -15,6 +15,7 @@ type supportedApiVersion string
 const (
 	APIVersion200 supportedApiVersion = "2.0.0"
 	APIVersion210 supportedApiVersion = "2.1.0"
+	V2APIVersion  supportedApiVersion = "v1alpha2"
 )
 
 // ------------- Init functions ------------- //
@@ -27,6 +28,7 @@ func init() {
 	apiVersionToDevfileStruct = make(map[supportedApiVersion]reflect.Type)
 	apiVersionToDevfileStruct[APIVersion200] = reflect.TypeOf(v2.DevfileV2{})
 	apiVersionToDevfileStruct[APIVersion210] = reflect.TypeOf(v2.DevfileV2{})
+	apiVersionToDevfileStruct[V2APIVersion] = reflect.TypeOf(v2.DevfileV2{})
 }
 
 // Map to store mappings between supported devfile API versions and respective devfile JSON schemas
@@ -37,4 +39,6 @@ func init() {
 	devfileApiVersionToJSONSchema = make(map[supportedApiVersion]string)
 	devfileApiVersionToJSONSchema[APIVersion200] = v200.JsonSchema200
 	devfileApiVersionToJSONSchema[APIVersion210] = v210.JsonSchema210
+	// should use hightest v2 schema version since it is expected to be backward compatible with the same api version
+	devfileApiVersionToJSONSchema[V2APIVersion] = v210.JsonSchema210
 }

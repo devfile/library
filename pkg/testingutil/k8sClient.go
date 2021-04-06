@@ -24,6 +24,7 @@ func (client *FakeK8sClient) Get(_ context.Context, namespacedName client.Object
 		*template = element
 		return nil
 	}
+
 	if err, ok := client.Errors[namespacedName.Name]; ok {
 		return errors.New(err)
 	}

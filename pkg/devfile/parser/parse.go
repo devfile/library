@@ -381,21 +381,35 @@ func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolution
 		Namespace: namespace,
 	}
 	err = tool.k8sClient.Get(tool.context, namespacedName, &dwTemplate)
+	if err != nil {
+		return DevfileObj{}, err
+	}
 
+	d, err = convertDevWorskapceTemplateToDevObj(dwTemplate)
 	if err != nil {
 		return DevfileObj{}, err
 	}
-	data, err := json.Marshal(dwTemplate)
-	if err != nil {
-		return DevfileObj{}, err
-	}
-	err = d.Ctx.SetDevfileContentFromBytes(data)
-	if err != nil {
-		return d, errors.Wrap(err, "failed to set devfile content from bytes")
-	}
+
 	importReference.Kubernetes.Namespace = namespace
 	newCtx := resolveCtx.appendNode(importReference)
 
-	return populateAndParseDevfile(d, newCtx, tool, true)
+	err = parseParentAndPlugin(d, newCtx, tool)
+	return d, err
+
+}
+
+func convertDevWorskapceTemplateToDevObj(dwTemplate v1.DevWorkspaceTemplate) (d DevfileObj, err error) {
+	// Todo: use dwTemplate.APIVersion to determine devfile schemaversion
+	// APIVersion: group/version
+	// for example: APIVersion: "workspace.devfile.io/v1alpha2" uses api version v1alpha2, and match to v2 schemas
+	tempList := strings.Split(dwTemplate.APIVersion, "/")
+	apiversion := tempList[len(tempList)-1]
+	d.Data, err = data.NewDevfileData(apiversion)
+	if err != nil {
+		return DevfileObj{}, err
+	}
+	d.Data.SetDevfileWorkspace(dwTemplate.Spec.DevWorkspaceTemplateSpecContent)
+
+	return d, nil
 
 }

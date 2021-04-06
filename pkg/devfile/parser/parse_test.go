@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -19,6 +20,7 @@ import (
 	"github.com/devfile/library/pkg/testingutil"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
+	kubev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const schemaV200 = "2.0.0"
@@ -3076,35 +3078,30 @@ func Test_parseFromRegistry(t *testing.T) {
 
 func Test_parseFromKubeCRD(t *testing.T) {
 	const (
-		registry        = "127.0.0.1:8080"
-		httpPrefix      = "http://"
-		notExistId      = "notexist"
-		invalidRegistry = "http//invalid.com"
-		registryId      = "nodejs"
+		namespace  = "default"
+		name       = "test-parent-k8s"
+		apiVersion = "testgroup/v1alpha2"
 	)
-
-	parentDevfile := DevfileObj{
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "runtime2",
-								ComponentUnion: v1.ComponentUnion{
-									Volume: &v1.VolumeComponent{
-										Volume: v1.Volume{
-											Size: "500Mi",
-										},
-									},
-								},
+	parentSpec := v1.DevWorkspaceTemplateSpec{
+		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+			Components: []v1.Component{
+				{
+					Name: "runtime",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Size: "500Mi",
 							},
 						},
 					},
 				},
+			},
+		},
+	}
+	parentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevWorkspaceTemplateSpec: parentSpec,
 			},
 		},
 	}
@@ -3119,13 +3116,41 @@ func Test_parseFromKubeCRD(t *testing.T) {
 		wantErr               bool
 	}{
 		{
-			name:        "should fail if provided registryUrl does not have protocol prefix",
+			name:        "should successfully parse the parent with namespace specified in devfile",
 			wantDevFile: parentDevfile,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
-					Id: registryId,
+					Kubernetes: &v1.KubernetesCustomResourceImportReference{
+						Name:      name,
+						Namespace: namespace,
+					},
 				},
-				RegistryUrl: registry,
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{
+				name: {
+					TypeMeta: kubev1.TypeMeta{
+						Kind:       "DevWorkspaceTemplate",
+						APIVersion: apiVersion,
+					},
+					Spec: parentSpec,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:        "should fail if kclient get returns error",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Kubernetes: &v1.KubernetesCustomResourceImportReference{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{},
+			errors: map[string]string{
+				name: "not found",
 			},
 			wantErr: true,
 		},
@@ -3138,10 +3163,11 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			}
 			tool := resolverTools{
 				k8sClient: testK8sClient,
+				context:   context.Background(),
 			}
 			got, err := parseFromKubeCRD(tt.importReference, &resolutionContextTree{}, tool)
 			if tt.wantErr == (err == nil) {
-				t.Errorf("Test_parseFromRegistry() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Test_parseFromKubeCRD() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
