@@ -16,6 +16,7 @@ import (
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/testingutil"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
 )
@@ -3061,6 +3062,84 @@ func Test_parseFromRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseFromRegistry(tt.importReference, &resolutionContextTree{}, tt.tool)
+			if tt.wantErr == (err == nil) {
+				t.Errorf("Test_parseFromRegistry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
+				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
+			}
+		})
+	}
+}
+
+func Test_parseFromKubeCRD(t *testing.T) {
+	const (
+		registry        = "127.0.0.1:8080"
+		httpPrefix      = "http://"
+		notExistId      = "notexist"
+		invalidRegistry = "http//invalid.com"
+		registryId      = "nodejs"
+	)
+
+	parentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime2",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name                  string
+		curDevfileCtx         devfileCtx.DevfileCtx
+		importReference       v1.ImportReference
+		devWorkspaceResources map[string]v1.DevWorkspaceTemplate
+		errors                map[string]string
+		wantDevFile           DevfileObj
+		wantErr               bool
+	}{
+		{
+			name:        "should fail if provided registryUrl does not have protocol prefix",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				RegistryUrl: registry,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testK8sClient := &testingutil.FakeK8sClient{
+				DevWorkspaceResources: tt.devWorkspaceResources,
+				Errors:                tt.errors,
+			}
+			tool := resolverTools{
+				k8sClient: testK8sClient,
+			}
+			got, err := parseFromKubeCRD(tt.importReference, &resolutionContextTree{}, tool)
 			if tt.wantErr == (err == nil) {
 				t.Errorf("Test_parseFromRegistry() error = %v, wantErr %v", err, tt.wantErr)
 				return
