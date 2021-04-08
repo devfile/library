@@ -74,8 +74,8 @@ type ParserArgs struct {
 	// If registryUrl is defined in devfile, this list will be ignored.
 	RegistryURLs []string
 	// DefaultNamespace is the default namespace to use
-	// If namespace is defined under ImportReferences.Kubernetes, this namespace will be ignored.
-	DefaultNameSpace string
+	// If namespace is defined under devfile's parent kubernetes object, this namespace will be ignored.
+	DefaultNamespace string
 	// Context is the context used for making Kubernetes requests
 	Context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
@@ -100,7 +100,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	}
 
 	tool := resolverTools{
-		defaultNamespace: args.DefaultNameSpace,
+		defaultNamespace: args.DefaultNamespace,
 		registryURLs:     args.RegistryURLs,
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
@@ -206,7 +206,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			case parent.Kubernetes != nil:
 				parentDevfileObj, err = parseFromKubeCRD(parent.ImportReference, resolveCtx, tool)
 			default:
-				return fmt.Errorf("parent URI or parent Id undefined, currently only URI and Id are suppported")
+				return fmt.Errorf("devfile parent does not define any resources")
 			}
 
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspace()
@@ -246,7 +246,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			case plugin.Kubernetes != nil:
 				pluginDevfileObj, err = parseFromKubeCRD(plugin.ImportReference, resolveCtx, tool)
 			default:
-				return fmt.Errorf("plugin URI or plugin Id undefined, currently only URI and Id are suppported")
+				return fmt.Errorf("plugin %s does not define any resources", component.Name)
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspace()
 			flattenedPlugin := pluginWorkspaceContent
@@ -285,12 +285,12 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 
 	// relative path on disk
 	if !absoluteURL && curDevfileCtx.GetAbsPath() != "" {
-		d.Ctx = devfileCtx.NewDevfileCtx(path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri))
 		newUri = path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri)
+		d.Ctx = devfileCtx.NewDevfileCtx(newUri)
 	} else if absoluteURL {
 		// absolute URL address
-		d.Ctx = devfileCtx.NewURLDevfileCtx(uri)
 		newUri = uri
+		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 	} else if curDevfileCtx.GetURL() != "" {
 		// relative path to a URL
 		u, err := url.Parse(curDevfileCtx.GetURL())
@@ -298,8 +298,8 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			return DevfileObj{}, err
 		}
 		u.Path = path.Join(path.Dir(u.Path), uri)
-		d.Ctx = devfileCtx.NewURLDevfileCtx(u.String())
 		newUri = u.String()
+		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 	}
 	importReference.Uri = newUri
 	newCtx := resolveCtx.appendNode(importReference)
@@ -309,10 +309,10 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 	d.Ctx = devfileCtx.DevfileCtx{}
-	Id := importReference.Id
+	id := importReference.Id
 	registryURL := importReference.RegistryUrl
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(Id, registryURL)
+		devfileContent, err := getDevfileFromRegistry(id, registryURL)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -320,37 +320,37 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 		if err != nil {
 			return d, errors.Wrap(err, "failed to set devfile content from bytes")
 		}
-		newCtx := resolveCtx.appendNode(importReference)
+		newResolveCtx := resolveCtx.appendNode(importReference)
 
-		return populateAndParseDevfile(d, newCtx, tool, true)
+		return populateAndParseDevfile(d, newResolveCtx, tool, true)
 
 	} else if tool.registryURLs != nil {
-		for _, registry := range tool.registryURLs {
-			devfileContent, err := getDevfileFromRegistry(Id, registry)
+		for _, registryURL := range tool.registryURLs {
+			devfileContent, err := getDevfileFromRegistry(id, registryURL)
 			if devfileContent != nil && err == nil {
 				err = d.Ctx.SetDevfileContentFromBytes(devfileContent)
 				if err != nil {
 					return d, errors.Wrap(err, "failed to set devfile content from bytes")
 				}
-				importReference.RegistryUrl = registry
-				newCtx := resolveCtx.appendNode(importReference)
+				importReference.RegistryUrl = registryURL
+				newResolveCtx := resolveCtx.appendNode(importReference)
 
-				return populateAndParseDevfile(d, newCtx, tool, true)
+				return populateAndParseDevfile(d, newResolveCtx, tool, true)
 			}
 		}
 	} else {
 		return DevfileObj{}, fmt.Errorf("failed to fetch from registry, registry URL is not provided")
 	}
 
-	return DevfileObj{}, fmt.Errorf("failed to get Id: %s from registry URLs provided", Id)
+	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
 }
 
-func getDevfileFromRegistry(Id, registryURL string) ([]byte, error) {
+func getDevfileFromRegistry(id, registryURL string) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
 	}
 	param := util.HTTPRequestParams{
-		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, Id),
+		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, id),
 	}
 	return util.HTTPGetRequest(param, 0)
 }
@@ -399,7 +399,6 @@ func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolution
 }
 
 func convertDevWorskapceTemplateToDevObj(dwTemplate v1.DevWorkspaceTemplate) (d DevfileObj, err error) {
-	// Todo: use dwTemplate.APIVersion to determine devfile schemaversion
 	// APIVersion: group/version
 	// for example: APIVersion: "workspace.devfile.io/v1alpha2" uses api version v1alpha2, and match to v2 schemas
 	tempList := strings.Split(dwTemplate.APIVersion, "/")

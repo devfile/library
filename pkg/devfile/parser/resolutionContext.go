@@ -40,7 +40,7 @@ func (t *resolutionContextTree) hasCycle() error {
 }
 
 // formatImportCycle is a utility method for formatting a cycle that has been detected. Output is formatted as
-// plugin1 -> plugin2 -> plugin3 -> plugin1, where pluginX are component names.
+// {importReference1} -> {importReference2} -> {importReference3} -> {importReference1}, where {importReference1} are importReference detailed info
 func formatImportCycle(end *resolutionContextTree) string {
 	cycle := resolveImportReference(end.importReference)
 	for end.parentNode != nil {
