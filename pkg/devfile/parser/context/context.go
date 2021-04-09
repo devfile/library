@@ -52,6 +52,15 @@ func NewURLDevfileCtx(url string) DevfileCtx {
 	}
 }
 
+// NewByteContentDevfileCtx set devfile content from byte data and returns a new DevfileCtx type object and error
+func NewByteContentDevfileCtx(data []byte) (d DevfileCtx, err error) {
+	err = d.SetDevfileContentFromBytes(data)
+	if err != nil {
+		return DevfileCtx{}, err
+	}
+	return d, nil
+}
+
 // populateDevfile checks the API version is supported and returns the JSON schema for the given devfile API Version
 func (d *DevfileCtx) populateDevfile() (err error) {
 

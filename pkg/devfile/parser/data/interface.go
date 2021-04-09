@@ -52,8 +52,9 @@ type DevfileData interface {
 	GetVolumeMountPaths(mountName, containerName string) ([]string, error)
 
 	// workspace related methods
-	GetDevfileWorkspace() *v1.DevWorkspaceTemplateSpecContent
-	SetDevfileWorkspace(content v1.DevWorkspaceTemplateSpecContent)
+	GetDevfileWorkspaceSpecContent() *v1.DevWorkspaceTemplateSpecContent
+	SetDevfileWorkspaceSpecContent(content v1.DevWorkspaceTemplateSpecContent)
+	SetDevfileWorkspaceSpec(spec v1.DevWorkspaceTemplateSpec)
 
 	// utils
 	GetDevfileContainerComponents(common.DevfileOptions) ([]v1.Component, error)

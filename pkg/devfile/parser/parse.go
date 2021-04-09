@@ -86,8 +86,7 @@ type ParserArgs struct {
 // Creates devfile context and runtime objects
 func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	if args.Data != nil {
-		d.Ctx = devfileCtx.DevfileCtx{}
-		err = d.Ctx.SetDevfileContentFromBytes(args.Data)
+		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(args.Data)
 		if err != nil {
 			return d, errors.Wrap(err, "failed to set devfile content from bytes")
 		}
@@ -177,8 +176,7 @@ func ParseFromURL(url string) (d DevfileObj, err error) {
 // Creates devfile context and runtime objects
 // Deprecated, use ParseDevfile() instead
 func ParseFromData(data []byte) (d DevfileObj, err error) {
-	d.Ctx = devfileCtx.DevfileCtx{}
-	err = d.Ctx.SetDevfileContentFromBytes(data)
+	d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(data)
 	if err != nil {
 		return d, errors.Wrap(err, "failed to set devfile content from bytes")
 	}
@@ -209,7 +207,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 				return fmt.Errorf("devfile parent does not define any resources")
 			}
 
-			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspace()
+			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			if !reflect.DeepEqual(parent.ParentOverrides, v1.ParentOverrides{}) {
 				flattenedParent, err = apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent.ParentOverrides)
 				if err != nil {
@@ -248,7 +246,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			default:
 				return fmt.Errorf("plugin %s does not define any resources", component.Name)
 			}
-			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspace()
+			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			flattenedPlugin := pluginWorkspaceContent
 			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
 				flattenedPlugin, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
@@ -260,11 +258,11 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 		}
 	}
 
-	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspace(), flattenedParent, flattenedPlugins...)
+	mergedContent, err := apiOverride.MergeDevWorkspaceTemplateSpec(d.Data.GetDevfileWorkspaceSpecContent(), flattenedParent, flattenedPlugins...)
 	if err != nil {
 		return err
 	}
-	d.Data.SetDevfileWorkspace(*mergedContent)
+	d.Data.SetDevfileWorkspaceSpecContent(*mergedContent)
 	// remove parent from flatterned devfile
 	d.Data.SetParent(nil)
 
@@ -302,13 +300,12 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 	}
 	importReference.Uri = newUri
-	newCtx := resolveCtx.appendNode(importReference)
+	newResolveCtx := resolveCtx.appendNode(importReference)
 
-	return populateAndParseDevfile(d, newCtx, tool, true)
+	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
-	d.Ctx = devfileCtx.DevfileCtx{}
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
 	if registryURL != "" {
@@ -316,7 +313,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 		if err != nil {
 			return DevfileObj{}, err
 		}
-		err = d.Ctx.SetDevfileContentFromBytes(devfileContent)
+		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 		if err != nil {
 			return d, errors.Wrap(err, "failed to set devfile content from bytes")
 		}
@@ -328,7 +325,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 		for _, registryURL := range tool.registryURLs {
 			devfileContent, err := getDevfileFromRegistry(id, registryURL)
 			if devfileContent != nil && err == nil {
-				err = d.Ctx.SetDevfileContentFromBytes(devfileContent)
+				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
 					return d, errors.Wrap(err, "failed to set devfile content from bytes")
 				}
@@ -361,20 +358,23 @@ func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolution
 		return DevfileObj{}, fmt.Errorf("Kubernetes client and context are required to parse from Kubernetes CRD")
 	}
 	namespace := importReference.Kubernetes.Namespace
-	// if namespace is not set in devfile, use default namespace provided in by consumer
+
 	if namespace == "" {
-		namespace = tool.defaultNamespace
-	}
-	// use current namespace if namespace is not set in devfile and not provided by consumer
-	if namespace == "" {
-		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-		configOverrides := &clientcmd.ConfigOverrides{}
-		config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-		namespace, _, err = config.Namespace()
-		if err != nil {
-			return DevfileObj{}, fmt.Errorf("kubernetes namespace is not provided, and cannot get current running cluster's namespace: %v", err)
+		// if namespace is not set in devfile, use default namespace provided in by consumer
+		if tool.defaultNamespace != "" {
+			namespace = tool.defaultNamespace
+		} else {
+			// use current namespace if namespace is not set in devfile and not provided by consumer
+			loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+			configOverrides := &clientcmd.ConfigOverrides{}
+			config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+			namespace, _, err = config.Namespace()
+			if err != nil {
+				return DevfileObj{}, fmt.Errorf("kubernetes namespace is not provided, and cannot get current running cluster's namespace: %v", err)
+			}
 		}
 	}
+
 	var dwTemplate v1.DevWorkspaceTemplate
 	namespacedName := types.NamespacedName{
 		Name:      importReference.Kubernetes.Name,
@@ -391,9 +391,9 @@ func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolution
 	}
 
 	importReference.Kubernetes.Namespace = namespace
-	newCtx := resolveCtx.appendNode(importReference)
+	newResolveCtx := resolveCtx.appendNode(importReference)
 
-	err = parseParentAndPlugin(d, newCtx, tool)
+	err = parseParentAndPlugin(d, newResolveCtx, tool)
 	return d, err
 
 }
@@ -407,7 +407,7 @@ func convertDevWorskapceTemplateToDevObj(dwTemplate v1.DevWorkspaceTemplate) (d 
 	if err != nil {
 		return DevfileObj{}, err
 	}
-	d.Data.SetDevfileWorkspace(dwTemplate.Spec.DevWorkspaceTemplateSpecContent)
+	d.Data.SetDevfileWorkspaceSpec(dwTemplate.Spec)
 
 	return d, nil
 
