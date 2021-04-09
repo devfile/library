@@ -203,6 +203,9 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 				}
 			case parent.Kubernetes != nil:
 				parentDevfileObj, err = parseFromKubeCRD(parent.ImportReference, resolveCtx, tool)
+				if err != nil {
+					return err
+				}
 			default:
 				return fmt.Errorf("devfile parent does not define any resources")
 			}

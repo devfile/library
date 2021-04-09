@@ -2188,11 +2188,12 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 	}
 }
 
-func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T) {
+func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
-	const uri2 = "127.0.0.1:9090"
-	const uri3 = "127.0.0.1:8090"
+	const uri2 = "127.0.0.1:8090"
 	const httpPrefix = "http://"
+	const name = "testcrd"
+	const namespace = "defaultnamespace"
 
 	devFileObj := DevfileObj{
 		Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -2236,7 +2237,10 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 					Parent: &v1.Parent{
 						ImportReference: v1.ImportReference{
 							ImportReferenceUnion: v1.ImportReferenceUnion{
-								Uri: httpPrefix + uri2,
+								Kubernetes: &v1.KubernetesCustomResourceImportReference{
+									Name:      name,
+									Namespace: namespace,
+								},
 							},
 						},
 					},
@@ -2258,35 +2262,8 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 			},
 		},
 	}
+
 	parentDevfile2 := DevfileObj{
-		Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "plugin",
-								ComponentUnion: v1.ComponentUnion{
-									Plugin: &v1.PluginComponent{
-										ImportReference: v1.ImportReference{
-											ImportReferenceUnion: v1.ImportReferenceUnion{
-												Uri: httpPrefix + uri3,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	parentDevfile3 := DevfileObj{
 		Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -2345,7 +2322,13 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 	defer testServer1.Close()
 
 	testServer2 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data, err := yaml.Marshal(parentDevfile2.Data)
+		var data []byte
+		if strings.Contains(r.URL.Path, "/devfiles/nodejs") {
+			data, err = yaml.Marshal(parentDevfile2.Data)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -2355,7 +2338,7 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 		}
 	}))
 	// create a listener with the desired port.
-	l2, err := net.Listen("tcp", uri2)
+	l3, err := net.Listen("tcp", uri2)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -2363,42 +2346,62 @@ func Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI(t *testing.T
 	// NewUnstartedServer creates a listener. Close that listener and replace
 	// with the one we created.
 	testServer2.Listener.Close()
-	testServer2.Listener = l2
+	testServer2.Listener = l3
 
 	testServer2.Start()
 	defer testServer2.Close()
 
-	testServer3 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data, err := yaml.Marshal(parentDevfile3.Data)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		_, err = w.Write(data)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-	}))
-	// create a listener with the desired port.
-	l3, err := net.Listen("tcp", uri3)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+	parentSpec := v1.DevWorkspaceTemplateSpec{
+		Parent: &v1.Parent{
+			ImportReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: "nodejs",
+				},
+				RegistryUrl: httpPrefix + uri2,
+			},
+		},
+		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+			Components: []v1.Component{
+				{
+					Name: "crdcomponent",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Size: "500Mi",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	devWorkspaceResources := map[string]v1.DevWorkspaceTemplate{
+		name: {
+			TypeMeta: kubev1.TypeMeta{
+				Kind:       "DevWorkspaceTemplate",
+				APIVersion: "testgroup/v1alpha2",
+			},
+			Spec: parentSpec,
+		},
 	}
 
-	// NewUnstartedServer creates a listener. Close that listener and replace
-	// with the one we created.
-	testServer3.Listener.Close()
-	testServer3.Listener = l3
+	t.Run("it should error out if import reference has a cycle", func(t *testing.T) {
+		testK8sClient := &testingutil.FakeK8sClient{
+			DevWorkspaceResources: devWorkspaceResources,
+		}
+		tool := resolverTools{
+			k8sClient: testK8sClient,
+			context:   context.Background(),
+		}
 
-	testServer3.Start()
-	defer testServer3.Close()
-	t.Run("it should error out if URI is recursively referenced with multiple references", func(t *testing.T) {
-		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, resolverTools{})
-		// devfile has an cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> uri: http://127.0.0.1:9090 -> uri: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
-		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> uri: %s%s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1,
-			httpPrefix, uri2, httpPrefix, uri3, httpPrefix, uri1)
+		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
+		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> uri: http://127.0.0.1:9090 -> id: nodejs, registryURL: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
+		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> id: nodejs, registryURL: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
+			httpPrefix, uri2, httpPrefix, uri1)
 		// Unexpected error
 		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
-			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference_withMultipleURI() unexpected error = %v", err)
+			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference unexpected error = %v", err)
+
 			return
 		}
 
