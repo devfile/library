@@ -18,12 +18,12 @@ func TestDevfile200_AddEvents(t *testing.T) {
 		{
 			name: "successfully add the events",
 			currentEvents: &v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
 			},
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PostStart: []string{"postStart1"},
 				},
 			},
@@ -33,7 +33,7 @@ func TestDevfile200_AddEvents(t *testing.T) {
 			name:          "successfully add the events to empty devfile event",
 			currentEvents: nil,
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PostStart: []string{"postStart1"},
 				},
 			},
@@ -42,12 +42,12 @@ func TestDevfile200_AddEvents(t *testing.T) {
 		{
 			name: "event already present",
 			currentEvents: &v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
 			},
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart2"},
 				},
 			},
@@ -86,12 +86,12 @@ func TestDevfile200_UpdateEvents(t *testing.T) {
 		{
 			name: "successfully add/update the events",
 			currentEvents: &v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
 			},
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart:  []string{"preStart2"},
 					PostStart: []string{"postStart2"},
 				},
@@ -100,12 +100,12 @@ func TestDevfile200_UpdateEvents(t *testing.T) {
 		{
 			name: "successfully update the events to empty",
 			currentEvents: &v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart1"},
 				},
 			},
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{""},
 				},
 			},
@@ -114,7 +114,7 @@ func TestDevfile200_UpdateEvents(t *testing.T) {
 			name:          "successfully add the events to empty devfile events",
 			currentEvents: nil,
 			newEvents: v1.Events{
-				WorkspaceEvents: v1.WorkspaceEvents{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart:  []string{"preStart2"},
 					PostStart: []string{"postStart2"},
 				},

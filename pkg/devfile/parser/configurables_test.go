@@ -100,7 +100,7 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStop: []string{"post-stop"},
 									},
 								},
@@ -194,7 +194,7 @@ func testDevfileObj(fs filesystem.Filesystem) DevfileObj {
 							},
 						},
 						Events: &v1.Events{
-							WorkspaceEvents: v1.WorkspaceEvents{
+							DevWorkspaceEvents: v1.DevWorkspaceEvents{
 								PostStop: []string{"post-stop"},
 							},
 						},

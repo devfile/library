@@ -10,7 +10,7 @@ set -e
 
 CURRENT_DIR=$(pwd)
 API_PKG="github.com/devfile/api/v2"
-SCHEMA_URL_MASTER="https://raw.githubusercontent.com/devfile/api/master/schemas/latest/devfile.json"
+SCHEMA_URL_MASTER="https://raw.githubusercontent.com/devfile/api/main/schemas/latest/devfile.json"
 
 # 2.0.0 devfile
 SCHEMA_URL_200="https://raw.githubusercontent.com/devfile/api/2.0.x/schemas/latest/devfile.json"
@@ -31,7 +31,7 @@ trap 'onError' ERR
 
 
 echo -e "${GREEN}Updating devfile/api in go.mod${NC}"
-go get "${API_PKG}@master"
+go get "${API_PKG}@main"
 
 echo -e "${GREEN}Get latest schema${NC}"
 

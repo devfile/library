@@ -101,7 +101,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop"},
 										},
 									},
@@ -149,7 +149,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 									},
 								},
@@ -220,7 +220,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop"},
 										PreStop:   []string{},
@@ -284,7 +284,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop"},
 										},
 									},
@@ -332,7 +332,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 									},
 								},
@@ -403,7 +403,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop"},
 										PreStop:   []string{},
@@ -621,7 +621,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 								DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop"},
 										},
 									},
@@ -640,7 +640,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStop: []string{"post-stop"},
 									},
 								},
@@ -655,7 +655,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStop:  []string{"post-stop"},
 										PreStart:  []string{},
 										PreStop:   []string{},
@@ -745,7 +745,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop"},
 										},
 									},
@@ -793,7 +793,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 									},
 								},
@@ -864,7 +864,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop"},
 										PreStop:   []string{},
@@ -928,7 +928,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop-1"},
 										},
 									},
@@ -976,7 +976,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop-2"},
 									},
@@ -1074,7 +1074,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop-1", "post-stop-2"},
 										PreStop:   []string{},
@@ -1580,7 +1580,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									Events: &v1.Events{
-										WorkspaceEvents: v1.WorkspaceEvents{
+										DevWorkspaceEvents: v1.DevWorkspaceEvents{
 											PostStop: []string{"post-stop"},
 										},
 									},
@@ -1616,7 +1616,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 									},
 								},
@@ -1672,7 +1672,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PreStart: []string{"pre-start-0"},
 									},
 								},
@@ -1751,7 +1751,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 								Events: &v1.Events{
-									WorkspaceEvents: v1.WorkspaceEvents{
+									DevWorkspaceEvents: v1.DevWorkspaceEvents{
 										PostStart: []string{"post-start-0"},
 										PostStop:  []string{"post-stop"},
 										PreStop:   []string{},
@@ -2510,7 +2510,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 					},
 				},
 				Events: &v1.Events{
-					WorkspaceEvents: v1.WorkspaceEvents{
+					DevWorkspaceEvents: v1.DevWorkspaceEvents{
 						PostStop: []string{"post-stop"},
 					},
 				},
@@ -2559,7 +2559,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 					},
 				},
 				Events: &v1.Events{
-					WorkspaceEvents: v1.WorkspaceEvents{
+					DevWorkspaceEvents: v1.DevWorkspaceEvents{
 						PostStart: []string{},
 						PostStop:  []string{"post-stop"},
 						PreStop:   []string{},
