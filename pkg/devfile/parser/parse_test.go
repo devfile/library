@@ -2395,7 +2395,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		}
 
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
-		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> uri: http://127.0.0.1:9090 -> id: nodejs, registryURL: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
+		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> name: testcrd, namespace: defaultnamespace -> id: nodejs, registryURL: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
 		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> id: nodejs, registryURL: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
 			httpPrefix, uri2, httpPrefix, uri1)
 		// Unexpected error

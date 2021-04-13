@@ -27,27 +27,24 @@ func (t *resolutionContextTree) appendNode(importReference v1.ImportReference) *
 func (t *resolutionContextTree) hasCycle() error {
 	var seenRefs []v1.ImportReference
 	currNode := t
+	hasCycle := false
+	cycle := resolveImportReference(t.importReference)
+
 	for currNode.parentNode != nil {
 		for _, seenRef := range seenRefs {
 			if reflect.DeepEqual(seenRef, currNode.importReference) {
-				return fmt.Errorf("devfile has an cycle in references: %v", formatImportCycle(t))
+				hasCycle = true
 			}
 		}
 		seenRefs = append(seenRefs, currNode.importReference)
 		currNode = currNode.parentNode
+		cycle = fmt.Sprintf("%s -> %s", resolveImportReference(currNode.importReference), cycle)
+	}
+
+	if hasCycle {
+		return fmt.Errorf("devfile has an cycle in references: %v", cycle)
 	}
 	return nil
-}
-
-// formatImportCycle is a utility method for formatting a cycle that has been detected. Output is formatted as
-// {importReference1} -> {importReference2} -> {importReference3} -> {importReference1}, where {importReference1} are importReference detailed info
-func formatImportCycle(end *resolutionContextTree) string {
-	cycle := resolveImportReference(end.importReference)
-	for end.parentNode != nil {
-		end = end.parentNode
-		cycle = fmt.Sprintf("%s -> %s", resolveImportReference(end.importReference), cycle)
-	}
-	return cycle
 }
 
 func resolveImportReference(importReference v1.ImportReference) string {
