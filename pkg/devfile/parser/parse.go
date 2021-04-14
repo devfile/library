@@ -211,7 +211,12 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			}
 
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspaceSpecContent()
+			// add attribute to parent elements
+			AddSourceAttributesForTemplateSpecContent(parent.ImportReference, parentWorkspaceContent)
 			if !reflect.DeepEqual(parent.ParentOverrides, v1.ParentOverrides{}) {
+				// add attribute to parentOverrides elements
+				curNodeImportReference := resolveCtx.importReference
+				AddSourceAttributesForParentOverride(curNodeImportReference, &parent.ParentOverrides)
 				flattenedParent, err = apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent.ParentOverrides)
 				if err != nil {
 					return err
@@ -250,8 +255,13 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 				return fmt.Errorf("plugin %s does not define any resources", component.Name)
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
+			// add attribute to plugin elements
+			AddSourceAttributesForTemplateSpecContent(parent.ImportReference, pluginWorkspaceContent)
 			flattenedPlugin := pluginWorkspaceContent
 			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
+				// add attribute to parentOverrides elements
+				curNodeImportReference := resolveCtx.importReference
+				AddSourceAttributesForPluginOverride(curNodeImportReference, plugin.Id, &plugin.PluginOverrides)
 				flattenedPlugin, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
 				if err != nil {
 					return err
