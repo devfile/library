@@ -256,12 +256,12 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			// add attribute to plugin elements
-			AddSourceAttributesForTemplateSpecContent(parent.ImportReference, pluginWorkspaceContent)
+			AddSourceAttributesForTemplateSpecContent(plugin.ImportReference, pluginWorkspaceContent)
 			flattenedPlugin := pluginWorkspaceContent
 			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
 				// add attribute to parentOverrides elements
 				curNodeImportReference := resolveCtx.importReference
-				AddSourceAttributesForPluginOverride(curNodeImportReference, plugin.Id, &plugin.PluginOverrides)
+				AddSourceAttributesForPluginOverride(curNodeImportReference, component.Name, &plugin.PluginOverrides)
 				flattenedPlugin, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
 				if err != nil {
 					return err

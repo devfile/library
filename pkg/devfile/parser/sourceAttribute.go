@@ -37,7 +37,6 @@ func AddSourceAttributesForTemplateSpecContent(sourceImportReference v1.ImportRe
 	}
 }
 
-
 // AddSourceAttributesForParentOverride adds an attribute 'library.devfile.io/imported-from=<source reference>'
 //  to all elements of parent override that support attributes.
 func AddSourceAttributesForParentOverride(sourceImportReference v1.ImportReference, parentoverride *v1.ParentOverrides) {
@@ -68,21 +67,20 @@ func AddSourceAttributesForParentOverride(sourceImportReference v1.ImportReferen
 
 }
 
-
 // AddSourceAttributesForPluginOverride adds an attribute 'library.devfile.io/imported-from=<source reference>'
 //  to all elements of plugin override that support attributes.
-func AddSourceAttributesForPluginOverride(sourceImportReference v1.ImportReference, pluginId string,  pluginoverride *v1.PluginOverrides) {
+func AddSourceAttributesForPluginOverride(sourceImportReference v1.ImportReference, pluginName string, pluginoverride *v1.PluginOverrides) {
 	for idx, component := range pluginoverride.Components {
 		if component.Attributes == nil {
 			pluginoverride.Components[idx].Attributes = attributes.Attributes{}
 		}
-		pluginoverride.Components[idx].Attributes.PutString(ImportSourceAttribute, fmt.Sprintf("pluginOverrides from: %s, plugin : %s", resolveImportReference(sourceImportReference), pluginId))
+		pluginoverride.Components[idx].Attributes.PutString(ImportSourceAttribute, fmt.Sprintf("pluginOverrides from: %s, plugin : %s", resolveImportReference(sourceImportReference), pluginName))
 	}
 	for idx, command := range pluginoverride.Commands {
 		if command.Attributes == nil {
 			pluginoverride.Commands[idx].Attributes = attributes.Attributes{}
 		}
-		pluginoverride.Commands[idx].Attributes.PutString(ImportSourceAttribute, fmt.Sprintf("pluginOverrides from: %s, plugin : %s", resolveImportReference(sourceImportReference), pluginId))
+		pluginoverride.Commands[idx].Attributes.PutString(ImportSourceAttribute, fmt.Sprintf("pluginOverrides from: %s, plugin : %s", resolveImportReference(sourceImportReference), pluginName))
 	}
 
 }
