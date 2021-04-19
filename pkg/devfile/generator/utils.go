@@ -419,3 +419,46 @@ func getBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.Bu
 		},
 	}
 }
+
+// GetVolumeMountPath gets the volume mount's path.
+func GetVolumeMountPath(volumeMount v1.VolumeMount) string {
+	// if there is no volume mount path, default to volume mount name as per devfile schema
+	if volumeMount.Path == "" {
+		volumeMount.Path = "/" + volumeMount.Name
+	}
+
+	return volumeMount.Path
+}
+
+// getPVC gets a pvc type volume with the given volume name and pvc name.
+func getPVC(volumeName, pvcName string) corev1.Volume {
+
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: pvcName,
+			},
+		},
+	}
+}
+
+// addVolumeMountToContainers adds the Volume Mounts in containerNameToMountPaths to the containers for a given volumeName.
+// containerNameToMountPaths is a map of a container name to an array of its Mount Paths.
+func addVolumeMountToContainers(containers []corev1.Container, volumeName string, containerNameToMountPaths map[string][]string) {
+
+	for containerName, mountPaths := range containerNameToMountPaths {
+		for i := range containers {
+			if containers[i].Name == containerName {
+				for _, mountPath := range mountPaths {
+					containers[i].VolumeMounts = append(containers[i].VolumeMounts, corev1.VolumeMount{
+						Name:      volumeName,
+						MountPath: mountPath,
+						SubPath:   "",
+					},
+					)
+				}
+			}
+		}
+	}
+}

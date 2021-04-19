@@ -284,3 +284,45 @@ func GetImageStream(imageStreamParams ImageStreamParams) imagev1.ImageStream {
 	}
 	return imageStream
 }
+
+// VolumeInfo is a struct to hold the pvc name and the volume name to create a volume.
+type VolumeInfo struct {
+	PVCName    string
+	VolumeName string
+}
+
+// VolumeParams is a struct that contains the required data to create Kubernetes Volumes and mount Volumes in Containers
+type VolumeParams struct {
+	// Containers is a list of containers that needs to be updated for the volume mounts
+	Containers []corev1.Container
+
+	// VolumeNameToVolumeInfo is a map of the devfile volume name to the volume info containing the pvc name and the volume name.
+	VolumeNameToVolumeInfo map[string]VolumeInfo
+}
+
+// GetVolumesAndVolumeMounts gets the PVC volumes and updates the containers with the volume mounts.
+func GetVolumesAndVolumeMounts(devfileObj parser.DevfileObj, volumeParams VolumeParams, options common.DevfileOptions) ([]corev1.Volume, error) {
+
+	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
+	if err != nil {
+		return nil, err
+	}
+
+	var pvcVols []corev1.Volume
+	for volName, volInfo := range volumeParams.VolumeNameToVolumeInfo {
+		pvcVols = append(pvcVols, getPVC(volInfo.VolumeName, volInfo.PVCName))
+
+		// containerNameToMountPaths is a map of the Devfile container name to their Devfile Volume Mount Paths for a given Volume Name
+		containerNameToMountPaths := make(map[string][]string)
+		for _, containerComp := range containerComponents {
+			for _, volumeMount := range containerComp.Container.VolumeMounts {
+				if volName == volumeMount.Name {
+					containerNameToMountPaths[containerComp.Name] = append(containerNameToMountPaths[containerComp.Name], GetVolumeMountPath(volumeMount))
+				}
+			}
+		}
+
+		addVolumeMountToContainers(volumeParams.Containers, volInfo.VolumeName, containerNameToMountPaths)
+	}
+	return pvcVols, nil
+}

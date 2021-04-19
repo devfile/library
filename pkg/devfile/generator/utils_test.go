@@ -1310,3 +1310,147 @@ func TestGetBuildConfigSpec(t *testing.T) {
 	}
 
 }
+
+func TestGetVolumeMountPath(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		volumeMount v1.VolumeMount
+		wantPath    string
+	}{
+		{
+			name: "Mount Path is present",
+			volumeMount: v1.VolumeMount{
+				Name: "name1",
+				Path: "/path1",
+			},
+			wantPath: "/path1",
+		},
+		{
+			name: "Mount Path is absent",
+			volumeMount: v1.VolumeMount{
+				Name: "name1",
+			},
+			wantPath: "/name1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := GetVolumeMountPath(tt.volumeMount)
+
+			if path != tt.wantPath {
+				t.Errorf("TestGetVolumeMountPath error: mount path mismatch, expected: %v got: %v", tt.wantPath, path)
+			}
+		})
+	}
+
+}
+
+func TestGetPVC(t *testing.T) {
+
+	tests := []struct {
+		pvc        string
+		volumeName string
+	}{
+		{
+			pvc:        "mypvc",
+			volumeName: "myvolume",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.volumeName, func(t *testing.T) {
+			volume := getPVC(tt.volumeName, tt.pvc)
+
+			if volume.Name != tt.volumeName {
+				t.Errorf("TestGetPVC error: volume name does not match; expected %s got %s", tt.volumeName, volume.Name)
+			}
+
+			if volume.PersistentVolumeClaim.ClaimName != tt.pvc {
+				t.Errorf("TestGetPVC error: pvc name does not match; expected %s got %s", tt.pvc, volume.PersistentVolumeClaim.ClaimName)
+			}
+		})
+	}
+}
+
+func TestAddVolumeMountToContainers(t *testing.T) {
+
+	tests := []struct {
+		podName                string
+		namespace              string
+		serviceAccount         string
+		pvc                    string
+		volumeName             string
+		containerMountPathsMap map[string][]string
+		container              corev1.Container
+		labels                 map[string]string
+		wantErr                bool
+	}{
+		{
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "default",
+			pvc:            "mypvc",
+			volumeName:     "myvolume",
+			containerMountPathsMap: map[string][]string{
+				"container1": {"/tmp/path1", "/tmp/path2"},
+			},
+			container: corev1.Container{
+				Name:            "container1",
+				Image:           "image1",
+				ImagePullPolicy: corev1.PullAlways,
+
+				Command: []string{"tail"},
+				Args:    []string{"-f", "/dev/null"},
+				Env:     []corev1.EnvVar{},
+			},
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
+			wantErr: false,
+		},
+		{
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "default",
+			pvc:            "mypvc",
+			volumeName:     "myvolume",
+			containerMountPathsMap: map[string][]string{
+				"container1": {"/tmp/path1", "/tmp/path2"},
+			},
+			container: corev1.Container{},
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.podName, func(t *testing.T) {
+			containers := []corev1.Container{tt.container}
+			addVolumeMountToContainers(containers, tt.volumeName, tt.containerMountPathsMap)
+
+			mountPathCount := 0
+			for _, container := range containers {
+				if container.Name == tt.container.Name {
+					for _, volumeMount := range container.VolumeMounts {
+						if volumeMount.Name == tt.volumeName {
+							for _, mountPath := range tt.containerMountPathsMap[tt.container.Name] {
+								if volumeMount.MountPath == mountPath {
+									mountPathCount++
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if mountPathCount != len(tt.containerMountPathsMap[tt.container.Name]) {
+				t.Errorf("Volume Mounts for %s have not been properly mounted to the container", tt.volumeName)
+			}
+		})
+	}
+}
