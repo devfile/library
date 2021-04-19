@@ -2403,6 +2403,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	tool := resolverTools{
 		registryURLs: []string{"http://" + validRegistry},
 	}
+
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -2526,6 +2527,8 @@ func Test_parseParentFromRegistry(t *testing.T) {
 
 	parentOverridesFromMainDevfile := attributes.Attributes{}
 	parentOverridesFromMainDevfile.PutString(ImportSourceAttribute, "parentOverrides from: main devfile")
+	importFromRegistry := attributes.Attributes{}
+	importFromRegistry.PutString(ImportSourceAttribute, resolveImportReference(mainDevfileContent.Parent.ImportReference))
 
 	wantDevfileContent := v1.Devfile{
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
@@ -2617,6 +2620,92 @@ func Test_parseParentFromRegistry(t *testing.T) {
 			},
 		},
 		{
+			name: "it should merge the requested parent's data from provided registryURL if no override is set",
+			mainDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									RegistryUrl: "http://" + validRegistry,
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "nodejs",
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: importFromRegistry,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "it should error out with invalid registry provided",
 			mainDevfile: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -2663,6 +2752,307 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
+
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseParentAndPlugin() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Expected error and got an err
+			if tt.wantErr && err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(tt.mainDevfile.Data, tt.wantDevFile.Data) {
+				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile.Data, tt.mainDevfile.Data, pretty.Compare(tt.mainDevfile.Data, tt.wantDevFile.Data))
+			}
+
+		})
+	}
+}
+
+func Test_parseParentFromKubeCRD(t *testing.T) {
+
+	const (
+		namespace  = "default"
+		name       = "test-parent-k8s"
+		apiVersion = "testgroup/v1alpha2"
+	)
+
+	kubeCRDReference := v1.ImportReference{
+		ImportReferenceUnion: v1.ImportReferenceUnion{
+			Kubernetes: &v1.KubernetesCustomResourceImportReference{
+				Name:      name,
+				Namespace: namespace,
+			},
+		},
+	}
+
+	parentOverridesFromMainDevfile := attributes.Attributes{}
+	parentOverridesFromMainDevfile.PutString(ImportSourceAttribute, "parentOverrides from: main devfile")
+	importFromKubeCRD := attributes.Attributes{}
+	importFromKubeCRD.PutString(ImportSourceAttribute, resolveImportReference(kubeCRDReference))
+
+	parentSpec := v1.DevWorkspaceTemplateSpec{
+		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+			Components: []v1.Component{
+				{
+					Name: "parent-runtime",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Size: "500Mi",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name                  string
+		devWorkspaceResources map[string]v1.DevWorkspaceTemplate
+		errors                map[string]string
+		mainDevfile           DevfileObj
+		wantDevFile           DevfileObj
+		wantErr               bool
+	}{
+		{
+			name: "should successfully override the parent data",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+								ParentOverrides: v1.ParentOverrides{
+									Components: []v1.ComponentParentOverride{
+										{
+											Name: "parent-runtime",
+											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+												Container: &v1.ContainerComponentParentOverride{
+													ContainerParentOverride: v1.ContainerParentOverride{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{
+				name: {
+					TypeMeta: kubev1.TypeMeta{
+						Kind:       "DevWorkspaceTemplate",
+						APIVersion: apiVersion,
+					},
+					Spec: parentSpec,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should successfully merge the parent data without override defined",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: importFromKubeCRD,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{
+				name: {
+					TypeMeta: kubev1.TypeMeta{
+						Kind:       "DevWorkspaceTemplate",
+						APIVersion: apiVersion,
+					},
+					Spec: parentSpec,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if kclient get returns error",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{},
+			errors: map[string]string{
+				name: "not found",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testK8sClient := &testingutil.FakeK8sClient{
+				DevWorkspaceResources: tt.devWorkspaceResources,
+				Errors:                tt.errors,
+			}
+			tool := resolverTools{
+				k8sClient: testK8sClient,
+				context:   context.Background(),
+			}
 			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
 
 			// Unexpected error
