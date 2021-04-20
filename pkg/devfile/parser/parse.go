@@ -212,11 +212,17 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			// add attribute to parent elements
-			AddSourceAttributesForOverrideAndMerge(parent.ImportReference, parentWorkspaceContent)
+			err = addSourceAttributesForOverrideAndMerge(parent.ImportReference, parentWorkspaceContent)
+			if err != nil {
+				return err
+			}
 			if !reflect.DeepEqual(parent.ParentOverrides, v1.ParentOverrides{}) {
 				// add attribute to parentOverrides elements
 				curNodeImportReference := resolveCtx.importReference
-				AddSourceAttributesForOverrideAndMerge(curNodeImportReference, &parent.ParentOverrides)
+				err = addSourceAttributesForOverrideAndMerge(curNodeImportReference, &parent.ParentOverrides)
+				if err != nil {
+					return err
+				}
 				flattenedParent, err = apiOverride.OverrideDevWorkspaceTemplateSpec(parentWorkspaceContent, parent.ParentOverrides)
 				if err != nil {
 					return err
@@ -256,12 +262,18 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			// add attribute to plugin elements
-			AddSourceAttributesForOverrideAndMerge(plugin.ImportReference, pluginWorkspaceContent)
+			err = addSourceAttributesForOverrideAndMerge(plugin.ImportReference, pluginWorkspaceContent)
+			if err != nil {
+				return err
+			}
 			flattenedPlugin := pluginWorkspaceContent
 			if !reflect.DeepEqual(plugin.PluginOverrides, v1.PluginOverrides{}) {
 				// add attribute to pluginOverrides elements
 				curNodeImportReference := resolveCtx.importReference
-				AddSourceAttributesForOverrideAndMerge(curNodeImportReference, &plugin.PluginOverrides)
+				err = addSourceAttributesForOverrideAndMerge(curNodeImportReference, &plugin.PluginOverrides)
+				if err != nil {
+					return err
+				}
 				flattenedPlugin, err = apiOverride.OverrideDevWorkspaceTemplateSpec(pluginWorkspaceContent, plugin.PluginOverrides)
 				if err != nil {
 					return err

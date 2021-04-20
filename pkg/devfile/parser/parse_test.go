@@ -29,12 +29,12 @@ const schemaV200 = "2.0.0"
 func Test_parseParentAndPluginFromURI(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
 	const uri2 = "127.0.0.1:9090"
-	importFromUri1 := attributes.Attributes{}.PutString(ImportSourceAttribute, fmt.Sprintf("uri: http://%s", uri1))
-	importFromUri2 := attributes.Attributes{}.PutString(ImportSourceAttribute, fmt.Sprintf("uri: http://%s", uri2))
-	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(ImportSourceAttribute,
-		fmt.Sprintf("uri: http://%s", uri1)).PutString(ParentOverrideAttribute, "main devfile")
-	pluginOverridesFromMainDevfile := attributes.Attributes{}.PutString(ImportSourceAttribute,
-		fmt.Sprintf("uri: http://%s", uri2)).PutString(PluginOverrideAttribute, "main devfile")
+	importFromUri1 := attributes.Attributes{}.PutString(importSourceAttribute, fmt.Sprintf("uri: http://%s", uri1))
+	importFromUri2 := attributes.Attributes{}.PutString(importSourceAttribute, fmt.Sprintf("uri: http://%s", uri2))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		fmt.Sprintf("uri: http://%s", uri1)).PutString(parentOverrideAttribute, "main devfile")
+	pluginOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		fmt.Sprintf("uri: http://%s", uri2)).PutString(pluginOverrideAttribute, "main devfile")
 
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
@@ -2522,9 +2522,9 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		},
 	}
 
-	importFromRegistry := attributes.Attributes{}.PutString(ImportSourceAttribute, resolveImportReference(mainDevfileContent.Parent.ImportReference))
-	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(ImportSourceAttribute,
-		resolveImportReference(mainDevfileContent.Parent.ImportReference)).PutString(ParentOverrideAttribute, "main devfile")
+	importFromRegistry := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(mainDevfileContent.Parent.ImportReference))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		resolveImportReference(mainDevfileContent.Parent.ImportReference)).PutString(parentOverrideAttribute, "main devfile")
 
 	wantDevfileContent := v1.Devfile{
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
@@ -2786,9 +2786,9 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
-	importFromKubeCRD := attributes.Attributes{}.PutString(ImportSourceAttribute, resolveImportReference(kubeCRDReference))
-	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(ImportSourceAttribute,
-		resolveImportReference(kubeCRDReference)).PutString(ParentOverrideAttribute, "main devfile")
+	importFromKubeCRD := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(kubeCRDReference))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		resolveImportReference(kubeCRDReference)).PutString(parentOverrideAttribute, "main devfile")
 
 	parentSpec := v1.DevWorkspaceTemplateSpec{
 		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
