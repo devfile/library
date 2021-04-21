@@ -420,16 +420,6 @@ func getBuildConfigSpec(buildConfigSpecParams BuildConfigSpecParams) *buildv1.Bu
 	}
 }
 
-// GetVolumeMountPath gets the volume mount's path.
-func GetVolumeMountPath(volumeMount v1.VolumeMount) string {
-	// if there is no volume mount path, default to volume mount name as per devfile schema
-	if volumeMount.Path == "" {
-		volumeMount.Path = "/" + volumeMount.Name
-	}
-
-	return volumeMount.Path
-}
-
 // getPVC gets a pvc type volume with the given volume name and pvc name.
 func getPVC(volumeName, pvcName string) corev1.Volume {
 
@@ -454,7 +444,6 @@ func addVolumeMountToContainers(containers []corev1.Container, volumeName string
 					containers[i].VolumeMounts = append(containers[i].VolumeMounts, corev1.VolumeMount{
 						Name:      volumeName,
 						MountPath: mountPath,
-						SubPath:   "",
 					},
 					)
 				}

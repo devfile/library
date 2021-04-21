@@ -417,50 +417,79 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			}
 
 			pvcVols, err := GetVolumesAndVolumeMounts(devObj, volumeParams, options)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetVolumesAndVolumeMounts unexpected error: %v", err)
-				return
-			} else if tt.wantErr && err != nil {
-				return
-			} else if tt.wantErr && err == nil {
-				t.Error("TestGetVolumesAndVolumeMounts expected error but got nil")
-				return
-			}
+			if tt.wantErr == (err == nil) {
+				t.Errorf("TestGetVolumesAndVolumeMounts() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				// check if the pvc volumes returned are correct
+				for _, volInfo := range tt.volumeNameToVolInfo {
+					matched := false
+					for _, pvcVol := range pvcVols {
+						if volInfo.VolumeName == pvcVol.Name && pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName {
+							matched = true
+						}
+					}
 
-			// check if the pvc volumes returned are correct
-			for _, volInfo := range tt.volumeNameToVolInfo {
-				matched := false
-				for _, pvcVol := range pvcVols {
-					if volInfo.VolumeName == pvcVol.Name && pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName {
-						matched = true
+					if !matched {
+						t.Errorf("TestGetVolumesAndVolumeMounts error - could not find volume details %s in the actual result", volInfo.VolumeName)
 					}
 				}
 
-				if !matched {
-					t.Errorf("TestGetVolumesAndVolumeMounts error - could not find volume details %s in the actual result", volInfo.VolumeName)
-				}
-			}
-
-			// check the volume mounts of the containers
-			for _, container := range containers {
-				if volMounts, ok := tt.wantContainerToVol[container.Name]; !ok {
-					t.Errorf("TestGetVolumesAndVolumeMounts error - did not find the expected container %s", container.Name)
-					return
-				} else {
-					for _, expectedVolMount := range volMounts {
-						matched := false
-						for _, actualVolMount := range container.VolumeMounts {
-							if expectedVolMount.volumeName == actualVolMount.Name && expectedVolMount.mountPath == actualVolMount.MountPath {
-								matched = true
+				// check the volume mounts of the containers
+				for _, container := range containers {
+					if volMounts, ok := tt.wantContainerToVol[container.Name]; !ok {
+						t.Errorf("TestGetVolumesAndVolumeMounts error - did not find the expected container %s", container.Name)
+						return
+					} else {
+						for _, expectedVolMount := range volMounts {
+							matched := false
+							for _, actualVolMount := range container.VolumeMounts {
+								if expectedVolMount.volumeName == actualVolMount.Name && expectedVolMount.mountPath == actualVolMount.MountPath {
+									matched = true
+								}
 							}
-						}
 
-						if !matched {
-							t.Errorf("TestGetVolumesAndVolumeMounts error - could not find volume mount details for path %s in the actual result for container %s", expectedVolMount.mountPath, container.Name)
+							if !matched {
+								t.Errorf("TestGetVolumesAndVolumeMounts error - could not find volume mount details for path %s in the actual result for container %s", expectedVolMount.mountPath, container.Name)
+							}
 						}
 					}
 				}
 			}
 		})
 	}
+}
+
+func TestGetVolumeMountPath(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		volumeMount v1.VolumeMount
+		wantPath    string
+	}{
+		{
+			name: "Mount Path is present",
+			volumeMount: v1.VolumeMount{
+				Name: "name1",
+				Path: "/path1",
+			},
+			wantPath: "/path1",
+		},
+		{
+			name: "Mount Path is absent",
+			volumeMount: v1.VolumeMount{
+				Name: "name1",
+			},
+			wantPath: "/name1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := GetVolumeMountPath(tt.volumeMount)
+
+			if path != tt.wantPath {
+				t.Errorf("TestGetVolumeMountPath error: mount path mismatch, expected: %v got: %v", tt.wantPath, path)
+			}
+		})
+	}
+
 }

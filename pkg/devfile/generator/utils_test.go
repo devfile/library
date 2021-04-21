@@ -1311,55 +1311,22 @@ func TestGetBuildConfigSpec(t *testing.T) {
 
 }
 
-func TestGetVolumeMountPath(t *testing.T) {
-
-	tests := []struct {
-		name        string
-		volumeMount v1.VolumeMount
-		wantPath    string
-	}{
-		{
-			name: "Mount Path is present",
-			volumeMount: v1.VolumeMount{
-				Name: "name1",
-				Path: "/path1",
-			},
-			wantPath: "/path1",
-		},
-		{
-			name: "Mount Path is absent",
-			volumeMount: v1.VolumeMount{
-				Name: "name1",
-			},
-			wantPath: "/name1",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			path := GetVolumeMountPath(tt.volumeMount)
-
-			if path != tt.wantPath {
-				t.Errorf("TestGetVolumeMountPath error: mount path mismatch, expected: %v got: %v", tt.wantPath, path)
-			}
-		})
-	}
-
-}
-
 func TestGetPVC(t *testing.T) {
 
 	tests := []struct {
+		name       string
 		pvc        string
 		volumeName string
 	}{
 		{
+			name:       "Get PVC vol for given pvc name and volume name",
 			pvc:        "mypvc",
 			volumeName: "myvolume",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.volumeName, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			volume := getPVC(tt.volumeName, tt.pvc)
 
 			if volume.Name != tt.volumeName {
@@ -1376,22 +1343,14 @@ func TestGetPVC(t *testing.T) {
 func TestAddVolumeMountToContainers(t *testing.T) {
 
 	tests := []struct {
-		podName                string
-		namespace              string
-		serviceAccount         string
-		pvc                    string
+		name                   string
 		volumeName             string
 		containerMountPathsMap map[string][]string
 		container              corev1.Container
-		labels                 map[string]string
-		wantErr                bool
 	}{
 		{
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "default",
-			pvc:            "mypvc",
-			volumeName:     "myvolume",
+			name:       "Successfully mount volume to container",
+			volumeName: "myvolume",
 			containerMountPathsMap: map[string][]string{
 				"container1": {"/tmp/path1", "/tmp/path2"},
 			},
@@ -1404,32 +1363,19 @@ func TestAddVolumeMountToContainers(t *testing.T) {
 				Args:    []string{"-f", "/dev/null"},
 				Env:     []corev1.EnvVar{},
 			},
-			labels: map[string]string{
-				"app":       "app",
-				"component": "frontend",
-			},
-			wantErr: false,
 		},
 		{
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "default",
-			pvc:            "mypvc",
-			volumeName:     "myvolume",
+			name:       "No Container present to mount volume",
+			volumeName: "myvolume",
 			containerMountPathsMap: map[string][]string{
 				"container1": {"/tmp/path1", "/tmp/path2"},
 			},
 			container: corev1.Container{},
-			labels: map[string]string{
-				"app":       "app",
-				"component": "frontend",
-			},
-			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.podName, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			containers := []corev1.Container{tt.container}
 			addVolumeMountToContainers(containers, tt.volumeName, tt.containerMountPathsMap)
 
