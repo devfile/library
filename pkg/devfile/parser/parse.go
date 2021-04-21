@@ -193,21 +193,15 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			switch {
 			case parent.Uri != "":
 				parentDevfileObj, err = parseFromURI(parent.ImportReference, d.Ctx, resolveCtx, tool)
-				if err != nil {
-					return err
-				}
 			case parent.Id != "":
 				parentDevfileObj, err = parseFromRegistry(parent.ImportReference, resolveCtx, tool)
-				if err != nil {
-					return err
-				}
 			case parent.Kubernetes != nil:
 				parentDevfileObj, err = parseFromKubeCRD(parent.ImportReference, resolveCtx, tool)
-				if err != nil {
-					return err
-				}
 			default:
 				return fmt.Errorf("devfile parent does not define any resources")
+			}
+			if err != nil {
+				return err
 			}
 
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspaceSpecContent()
@@ -247,18 +241,15 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			switch {
 			case plugin.Uri != "":
 				pluginDevfileObj, err = parseFromURI(plugin.ImportReference, d.Ctx, resolveCtx, tool)
-				if err != nil {
-					return err
-				}
 			case plugin.Id != "":
 				pluginDevfileObj, err = parseFromRegistry(plugin.ImportReference, resolveCtx, tool)
-				if err != nil {
-					return err
-				}
 			case plugin.Kubernetes != nil:
 				pluginDevfileObj, err = parseFromKubeCRD(plugin.ImportReference, resolveCtx, tool)
 			default:
 				return fmt.Errorf("plugin %s does not define any resources", component.Name)
+			}
+			if err != nil {
+				return err
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
 			// add attribute to plugin elements
