@@ -1310,3 +1310,93 @@ func TestGetBuildConfigSpec(t *testing.T) {
 	}
 
 }
+
+func TestGetPVC(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		pvc        string
+		volumeName string
+	}{
+		{
+			name:       "Get PVC vol for given pvc name and volume name",
+			pvc:        "mypvc",
+			volumeName: "myvolume",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			volume := getPVC(tt.volumeName, tt.pvc)
+
+			if volume.Name != tt.volumeName {
+				t.Errorf("TestGetPVC error: volume name does not match; expected %s got %s", tt.volumeName, volume.Name)
+			}
+
+			if volume.PersistentVolumeClaim.ClaimName != tt.pvc {
+				t.Errorf("TestGetPVC error: pvc name does not match; expected %s got %s", tt.pvc, volume.PersistentVolumeClaim.ClaimName)
+			}
+		})
+	}
+}
+
+func TestAddVolumeMountToContainers(t *testing.T) {
+
+	tests := []struct {
+		name                   string
+		volumeName             string
+		containerMountPathsMap map[string][]string
+		container              corev1.Container
+	}{
+		{
+			name:       "Successfully mount volume to container",
+			volumeName: "myvolume",
+			containerMountPathsMap: map[string][]string{
+				"container1": {"/tmp/path1", "/tmp/path2"},
+			},
+			container: corev1.Container{
+				Name:            "container1",
+				Image:           "image1",
+				ImagePullPolicy: corev1.PullAlways,
+
+				Command: []string{"tail"},
+				Args:    []string{"-f", "/dev/null"},
+				Env:     []corev1.EnvVar{},
+			},
+		},
+		{
+			name:       "No Container present to mount volume",
+			volumeName: "myvolume",
+			containerMountPathsMap: map[string][]string{
+				"container1": {"/tmp/path1", "/tmp/path2"},
+			},
+			container: corev1.Container{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			containers := []corev1.Container{tt.container}
+			addVolumeMountToContainers(containers, tt.volumeName, tt.containerMountPathsMap)
+
+			mountPathCount := 0
+			for _, container := range containers {
+				if container.Name == tt.container.Name {
+					for _, volumeMount := range container.VolumeMounts {
+						if volumeMount.Name == tt.volumeName {
+							for _, mountPath := range tt.containerMountPathsMap[tt.container.Name] {
+								if volumeMount.MountPath == mountPath {
+									mountPathCount++
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if mountPathCount != len(tt.containerMountPathsMap[tt.container.Name]) {
+				t.Errorf("Volume Mounts for %s have not been properly mounted to the container", tt.volumeName)
+			}
+		})
+	}
+}
