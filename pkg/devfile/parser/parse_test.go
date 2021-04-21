@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
@@ -26,6 +27,71 @@ import (
 const schemaV200 = "2.0.0"
 
 func Test_parseParentAndPluginFromURI(t *testing.T) {
+	const uri1 = "127.0.0.1:8080"
+	const uri2 = "127.0.0.1:9090"
+	importFromUri1 := attributes.Attributes{}.PutString(importSourceAttribute, fmt.Sprintf("uri: http://%s", uri1))
+	importFromUri2 := attributes.Attributes{}.PutString(importSourceAttribute, fmt.Sprintf("uri: http://%s", uri2))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		fmt.Sprintf("uri: http://%s", uri1)).PutString(parentOverrideAttribute, "main devfile")
+	pluginOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		fmt.Sprintf("uri: http://%s", uri2)).PutString(pluginOverrideAttribute, "main devfile")
+
+	parentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaV200,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Commands: []v1.Command{
+							{
+								Id: "devrun",
+								CommandUnion: v1.CommandUnion{
+									Exec: &v1.ExecCommand{
+										WorkingDir:  "/projects",
+										CommandLine: "npm run",
+									},
+								},
+							},
+						},
+						Components: []v1.Component{
+							{
+								Name: "nodejs",
+								ComponentUnion: v1.ComponentUnion{
+									Container: &v1.ContainerComponent{
+										Container: v1.Container{
+											Image: "quay.io/nodejs-10",
+										},
+									},
+								},
+							},
+						},
+						Events: &v1.Events{
+							DevWorkspaceEvents: v1.DevWorkspaceEvents{
+								PostStart: []string{"post-start-0"},
+							},
+						},
+						Projects: []v1.Project{
+							{
+								ClonePath: "/data",
+								ProjectSource: v1.ProjectSource{
+									Github: &v1.GithubProjectSource{
+										GitLikeProjectSource: v1.GitLikeProjectSource{
+											Remotes: map[string]string{
+												"master": "https://githube.com/somerepo/someproject.git",
+											},
+										},
+									},
+								},
+								Name: "nodejs-starter",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
 	type args struct {
 		devFileObj DevfileObj
@@ -120,62 +186,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 					},
 				},
 			},
-			parentDevfile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
-						},
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devrun",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir:  "/projects",
-												CommandLine: "npm run",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "nodejs",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-10",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									DevWorkspaceEvents: v1.DevWorkspaceEvents{
-										PostStart: []string{"post-start-0"},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/data",
-										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
-												GitLikeProjectSource: v1.GitLikeProjectSource{
-													Remotes: map[string]string{
-														"master": "https://githube.com/somerepo/someproject.git",
-													},
-												},
-											},
-										},
-										Name: "nodejs-starter",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			parentDevfile: parentDevfile,
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
@@ -183,7 +194,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
 									{
-										Id: "devrun",
+										Attributes: parentOverridesFromMainDevfile,
+										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												CommandLine: "npm run",
@@ -202,7 +214,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Components: []v1.Component{
 									{
-										Name: "nodejs",
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "nodejs",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -232,7 +245,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Projects: []v1.Project{
 									{
-										ClonePath: "/projects",
+										Attributes: parentOverridesFromMainDevfile,
+										ClonePath:  "/projects",
 										ProjectSource: v1.ProjectSource{
 											Github: &v1.GithubProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
@@ -303,62 +317,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 					},
 				},
 			},
-			parentDevfile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
-						},
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devrun",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir:  "/projects",
-												CommandLine: "npm run",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "nodejs",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-10",
-												},
-											},
-										},
-									},
-								},
-								Events: &v1.Events{
-									DevWorkspaceEvents: v1.DevWorkspaceEvents{
-										PostStart: []string{"post-start-0"},
-									},
-								},
-								Projects: []v1.Project{
-									{
-										ClonePath: "/data",
-										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
-												GitLikeProjectSource: v1.GitLikeProjectSource{
-													Remotes: map[string]string{
-														"master": "https://githube.com/somerepo/someproject.git",
-													},
-												},
-											},
-										},
-										Name: "nodejs-starter",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			parentDevfile: parentDevfile,
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
@@ -366,7 +325,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
 									{
-										Id: "devrun",
+										Attributes: importFromUri1,
+										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												CommandLine: "npm run",
@@ -385,7 +345,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Components: []v1.Component{
 									{
-										Name: "nodejs",
+										Attributes: importFromUri1,
+										Name:       "nodejs",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -415,7 +376,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Projects: []v1.Project{
 									{
-										ClonePath: "/data",
+										Attributes: importFromUri1,
+										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
 											Github: &v1.GithubProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
@@ -827,7 +789,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
 									{
-										Id: "devrun",
+										Attributes: importFromUri2,
+										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												CommandLine: "npm run",
@@ -846,7 +809,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Components: []v1.Component{
 									{
-										Name: "nodejs",
+										Attributes: importFromUri2,
+										Name:       "nodejs",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -876,7 +840,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Projects: []v1.Project{
 									{
-										ClonePath: "/data",
+										Attributes: importFromUri2,
+										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
 											Github: &v1.GithubProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
@@ -1037,7 +1002,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
 									{
-										Id: "devrun",
+										Attributes: pluginOverridesFromMainDevfile,
+										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												CommandLine: "npm build",
@@ -1056,7 +1022,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Components: []v1.Component{
 									{
-										Name: "nodejs",
+										Attributes: pluginOverridesFromMainDevfile,
+										Name:       "nodejs",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -1086,7 +1053,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Projects: []v1.Project{
 									{
-										ClonePath: "/data",
+										Attributes: importFromUri2,
+										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
 											Github: &v1.GithubProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
@@ -1705,7 +1673,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands: []v1.Command{
 									{
-										Id: "devrun",
+										Attributes: parentOverridesFromMainDevfile,
+										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												CommandLine: "npm run",
@@ -1714,7 +1683,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									{
-										Id: "devdebug",
+										Attributes: importFromUri2,
+										Id:         "devdebug",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
 												WorkingDir:  "/projects",
@@ -1733,7 +1703,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Components: []v1.Component{
 									{
-										Name: "nodejs",
+										Attributes: pluginOverridesFromMainDevfile,
+										Name:       "nodejs",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -1763,7 +1734,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								},
 								Projects: []v1.Project{
 									{
-										ClonePath: "/projects",
+										Attributes: parentOverridesFromMainDevfile,
+										ClonePath:  "/projects",
 										ProjectSource: v1.ProjectSource{
 											Github: &v1.GithubProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
@@ -1899,7 +1871,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
 									{
-										Name: "runtime",
+										Attributes: pluginOverridesFromMainDevfile,
+										Name:       "runtime",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -2034,7 +2007,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Components: []v1.Component{
 									{
-										Name: "runtime",
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "runtime",
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
@@ -2071,7 +2045,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							Parent: &v1.Parent{
 								ImportReference: v1.ImportReference{
 									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: "http://127.0.0.1:8080",
+										Uri: "http://" + uri2,
 									},
 								},
 							},
@@ -2102,8 +2076,10 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var parentTestServer *httptest.Server
+			var pluginTestServer *httptest.Server
 			if !reflect.DeepEqual(tt.parentDevfile, DevfileObj{}) {
-				testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				parentTestServer = httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					data, err := yaml.Marshal(tt.parentDevfile.Data)
 					if err != nil {
 						t.Errorf("unexpected error: %v", err)
@@ -2113,18 +2089,31 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						t.Errorf("unexpected error: %v", err)
 					}
 				}))
-				defer testServer.Close()
+				// create a listener with the desired port.
+				l1, err := net.Listen("tcp", uri1)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+
+				// NewUnstartedServer creates a listener. Close that listener and replace
+				// with the one we created.
+				parentTestServer.Listener.Close()
+				parentTestServer.Listener = l1
+
+				parentTestServer.Start()
+				defer parentTestServer.Close()
+
 				parent := tt.args.devFileObj.Data.GetParent()
 				if parent == nil {
 					parent = &v1.Parent{}
 				}
-				parent.Uri = testServer.URL
+				parent.Uri = parentTestServer.URL
 
 				tt.args.devFileObj.Data.SetParent(parent)
 			}
 			if !reflect.DeepEqual(tt.pluginDevfile, DevfileObj{}) {
 
-				testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				pluginTestServer = httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					data, err := yaml.Marshal(tt.pluginDevfile.Data)
 					if err != nil {
 						t.Errorf("unexpected error: %v", err)
@@ -2134,20 +2123,18 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						t.Errorf("unexpected error: %v", err)
 					}
 				}))
-				if tt.testRecursiveReference {
-					// create a listener with the desired port.
-					l, err := net.Listen("tcp", "127.0.0.1:8080")
-					if err != nil {
-						t.Errorf("unexpected error: %v", err)
-					}
-
-					// NewUnstartedServer creates a listener. Close that listener and replace
-					// with the one we created.
-					testServer.Listener.Close()
-					testServer.Listener = l
+				l, err := net.Listen("tcp", uri2)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
 				}
-				testServer.Start()
-				defer testServer.Close()
+
+				// NewUnstartedServer creates a listener. Close that listener and replace
+				// with the one we created.
+				pluginTestServer.Listener.Close()
+				pluginTestServer.Listener = l
+
+				pluginTestServer.Start()
+				defer pluginTestServer.Close()
 
 				plugincomp := []v1.Component{
 					{
@@ -2156,7 +2143,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							Plugin: &v1.PluginComponent{
 								ImportReference: v1.ImportReference{
 									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Uri: testServer.URL,
+										Uri: pluginTestServer.URL,
 									},
 								},
 								PluginOverrides: tt.pluginOverride,
@@ -2183,7 +2170,6 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			if !reflect.DeepEqual(tt.args.devFileObj.Data, tt.wantDevFile.Data) {
 				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile.Data, tt.args.devFileObj.Data, pretty.Compare(tt.args.devFileObj.Data, tt.wantDevFile.Data))
 			}
-
 		})
 	}
 }
@@ -2414,6 +2400,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	tool := resolverTools{
 		registryURLs: []string{"http://" + validRegistry},
 	}
+
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -2534,6 +2521,11 @@ func Test_parseParentFromRegistry(t *testing.T) {
 			},
 		},
 	}
+
+	importFromRegistry := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(mainDevfileContent.Parent.ImportReference))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		resolveImportReference(mainDevfileContent.Parent.ImportReference)).PutString(parentOverrideAttribute, "main devfile")
+
 	wantDevfileContent := v1.Devfile{
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 			DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2549,7 +2541,8 @@ func Test_parseParentFromRegistry(t *testing.T) {
 				},
 				Components: []v1.Component{
 					{
-						Name: "parent-runtime",
+						Attributes: parentOverridesFromMainDevfile,
+						Name:       "parent-runtime",
 						ComponentUnion: v1.ComponentUnion{
 							Container: &v1.ContainerComponent{
 								Container: v1.Container{
@@ -2623,6 +2616,92 @@ func Test_parseParentFromRegistry(t *testing.T) {
 			},
 		},
 		{
+			name: "it should merge the requested parent's data from provided registryURL if no override is set",
+			mainDevfile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: v1.ImportReference{
+									RegistryUrl: "http://" + validRegistry,
+									ImportReferenceUnion: v1.ImportReferenceUnion{
+										Id: "nodejs",
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: importFromRegistry,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime2",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "it should error out with invalid registry provided",
 			mainDevfile: DevfileObj{
 				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
@@ -2669,6 +2748,306 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
+
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseParentAndPlugin() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Expected error and got an err
+			if tt.wantErr && err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(tt.mainDevfile.Data, tt.wantDevFile.Data) {
+				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantDevFile.Data, tt.mainDevfile.Data, pretty.Compare(tt.mainDevfile.Data, tt.wantDevFile.Data))
+			}
+
+		})
+	}
+}
+
+func Test_parseParentFromKubeCRD(t *testing.T) {
+
+	const (
+		namespace  = "default"
+		name       = "test-parent-k8s"
+		apiVersion = "testgroup/v1alpha2"
+	)
+
+	kubeCRDReference := v1.ImportReference{
+		ImportReferenceUnion: v1.ImportReferenceUnion{
+			Kubernetes: &v1.KubernetesCustomResourceImportReference{
+				Name:      name,
+				Namespace: namespace,
+			},
+		},
+	}
+
+	importFromKubeCRD := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(kubeCRDReference))
+	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
+		resolveImportReference(kubeCRDReference)).PutString(parentOverrideAttribute, "main devfile")
+
+	parentSpec := v1.DevWorkspaceTemplateSpec{
+		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+			Components: []v1.Component{
+				{
+					Name: "parent-runtime",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Size: "500Mi",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name                  string
+		devWorkspaceResources map[string]v1.DevWorkspaceTemplate
+		errors                map[string]string
+		mainDevfile           DevfileObj
+		wantDevFile           DevfileObj
+		wantErr               bool
+	}{
+		{
+			name: "should successfully override the parent data",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+								ParentOverrides: v1.ParentOverrides{
+									Components: []v1.ComponentParentOverride{
+										{
+											Name: "parent-runtime",
+											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+												Container: &v1.ContainerComponentParentOverride{
+													ContainerParentOverride: v1.ContainerParentOverride{
+														Image: "quay.io/nodejs-12",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{
+				name: {
+					TypeMeta: kubev1.TypeMeta{
+						Kind:       "DevWorkspaceTemplate",
+						APIVersion: apiVersion,
+					},
+					Spec: parentSpec,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should successfully merge the parent data without override defined",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDevFile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Commands: []v1.Command{
+									{
+										Id: "devbuild",
+										CommandUnion: v1.CommandUnion{
+											Exec: &v1.ExecCommand{
+												WorkingDir: "/projects/nodejs-starter",
+											},
+										},
+									},
+								},
+								Components: []v1.Component{
+									{
+										Attributes: importFromKubeCRD,
+										Name:       "parent-runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size: "500Mi",
+												},
+											},
+										},
+									},
+									{
+										Name: "runtime",
+										ComponentUnion: v1.ComponentUnion{
+											Container: &v1.ContainerComponent{
+												Container: v1.Container{
+													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{
+				name: {
+					TypeMeta: kubev1.TypeMeta{
+						Kind:       "DevWorkspaceTemplate",
+						APIVersion: apiVersion,
+					},
+					Spec: parentSpec,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if kclient get returns error",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: kubeCRDReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{},
+			errors: map[string]string{
+				name: "not found",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testK8sClient := &testingutil.FakeK8sClient{
+				DevWorkspaceResources: tt.devWorkspaceResources,
+				Errors:                tt.errors,
+			}
+			tool := resolverTools{
+				k8sClient: testK8sClient,
+				context:   context.Background(),
+			}
 			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
 
 			// Unexpected error
