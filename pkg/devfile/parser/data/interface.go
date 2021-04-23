@@ -54,6 +54,7 @@ type DevfileData interface {
 	// workspace related methods
 	GetDevfileWorkspaceSpecContent() *v1.DevWorkspaceTemplateSpecContent
 	SetDevfileWorkspaceSpecContent(content v1.DevWorkspaceTemplateSpecContent)
+	GetDevfileWorkspaceSpec() *v1.DevWorkspaceTemplateSpec
 	SetDevfileWorkspaceSpec(spec v1.DevWorkspaceTemplateSpec)
 
 	// utils

@@ -40,7 +40,7 @@ func parserTest() {
 		}
 		fmt.Println("parsing devfile from ./devfile.yaml")
 	}
-	devfile, err := devfilepkg.ParseDevfileAndValidate(args)
+	devfile, _, err := devfilepkg.ParseDevfileAndValidate(args)
 	if err != nil {
 		fmt.Println(err)
 	} else {

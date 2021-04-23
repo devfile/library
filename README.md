@@ -14,7 +14,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 1. To parse a devfile, visit pkg/devfile/parse.go 
    ```
    // Parses the devfile and validates the devfile data
-   devfile, err := devfilePkg.ParseAndValidate(devfileLocation)
+   devfile, _, err := devfilePkg.ParseDevfileAndValidate(devfileLocation)
 
    // To get all the components from the devfile
    components, err := devfile.Data.GetComponents(DevfileOptions{})

@@ -15,6 +15,10 @@ func (d *DevfileV2) SetDevfileWorkspaceSpecContent(content v1.DevWorkspaceTempla
 	d.DevWorkspaceTemplateSpecContent = content
 }
 
+func (d *DevfileV2) GetDevfileWorkspaceSpec() *v1.DevWorkspaceTemplateSpec {
+	return &d.DevWorkspaceTemplateSpec
+}
+
 // SetDevfileWorkspaceSpec sets the workspace spec
 func (d *DevfileV2) SetDevfileWorkspaceSpec(spec v1.DevWorkspaceTemplateSpec) {
 	d.DevWorkspaceTemplateSpec = spec
