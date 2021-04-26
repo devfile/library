@@ -4,6 +4,8 @@ metadata:
   version: 1.0.0
   attributes:
     alpha.build-dockerfile: /relative/path/to/Dockerfile
+variables:
+  test: testValue
 parent:
   # uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
   id: nodejs
@@ -58,7 +60,7 @@ components:
     endpoints:
     - name: http-9090
       targetPort: 9090
-    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
+    image: "{{invalid-var}}"
     memoryLimit: 1024Mi
     mountSources: true
     sourceMapping: /project
@@ -69,7 +71,7 @@ commands:
     group:
       isDefault: false
       kind: build
-    workingDir: /project
+    workingDir: "{{test}}"
   id: install2
   attributes:
     tool: odo

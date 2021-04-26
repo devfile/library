@@ -79,8 +79,10 @@ func ParseDevfileAndValidate(args parser.ParserArgs) (d parser.DevfileObj, varWa
 		return d, varWarning, err
 	}
 
-	// replace the top level variable keys with their values in the devfile
-	varWarning = variables.ValidateAndReplaceGlobalVariable(d.Data.GetDevfileWorkspaceSpec())
+	if d.Data.GetSchemaVersion() != "2.0.0" {
+		// replace the top level variable keys with their values in the devfile
+		varWarning = variables.ValidateAndReplaceGlobalVariable(d.Data.GetDevfileWorkspaceSpec())
+	}
 
 	// generic validation on devfile content
 	err = validate.ValidateDevfileData(d.Data)
