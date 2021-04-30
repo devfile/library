@@ -16,7 +16,7 @@ func TestFilterDevfileObject(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "Case 1: Filter with one key",
+			name: "Filter with one key",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",
@@ -30,7 +30,7 @@ func TestFilterDevfileObject(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "Case 2: Filter with two keys",
+			name: "Filter with two keys",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",
@@ -45,7 +45,7 @@ func TestFilterDevfileObject(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "Case 3: Filter with missing key",
+			name: "Filter with missing key",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",

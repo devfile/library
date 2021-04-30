@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"reflect"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -87,17 +88,20 @@ func (d *DevfileV2) AddComponents(components []v1.Component) error {
 }
 
 // UpdateComponent updates the component with the given name
-func (d *DevfileV2) UpdateComponent(component v1.Component) {
-	index := -1
+// return an error if the component is not found
+func (d *DevfileV2) UpdateComponent(component v1.Component) error {
+	found := false
 	for i := range d.Components {
 		if d.Components[i].Name == component.Name {
-			index = i
+			d.Components[i] = component
+			found = true
 			break
 		}
 	}
-	if index != -1 {
-		d.Components[index] = component
+	if !found {
+		return fmt.Errorf("update component failed: component %s not found", component.Name)
 	}
+	return nil
 }
 
 // DeleteComponent removes the specified component

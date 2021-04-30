@@ -52,7 +52,7 @@ func TestGetContainers(t *testing.T) {
 		wantErr               bool
 	}{
 		{
-			name: "Case 1: Container with default project root",
+			name: "Container with default project root",
 			containerComponents: []v1.Component{
 				{
 					Name: containerNames[0],
@@ -87,7 +87,7 @@ func TestGetContainers(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: Container with source mapping",
+			name: "Container with source mapping",
 			containerComponents: []v1.Component{
 				{
 					Name: containerNames[0],
@@ -123,7 +123,7 @@ func TestGetContainers(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 3: Container with no mount source",
+			name: "Container with no mount source",
 			containerComponents: []v1.Component{
 				{
 					Name: containerNames[0],
@@ -141,7 +141,7 @@ func TestGetContainers(t *testing.T) {
 			wantContainerImage: containerImages[0],
 		},
 		{
-			name: "Case 4: Filter containers",
+			name: "Filter containers",
 			containerComponents: []v1.Component{
 				{
 					Name: containerNames[0],

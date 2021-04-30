@@ -14,7 +14,7 @@ func TestIsContainer(t *testing.T) {
 		wantIsSupported bool
 	}{
 		{
-			name: "Case 1: Container component",
+			name: "Container component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
@@ -24,7 +24,7 @@ func TestIsContainer(t *testing.T) {
 			wantIsSupported: true,
 		},
 		{
-			name: "Case 2: Not a container component",
+			name: "Not a container component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
@@ -53,7 +53,7 @@ func TestIsVolume(t *testing.T) {
 		wantIsSupported bool
 	}{
 		{
-			name: "Case 1: Volume component",
+			name: "Volume component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{
@@ -67,7 +67,7 @@ func TestIsVolume(t *testing.T) {
 			wantIsSupported: true,
 		},
 		{
-			name: "Case 2: Not a volume component",
+			name: "Not a volume component",
 			component: v1.Component{
 				Name: "name",
 				ComponentUnion: v1.ComponentUnion{

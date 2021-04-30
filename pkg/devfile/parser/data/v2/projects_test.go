@@ -197,7 +197,7 @@ func TestDevfile200_AddProjects(t *testing.T) {
 		args    []v1.Project
 	}{
 		{
-			name:    "case:1 It should add project",
+			name:    "It should add project",
 			wantErr: false,
 			args: []v1.Project{
 				{
@@ -210,7 +210,7 @@ func TestDevfile200_AddProjects(t *testing.T) {
 		},
 
 		{
-			name:    "case:2 It should give error if tried to add already present starter project",
+			name:    "It should give error if tried to add already present starter project",
 			wantErr: true,
 			args: []v1.Project{
 				{
@@ -249,9 +249,10 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 		args              v1.Project
 		devfilev2         *DevfileV2
 		expectedDevfilev2 *DevfileV2
+		wantErr           bool
 	}{
 		{
-			name: "case:1 It should update project for existing project",
+			name: "It should update project for existing project",
 			args: v1.Project{
 				Name:      "nodejs",
 				ClonePath: "/test",
@@ -292,9 +293,10 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 					},
 				},
 			},
+			wantErr: false,
 		},
 		{
-			name: "case:2 It should not update project for non existing project",
+			name: "It should not fail to update project for non existing project",
 			args: v1.Project{
 				Name:      "quarkus-starter",
 				ClonePath: "/project",
@@ -317,33 +319,24 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 					},
 				},
 			},
-			expectedDevfilev2: &DevfileV2{
-				v1.Devfile{
-					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							Projects: []v1.Project{
-								{
-									Name:      "nodejs",
-									ClonePath: "/project",
-								},
-								{
-									Name:      "java-starter",
-									ClonePath: "/project",
-								},
-							},
-						},
-					},
-				},
-			},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.devfilev2.UpdateProject(tt.args)
+			err := tt.devfilev2.UpdateProject(tt.args)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_UpdateProject() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
 
 			if !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
-				t.Errorf("wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
+				t.Errorf("TestDevfile200_UpdateProject() - wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
 			}
 		})
 	}
@@ -592,7 +585,7 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 		args    []v1.StarterProject
 	}{
 		{
-			name:    "case:1 It should add starter project",
+			name:    "It should add starter project",
 			wantErr: false,
 			args: []v1.StarterProject{
 				{
@@ -607,7 +600,7 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 		},
 
 		{
-			name:    "case:2 It should give error if tried to add already present starter project",
+			name:    "It should give error if tried to add already present starter project",
 			wantErr: true,
 			args: []v1.StarterProject{
 				{
@@ -647,9 +640,10 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 		args              v1.StarterProject
 		devfilev2         *DevfileV2
 		expectedDevfilev2 *DevfileV2
+		wantErr           bool
 	}{
 		{
-			name: "case:1 It should update project for existing project",
+			name: "It should update project for existing project",
 			args: v1.StarterProject{
 				Name:   "nodejs",
 				SubDir: "/test",
@@ -690,9 +684,10 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 					},
 				},
 			},
+			wantErr: false,
 		},
 		{
-			name: "case:2 It should not update project for non existing project",
+			name: "It should fail to update project for non existing project",
 			args: v1.StarterProject{
 				Name:   "quarkus-starter",
 				SubDir: "/project",
@@ -715,33 +710,24 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 					},
 				},
 			},
-			expectedDevfilev2: &DevfileV2{
-				v1.Devfile{
-					DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-						DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-							StarterProjects: []v1.StarterProject{
-								{
-									Name:   "nodejs",
-									SubDir: "/project",
-								},
-								{
-									Name:   "java-starter",
-									SubDir: "/project",
-								},
-							},
-						},
-					},
-				},
-			},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.devfilev2.UpdateStarterProject(tt.args)
+			err := tt.devfilev2.UpdateStarterProject(tt.args)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_UpdateStarterProject() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
 
 			if !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
-				t.Errorf("wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
+				t.Errorf("TestDevfile200_UpdateStarterProject() - wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
 			}
 		})
 	}

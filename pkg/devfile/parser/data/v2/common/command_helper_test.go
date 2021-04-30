@@ -127,7 +127,7 @@ func TestGetExecComponent(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Case 1: Exec component present",
+			name: "Exec component present",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -139,7 +139,7 @@ func TestGetExecComponent(t *testing.T) {
 			want: "component1",
 		},
 		{
-			name: "Case 2: Exec component absent",
+			name: "Exec component absent",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -149,7 +149,7 @@ func TestGetExecComponent(t *testing.T) {
 			want: "",
 		},
 		{
-			name:    "Case 3: Empty command",
+			name:    "Empty command",
 			command: v1.Command{},
 			want:    "",
 		},
@@ -173,7 +173,7 @@ func TestGetExecCommandLine(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Case 1: Exec command line present",
+			name: "Exec command line present",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -185,7 +185,7 @@ func TestGetExecCommandLine(t *testing.T) {
 			want: "commandline1",
 		},
 		{
-			name: "Case 2: Exec command line absent",
+			name: "Exec command line absent",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -195,7 +195,7 @@ func TestGetExecCommandLine(t *testing.T) {
 			want: "",
 		},
 		{
-			name:    "Case 3: Empty command",
+			name:    "Empty command",
 			command: v1.Command{},
 			want:    "",
 		},
@@ -219,7 +219,7 @@ func TestGetExecWorkingDir(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Case 1: Exec working dir present",
+			name: "Exec working dir present",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -231,7 +231,7 @@ func TestGetExecWorkingDir(t *testing.T) {
 			want: "workingdir1",
 		},
 		{
-			name: "Case 2: Exec working dir absent",
+			name: "Exec working dir absent",
 			command: v1.Command{
 				Id: "exec1",
 				CommandUnion: v1.CommandUnion{
@@ -241,7 +241,7 @@ func TestGetExecWorkingDir(t *testing.T) {
 			want: "",
 		},
 		{
-			name:    "Case 3: Empty command",
+			name:    "Empty command",
 			command: v1.Command{},
 			want:    "",
 		},

@@ -237,7 +237,7 @@ func TestDevfile200_AddCommands(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "case 1: Command does not exist",
+			name: "Command does not exist",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -263,7 +263,7 @@ func TestDevfile200_AddCommands(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "case 2: Command does exist",
+			name: "Command does exist",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -314,9 +314,10 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 		name            string
 		currentCommands []v1.Command
 		newCommand      v1.Command
+		wantErr         bool
 	}{
 		{
-			name: "case 1: update the command",
+			name: "successfully update the command",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
@@ -341,6 +342,29 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 					},
 				},
 			},
+			wantErr: false,
+		},
+		{
+			name: "fail to update the command if not exist",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{
+							Component: "component1",
+						},
+					},
+				},
+			},
+			newCommand: v1.Command{
+				Id: "command2",
+				CommandUnion: v1.CommandUnion{
+					Exec: &v1.ExecCommand{
+						Component: "component1new",
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -355,7 +379,15 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 				},
 			}
 
-			d.UpdateCommand(tt.newCommand)
+			err := d.UpdateCommand(tt.newCommand)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_UpdateCommands() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
 
 			commands, err := d.GetCommands(common.DevfileOptions{})
 			if err != nil {

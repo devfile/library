@@ -20,7 +20,7 @@ func TestDevfile200_GetSchemaVersion(t *testing.T) {
 		devfilev2             *DevfileV2
 	}{
 		{
-			name: "case 1: Get the schema version",
+			name: "Get the schema version",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
@@ -53,7 +53,7 @@ func TestDevfile200_SetSchemaVersion(t *testing.T) {
 		expectedDevfilev2 *DevfileV2
 	}{
 		{
-			name: "case 1: empty header",
+			name: "empty header",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{},
@@ -69,7 +69,7 @@ func TestDevfile200_SetSchemaVersion(t *testing.T) {
 			},
 		},
 		{
-			name: "case 2: override existing header",
+			name: "override existing header",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
@@ -111,7 +111,7 @@ func TestDevfile200_GetMetadata(t *testing.T) {
 		expectedDockerfilePath string
 	}{
 		{
-			name: "case 1: Get the metadata",
+			name: "Get the metadata",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
@@ -158,7 +158,7 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 		expectedDevfilev2 *DevfileV2
 	}{
 		{
-			name: "case 1: empty header",
+			name: "empty header",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{},
@@ -180,7 +180,7 @@ func TestDevfile200_SetSetMetadata(t *testing.T) {
 			},
 		},
 		{
-			name: "case 2: override existing header",
+			name: "override existing header",
 			devfilev2: &DevfileV2{
 				v1.Devfile{
 					DevfileHeader: devfilepkg.DevfileHeader{
