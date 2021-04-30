@@ -21,7 +21,7 @@ type DevfileData interface {
 
 	GetAttributes() (attributes.Attributes, error)
 	AddAttributes(key string, value interface{}) error
-	UpdateAttributes(attr attributes.Attributes) error
+	UpdateAttributes(key string, value interface{}) error
 
 	// parent related methods
 
