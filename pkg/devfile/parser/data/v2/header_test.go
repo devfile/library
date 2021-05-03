@@ -11,9 +11,6 @@ import (
 
 func TestDevfile200_GetSchemaVersion(t *testing.T) {
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name                  string
 		expectedSchemaVersion string
@@ -43,9 +40,6 @@ func TestDevfile200_GetSchemaVersion(t *testing.T) {
 
 func TestDevfile200_SetSchemaVersion(t *testing.T) {
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name              string
 		schemaVersion     string
@@ -99,9 +93,6 @@ func TestDevfile200_SetSchemaVersion(t *testing.T) {
 
 func TestDevfile200_GetMetadata(t *testing.T) {
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name                   string
 		devfilev2              *DevfileV2
@@ -148,9 +139,6 @@ func TestDevfile200_GetMetadata(t *testing.T) {
 
 func TestDevfile200_SetSetMetadata(t *testing.T) {
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name              string
 		metadata          devfilepkg.DevfileMetadata

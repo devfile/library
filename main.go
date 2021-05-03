@@ -40,10 +40,13 @@ func parserTest() {
 		}
 		fmt.Println("parsing devfile from ./devfile.yaml")
 	}
-	devfile, err := devfilepkg.ParseDevfileAndValidate(args)
+	devfile, warning, err := devfilepkg.ParseDevfileAndValidate(args)
 	if err != nil {
 		fmt.Println(err)
 	} else {
+		if len(warning.Commands) > 0 || len(warning.Components) > 0 || len(warning.Projects) > 0 || len(warning.StarterProjects) > 0 {
+			fmt.Printf("top-level variables were not substituted successfully %+v\n", warning)
+		}
 		devdata := devfile.Data
 		if (reflect.TypeOf(devdata) == reflect.TypeOf(&v2.DevfileV2{})) {
 			d := devdata.(*v2.DevfileV2)
@@ -66,7 +69,7 @@ func parserTest() {
 		}
 		for _, command := range commands {
 			if command.Exec != nil {
-				fmt.Printf("command %s is with kind: %s", command.Id, command.Exec.Group.Kind)
+				fmt.Printf("command %s is with kind: %s\n", command.Id, command.Exec.Group.Kind)
 				fmt.Printf("workingDir is: %s\n", command.Exec.WorkingDir)
 			}
 		}

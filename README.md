@@ -12,9 +12,10 @@ The Devfile Parser library is a Golang module that:
 
 The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/github.com/devfile/library). 
 1. To parse a devfile, visit pkg/devfile/parse.go 
-   ```
+   ```go
    // Parses the devfile and validates the devfile data
-   devfile, err := devfilePkg.ParseAndValidate(devfileLocation)
+   // if top-level variables are not substituted successfully, the warnings can be logged by parsing variableWarning
+   devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(devfileLocation)
 
    // To get all the components from the devfile
    components, err := devfile.Data.GetComponents(DevfileOptions{})
@@ -46,7 +47,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    })
    ```
 2. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
-   ```
+   ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
     containers, err := generator.GetContainers(devfile)
 
