@@ -16,7 +16,7 @@ func TestFilterDevfileObject(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "Case 1: Filter with one key",
+			name: "Filter with one key",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",
@@ -30,7 +30,7 @@ func TestFilterDevfileObject(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "Case 2: Filter with two keys",
+			name: "Filter with two keys",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",
@@ -45,7 +45,7 @@ func TestFilterDevfileObject(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "Case 3: Filter with missing key",
+			name: "Filter with missing key",
 			attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 				"firstString":  "firstStringValue",
 				"secondString": "secondStringValue",
@@ -63,11 +63,10 @@ func TestFilterDevfileObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filterIn, err := FilterDevfileObject(tt.attributes, tt.options)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestFilterDevfileObject unexpected error - %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestFilterDevfileObject wanted error got nil")
-			} else if filterIn != tt.wantFilter {
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestFilterDevfileObject() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && filterIn != tt.wantFilter {
 				t.Errorf("TestFilterDevfileObject error - expected %v got %v", tt.wantFilter, filterIn)
 			}
 		})

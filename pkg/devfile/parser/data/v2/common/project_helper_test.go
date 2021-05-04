@@ -103,16 +103,16 @@ func TestGitLikeProjectSource_GetDefaultSource(t *testing.T) {
 			got1, got2, got3, err := GetDefaultSource(tt.gitLikeProjectSource)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GitLikeProjectSource.GetDefaultSource() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got1 != tt.want1 {
-				t.Errorf("GitLikeProjectSource.GetDefaultSource() got1 = %v, want %v", got1, tt.want1)
-			}
-			if got2 != tt.want2 {
-				t.Errorf("GitLikeProjectSource.GetDefaultSource() got2 = %v, want %v", got2, tt.want2)
-			}
-			if got3 != tt.want3 {
-				t.Errorf("GitLikeProjectSource.GetDefaultSource() got2 = %v, want %v", got3, tt.want3)
+			} else if err == nil {
+				if got1 != tt.want1 {
+					t.Errorf("GitLikeProjectSource.GetDefaultSource() got1 = %v, want %v", got1, tt.want1)
+				}
+				if got2 != tt.want2 {
+					t.Errorf("GitLikeProjectSource.GetDefaultSource() got2 = %v, want %v", got2, tt.want2)
+				}
+				if got3 != tt.want3 {
+					t.Errorf("GitLikeProjectSource.GetDefaultSource() got2 = %v, want %v", got3, tt.want3)
+				}
 			}
 		})
 	}
@@ -170,9 +170,7 @@ func TestGetProjectSrcType(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetProjectSrcType() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.projectSrcType {
+			} else if err == nil && got != tt.projectSrcType {
 				t.Errorf("TestGetProjectSrcType error: project src type mismatch, expected: %v got: %v", tt.projectSrcType, got)
 			}
 		})

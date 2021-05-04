@@ -20,7 +20,7 @@ func TestDevfile200_AddComponent(t *testing.T) {
 		wantErr           bool
 	}{
 		{
-			name: "case 1: successfully add the component",
+			name: "successfully add the component",
 			currentComponents: []v1.Component{
 				{
 					Name: "component1",
@@ -46,7 +46,7 @@ func TestDevfile200_AddComponent(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "case 2: error out on duplicate component",
+			name: "error out on duplicate component",
 			currentComponents: []v1.Component{
 				{
 					Name: "component1",
@@ -84,14 +84,11 @@ func TestDevfile200_AddComponent(t *testing.T) {
 				},
 			}
 
-			got := d.AddComponents(tt.newComponents)
-
-			if !tt.wantErr && got != nil {
-				t.Errorf("TestDevfile200_AddComponents() unexpected error - %+v", got)
-			} else if tt.wantErr && got == nil {
-				t.Errorf("TestDevfile200_AddComponents() expected error but got nil")
+			err := d.AddComponents(tt.newComponents)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_AddComponents() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 		})
 	}
 }
@@ -102,9 +99,10 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 		name              string
 		currentComponents []v1.Component
 		newComponent      v1.Component
+		wantErr           bool
 	}{
 		{
-			name: "case 1: successfully update the component",
+			name: "successfully update the component",
 			currentComponents: []v1.Component{
 				{
 					Name: "Component1",
@@ -133,6 +131,33 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 					},
 				},
 			},
+			wantErr: false,
+		},
+		{
+			name: "fail to update the component if not exist",
+			currentComponents: []v1.Component{
+				{
+					Name: "Component1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image1",
+							},
+						},
+					},
+				},
+			},
+			newComponent: v1.Component{
+				Name: "Component2",
+				ComponentUnion: v1.ComponentUnion{
+					Container: &v1.ContainerComponent{
+						Container: v1.Container{
+							Image: "image2",
+						},
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -147,24 +172,28 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 				},
 			}
 
-			d.UpdateComponent(tt.newComponent)
-
-			components, err := d.GetComponents(common.DevfileOptions{})
-			if err != nil {
-				t.Errorf("TestDevfile200_UpdateComponent() unxpected error %v", err)
-				return
-			}
-
-			matched := false
-			for _, component := range components {
-				if reflect.DeepEqual(component, tt.newComponent) {
-					matched = true
-					break
+			err := d.UpdateComponent(tt.newComponent)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_UpdateComponent() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				components, err := d.GetComponents(common.DevfileOptions{})
+				if err != nil {
+					t.Errorf("TestDevfile200_UpdateComponent() unxpected error %v", err)
+					return
 				}
-			}
 
-			if !matched {
-				t.Error("TestDevfile200_UpdateComponent() error updating the component")
+				matched := false
+				for _, component := range components {
+					if reflect.DeepEqual(component, tt.newComponent) {
+						matched = true
+						break
+					}
+				}
+
+				if !matched {
+					t.Error("TestDevfile200_UpdateComponent() error updating the component")
+				}
 			}
 		})
 	}
@@ -370,12 +399,12 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 		wantErr              bool
 	}{
 		{
-			name:                 "Case 1: Invalid devfile",
+			name:                 "Invalid devfile",
 			component:            []v1.Component{},
 			expectedMatchesCount: 0,
 		},
 		{
-			name: "Case 2: Valid devfile with wrong component type (Openshift)",
+			name: "Valid devfile with wrong component type (Openshift)",
 			component: []v1.Component{
 				{
 					ComponentUnion: v1.ComponentUnion{
@@ -386,7 +415,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			expectedMatchesCount: 0,
 		},
 		{
-			name: "Case 3 : Valid devfile with correct component type (Container)",
+			name: "Valid devfile with correct component type (Container)",
 			component: []v1.Component{
 				testingutil.GetFakeContainerComponent("comp1"),
 				testingutil.GetFakeContainerComponent("comp2"),
@@ -395,7 +424,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			filterOptions:        common.DevfileOptions{},
 		},
 		{
-			name: "Case 4 : Get Container component with the specified filter",
+			name: "Get Container component with the specified filter",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -427,7 +456,7 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			expectedMatchesCount: 1,
 		},
 		{
-			name: "Case 5 : Get Container component with the wrong specified filter",
+			name: "Get Container component with the wrong specified filter",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -472,11 +501,9 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			}
 
 			devfileComponents, err := d.GetDevfileContainerComponents(tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetDevfileContainerComponents unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetDevfileContainerComponents expected error but got nil")
-			} else if len(devfileComponents) != tt.expectedMatchesCount {
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetDevfileContainerComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
 			}
 		})
@@ -494,12 +521,12 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 		wantErr              bool
 	}{
 		{
-			name:                 "Case 1: Invalid devfile",
+			name:                 "Invalid devfile",
 			component:            []v1.Component{},
 			expectedMatchesCount: 0,
 		},
 		{
-			name: "Case 2: Valid devfile with wrong component type (Kubernetes)",
+			name: "Valid devfile with wrong component type (Kubernetes)",
 			component: []v1.Component{
 				{
 					ComponentUnion: v1.ComponentUnion{
@@ -510,7 +537,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 			expectedMatchesCount: 0,
 		},
 		{
-			name: "Case 3: Valid devfile with correct component type (Volume)",
+			name: "Valid devfile with correct component type (Volume)",
 			component: []v1.Component{
 				testingutil.GetFakeContainerComponent("comp1"),
 				testingutil.GetFakeVolumeComponent("myvol", "4Gi"),
@@ -518,7 +545,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 			expectedMatchesCount: 1,
 		},
 		{
-			name: "Case 4 : Get Container component with the specified filter",
+			name: "Get Container component with the specified filter",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -549,7 +576,7 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 			expectedMatchesCount: 2,
 		},
 		{
-			name: "Case 5 : Get Container component with the wrong specified filter",
+			name: "Get Container component with the wrong specified filter",
 			component: []v1.Component{
 				{
 					Name: "comp1",
@@ -583,11 +610,9 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 				},
 			}
 			devfileComponents, err := d.GetDevfileVolumeComponents(tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetDevfileVolumeComponents unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetDevfileVolumeComponents expected error but got nil")
-			} else if len(devfileComponents) != tt.expectedMatchesCount {
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetDevfileVolumeComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
 			}
 		})

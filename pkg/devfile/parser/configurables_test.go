@@ -24,7 +24,7 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 		wantDevFile    DevfileObj
 	}{
 		{
-			name: "case 1: add and remove env vars",
+			name: "add and remove env vars",
 			listToAdd: []v1.EnvVar{
 				{
 					Name:  "DATABASE_PASSWORD",

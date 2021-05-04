@@ -38,28 +38,28 @@ type DevfileData interface {
 
 	GetComponents(common.DevfileOptions) ([]v1.Component, error)
 	AddComponents(components []v1.Component) error
-	UpdateComponent(component v1.Component)
+	UpdateComponent(component v1.Component) error
 	DeleteComponent(name string) error
 
 	// project related methods
 
 	GetProjects(common.DevfileOptions) ([]v1.Project, error)
 	AddProjects(projects []v1.Project) error
-	UpdateProject(project v1.Project)
+	UpdateProject(project v1.Project) error
 	DeleteProject(name string) error
 
 	// starter projects related commands
 
 	GetStarterProjects(common.DevfileOptions) ([]v1.StarterProject, error)
 	AddStarterProjects(projects []v1.StarterProject) error
-	UpdateStarterProject(project v1.StarterProject)
+	UpdateStarterProject(project v1.StarterProject) error
 	DeleteStarterProject(name string) error
 
 	// command related methods
 
 	GetCommands(common.DevfileOptions) ([]v1.Command, error)
 	AddCommands(commands []v1.Command) error
-	UpdateCommand(command v1.Command)
+	UpdateCommand(command v1.Command) error
 	DeleteCommand(id string) error
 
 	// volume mount related methods

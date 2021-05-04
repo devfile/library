@@ -145,14 +145,7 @@ func TestAddSourceAttributesForOverrideAndMerge(t *testing.T) {
 
 			if tt.wantErr == (err == nil) {
 				t.Errorf("Test_AddSourceAttributesForOverrideAndMerge() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if err != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(tt.template, tt.wantResult) {
+			} else if err == nil && !reflect.DeepEqual(tt.template, tt.wantResult) {
 				t.Errorf("wanted: %v, got: %v, difference at %v", tt.wantResult, tt.template, pretty.Compare(tt.template, tt.wantResult))
 			}
 

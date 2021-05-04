@@ -29,7 +29,7 @@ func TestConvertEnvs(t *testing.T) {
 		want    []corev1.EnvVar
 	}{
 		{
-			name: "Case 1: One env var",
+			name: "One env var",
 			envVars: []v1.EnvVar{
 				{
 					Name:  envVarsNames[0],
@@ -44,7 +44,7 @@ func TestConvertEnvs(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: Multiple env vars",
+			name: "Multiple env vars",
 			envVars: []v1.EnvVar{
 				{
 					Name:  envVarsNames[0],
@@ -75,7 +75,7 @@ func TestConvertEnvs(t *testing.T) {
 			},
 		},
 		{
-			name:    "Case 3: No env vars",
+			name:    "No env vars",
 			envVars: []v1.EnvVar{},
 			want:    []corev1.EnvVar{},
 		},
@@ -100,7 +100,7 @@ func TestConvertPorts(t *testing.T) {
 		want      []corev1.ContainerPort
 	}{
 		{
-			name: "Case 1: One Endpoint",
+			name: "One Endpoint",
 			endpoints: []v1.Endpoint{
 				{
 					Name:       endpointsNames[0],
@@ -116,7 +116,7 @@ func TestConvertPorts(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: Multiple endpoints",
+			name: "Multiple endpoints",
 			endpoints: []v1.Endpoint{
 				{
 					Name:       endpointsNames[0],
@@ -141,7 +141,7 @@ func TestConvertPorts(t *testing.T) {
 			},
 		},
 		{
-			name:      "Case 3: No endpoints",
+			name:      "No endpoints",
 			endpoints: []v1.Endpoint{},
 			want:      []corev1.ContainerPort{},
 		},
@@ -169,7 +169,7 @@ func TestGetResourceReqs(t *testing.T) {
 		want      corev1.ResourceRequirements
 	}{
 		{
-			name: "Case 1: One Endpoint",
+			name: "One Endpoint",
 			component: v1.Component{
 				Name: "testcomponent",
 				ComponentUnion: v1.ComponentUnion{
@@ -187,12 +187,12 @@ func TestGetResourceReqs(t *testing.T) {
 			},
 		},
 		{
-			name:      "Case 2: Empty Component",
+			name:      "Empty Component",
 			component: v1.Component{},
 			want:      corev1.ResourceRequirements{},
 		},
 		{
-			name: "Case 3: Valid container, but empty memoryLimit",
+			name: "Valid container, but empty memoryLimit",
 			component: v1.Component{
 				Name: "testcomponent",
 				ComponentUnion: v1.ComponentUnion{
@@ -225,12 +225,12 @@ func TestAddSyncRootFolder(t *testing.T) {
 		wantSyncRootFolder string
 	}{
 		{
-			name:               "Case 1: Valid Source Mapping",
+			name:               "Valid Source Mapping",
 			sourceMapping:      "/mypath",
 			wantSyncRootFolder: "/mypath",
 		},
 		{
-			name:               "Case 2: No Source Mapping",
+			name:               "No Source Mapping",
 			sourceMapping:      "",
 			wantSyncRootFolder: DevfileSourceVolumeMount,
 		},
@@ -268,13 +268,13 @@ func TestAddSyncFolder(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "Case 1: No projects",
+			name:     "No projects",
 			projects: []v1.Project{},
 			want:     sourceVolumePath,
 			wantErr:  false,
 		},
 		{
-			name: "Case 2: One project",
+			name: "One project",
 			projects: []v1.Project{
 				{
 					Name: projectNames[0],
@@ -291,7 +291,7 @@ func TestAddSyncFolder(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Case 3: Multiple projects",
+			name: "Multiple projects",
 			projects: []v1.Project{
 				{
 					Name: projectNames[0],
@@ -326,7 +326,7 @@ func TestAddSyncFolder(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Case 4: Clone path set",
+			name: "Clone path set",
 			projects: []v1.Project{
 				{
 					ClonePath: projectClonePath,
@@ -342,7 +342,7 @@ func TestAddSyncFolder(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Case 5: Invalid clone path, set with absolute path",
+			name: "Invalid clone path, set with absolute path",
 			projects: []v1.Project{
 				{
 					ClonePath: invalidClonePaths[0],
@@ -360,7 +360,7 @@ func TestAddSyncFolder(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Case 6: Invalid clone path, starts with ..",
+			name: "Invalid clone path, starts with ..",
 			projects: []v1.Project{
 				{
 					ClonePath: invalidClonePaths[1],
@@ -378,7 +378,7 @@ func TestAddSyncFolder(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Case 7: Invalid clone path, contains ..",
+			name: "Invalid clone path, contains ..",
 			projects: []v1.Project{
 				{
 					ClonePath: invalidClonePaths[2],
@@ -402,11 +402,11 @@ func TestAddSyncFolder(t *testing.T) {
 
 			if !tt.wantErr == (err != nil) {
 				t.Errorf("expected %v, actual %v", tt.wantErr, err)
-			}
-
-			for _, env := range container.Env {
-				if env.Name == EnvProjectsSrc && env.Value != tt.want {
-					t.Errorf("expected %s, actual %s", tt.want, env.Value)
+			} else if err == nil {
+				for _, env := range container.Env {
+					if env.Name == EnvProjectsSrc && env.Value != tt.want {
+						t.Errorf("expected %s, actual %s", tt.want, env.Value)
+					}
 				}
 			}
 		})
@@ -427,7 +427,7 @@ func TestGetContainer(t *testing.T) {
 		ports         []corev1.ContainerPort
 	}{
 		{
-			name:          "Case 1: Empty container params",
+			name:          "Empty container params",
 			containerName: "",
 			image:         "",
 			isPrivileged:  false,
@@ -438,7 +438,7 @@ func TestGetContainer(t *testing.T) {
 			ports:         []corev1.ContainerPort{},
 		},
 		{
-			name:          "Case 2: Valid container params",
+			name:          "Valid container params",
 			containerName: "container1",
 			image:         "quay.io/eclipse/che-java8-maven:nightly",
 			isPrivileged:  true,
@@ -624,7 +624,7 @@ func TestGetServiceSpec(t *testing.T) {
 		wantErr             bool
 	}{
 		{
-			name: "Case 1: multiple endpoints share the same port",
+			name: "multiple endpoints share the same port",
 			containerComponents: []v1.Component{
 				{
 					Name: "testcontainer1",
@@ -655,7 +655,7 @@ func TestGetServiceSpec(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Case 2: multiple endpoints have different ports",
+			name: "multiple endpoints have different ports",
 			containerComponents: []v1.Component{
 				{
 					Name: "testcontainer1",
@@ -693,7 +693,7 @@ func TestGetServiceSpec(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Case 3: filter components",
+			name: "filter components",
 			containerComponents: []v1.Component{
 				{
 					Name: "testcontainer1",
@@ -764,26 +764,20 @@ func TestGetServiceSpec(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetServiceSpec() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			// Expected error and got an err
-			if tt.wantErr && err != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(serviceSpec.Selector, tt.labels) {
-				t.Errorf("expected service selector is %v, actual %v", tt.labels, serviceSpec.Selector)
-			}
-			if len(serviceSpec.Ports) != len(tt.wantPorts) {
-				t.Errorf("expected service ports length is %v, actual %v", len(tt.wantPorts), len(serviceSpec.Ports))
-			} else {
-				for i := range serviceSpec.Ports {
-					if serviceSpec.Ports[i].Name != tt.wantPorts[i].Name {
-						t.Errorf("expected name %s, actual name %s", tt.wantPorts[i].Name, serviceSpec.Ports[i].Name)
-					}
-					if serviceSpec.Ports[i].Port != tt.wantPorts[i].Port {
-						t.Errorf("expected port number is %v, actual %v", tt.wantPorts[i].Port, serviceSpec.Ports[i].Port)
+			} else if err == nil {
+				if !reflect.DeepEqual(serviceSpec.Selector, tt.labels) {
+					t.Errorf("expected service selector is %v, actual %v", tt.labels, serviceSpec.Selector)
+				}
+				if len(serviceSpec.Ports) != len(tt.wantPorts) {
+					t.Errorf("expected service ports length is %v, actual %v", len(tt.wantPorts), len(serviceSpec.Ports))
+				} else {
+					for i := range serviceSpec.Ports {
+						if serviceSpec.Ports[i].Name != tt.wantPorts[i].Name {
+							t.Errorf("expected name %s, actual name %s", tt.wantPorts[i].Name, serviceSpec.Ports[i].Name)
+						}
+						if serviceSpec.Ports[i].Port != tt.wantPorts[i].Port {
+							t.Errorf("expected port number is %v, actual %v", tt.wantPorts[i].Port, serviceSpec.Ports[i].Port)
+						}
 					}
 				}
 			}
@@ -802,7 +796,7 @@ func TestGetPortExposure(t *testing.T) {
 		wantErr             bool
 	}{
 		{
-			name: "Case 1: devfile has single container with single endpoint",
+			name: "devfile has single container with single endpoint",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.PublicEndpointExposure,
 			},
@@ -827,7 +821,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name:    "Case 2: devfile no endpoints",
+			name:    "devfile no endpoints",
 			wantMap: map[int]v1.EndpointExposure{},
 			containerComponents: []v1.Component{
 				{
@@ -843,7 +837,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 3: devfile has multiple endpoints with same port, 1 public and 1 internal, should assign public",
+			name: "devfile has multiple endpoints with same port, 1 public and 1 internal, should assign public",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.PublicEndpointExposure,
 			},
@@ -873,7 +867,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 4: devfile has multiple endpoints with same port, 1 public and 1 none, should assign public",
+			name: "devfile has multiple endpoints with same port, 1 public and 1 none, should assign public",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.PublicEndpointExposure,
 			},
@@ -903,7 +897,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 5: devfile has multiple endpoints with same port, 1 internal and 1 none, should assign internal",
+			name: "devfile has multiple endpoints with same port, 1 internal and 1 none, should assign internal",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.InternalEndpointExposure,
 			},
@@ -933,7 +927,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 6: devfile has multiple endpoints with different port",
+			name: "devfile has multiple endpoints with different port",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.PublicEndpointExposure,
 				9090: v1.InternalEndpointExposure,
@@ -984,7 +978,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 7: Filter components",
+			name: "Filter components",
 			wantMap: map[int]v1.EndpointExposure{
 				8080: v1.PublicEndpointExposure,
 				3000: v1.NoneEndpointExposure,
@@ -1043,7 +1037,7 @@ func TestGetPortExposure(t *testing.T) {
 			},
 		},
 		{
-			name:    "Case 8: Wrong filter components",
+			name:    "Wrong filter components",
 			wantMap: map[int]v1.EndpointExposure{},
 			containerComponents: []v1.Component{
 				{
@@ -1095,11 +1089,10 @@ func TestGetPortExposure(t *testing.T) {
 			}
 
 			mapCreated, err := getPortExposure(devObj, tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetPortExposure unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetPortExposure expected error but got nil")
-			} else if !reflect.DeepEqual(mapCreated, tt.wantMap) {
+			// Checks for unexpected error cases
+			if !tt.wantErr == (err != nil) {
+				t.Errorf("TestGetPortExposure unexpected error %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && !reflect.DeepEqual(mapCreated, tt.wantMap) {
 				t.Errorf("TestGetPortExposure Expected: %v, got %v", tt.wantMap, mapCreated)
 			}
 
@@ -1159,7 +1152,7 @@ func TestGetRouteSpec(t *testing.T) {
 		parameter RouteSpecParams
 	}{
 		{
-			name: "Case 1: insecure route",
+			name: "insecure route",
 			parameter: RouteSpecParams{
 				ServiceName: "service1",
 				PortNumber: intstr.IntOrString{
@@ -1170,7 +1163,7 @@ func TestGetRouteSpec(t *testing.T) {
 			},
 		},
 		{
-			name: "Case 2: secure route",
+			name: "secure route",
 			parameter: RouteSpecParams{
 				ServiceName: "service1",
 				PortNumber: intstr.IntOrString{
@@ -1215,12 +1208,12 @@ func TestGetPVCSpec(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "Case 1: Valid resource size",
+			name:    "Valid resource size",
 			size:    "1Gi",
 			wantErr: false,
 		},
 		{
-			name:    "Case 2: Resource size missing",
+			name:    "Resource size missing",
 			size:    "",
 			wantErr: true,
 		},
@@ -1233,16 +1226,16 @@ func TestGetPVCSpec(t *testing.T) {
 			// Checks for unexpected error cases
 			if !tt.wantErr == (err != nil) {
 				t.Errorf("resource.ParseQuantity unexpected error %v, wantErr %v", err, tt.wantErr)
-			}
+			} else if err == nil {
+				pvcSpec := getPVCSpec(quantity)
+				if pvcSpec.AccessModes[0] != corev1.ReadWriteOnce {
+					t.Errorf("AccessMode Error: expected %s, actual %s", corev1.ReadWriteMany, pvcSpec.AccessModes[0])
+				}
 
-			pvcSpec := getPVCSpec(quantity)
-			if pvcSpec.AccessModes[0] != corev1.ReadWriteOnce {
-				t.Errorf("AccessMode Error: expected %s, actual %s", corev1.ReadWriteMany, pvcSpec.AccessModes[0])
-			}
-
-			pvcSpecQuantity := pvcSpec.Resources.Requests["storage"]
-			if pvcSpecQuantity.String() != quantity.String() {
-				t.Errorf("pvcSpec.Resources.Requests Error: expected %v, actual %v", pvcSpecQuantity.String(), quantity.String())
+				pvcSpecQuantity := pvcSpec.Resources.Requests["storage"]
+				if pvcSpecQuantity.String() != quantity.String() {
+					t.Errorf("pvcSpec.Resources.Requests Error: expected %v, actual %v", pvcSpecQuantity.String(), quantity.String())
+				}
 			}
 		})
 	}
@@ -1270,13 +1263,13 @@ func TestGetBuildConfigSpec(t *testing.T) {
 		buildStrategy buildv1.BuildStrategy
 	}{
 		{
-			name:          "Case 1: Get a Source Strategy Build Config",
+			name:          "Get a Source Strategy Build Config",
 			GitURL:        "url",
 			GitRef:        "ref",
 			buildStrategy: GetSourceBuildStrategy(image, namespace),
 		},
 		{
-			name:          "Case 2: Get a Docker Strategy Build Config",
+			name:          "Get a Docker Strategy Build Config",
 			GitURL:        "url",
 			GitRef:        "ref",
 			ContextDir:    "./",
