@@ -402,11 +402,11 @@ func TestAddSyncFolder(t *testing.T) {
 
 			if !tt.wantErr == (err != nil) {
 				t.Errorf("expected %v, actual %v", tt.wantErr, err)
-			}
-
-			for _, env := range container.Env {
-				if env.Name == EnvProjectsSrc && env.Value != tt.want {
-					t.Errorf("expected %s, actual %s", tt.want, env.Value)
+			} else if err == nil {
+				for _, env := range container.Env {
+					if env.Name == EnvProjectsSrc && env.Value != tt.want {
+						t.Errorf("expected %s, actual %s", tt.want, env.Value)
+					}
 				}
 			}
 		})
@@ -764,26 +764,20 @@ func TestGetServiceSpec(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetServiceSpec() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			// Expected error and got an err
-			if tt.wantErr && err != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(serviceSpec.Selector, tt.labels) {
-				t.Errorf("expected service selector is %v, actual %v", tt.labels, serviceSpec.Selector)
-			}
-			if len(serviceSpec.Ports) != len(tt.wantPorts) {
-				t.Errorf("expected service ports length is %v, actual %v", len(tt.wantPorts), len(serviceSpec.Ports))
-			} else {
-				for i := range serviceSpec.Ports {
-					if serviceSpec.Ports[i].Name != tt.wantPorts[i].Name {
-						t.Errorf("expected name %s, actual name %s", tt.wantPorts[i].Name, serviceSpec.Ports[i].Name)
-					}
-					if serviceSpec.Ports[i].Port != tt.wantPorts[i].Port {
-						t.Errorf("expected port number is %v, actual %v", tt.wantPorts[i].Port, serviceSpec.Ports[i].Port)
+			} else if err == nil {
+				if !reflect.DeepEqual(serviceSpec.Selector, tt.labels) {
+					t.Errorf("expected service selector is %v, actual %v", tt.labels, serviceSpec.Selector)
+				}
+				if len(serviceSpec.Ports) != len(tt.wantPorts) {
+					t.Errorf("expected service ports length is %v, actual %v", len(tt.wantPorts), len(serviceSpec.Ports))
+				} else {
+					for i := range serviceSpec.Ports {
+						if serviceSpec.Ports[i].Name != tt.wantPorts[i].Name {
+							t.Errorf("expected name %s, actual name %s", tt.wantPorts[i].Name, serviceSpec.Ports[i].Name)
+						}
+						if serviceSpec.Ports[i].Port != tt.wantPorts[i].Port {
+							t.Errorf("expected port number is %v, actual %v", tt.wantPorts[i].Port, serviceSpec.Ports[i].Port)
+						}
 					}
 				}
 			}
@@ -1095,11 +1089,10 @@ func TestGetPortExposure(t *testing.T) {
 			}
 
 			mapCreated, err := getPortExposure(devObj, tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetPortExposure unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetPortExposure expected error but got nil")
-			} else if !reflect.DeepEqual(mapCreated, tt.wantMap) {
+			// Checks for unexpected error cases
+			if !tt.wantErr == (err != nil) {
+				t.Errorf("TestGetPortExposure unexpected error %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && !reflect.DeepEqual(mapCreated, tt.wantMap) {
 				t.Errorf("TestGetPortExposure Expected: %v, got %v", tt.wantMap, mapCreated)
 			}
 
@@ -1233,16 +1226,16 @@ func TestGetPVCSpec(t *testing.T) {
 			// Checks for unexpected error cases
 			if !tt.wantErr == (err != nil) {
 				t.Errorf("resource.ParseQuantity unexpected error %v, wantErr %v", err, tt.wantErr)
-			}
+			} else if err == nil {
+				pvcSpec := getPVCSpec(quantity)
+				if pvcSpec.AccessModes[0] != corev1.ReadWriteOnce {
+					t.Errorf("AccessMode Error: expected %s, actual %s", corev1.ReadWriteMany, pvcSpec.AccessModes[0])
+				}
 
-			pvcSpec := getPVCSpec(quantity)
-			if pvcSpec.AccessModes[0] != corev1.ReadWriteOnce {
-				t.Errorf("AccessMode Error: expected %s, actual %s", corev1.ReadWriteMany, pvcSpec.AccessModes[0])
-			}
-
-			pvcSpecQuantity := pvcSpec.Resources.Requests["storage"]
-			if pvcSpecQuantity.String() != quantity.String() {
-				t.Errorf("pvcSpec.Resources.Requests Error: expected %v, actual %v", pvcSpecQuantity.String(), quantity.String())
+				pvcSpecQuantity := pvcSpec.Resources.Requests["storage"]
+				if pvcSpecQuantity.String() != quantity.String() {
+					t.Errorf("pvcSpec.Resources.Requests Error: expected %v, actual %v", pvcSpecQuantity.String(), quantity.String())
+				}
 			}
 		})
 	}

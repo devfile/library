@@ -66,19 +66,13 @@ func (d *DevfileV2) AddCommands(commands []v1.Command) error {
 // UpdateCommand updates the command with the given id
 // return an error if the command is not found
 func (d *DevfileV2) UpdateCommand(command v1.Command) error {
-	found := false
 	for i := range d.Commands {
 		if d.Commands[i].Id == command.Id {
-			found = true
 			d.Commands[i] = command
-			d.Commands[i].Id = d.Commands[i].Id
-			break
+			return nil
 		}
 	}
-	if !found {
-		return fmt.Errorf("update command failed: command %s not found", command.Id)
-	}
-	return nil
+	return fmt.Errorf("update command failed: command %s not found", command.Id)
 }
 
 // DeleteCommand removes the specified command

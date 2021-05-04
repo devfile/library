@@ -201,26 +201,20 @@ func TestGetContainers(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetContainers() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			// Expected error and got an err
-			if tt.wantErr && err != nil {
-				return
-			}
-
-			for _, container := range containers {
-				if container.Name != tt.wantContainerName {
-					t.Errorf("TestGetContainers error: Name mismatch - got: %s, wanted: %s", container.Name, tt.wantContainerName)
-				}
-				if container.Image != tt.wantContainerImage {
-					t.Errorf("TestGetContainers error: Image mismatch - got: %s, wanted: %s", container.Image, tt.wantContainerImage)
-				}
-				if len(container.Env) > 0 && !reflect.DeepEqual(container.Env, tt.wantContainerEnv) {
-					t.Errorf("TestGetContainers error: Env mismatch - got: %+v, wanted: %+v", container.Env, tt.wantContainerEnv)
-				}
-				if len(container.VolumeMounts) > 0 && !reflect.DeepEqual(container.VolumeMounts, tt.wantContainerVolMount) {
-					t.Errorf("TestGetContainers error: Vol Mount mismatch - got: %+v, wanted: %+v", container.VolumeMounts, tt.wantContainerVolMount)
+			} else if err == nil {
+				for _, container := range containers {
+					if container.Name != tt.wantContainerName {
+						t.Errorf("TestGetContainers error: Name mismatch - got: %s, wanted: %s", container.Name, tt.wantContainerName)
+					}
+					if container.Image != tt.wantContainerImage {
+						t.Errorf("TestGetContainers error: Image mismatch - got: %s, wanted: %s", container.Image, tt.wantContainerImage)
+					}
+					if len(container.Env) > 0 && !reflect.DeepEqual(container.Env, tt.wantContainerEnv) {
+						t.Errorf("TestGetContainers error: Env mismatch - got: %+v, wanted: %+v", container.Env, tt.wantContainerEnv)
+					}
+					if len(container.VolumeMounts) > 0 && !reflect.DeepEqual(container.VolumeMounts, tt.wantContainerVolMount) {
+						t.Errorf("TestGetContainers error: Vol Mount mismatch - got: %+v, wanted: %+v", container.VolumeMounts, tt.wantContainerVolMount)
+					}
 				}
 			}
 		})

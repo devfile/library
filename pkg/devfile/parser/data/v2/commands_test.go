@@ -295,11 +295,10 @@ func TestDevfile200_AddCommands(t *testing.T) {
 				},
 			}
 
-			got := d.AddCommands(tt.newCommands)
-			if !tt.wantErr && got != nil {
-				t.Errorf("TestDevfile200_AddCommands() unexpected error - %v", got)
-			} else if tt.wantErr && got == nil {
-				t.Errorf("TestDevfile200_AddCommands() wanted an error but got nil")
+			err := d.AddCommands(tt.newCommands)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_AddCommands() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -383,30 +382,26 @@ func TestDevfile200_UpdateCommands(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_UpdateCommands() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
+			} else if err == nil {
+				commands, err := d.GetCommands(common.DevfileOptions{})
+				if err != nil {
+					t.Errorf("TestDevfile200_UpdateCommands() unxpected error %v", err)
+					return
+				}
 
-			commands, err := d.GetCommands(common.DevfileOptions{})
-			if err != nil {
-				t.Errorf("TestDevfile200_UpdateCommands() unxpected error %v", err)
-				return
-			}
-
-			matched := false
-			for _, devfileCommand := range commands {
-				if tt.newCommand.Id == devfileCommand.Id {
-					matched = true
-					if !reflect.DeepEqual(devfileCommand, tt.newCommand) {
-						t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, devfileCommand)
+				matched := false
+				for _, devfileCommand := range commands {
+					if tt.newCommand.Id == devfileCommand.Id {
+						matched = true
+						if !reflect.DeepEqual(devfileCommand, tt.newCommand) {
+							t.Errorf("TestDevfile200_UpdateCommands() command mismatch - wanted %+v, got %+v", tt.newCommand, devfileCommand)
+						}
 					}
 				}
-			}
 
-			if !matched {
-				t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
+				if !matched {
+					t.Errorf("TestDevfile200_UpdateCommands() command mismatch - did not find command with id %s", tt.newCommand.Id)
+				}
 			}
 		})
 	}
@@ -483,7 +478,6 @@ func TestDeleteCommands(t *testing.T) {
 			err := d.DeleteCommand(tt.commandToDelete)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			} else if err == nil {
 				assert.Equal(t, tt.wantCommands, d.Commands, "The two values should be the same.")
 			}

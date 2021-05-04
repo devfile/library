@@ -60,18 +60,13 @@ func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 // UpdateProject updates the slice of Devfile projects parsed from the Devfile
 // return an error if the project is not found
 func (d *DevfileV2) UpdateProject(project v1.Project) error {
-	found := false
 	for i := range d.Projects {
 		if d.Projects[i].Name == project.Name {
-			found = true
 			d.Projects[i] = project
-			break
+			return nil
 		}
 	}
-	if !found {
-		return fmt.Errorf("update project failed: project %s not found", project.Name)
-	}
-	return nil
+	return fmt.Errorf("update project failed: project %s not found", project.Name)
 }
 
 // DeleteProject removes the specified project
@@ -142,18 +137,13 @@ func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 
 // UpdateStarterProject updates the slice of Devfile starter projects parsed from the Devfile
 func (d *DevfileV2) UpdateStarterProject(project v1.StarterProject) error {
-	found := false
 	for i := range d.StarterProjects {
 		if d.StarterProjects[i].Name == project.Name {
-			found = true
 			d.StarterProjects[i] = project
-			break
+			return nil
 		}
 	}
-	if !found {
-		return fmt.Errorf("update starter project failed: starter project %s not found", project.Name)
-	}
-	return nil
+	return fmt.Errorf("update starter project failed: starter project %s not found", project.Name)
 }
 
 // DeleteStarterProject removes the specified starter project

@@ -179,9 +179,7 @@ func TestGetComponentType(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetComponentType() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.componentType {
+			} else if err == nil && got != tt.componentType {
 				t.Errorf("TestGetComponentType error: component type mismatch, expected: %v got: %v", tt.componentType, got)
 			}
 		})

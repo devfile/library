@@ -324,9 +324,7 @@ func TestGetCommandType(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetCommandType() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.commandType {
+			} else if err == nil && got != tt.commandType {
 				t.Errorf("TestGetCommandType error: command type mismatch, expected: %v got: %v", tt.commandType, got)
 			}
 		})

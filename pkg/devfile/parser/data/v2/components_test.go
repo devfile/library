@@ -84,14 +84,11 @@ func TestDevfile200_AddComponent(t *testing.T) {
 				},
 			}
 
-			got := d.AddComponents(tt.newComponents)
-
-			if !tt.wantErr && got != nil {
-				t.Errorf("TestDevfile200_AddComponents() unexpected error - %+v", got)
-			} else if tt.wantErr && got == nil {
-				t.Errorf("TestDevfile200_AddComponents() expected error but got nil")
+			err := d.AddComponents(tt.newComponents)
+			// Unexpected error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_AddComponents() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 		})
 	}
 }
@@ -179,28 +176,24 @@ func TestDevfile200_UpdateComponent(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_UpdateComponent() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
-
-			components, err := d.GetComponents(common.DevfileOptions{})
-			if err != nil {
-				t.Errorf("TestDevfile200_UpdateComponent() unxpected error %v", err)
-				return
-			}
-
-			matched := false
-			for _, component := range components {
-				if reflect.DeepEqual(component, tt.newComponent) {
-					matched = true
-					break
+			} else if err == nil {
+				components, err := d.GetComponents(common.DevfileOptions{})
+				if err != nil {
+					t.Errorf("TestDevfile200_UpdateComponent() unxpected error %v", err)
+					return
 				}
-			}
 
-			if !matched {
-				t.Error("TestDevfile200_UpdateComponent() error updating the component")
+				matched := false
+				for _, component := range components {
+					if reflect.DeepEqual(component, tt.newComponent) {
+						matched = true
+						break
+					}
+				}
+
+				if !matched {
+					t.Error("TestDevfile200_UpdateComponent() error updating the component")
+				}
 			}
 		})
 	}
@@ -508,11 +501,9 @@ func TestGetDevfileContainerComponents(t *testing.T) {
 			}
 
 			devfileComponents, err := d.GetDevfileContainerComponents(tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetDevfileContainerComponents unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetDevfileContainerComponents expected error but got nil")
-			} else if len(devfileComponents) != tt.expectedMatchesCount {
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetDevfileContainerComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileContainerComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
 			}
 		})
@@ -619,11 +610,9 @@ func TestGetDevfileVolumeComponents(t *testing.T) {
 				},
 			}
 			devfileComponents, err := d.GetDevfileVolumeComponents(tt.filterOptions)
-			if !tt.wantErr && err != nil {
-				t.Errorf("TestGetDevfileVolumeComponents unexpected error: %v", err)
-			} else if tt.wantErr && err == nil {
-				t.Errorf("TestGetDevfileVolumeComponents expected error but got nil")
-			} else if len(devfileComponents) != tt.expectedMatchesCount {
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetDevfileVolumeComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && len(devfileComponents) != tt.expectedMatchesCount {
 				t.Errorf("TestGetDevfileVolumeComponents error: wrong number of components matched: expected %v, actual %v", tt.expectedMatchesCount, len(devfileComponents))
 			}
 		})

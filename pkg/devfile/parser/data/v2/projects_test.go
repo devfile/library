@@ -223,20 +223,14 @@ func TestDevfile200_AddProjects(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := d.AddProjects(tt.args)
-			if err != nil {
-				if !tt.wantErr {
-					t.Errorf("unexpected error: %v", err)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Errorf("expected error, got %v", err)
-				return
-			}
-			wantProjects := append(currentProject, tt.args...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_AddProjects() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				wantProjects := append(currentProject, tt.args...)
 
-			if !reflect.DeepEqual(d.Projects, wantProjects) {
-				t.Errorf("wanted: %v, got: %v, difference at %v", wantProjects, d.Projects, pretty.Compare(wantProjects, d.Projects))
+				if !reflect.DeepEqual(d.Projects, wantProjects) {
+					t.Errorf("wanted: %v, got: %v, difference at %v", wantProjects, d.Projects, pretty.Compare(wantProjects, d.Projects))
+				}
 			}
 		})
 	}
@@ -296,7 +290,7 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "It should not fail to update project for non existing project",
+			name: "It should fail to update project for non existing project",
 			args: v1.Project{
 				Name:      "quarkus-starter",
 				ClonePath: "/project",
@@ -329,13 +323,7 @@ func TestDevfile200_UpdateProject(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_UpdateProject() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
+			} else if err == nil && !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
 				t.Errorf("TestDevfile200_UpdateProject() - wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
 			}
 		})
@@ -614,20 +602,14 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := d.AddStarterProjects(tt.args)
-			if err != nil {
-				if !tt.wantErr {
-					t.Errorf("unexpected error: %v", err)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Errorf("expected error, got %v", err)
-				return
-			}
-			wantProjects := append(currentProject, tt.args...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestDevfile200_AddStarterProjects() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				wantProjects := append(currentProject, tt.args...)
 
-			if !reflect.DeepEqual(d.StarterProjects, wantProjects) {
-				t.Errorf("wanted: %v, got: %v, difference at %v", wantProjects, d.StarterProjects, pretty.Compare(wantProjects, d.StarterProjects))
+				if !reflect.DeepEqual(d.StarterProjects, wantProjects) {
+					t.Errorf("wanted: %v, got: %v, difference at %v", wantProjects, d.StarterProjects, pretty.Compare(wantProjects, d.StarterProjects))
+				}
 			}
 		})
 	}
@@ -720,13 +702,7 @@ func TestDevfile200_UpdateStarterProject(t *testing.T) {
 			// Unexpected error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestDevfile200_UpdateStarterProject() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
+			} else if err == nil && !reflect.DeepEqual(tt.devfilev2, tt.expectedDevfilev2) {
 				t.Errorf("TestDevfile200_UpdateStarterProject() - wanted: %v, got: %v, difference at %v", tt.expectedDevfilev2, tt.devfilev2, pretty.Compare(tt.expectedDevfilev2, tt.devfilev2))
 			}
 		})
