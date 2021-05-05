@@ -8,6 +8,7 @@ BOLD='\033[1m'
 
 set -e
 
+DIR=$(dirname $0)
 CURRENT_DIR=$(pwd)
 API_PKG="github.com/devfile/api/v2"
 SCHEMA_URL_MASTER="https://raw.githubusercontent.com/devfile/api/main/schemas/latest/devfile.json"
@@ -16,12 +17,12 @@ SCHEMA_URL_MASTER="https://raw.githubusercontent.com/devfile/api/main/schemas/la
 SCHEMA_URL_200="https://raw.githubusercontent.com/devfile/api/2.0.x/schemas/latest/devfile.json"
 PACKAGE_VERSION_200="version200"
 JSON_SCHEMA_200="JsonSchema200"
-FILE_PATH_200="./pkg/devfile/parser/data/v2/2.0.0/devfileJsonSchema200.go"
+FILE_PATH_200="$DIR/../pkg/devfile/parser/data/v2/2.0.0/devfileJsonSchema200.go"
 
 # 2.1.0 devfile
 PACKAGE_VERSION_210="version210"
 JSON_SCHEMA_210="JsonSchema210"
-FILE_PATH_210="./pkg/devfile/parser/data/v2/2.1.0/devfileJsonSchema210.go"
+FILE_PATH_210="$DIR/../pkg/devfile/parser/data/v2/2.1.0/devfileJsonSchema210.go"
 
 
 onError() {
@@ -55,5 +56,5 @@ schema=$(curl -L "${SCHEMA_URL}")
 
 #replace all ` with ' and write to schema file
 echo -e "${GREEN}Write to go file${NC}"
-go build *.go
+go build $DIR/../*.go
 ./main updateSchema "${schema}" "${SCHEMA_URL}" "${PACKAGE_VERSION}" "${JSON_SCHEMA}" "${FILE_PATH}"

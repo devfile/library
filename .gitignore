@@ -24,4 +24,8 @@ main
 # File created running tests
 tests/**/tmp/
 
+# Mac related files
 .DS_Store
+
+# Release utility changelog files
+CHANGELOG.md
