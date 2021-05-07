@@ -4,15 +4,16 @@ import (
 	"fmt"
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/devfile/api/v2/pkg/validation"
 )
 
 const (
-	importSourceAttribute   = "library.devfile.io/imported-from"
-	parentOverrideAttribute = "library.devfile.io/parent-override-from"
-	pluginOverrideAttribute = "library.devfile.io/plugin-override-from"
+	importSourceAttribute   = validation.ImportSourceAttribute
+	parentOverrideAttribute = validation.ParentOverrideAttribute
+	pluginOverrideAttribute = validation.PluginOverrideAttribute
 )
 
-// addSourceAttributesForParentOverride adds an attribute 'library.devfile.io/imported-from=<source reference>'
+// addSourceAttributesForParentOverride adds an attribute 'api.devfile.io/imported-from=<source reference>'
 //  to all elements of template spec content that support attributes.
 func addSourceAttributesForTemplateSpecContent(sourceImportReference v1.ImportReference, template *v1.DevWorkspaceTemplateSpecContent) {
 	for idx, component := range template.Components {
@@ -41,7 +42,7 @@ func addSourceAttributesForTemplateSpecContent(sourceImportReference v1.ImportRe
 	}
 }
 
-// addSourceAttributesForParentOverride adds an attribute 'library.devfile.io/parent-override-from=<source reference>'
+// addSourceAttributesForParentOverride adds an attribute 'api.devfile.io/parent-override-from=<source reference>'
 //  to all elements of parent override that support attributes.
 func addSourceAttributesForParentOverride(sourceImportReference v1.ImportReference, parentOverrides *v1.ParentOverrides) {
 	for idx, component := range parentOverrides.Components {
@@ -71,7 +72,7 @@ func addSourceAttributesForParentOverride(sourceImportReference v1.ImportReferen
 
 }
 
-// addSourceAttributesForPluginOverride adds an attribute 'library.devfile.io/plugin-override-from=<source reference>'
+// addSourceAttributesForPluginOverride adds an attribute 'api.devfile.io/plugin-override-from=<source reference>'
 //  to all elements of plugin override that support attributes.
 func addSourceAttributesForPluginOverride(sourceImportReference v1.ImportReference, pluginOverrides *v1.PluginOverrides) {
 	for idx, component := range pluginOverrides.Components {
