@@ -1414,6 +1414,7 @@ const JsonSchema210 = `{
           }
         },
         "registryUrl": {
+          "description": "Registry URL to pull the parent devfile from when using id in the parent reference. To ensure the parent devfile gets resolved consistently in different environments, it is recommended to always specify the 'regsitryURL' when 'Id' is used.",
           "type": "string"
         },
         "starterProjects": {
@@ -1535,7 +1536,7 @@ const JsonSchema210 = `{
           }
         },
         "uri": {
-          "description": "Uri of a Devfile yaml file",
+          "description": "URI Reference of a parent devfile YAML file. It can be a full URL or a relative URI with the current devfile as the base URI.",
           "type": "string"
         },
         "variables": {
