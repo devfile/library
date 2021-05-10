@@ -3,6 +3,7 @@ package v2
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
@@ -75,14 +76,18 @@ func (d *DevfileV2) GetDevfileVolumeComponents(options common.DevfileOptions) ([
 // AddComponents adds the slice of Component objects to the devfile's components
 // if a component is already defined, error out
 func (d *DevfileV2) AddComponents(components []v1.Component) error {
-
+	var errorsList []string
 	for _, component := range components {
 		for _, devfileComponent := range d.Components {
 			if component.Name == devfileComponent.Name {
-				return &common.FieldAlreadyExistError{Name: component.Name, Field: "component"}
+				errorsList = append(errorsList, (&common.FieldAlreadyExistError{Name: component.Name, Field: "component"}).Error())
+				continue
 			}
 		}
 		d.Components = append(d.Components, component)
+	}
+	if len(errorsList) > 0 {
+		return fmt.Errorf("errors while adding components:\n%s", strings.Join(errorsList, "\n"))
 	}
 	return nil
 }
