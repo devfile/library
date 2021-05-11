@@ -50,7 +50,8 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 }
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
-// if a command is already defined, error out
+// a command is considered as invalid if it is already defined
+// command list passed in will be all processed, and returns a total error of all invalid commands
 func (d *DevfileV2) AddCommands(commands []v1.Command) error {
 	var errorsList []string
 	for _, command := range commands {

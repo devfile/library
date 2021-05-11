@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -226,15 +227,13 @@ func TestDevfile200_GetCommands(t *testing.T) {
 }
 
 func TestDevfile200_AddCommands(t *testing.T) {
+	multipleDupError := fmt.Sprintf("%s\n%s", "command command1 already exists in devfile", "command command2 already exists in devfile")
 
-	type args struct {
-		name string
-	}
 	tests := []struct {
 		name            string
 		currentCommands []v1.Command
 		newCommands     []v1.Command
-		wantErr         bool
+		wantErr         *string
 	}{
 		{
 			name: "Command does not exist",
@@ -260,13 +259,19 @@ func TestDevfile200_AddCommands(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
-			name: "Command does exist",
+			name: "Multiple duplicate commands",
 			currentCommands: []v1.Command{
 				{
 					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
 					CommandUnion: v1.CommandUnion{
 						Exec: &v1.ExecCommand{},
 					},
@@ -279,8 +284,20 @@ func TestDevfile200_AddCommands(t *testing.T) {
 						Exec: &v1.ExecCommand{},
 					},
 				},
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command3",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
 			},
-			wantErr: true,
+			wantErr: &multipleDupError,
 		},
 	}
 	for _, tt := range tests {
@@ -297,8 +314,10 @@ func TestDevfile200_AddCommands(t *testing.T) {
 
 			err := d.AddCommands(tt.newCommands)
 			// Unexpected error
-			if (err != nil) != tt.wantErr {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestDevfile200_AddCommands() error = %v, wantErr %v", err, tt.wantErr)
+			} else if tt.wantErr != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
 			}
 		})
 	}

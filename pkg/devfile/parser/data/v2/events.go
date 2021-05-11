@@ -16,7 +16,8 @@ func (d *DevfileV2) GetEvents() v1.Events {
 }
 
 // AddEvents adds the Events Object to the devfile's events
-// if the event is already defined in the devfile, error out
+// an event field is considered as invalid if it is already defined
+// all event fields will be checked and processed, and returns a total error of all event fields
 func (d *DevfileV2) AddEvents(events v1.Events) error {
 
 	if d.Events == nil {
@@ -25,7 +26,7 @@ func (d *DevfileV2) AddEvents(events v1.Events) error {
 	var errorsList []string
 	if len(events.PreStop) > 0 {
 		if len(d.Events.PreStop) > 0 {
-			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "pre stop"}).Error())
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "event field", Name: "pre stop"}).Error())
 		} else {
 			d.Events.PreStop = events.PreStop
 		}
@@ -33,7 +34,7 @@ func (d *DevfileV2) AddEvents(events v1.Events) error {
 
 	if len(events.PreStart) > 0 {
 		if len(d.Events.PreStart) > 0 {
-			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "pre start"}).Error())
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "event field", Name: "pre start"}).Error())
 		} else {
 			d.Events.PreStart = events.PreStart
 		}
@@ -41,7 +42,7 @@ func (d *DevfileV2) AddEvents(events v1.Events) error {
 
 	if len(events.PostStop) > 0 {
 		if len(d.Events.PostStop) > 0 {
-			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "post stop"}).Error())
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "event field", Name: "post stop"}).Error())
 		} else {
 			d.Events.PostStop = events.PostStop
 		}
@@ -49,7 +50,7 @@ func (d *DevfileV2) AddEvents(events v1.Events) error {
 
 	if len(events.PostStart) > 0 {
 		if len(d.Events.PostStart) > 0 {
-			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "post start"}).Error())
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Field: "event field", Name: "post start"}).Error())
 		} else {
 			d.Events.PostStart = events.PostStart
 		}

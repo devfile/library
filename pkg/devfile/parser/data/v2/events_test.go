@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -8,12 +10,13 @@ import (
 )
 
 func TestDevfile200_AddEvents(t *testing.T) {
+	multipleDupError := fmt.Sprintf("%s\n%s", "event field pre start already exists in devfile", "event field post stop already exists in devfile")
 
 	tests := []struct {
 		name          string
 		currentEvents *v1.Events
 		newEvents     v1.Events
-		wantErr       bool
+		wantErr       *string
 	}{
 		{
 			name: "successfully add the events",
@@ -27,7 +30,7 @@ func TestDevfile200_AddEvents(t *testing.T) {
 					PostStart: []string{"postStart1"},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:          "successfully add the events to empty devfile event",
@@ -37,21 +40,24 @@ func TestDevfile200_AddEvents(t *testing.T) {
 					PostStart: []string{"postStart1"},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name: "event already present",
 			currentEvents: &v1.Events{
 				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart1"},
+					PostStop: []string{"postStop1"},
 				},
 			},
 			newEvents: v1.Events{
 				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: []string{"preStart2"},
+					PostStop: []string{"postStop2"},
+					PreStop:  []string{"preStop"},
 				},
 			},
-			wantErr: true,
+			wantErr: &multipleDupError,
 		},
 	}
 	for _, tt := range tests {
@@ -68,8 +74,10 @@ func TestDevfile200_AddEvents(t *testing.T) {
 
 			err := d.AddEvents(tt.newEvents)
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DeleteCommand() error = %v, wantErr %v", err, tt.wantErr)
+			if (err != nil) != (tt.wantErr != nil) {
+				t.Errorf("TestDevfile200_AddEvents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if tt.wantErr != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
 			}
 
 		})

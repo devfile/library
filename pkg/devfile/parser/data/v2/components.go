@@ -74,7 +74,8 @@ func (d *DevfileV2) GetDevfileVolumeComponents(options common.DevfileOptions) ([
 }
 
 // AddComponents adds the slice of Component objects to the devfile's components
-// if a component is already defined, error out
+// a component is considered as invalid if it is already defined
+// component list passed in will be all processed, and returns a total error of all invalid components
 func (d *DevfileV2) AddComponents(components []v1.Component) error {
 	var errorsList []string
 	for _, component := range components {

@@ -41,7 +41,8 @@ func (d *DevfileV2) GetProjects(options common.DevfileOptions) ([]v1.Project, er
 }
 
 // AddProjects adss the slice of Devfile projects to the Devfile's project list
-// if a project is already defined, error out
+// a project is considered as invalid if it is already defined
+// project list passed in will be all processed, and returns a total error of all invalid projects
 func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 	projectsMap := make(map[string]bool)
 	var errorsList []string
@@ -124,7 +125,8 @@ func (d *DevfileV2) GetStarterProjects(options common.DevfileOptions) ([]v1.Star
 }
 
 // AddStarterProjects adds the slice of Devfile starter projects to the Devfile's starter project list
-// if a starter project is already defined, error out
+// a starterProject is considered as invalid if it is already defined
+// starterProject list passed in will be all processed, and returns a total error of all invalid starterProjects
 func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 	projectsMap := make(map[string]bool)
 	var errorsList []string

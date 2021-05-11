@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -12,12 +13,13 @@ import (
 )
 
 func TestDevfile200_AddComponent(t *testing.T) {
+	multipleDupError := fmt.Sprintf("%s\n%s", "component component1 already exists in devfile", "component component2 already exists in devfile")
 
 	tests := []struct {
 		name              string
 		currentComponents []v1.Component
 		newComponents     []v1.Component
-		wantErr           bool
+		wantErr           *string
 	}{
 		{
 			name: "successfully add the component",
@@ -43,7 +45,7 @@ func TestDevfile200_AddComponent(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name: "error out on duplicate component",
@@ -68,8 +70,20 @@ func TestDevfile200_AddComponent(t *testing.T) {
 						Container: &v1.ContainerComponent{},
 					},
 				},
+				{
+					Name: "component2",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+				{
+					Name: "component3",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
 			},
-			wantErr: true,
+			wantErr: &multipleDupError,
 		},
 	}
 	for _, tt := range tests {
@@ -86,8 +100,10 @@ func TestDevfile200_AddComponent(t *testing.T) {
 
 			err := d.AddComponents(tt.newComponents)
 			// Unexpected error
-			if (err != nil) != tt.wantErr {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestDevfile200_AddComponents() error = %v, wantErr %v", err, tt.wantErr)
+			} else if tt.wantErr != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
 			}
 		})
 	}
