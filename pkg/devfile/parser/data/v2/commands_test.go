@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"github.com/kylelemons/godebug/pretty"
 	"reflect"
 	"testing"
 
@@ -318,7 +319,13 @@ func TestDevfile200_AddCommands(t *testing.T) {
 				t.Errorf("TestDevfile200_AddCommands() error = %v, wantErr %v", err, tt.wantErr)
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
+			} else {
+				wantCommands := append(tt.currentCommands, tt.newCommands...)
+				if !reflect.DeepEqual(d.Commands, wantCommands) {
+					t.Errorf("TestDevfile200_AddCommands() wanted: %v, got: %v, difference at %v", wantCommands, d.Commands, pretty.Compare(wantCommands, d.Commands))
+				}
 			}
+
 		})
 	}
 }

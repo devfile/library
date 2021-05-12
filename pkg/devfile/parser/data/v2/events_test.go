@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"github.com/kylelemons/godebug/pretty"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -16,6 +17,7 @@ func TestDevfile200_AddEvents(t *testing.T) {
 		name          string
 		currentEvents *v1.Events
 		newEvents     v1.Events
+		wantEvents    v1.Events
 		wantErr       *string
 	}{
 		{
@@ -30,12 +32,23 @@ func TestDevfile200_AddEvents(t *testing.T) {
 					PostStart: []string{"postStart1"},
 				},
 			},
+			wantEvents: v1.Events{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
+					PreStart:  []string{"preStart1"},
+					PostStart: []string{"postStart1"},
+				},
+			},
 			wantErr: nil,
 		},
 		{
 			name:          "successfully add the events to empty devfile event",
 			currentEvents: nil,
 			newEvents: v1.Events{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
+					PostStart: []string{"postStart1"},
+				},
+			},
+			wantEvents: v1.Events{
 				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PostStart: []string{"postStart1"},
 				},
@@ -78,6 +91,10 @@ func TestDevfile200_AddEvents(t *testing.T) {
 				t.Errorf("TestDevfile200_AddEvents() error = %v, wantErr %v", err, tt.wantErr)
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
+			} else {
+				if !reflect.DeepEqual(*d.Events, tt.wantEvents) {
+					t.Errorf("TestDevfile200_AddEvents() wanted: %v, got: %v, difference at %v", tt.wantEvents, *d.Events, pretty.Compare(tt.wantEvents, *d.Events))
+				}
 			}
 
 		})

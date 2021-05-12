@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"github.com/kylelemons/godebug/pretty"
 	"reflect"
 	"testing"
 
@@ -104,6 +105,11 @@ func TestDevfile200_AddComponent(t *testing.T) {
 				t.Errorf("TestDevfile200_AddComponents() error = %v, wantErr %v", err, tt.wantErr)
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
+			} else {
+				wantComponents := append(tt.currentComponents, tt.newComponents...)
+				if !reflect.DeepEqual(d.Components, wantComponents) {
+					t.Errorf("TestDevfile200_AddComponents() wanted: %v, got: %v, difference at %v", wantComponents, d.Components, pretty.Compare(wantComponents, d.Components))
+				}
 			}
 		})
 	}
