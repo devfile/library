@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -191,14 +192,15 @@ func TestDevfile200_AddProjects(t *testing.T) {
 		},
 	}
 
+	multipleDupError := fmt.Sprintf("%s\n%s", "project java-starter already exists in devfile", "project quarkus-starter already exists in devfile")
+
 	tests := []struct {
 		name    string
-		wantErr bool
 		args    []v1.Project
+		wantErr *string
 	}{
 		{
-			name:    "It should add project",
-			wantErr: false,
+			name: "It should add project",
 			args: []v1.Project{
 				{
 					Name: "nodejs",
@@ -207,24 +209,30 @@ func TestDevfile200_AddProjects(t *testing.T) {
 					Name: "spring-pet-clinic",
 				},
 			},
+			wantErr: nil,
 		},
 
 		{
-			name:    "It should give error if tried to add already present starter project",
-			wantErr: true,
+			name: "It should give error if tried to add already present starter project",
 			args: []v1.Project{
+				{
+					Name: "java-starter",
+				},
 				{
 					Name: "quarkus-starter",
 				},
 			},
+			wantErr: &multipleDupError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := d.AddProjects(tt.args)
-			if (err != nil) != tt.wantErr {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestDevfile200_AddProjects() error = %v, wantErr %v", err, tt.wantErr)
+			} else if tt.wantErr != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
 			} else if err == nil {
 				wantProjects := append(currentProject, tt.args...)
 
@@ -566,15 +574,15 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 			},
 		},
 	}
+	multipleDupError := fmt.Sprintf("%s\n%s", "starterProject java-starter already exists in devfile", "starterProject quarkus-starter already exists in devfile")
 
 	tests := []struct {
 		name    string
-		wantErr bool
 		args    []v1.StarterProject
+		wantErr *string
 	}{
 		{
-			name:    "It should add starter project",
-			wantErr: false,
+			name: "It should add starter project",
 			args: []v1.StarterProject{
 				{
 					Name:        "nodejs",
@@ -585,25 +593,32 @@ func TestDevfile200_AddStarterProjects(t *testing.T) {
 					Description: "starter project for springboot",
 				},
 			},
+			wantErr: nil,
 		},
 
 		{
-			name:    "It should give error if tried to add already present starter project",
-			wantErr: true,
+			name: "It should give error if tried to add already present starter project",
 			args: []v1.StarterProject{
+				{
+					Name:        "java-starter",
+					Description: "starter project for java",
+				},
 				{
 					Name:        "quarkus-starter",
 					Description: "starter project for quarkus",
 				},
 			},
+			wantErr: &multipleDupError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := d.AddStarterProjects(tt.args)
-			if (err != nil) != tt.wantErr {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestDevfile200_AddStarterProjects() error = %v, wantErr %v", err, tt.wantErr)
+			} else if tt.wantErr != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Error message should match")
 			} else if err == nil {
 				wantProjects := append(currentProject, tt.args...)
 

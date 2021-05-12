@@ -5,6 +5,7 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"reflect"
+	"strings"
 )
 
 // GetProjects returns the Project Object parsed from devfile
@@ -40,9 +41,11 @@ func (d *DevfileV2) GetProjects(options common.DevfileOptions) ([]v1.Project, er
 }
 
 // AddProjects adss the slice of Devfile projects to the Devfile's project list
-// if a project is already defined, error out
+// a project is considered as invalid if it is already defined
+// project list passed in will be all processed, and returns a total error of all invalid projects
 func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 	projectsMap := make(map[string]bool)
+	var errorsList []string
 	for _, project := range d.Projects {
 		projectsMap[project.Name] = true
 	}
@@ -51,8 +54,12 @@ func (d *DevfileV2) AddProjects(projects []v1.Project) error {
 		if _, ok := projectsMap[project.Name]; !ok {
 			d.Projects = append(d.Projects, project)
 		} else {
-			return &common.FieldAlreadyExistError{Name: project.Name, Field: "project"}
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Name: project.Name, Field: "project"}).Error())
+			continue
 		}
+	}
+	if len(errorsList) > 0 {
+		return fmt.Errorf("errors while adding projects:\n%s", strings.Join(errorsList, "\n"))
 	}
 	return nil
 }
@@ -118,9 +125,11 @@ func (d *DevfileV2) GetStarterProjects(options common.DevfileOptions) ([]v1.Star
 }
 
 // AddStarterProjects adds the slice of Devfile starter projects to the Devfile's starter project list
-// if a starter project is already defined, error out
+// a starterProject is considered as invalid if it is already defined
+// starterProject list passed in will be all processed, and returns a total error of all invalid starterProjects
 func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 	projectsMap := make(map[string]bool)
+	var errorsList []string
 	for _, project := range d.StarterProjects {
 		projectsMap[project.Name] = true
 	}
@@ -129,8 +138,12 @@ func (d *DevfileV2) AddStarterProjects(projects []v1.StarterProject) error {
 		if _, ok := projectsMap[project.Name]; !ok {
 			d.StarterProjects = append(d.StarterProjects, project)
 		} else {
-			return &common.FieldAlreadyExistError{Name: project.Name, Field: "starterProject"}
+			errorsList = append(errorsList, (&common.FieldAlreadyExistError{Name: project.Name, Field: "starterProject"}).Error())
+			continue
 		}
+	}
+	if len(errorsList) > 0 {
+		return fmt.Errorf("errors while adding starterProjects:\n%s", strings.Join(errorsList, "\n"))
 	}
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"reflect"
+	"strings"
 )
 
 // GetCommands returns the slice of Command objects parsed from the Devfile
@@ -49,16 +50,21 @@ func (d *DevfileV2) GetCommands(options common.DevfileOptions) ([]v1.Command, er
 }
 
 // AddCommands adds the slice of Command objects to the Devfile's commands
-// if a command is already defined, error out
+// a command is considered as invalid if it is already defined
+// command list passed in will be all processed, and returns a total error of all invalid commands
 func (d *DevfileV2) AddCommands(commands []v1.Command) error {
-
+	var errorsList []string
 	for _, command := range commands {
 		for _, devfileCommand := range d.Commands {
 			if command.Id == devfileCommand.Id {
-				return &common.FieldAlreadyExistError{Name: command.Id, Field: "command"}
+				errorsList = append(errorsList, (&common.FieldAlreadyExistError{Name: command.Id, Field: "command"}).Error())
+				continue
 			}
 		}
 		d.Commands = append(d.Commands, command)
+	}
+	if len(errorsList) > 0 {
+		return fmt.Errorf("errors while adding commands:\n%s", strings.Join(errorsList, "\n"))
 	}
 	return nil
 }
