@@ -13,10 +13,23 @@ The Devfile Parser library is a Golang module that:
 The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/github.com/devfile/library). 
 1. To parse a devfile, visit pkg/devfile/parse.go 
    ```go
+   // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
+   parserArgs := parser.ParserArgs{
+		Path:              path,
+		FlattenedDevfile:  &flattenedDevfile,
+		RegistryURLs:      registryURLs,
+		DefaultNamespace:  defaultNamespace,
+		Context:           context,
+		K8sClient:         client,
+	}
+
    // Parses the devfile and validates the devfile data
    // if top-level variables are not substituted successfully, the warnings can be logged by parsing variableWarning
-   devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(devfileLocation)
-
+   devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(parserArgs)
+   ```
+   
+2. To get specific content from devfile
+   ```go
    // To get all the components from the devfile
    components, err := devfile.Data.GetComponents(DevfileOptions{})
 
@@ -46,7 +59,8 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 		},
    })
    ```
-2. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
+   
+3. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
    ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
     containers, err := generator.GetContainers(devfile)
@@ -61,6 +75,70 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 		PodSelectorLabels: labels,
 	}
 	deployment := generator.GetDeployment(deployParams)
+   ```
+   
+4. To update devfile content
+   ```go
+   // To update an existing component in devfile object
+   err := devfile.Data.UpdateComponent(v1.Component{
+   	    Name: "component1",
+   	    ComponentUnion: v1.ComponentUnion{
+   	    	Container: &v1.ContainerComponent{
+   	    		Container: v1.Container{
+   	    			Image: "image1",
+                },
+            },
+        },
+   })
+
+   // To add a new component to devfile object
+   err := devfile.Data.AddComponents([]v1.Component{
+        {
+           Name: "component2",
+           ComponentUnion: v1.ComponentUnion{
+               Container: &v1.ContainerComponent{
+                   Container: v1.Container{
+                       Image: "image2",
+                   },
+               },
+           },
+        },
+   })
+
+   // To delete a component from the devfile object
+   err := devfile.Data.DeleteComponent(componentName)
+   ```
+
+5. To write to a devfile, visit pkg/devfile/parser/writer.go
+   ```go
+   // If the devfile object has been created with devfile path already set, can simply call WriteYamlDevfile to writes the devfile
+   err := devfile.WriteYamlDevfile()
+   
+   
+   // To write to a devfile from scratch
+   // create a new DevfileData with a specific devfile version
+   devfileData, err := data.NewDevfileData(devfileVersion)
+
+   // set schema version
+   devfileData.SetSchemaVersion(devfileVersion)
+   
+   // add devfile content use library APIs
+   devfileData.AddComponents([]v1.Component{...})
+   devfileData.AddCommands([]v1.Commands{...})
+   ......
+   
+   // create a new DevfileCtx
+   ctx := devfileCtx.NewDevfileCtx(devfilePath)
+   err = ctx.SetAbsPath()
+
+   // create devfile object with the new DevfileCtx and DevfileData
+   devfile := parser.DevfileObj{
+		Ctx:  ctx,
+		Data: devfileData,
+   }
+    
+   // write to the devfile on disk
+   err = devfile.WriteYamlDevfile()
    ```
 
 ## Updating Library Schema
