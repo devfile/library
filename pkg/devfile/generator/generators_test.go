@@ -1,7 +1,10 @@
 package generator
 
 import (
+	"github.com/devfile/library/pkg/devfile/parser/data"
+	"github.com/devfile/library/pkg/util"
 	"reflect"
+	"strings"
 	"testing"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -482,6 +485,197 @@ func TestGetVolumeMountPath(t *testing.T) {
 
 			if path != tt.wantPath {
 				t.Errorf("TestGetVolumeMountPath error: mount path mismatch, expected: %v got: %v", tt.wantPath, path)
+			}
+		})
+	}
+
+}
+
+func TestGetInitContainers(t *testing.T) {
+
+	containers := []v1.Component{
+		{
+			Name: "container1",
+			ComponentUnion: v1.ComponentUnion{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
+						Image: "container1",
+					},
+				},
+			},
+		},
+		{
+			Name: "container2",
+			ComponentUnion: v1.ComponentUnion{
+				Container: &v1.ContainerComponent{
+					Container: v1.Container{
+						Image: "container2",
+					},
+				},
+			},
+		},
+	}
+
+	execCommands := []v1.Command{
+		{
+			Id: "exec1",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{
+					CommandLine: "execcommand1",
+					WorkingDir:  "execworkdir1",
+					Component:   "container1",
+				},
+			},
+		},
+		{
+			Id: "exec2",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{
+					CommandLine: "execcommand2",
+					WorkingDir:  "",
+					Component:   "container1",
+				},
+			},
+		},
+		{
+			Id: "exec3",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{
+					CommandLine: "execcommand3",
+					WorkingDir:  "execworkdir3",
+					Component:   "container2",
+				},
+			},
+		},
+	}
+
+	compCommands := []v1.Command{
+		{
+			Id: "comp1",
+			CommandUnion: v1.CommandUnion{
+				Composite: &v1.CompositeCommand{
+					Commands: []string{
+						"exec1",
+						"exec3",
+					},
+				},
+			},
+		},
+	}
+
+	longContainerName := "thisisaverylongcontainerandkuberneteshasalimitforanamesize-exec2"
+	trimmedLongContainerName := util.TruncateString(longContainerName, containerNameMaxLen)
+
+	tests := []struct {
+		name              string
+		eventCommands     []string
+		wantInitContainer map[string]corev1.Container
+		longName          bool
+		wantErr           bool
+	}{
+		{
+			name: "Case 1: Composite and Exec events",
+			eventCommands: []string{
+				"exec1",
+				"exec3",
+				"exec2",
+			},
+			wantInitContainer: map[string]corev1.Container{
+				"container1-exec1": {
+					Command: []string{shellExecutable, "-c", "cd execworkdir1 && execcommand1"},
+				},
+				"container1-exec2": {
+					Command: []string{shellExecutable, "-c", "execcommand2"},
+				},
+				"container2-exec3": {
+					Command: []string{shellExecutable, "-c", "cd execworkdir3 && execcommand3"},
+				},
+			},
+		},
+		{
+			name: "Case 2: Long Container Name",
+			eventCommands: []string{
+				"exec2",
+			},
+			wantInitContainer: map[string]corev1.Container{
+				trimmedLongContainerName: {
+					Command: []string{shellExecutable, "-c", "execcommand2"},
+				},
+			},
+			longName: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.longName {
+				containers[0].Name = longContainerName
+				execCommands[1].Exec.Component = longContainerName
+			}
+
+			devObj := parser.DevfileObj{
+				Data: func() data.DevfileData {
+					devfileData, err := data.NewDevfileData(string(data.APISchemaVersion210))
+					if err != nil {
+						t.Error(err)
+					}
+					err = devfileData.AddComponents(containers)
+					if err != nil {
+						t.Error(err)
+					}
+					err = devfileData.AddCommands(execCommands)
+					if err != nil {
+						t.Error(err)
+					}
+					err = devfileData.AddCommands(compCommands)
+					if err != nil {
+						t.Error(err)
+					}
+					err = devfileData.AddEvents(v1.Events{
+						DevWorkspaceEvents: v1.DevWorkspaceEvents{
+							PreStart: tt.eventCommands,
+						},
+					})
+					if err != nil {
+						t.Error(err)
+					}
+					return devfileData
+				}(),
+			}
+
+			initContainers, err := GetInitContainers(devObj)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestGetInitContainers() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if len(tt.wantInitContainer) != len(initContainers) {
+				t.Errorf("TestGetInitContainers() error: init container length mismatch, wanted %v got %v", len(tt.wantInitContainer), len(initContainers))
+			}
+
+			for _, initContainer := range initContainers {
+				nameMatched := false
+				commandMatched := false
+				for containerName, container := range tt.wantInitContainer {
+					if strings.Contains(initContainer.Name, containerName) {
+						nameMatched = true
+					}
+
+					if reflect.DeepEqual(initContainer.Command, container.Command) {
+						commandMatched = true
+					}
+
+					if !reflect.DeepEqual(initContainer.Args, []string{}) {
+						t.Errorf("TestGetInitContainers() error: init container args not empty, got %v", initContainer.Args)
+					}
+				}
+
+				if !nameMatched {
+					t.Errorf("TestGetInitContainers() error: init container name mismatch, container name not present in %v", initContainer.Name)
+				}
+
+				if !commandMatched {
+					t.Errorf("TestGetInitContainers() error: init container command mismatch, command not found in %v", initContainer.Command)
+				}
 			}
 		})
 	}
