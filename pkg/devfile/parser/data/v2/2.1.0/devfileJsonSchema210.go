@@ -1,6 +1,6 @@
 package version210
 
-// https://raw.githubusercontent.com/devfile/api/main/schemas/latest/devfile.json
+// https://raw.githubusercontent.com/devfile/api/2.1.x/schemas/latest/devfile.json
 const JsonSchema210 = `{
   "description": "Devfile describes the structure of a cloud-native devworkspace and development environment.",
   "type": "object",
