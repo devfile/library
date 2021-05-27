@@ -306,16 +306,6 @@ func TestAddSyncFolder(t *testing.T) {
 				{
 					Name: projectNames[1],
 					ProjectSource: v1.ProjectSource{
-						Github: &v1.GithubProjectSource{
-							GitLikeProjectSource: v1.GitLikeProjectSource{
-								Remotes: map[string]string{"origin": projectRepos[0]},
-							},
-						},
-					},
-				},
-				{
-					Name: projectNames[1],
-					ProjectSource: v1.ProjectSource{
 						Zip: &v1.ZipProjectSource{
 							Location: projectRepos[1],
 						},
@@ -348,7 +338,7 @@ func TestAddSyncFolder(t *testing.T) {
 					ClonePath: invalidClonePaths[0],
 					Name:      projectNames[0],
 					ProjectSource: v1.ProjectSource{
-						Github: &v1.GithubProjectSource{
+						Git: &v1.GitProjectSource{
 							GitLikeProjectSource: v1.GitLikeProjectSource{
 								Remotes: map[string]string{"origin": projectRepos[0]},
 							},
