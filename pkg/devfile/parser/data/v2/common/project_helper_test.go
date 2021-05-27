@@ -135,14 +135,6 @@ func TestGetProjectSrcType(t *testing.T) {
 			wantErr:        false,
 		},
 		{
-			name: "Github project",
-			projectSrc: v1.ProjectSource{
-				Github: &v1.GithubProjectSource{},
-			},
-			projectSrcType: v1.GitHubProjectSourceType,
-			wantErr:        false,
-		},
-		{
 			name: "Zip project",
 			projectSrc: v1.ProjectSource{
 				Zip: &v1.ZipProjectSource{},

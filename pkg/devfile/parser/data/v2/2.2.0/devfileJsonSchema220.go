@@ -1,10 +1,10 @@
-package version210
+package version220
 
-// https://raw.githubusercontent.com/devfile/api/2.1.x/schemas/latest/devfile.json
-const JsonSchema210 = `{
+// https://raw.githubusercontent.com/devfile/api/main/schemas/latest/devfile.json
+const JsonSchema220 = `{
   "description": "Devfile describes the structure of a cloud-native devworkspace and development environment.",
   "type": "object",
-  "title": "Devfile schema - Version 2.1.0",
+  "title": "Devfile schema - Version 2.2.0-alpha",
   "required": [
     "schemaVersion"
   ],
