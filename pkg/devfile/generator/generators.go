@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"fmt"
+	"github.com/devfile/library/pkg/util"
 	buildv1 "github.com/openshift/api/build/v1"
 	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -9,6 +11,7 @@ import (
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
@@ -27,6 +30,10 @@ const (
 
 	deploymentKind       = "Deployment"
 	deploymentAPIVersion = "apps/v1"
+
+	containerNameMaxLen = 55
+
+	shellExecutable = "/bin/sh"
 )
 
 // GetTypeMeta gets a type meta of the specified kind and version
@@ -89,6 +96,70 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 		containers = append(containers, *container)
 	}
 	return containers, nil
+}
+
+// GetInitContainers gets the init container for every preStart devfile event
+func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
+	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
+	if err != nil {
+		return nil, err
+	}
+	preStartEvents := devfileObj.Data.GetEvents().PreStart
+	var initContainers []corev1.Container
+	if len(preStartEvents) > 0 {
+		var eventCommands []string
+		commands, err := devfileObj.Data.GetCommands(common.DevfileOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		commandsMap := getCommandsMap(commands)
+
+		for _, event := range preStartEvents {
+			eventSubCommands := getCommandsFromEvent(commandsMap, strings.ToLower(event))
+			eventCommands = append(eventCommands, eventSubCommands...)
+		}
+
+		for i, commandName := range eventCommands {
+			if command, ok := commandsMap[commandName]; ok {
+				component := common.GetExecComponent(command)
+				commandLine := common.GetExecCommandLine(command)
+				workingDir := common.GetExecWorkingDir(command)
+
+				var cmdArr []string
+				if workingDir != "" {
+					// since we are using /bin/sh -c, the command needs to be within a single double quote instance, for example "cd /tmp && pwd"
+					cmdArr = []string{shellExecutable, "-c", "cd " + workingDir + " && " + commandLine}
+				} else {
+					cmdArr = []string{shellExecutable, "-c", commandLine}
+				}
+
+				// Get the container info for the given component
+				for _, container := range containers {
+					if container.Name == component {
+						// override any container command and args with our event command cmdArr
+						container.Command = cmdArr
+						container.Args = []string{}
+
+						// Override the init container name since there cannot be two containers with the same
+						// name in a pod. This applies to pod containers and pod init containers. The convention
+						// for init container name here is, containername-eventname-<position of command in prestart events>
+						// If there are two events referencing the same devfile component, then we will have
+						// tools-event1-1 & tools-event2-3, for example. And if in the edge case, the same command is
+						// executed twice by preStart events, then we will have tools-event1-1 & tools-event1-2
+						initContainerName := fmt.Sprintf("%s-%s", container.Name, commandName)
+						initContainerName = util.TruncateString(initContainerName, containerNameMaxLen)
+						initContainerName = fmt.Sprintf("%s-%d", initContainerName, i+1)
+						container.Name = initContainerName
+
+						initContainers = append(initContainers, container)
+					}
+				}
+			}
+		}
+	}
+
+	return initContainers, nil
 }
 
 // DeploymentParams is a struct that contains the required data to create a deployment object
