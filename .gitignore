@@ -23,6 +23,8 @@ main
 
 # File created running tests
 tests/**/tmp/
+tests/v2/lib-test-coverage.*
+
 
 # Mac related files
 .DS_Store

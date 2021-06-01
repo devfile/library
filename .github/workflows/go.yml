@@ -45,3 +45,9 @@ jobs:
 
     - name: Run Go Tests
       run: make test
+      
+    - name: Upload Test Coverage results
+      uses: actions/upload-artifact@v2
+      with:
+        name: lib-test-coverage-html
+        path: tests/v2/lib-test-coverage.html
