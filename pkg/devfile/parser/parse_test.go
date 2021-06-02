@@ -76,7 +76,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							{
 								ClonePath: "/data",
 								ProjectSource: v1.ProjectSource{
-									Github: &v1.GithubProjectSource{
+									Git: &v1.GitProjectSource{
 										GitLikeProjectSource: v1.GitLikeProjectSource{
 											Remotes: map[string]string{
 												"master": "https://githube.com/somerepo/someproject.git",
@@ -248,7 +248,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Attributes: parentOverridesFromMainDevfile,
 										ClonePath:  "/projects",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -379,7 +379,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Attributes: importFromUri1,
 										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -766,7 +766,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									{
 										ClonePath: "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -843,7 +843,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Attributes: importFromUri2,
 										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -953,7 +953,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									{
 										ClonePath: "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -1056,7 +1056,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Attributes: importFromUri2,
 										ClonePath:  "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -1595,7 +1595,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									{
 										ClonePath: "/data",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
@@ -1737,7 +1737,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Attributes: parentOverridesFromMainDevfile,
 										ClonePath:  "/projects",
 										ProjectSource: v1.ProjectSource{
-											Github: &v1.GithubProjectSource{
+											Git: &v1.GitProjectSource{
 												GitLikeProjectSource: v1.GitLikeProjectSource{
 													Remotes: map[string]string{
 														"master": "https://githube.com/somerepo/someproject.git",
