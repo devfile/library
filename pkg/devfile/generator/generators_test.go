@@ -492,14 +492,15 @@ func TestGetVolumeMountPath(t *testing.T) {
 }
 
 func TestGetInitContainers(t *testing.T) {
-
+	shellExecutable := "/bin/sh"
 	containers := []v1.Component{
 		{
 			Name: "container1",
 			ComponentUnion: v1.ComponentUnion{
 				Container: &v1.ContainerComponent{
 					Container: v1.Container{
-						Image: "container1",
+						Image:   "container1",
+						Command: []string{shellExecutable, "-c", "cd execworkdir1 && execcommand1"},
 					},
 				},
 			},
@@ -509,7 +510,8 @@ func TestGetInitContainers(t *testing.T) {
 			ComponentUnion: v1.ComponentUnion{
 				Container: &v1.ContainerComponent{
 					Container: v1.Container{
-						Image: "container2",
+						Image:   "container2",
+						Command: []string{shellExecutable, "-c", "cd execworkdir3 && execcommand3"},
 					},
 				},
 			},
@@ -518,32 +520,26 @@ func TestGetInitContainers(t *testing.T) {
 
 	execCommands := []v1.Command{
 		{
-			Id: "exec1",
+			Id: "apply1",
 			CommandUnion: v1.CommandUnion{
-				Exec: &v1.ExecCommand{
-					CommandLine: "execcommand1",
-					WorkingDir:  "execworkdir1",
-					Component:   "container1",
+				Apply: &v1.ApplyCommand{
+					Component: "container1",
 				},
 			},
 		},
 		{
-			Id: "exec2",
+			Id: "apply2",
 			CommandUnion: v1.CommandUnion{
-				Exec: &v1.ExecCommand{
-					CommandLine: "execcommand2",
-					WorkingDir:  "",
-					Component:   "container1",
+				Apply: &v1.ApplyCommand{
+					Component: "container1",
 				},
 			},
 		},
 		{
-			Id: "exec3",
+			Id: "apply3",
 			CommandUnion: v1.CommandUnion{
-				Exec: &v1.ExecCommand{
-					CommandLine: "execcommand3",
-					WorkingDir:  "execworkdir3",
-					Component:   "container2",
+				Apply: &v1.ApplyCommand{
+					Component: "container2",
 				},
 			},
 		},
@@ -555,8 +551,8 @@ func TestGetInitContainers(t *testing.T) {
 			CommandUnion: v1.CommandUnion{
 				Composite: &v1.CompositeCommand{
 					Commands: []string{
-						"exec1",
-						"exec3",
+						"apply1",
+						"apply3",
 					},
 				},
 			},
@@ -574,32 +570,32 @@ func TestGetInitContainers(t *testing.T) {
 		wantErr           bool
 	}{
 		{
-			name: "Case 1: Composite and Exec events",
+			name: "Composite and Exec events",
 			eventCommands: []string{
-				"exec1",
-				"exec3",
-				"exec2",
+				"apply1",
+				"apply3",
+				"apply2",
 			},
 			wantInitContainer: map[string]corev1.Container{
-				"container1-exec1": {
+				"container1-apply1": {
 					Command: []string{shellExecutable, "-c", "cd execworkdir1 && execcommand1"},
 				},
-				"container1-exec2": {
-					Command: []string{shellExecutable, "-c", "execcommand2"},
+				"container1-apply2": {
+					Command: []string{shellExecutable, "-c", "cd execworkdir1 && execcommand1"},
 				},
-				"container2-exec3": {
+				"container2-apply3": {
 					Command: []string{shellExecutable, "-c", "cd execworkdir3 && execcommand3"},
 				},
 			},
 		},
 		{
-			name: "Case 2: Long Container Name",
+			name: "Long Container Name",
 			eventCommands: []string{
-				"exec2",
+				"apply2",
 			},
 			wantInitContainer: map[string]corev1.Container{
 				trimmedLongContainerName: {
-					Command: []string{shellExecutable, "-c", "execcommand2"},
+					Command: []string{shellExecutable, "-c", "cd execworkdir1 && execcommand1"},
 				},
 			},
 			longName: true,
@@ -610,7 +606,7 @@ func TestGetInitContainers(t *testing.T) {
 
 			if tt.longName {
 				containers[0].Name = longContainerName
-				execCommands[1].Exec.Component = longContainerName
+				execCommands[1].Apply.Component = longContainerName
 			}
 
 			devObj := parser.DevfileObj{
@@ -662,10 +658,6 @@ func TestGetInitContainers(t *testing.T) {
 
 					if reflect.DeepEqual(initContainer.Command, container.Command) {
 						commandMatched = true
-					}
-
-					if !reflect.DeepEqual(initContainer.Args, []string{}) {
-						t.Errorf("TestGetInitContainers() error: init container args not empty, got %v", initContainer.Args)
 					}
 				}
 

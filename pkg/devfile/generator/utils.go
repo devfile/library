@@ -451,31 +451,3 @@ func addVolumeMountToContainers(containers []corev1.Container, volumeName string
 		}
 	}
 }
-
-// getCommandsFromEvent returns the list of commands from the event name.
-// If the event is a composite command, it returns the sub-commands from the tree
-func getCommandsFromEvent(commandsMap map[string]v1.Command, eventName string) []string {
-	var commands []string
-
-	if command, ok := commandsMap[eventName]; ok {
-		if command.Composite != nil {
-			for _, compositeSubCmd := range command.Composite.Commands {
-				subCommands := getCommandsFromEvent(commandsMap, compositeSubCmd)
-				commands = append(commands, subCommands...)
-			}
-		} else {
-			commands = append(commands, command.Id)
-		}
-	}
-
-	return commands
-}
-
-// getCommandsMap returns a map of the command Id to the command
-func getCommandsMap(commands []v1.Command) map[string]v1.Command {
-	commandMap := make(map[string]v1.Command, len(commands))
-	for _, command := range commands {
-		commandMap[command.Id] = command
-	}
-	return commandMap
-}

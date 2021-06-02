@@ -2,6 +2,9 @@ package generator
 
 import (
 	"fmt"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/pkg/devfile/parser"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/util"
 	buildv1 "github.com/openshift/api/build/v1"
 	imagev1 "github.com/openshift/api/image/v1"
@@ -11,11 +14,6 @@ import (
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
-
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/library/pkg/devfile/parser"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 )
 
 const (
@@ -32,8 +30,6 @@ const (
 	deploymentAPIVersion = "apps/v1"
 
 	containerNameMaxLen = 55
-
-	shellExecutable = "/bin/sh"
 )
 
 // GetTypeMeta gets a type meta of the specified kind and version
@@ -113,34 +109,20 @@ func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error)
 			return nil, err
 		}
 
-		commandsMap := getCommandsMap(commands)
+		commandsMap := common.GetCommandsMap(commands)
 
 		for _, event := range preStartEvents {
-			eventSubCommands := getCommandsFromEvent(commandsMap, strings.ToLower(event))
+			eventSubCommands := common.GetCommandsFromEvent(commandsMap, event)
 			eventCommands = append(eventCommands, eventSubCommands...)
 		}
 
 		for i, commandName := range eventCommands {
 			if command, ok := commandsMap[commandName]; ok {
-				component := common.GetExecComponent(command)
-				commandLine := common.GetExecCommandLine(command)
-				workingDir := common.GetExecWorkingDir(command)
-
-				var cmdArr []string
-				if workingDir != "" {
-					// since we are using /bin/sh -c, the command needs to be within a single double quote instance, for example "cd /tmp && pwd"
-					cmdArr = []string{shellExecutable, "-c", "cd " + workingDir + " && " + commandLine}
-				} else {
-					cmdArr = []string{shellExecutable, "-c", commandLine}
-				}
+				component := common.GetApplyComponent(command)
 
 				// Get the container info for the given component
 				for _, container := range containers {
 					if container.Name == component {
-						// override any container command and args with our event command cmdArr
-						container.Command = cmdArr
-						container.Args = []string{}
-
 						// Override the init container name since there cannot be two containers with the same
 						// name in a pod. This applies to pod containers and pod init containers. The convention
 						// for init container name here is, containername-eventname-<position of command in prestart events>
