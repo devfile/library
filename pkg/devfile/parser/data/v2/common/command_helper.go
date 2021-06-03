@@ -50,7 +50,7 @@ func GetExecWorkingDir(dc v1.Command) string {
 	return ""
 }
 
-// GetApplyComponent returns the component of the exec command
+// GetApplyComponent returns the component of the apply command
 func GetApplyComponent(dc v1.Command) string {
 	if dc.Apply != nil {
 		return dc.Apply.Component
@@ -58,24 +58,6 @@ func GetApplyComponent(dc v1.Command) string {
 
 	return ""
 }
-
-//// GetApplyCommandLine returns the command line of the exec command
-//func GetApplyCommandLine(dc v1.Command) string {
-//	if dc.Apply != nil {
-//		return dc.Apply
-//	}
-//
-//	return ""
-//}
-//
-//// GetExecWorkingDir returns the working dir of the exec command
-//func GetExecWorkingDir(dc v1.Command) string {
-//	if dc.Exec != nil {
-//		return dc.Exec.WorkingDir
-//	}
-//
-//	return ""
-//}
 
 // GetCommandType returns the command type of a given command
 func GetCommandType(command v1.Command) (v1.CommandType, error) {
