@@ -20,9 +20,15 @@ JSON_SCHEMA_200="JsonSchema200"
 FILE_PATH_200="$DIR/../pkg/devfile/parser/data/v2/2.0.0/devfileJsonSchema200.go"
 
 # 2.1.0 devfile
+SCHEMA_URL_210="https://raw.githubusercontent.com/devfile/api/2.1.x/schemas/latest/devfile.json"
 PACKAGE_VERSION_210="version210"
 JSON_SCHEMA_210="JsonSchema210"
 FILE_PATH_210="$DIR/../pkg/devfile/parser/data/v2/2.1.0/devfileJsonSchema210.go"
+
+# 2.2.0 devfile
+PACKAGE_VERSION_220="version220"
+JSON_SCHEMA_220="JsonSchema220"
+FILE_PATH_220="$DIR/../pkg/devfile/parser/data/v2/2.2.0/devfileJsonSchema220.go"
 
 
 onError() {
@@ -43,12 +49,18 @@ case "${1}" in
      JSON_SCHEMA=${JSON_SCHEMA_200}
      FILE_PATH=${FILE_PATH_200}
    ;;
-   *)
-     # default
-     SCHEMA_URL=${SCHEMA_URL_MASTER}
+    "2.1.0")
+     SCHEMA_URL=${SCHEMA_URL_210}
      PACKAGE_VERSION=${PACKAGE_VERSION_210}
      JSON_SCHEMA=${JSON_SCHEMA_210}
      FILE_PATH=${FILE_PATH_210}
+   ;;
+   *)
+     # default
+     SCHEMA_URL=${SCHEMA_URL_MASTER}
+     PACKAGE_VERSION=${PACKAGE_VERSION_220}
+     JSON_SCHEMA=${JSON_SCHEMA_220}
+     FILE_PATH=${FILE_PATH_220}
    ;;
 esac
 
