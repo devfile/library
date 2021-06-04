@@ -331,3 +331,79 @@ func TestGetCommandType(t *testing.T) {
 	}
 
 }
+
+func TestGetCommandsFromEvent(t *testing.T) {
+
+	execCommands := []v1.Command{
+		{
+			Id: "exec1",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{},
+			},
+		},
+		{
+			Id: "exec2",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{},
+			},
+		},
+		{
+			Id: "exec3",
+			CommandUnion: v1.CommandUnion{
+				Exec: &v1.ExecCommand{},
+			},
+		},
+	}
+
+	compCommands := []v1.Command{
+		{
+			Id: "comp1",
+			CommandUnion: v1.CommandUnion{
+				Composite: &v1.CompositeCommand{
+					Commands: []string{
+						"exec1",
+						"exec3",
+					},
+				},
+			},
+		},
+	}
+
+	commandsMap := map[string]v1.Command{
+		compCommands[0].Id: compCommands[0],
+		execCommands[0].Id: execCommands[0],
+		execCommands[1].Id: execCommands[1],
+		execCommands[2].Id: execCommands[2],
+	}
+
+	tests := []struct {
+		name         string
+		eventName    string
+		wantCommands []string
+	}{
+		{
+			name:      "composite event",
+			eventName: "comp1",
+			wantCommands: []string{
+				"exec1",
+				"exec3",
+			},
+		},
+		{
+			name:      "exec event",
+			eventName: "exec2",
+			wantCommands: []string{
+				"exec2",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commands := GetCommandsFromEvent(commandsMap, tt.eventName)
+			if !reflect.DeepEqual(tt.wantCommands, commands) {
+				t.Errorf("TestGetCommandsFromEvent error - got %v expected %v", commands, tt.wantCommands)
+			}
+		})
+	}
+
+}

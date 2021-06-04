@@ -1,5 +1,10 @@
 # Devfile Library
 
+<div id="header">
+
+[![Apache2.0 License](https://img.shields.io/badge/license-Apache2.0-brightgreen.svg)](LICENSE)
+</div>
+
 ## About
 
 The Devfile Parser library is a Golang module that:
@@ -11,7 +16,7 @@ The Devfile Parser library is a Golang module that:
 ## Usage
 
 The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/github.com/devfile/library). 
-1. To parse a devfile, visit pkg/devfile/parse.go 
+1. To parse a devfile, visit [parse.go source file](pkg/devfile/parse.go)
    ```go
    // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
    parserArgs := parser.ParserArgs{
@@ -60,7 +65,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    })
    ```
    
-3. To get the Kubernetes objects from the devfile, visit pkg/devfile/generator/generators.go
+3. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
    ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
     containers, err := generator.GetContainers(devfile)
@@ -109,7 +114,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    err := devfile.Data.DeleteComponent(componentName)
    ```
 
-5. To write to a devfile, visit pkg/devfile/parser/writer.go
+5. To write to a devfile, visit [writer.go source file](pkg/devfile/parser/writer.go)
    ```go
    // If the devfile object has been created with devfile path already set, can simply call WriteYamlDevfile to writes the devfile
    err := devfile.WriteYamlDevfile()
@@ -159,7 +164,12 @@ The following projects are consuming this library as a Golang dependency
 * [odo](https://github.com/openshift/odo)
 * [OpenShift Console](https://github.com/openshift/console)
 
-In the future, [Workspace Operator](https://github.com/devfile/devworkspace-operator) will be the next consumer of devfile/library.
+## Tests
+
+To run unit tests and api tests. Visit [library tests](tests/README.md) to find out more information on tests
+```
+make test
+```
 
 ## Issues
 
