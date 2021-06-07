@@ -1,8 +1,7 @@
 package generator
 
 import (
-	"github.com/devfile/library/pkg/devfile/parser/data"
-	"github.com/devfile/library/pkg/util"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,9 +10,9 @@ import (
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/devfile/parser/data"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
+	"github.com/devfile/library/pkg/util"
 	"github.com/golang/mock/gomock"
 
 	corev1 "k8s.io/api/core/v1"
@@ -354,33 +353,32 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Invalid case",
-			components: []v1.Component{
-				{
-					Name: "container1",
-					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
-						"firstString": "firstStringValue",
-					}),
-					ComponentUnion: v1.ComponentUnion{},
-				},
-			},
-			wantErr: true,
+			name:       "Invalid case simulating no container components",
+			components: nil,
+			wantErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			// set up the mock data
+			if tt.wantErr {
+				// if we have an error, just call the mock GetDevfileContainerComponents once for GetContainers() and a different
+				// one for GetVolumesAndVolumeMounts() below to simulate err from that function
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.components, nil).Times(1)
+			} else {
+				// no error, use this below mock for all the future GetDevfileContainerComponents in the test
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.components, nil).AnyTimes()
+			}
+			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
+
 			devObj := parser.DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: tt.components,
-							},
-						},
-					},
-				},
+				Data: mockDevfileData,
 			}
 
 			containers, err := GetContainers(devObj, common.DevfileOptions{})
@@ -389,13 +387,10 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 				return
 			}
 
-			var options common.DevfileOptions
 			if tt.wantErr {
-				options = common.DevfileOptions{
-					Filter: map[string]interface{}{
-						"firstString": "firstStringValue",
-					},
-				}
+				// simulate error condition
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(nil, fmt.Errorf("mock error")).Times(1)
+
 			}
 
 			volumeParams := VolumeParams{
@@ -403,7 +398,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 				VolumeNameToVolumeInfo: tt.volumeNameToVolInfo,
 			}
 
-			pvcVols, err := GetVolumesAndVolumeMounts(devObj, volumeParams, options)
+			pvcVols, err := GetVolumesAndVolumeMounts(devObj, volumeParams, common.DevfileOptions{})
 			if tt.wantErr == (err == nil) {
 				t.Errorf("TestGetVolumesAndVolumeMounts() error = %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
@@ -508,7 +503,7 @@ func TestGetInitContainers(t *testing.T) {
 		},
 	}
 
-	execCommands := []v1.Command{
+	applyCommands := []v1.Command{
 		{
 			Id: "apply1",
 			CommandUnion: v1.CommandUnion{
@@ -579,6 +574,15 @@ func TestGetInitContainers(t *testing.T) {
 			},
 		},
 		{
+			name: "Simulate error condition",
+			eventCommands: []string{
+				"apply1",
+				"apply3",
+				"apply2",
+			},
+			wantErr: true,
+		},
+		{
 			name: "Long Container Name",
 			eventCommands: []string{
 				"apply2",
@@ -594,44 +598,41 @@ func TestGetInitContainers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			preStartEvents := v1.Events{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
+					PreStart: tt.eventCommands,
+				},
+			}
+
 			if tt.longName {
 				containers[0].Name = longContainerName
-				execCommands[1].Apply.Component = longContainerName
+				applyCommands[1].Apply.Component = longContainerName
+			}
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			// set up the mock data
+			mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(containers, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetEvents().Return(preStartEvents).AnyTimes()
+
+			if tt.wantErr {
+				mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{}).Return(nil, fmt.Errorf("mock error")).AnyTimes()
+			} else {
+				mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{}).Return(append(applyCommands, compCommands...), nil).AnyTimes()
 			}
 
 			devObj := parser.DevfileObj{
-				Data: func() data.DevfileData {
-					devfileData, err := data.NewDevfileData(string(data.APISchemaVersion210))
-					if err != nil {
-						t.Error(err)
-					}
-					err = devfileData.AddComponents(containers)
-					if err != nil {
-						t.Error(err)
-					}
-					err = devfileData.AddCommands(execCommands)
-					if err != nil {
-						t.Error(err)
-					}
-					err = devfileData.AddCommands(compCommands)
-					if err != nil {
-						t.Error(err)
-					}
-					err = devfileData.AddEvents(v1.Events{
-						DevWorkspaceEvents: v1.DevWorkspaceEvents{
-							PreStart: tt.eventCommands,
-						},
-					})
-					if err != nil {
-						t.Error(err)
-					}
-					return devfileData
-				}(),
+				Data: mockDevfileData,
 			}
 
 			initContainers, err := GetInitContainers(devObj)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TestGetInitContainers() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err != nil {
+				return
 			}
 
 			if len(tt.wantInitContainer) != len(initContainers) {

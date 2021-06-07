@@ -8,9 +8,10 @@ import (
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/pkg/devfile/parser"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/pkg/testingutil"
+	"github.com/golang/mock/gomock"
 	buildv1 "github.com/openshift/api/build/v1"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -608,6 +609,7 @@ func TestGetServiceSpec(t *testing.T) {
 	tests := []struct {
 		name                string
 		containerComponents []v1.Component
+		filteredComponents  []v1.Component
 		labels              map[string]string
 		filterOptions       common.DevfileOptions
 		wantPorts           []corev1.ServicePort
@@ -727,6 +729,25 @@ func TestGetServiceSpec(t *testing.T) {
 				},
 			},
 			wantErr: false,
+			filteredComponents: []v1.Component{
+				{
+					Name: "testcontainer2",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[2],
+									TargetPort: 9090,
+								},
+							},
+						},
+					},
+				},
+			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstString": "firstStringValue",
@@ -737,16 +758,20 @@ func TestGetServiceSpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			// set up the mock data
+			if len(tt.filterOptions.Filter) == 0 {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+			} else {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+			}
+			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
+
 			devObj := parser.DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: tt.containerComponents,
-							},
-						},
-					},
-				},
+				Data: mockDevfileData,
 			}
 
 			serviceSpec, err := getServiceSpec(devObj, tt.labels, tt.filterOptions)
@@ -781,6 +806,7 @@ func TestGetPortExposure(t *testing.T) {
 	tests := []struct {
 		name                string
 		containerComponents []v1.Component
+		filteredComponents  []v1.Component
 		filterOptions       common.DevfileOptions
 		wantMap             map[int]v1.EndpointExposure
 		wantErr             bool
@@ -1020,6 +1046,33 @@ func TestGetPortExposure(t *testing.T) {
 					},
 				},
 			},
+			filteredComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: "image",
+							},
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       urlName,
+									TargetPort: 8080,
+								},
+								{
+									Name:       urlName,
+									TargetPort: 3000,
+									Exposure:   v1.NoneEndpointExposure,
+								},
+							},
+						},
+					},
+				},
+			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstString": "firstStringValue",
@@ -1056,6 +1109,7 @@ func TestGetPortExposure(t *testing.T) {
 					},
 				},
 			},
+			filteredComponents: nil,
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstStringWrong": "firstStringValue",
@@ -1066,16 +1120,19 @@ func TestGetPortExposure(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			// set up the mock data
+			if len(tt.filterOptions.Filter) == 0 {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+			} else {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+			}
 			devObj := parser.DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Components: tt.containerComponents,
-							},
-						},
-					},
-				},
+				Data: mockDevfileData,
 			}
 
 			mapCreated, err := getPortExposure(devObj, tt.filterOptions)
