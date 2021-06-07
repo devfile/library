@@ -50,6 +50,7 @@ func TestGetContainers(t *testing.T) {
 	tests := []struct {
 		name                  string
 		containerComponents   []v1.Component
+		filteredComponents    []v1.Component
 		filterOptions         common.DevfileOptions
 		wantContainerName     string
 		wantContainerImage    string
@@ -150,6 +151,17 @@ func TestGetContainers(t *testing.T) {
 			name: "Filter containers",
 			containerComponents: []v1.Component{
 				{
+					Name: containerNames[0],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[0],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+				{
 					Name: containerNames[1],
 					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
 						"firstString": "firstStringValue",
@@ -167,6 +179,23 @@ func TestGetContainers(t *testing.T) {
 			},
 			wantContainerName:  containerNames[1],
 			wantContainerImage: containerImages[0],
+			filteredComponents: []v1.Component{
+				{
+					Name: containerNames[1],
+					Attributes: attributes.Attributes{}.FromStringMap(map[string]string{
+						"firstString": "firstStringValue",
+						"thirdString": "thirdStringValue",
+					}),
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[0],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+			},
 			filterOptions: common.DevfileOptions{
 				Filter: map[string]interface{}{
 					"firstString": "firstStringValue",
@@ -182,7 +211,11 @@ func TestGetContainers(t *testing.T) {
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
 			// set up the mock data
-			mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+			if len(tt.filterOptions.Filter) == 0 {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+			} else {
+				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+			}
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(projects, nil).AnyTimes()
 
 			devObj := parser.DevfileObj{
