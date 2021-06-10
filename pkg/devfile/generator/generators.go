@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
@@ -56,7 +57,11 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 // GetContainers iterates through the devfile components and returns a slice of the corresponding containers
 func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) ([]corev1.Container, error) {
 	var containers []corev1.Container
-	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
+
+	options.ComponentOptions = common.ComponentOptions{
+		ComponentType: v1.ContainerComponentType,
+	}
+	containerComponents, err := devfileObj.Data.GetComponents(options)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +362,10 @@ type VolumeParams struct {
 // GetVolumesAndVolumeMounts gets the PVC volumes and updates the containers with the volume mounts.
 func GetVolumesAndVolumeMounts(devfileObj parser.DevfileObj, volumeParams VolumeParams, options common.DevfileOptions) ([]corev1.Volume, error) {
 
-	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
+	options.ComponentOptions = common.ComponentOptions{
+		ComponentType: v1.ContainerComponentType,
+	}
+	containerComponents, err := devfileObj.Data.GetComponents(options)
 	if err != nil {
 		return nil, err
 	}
