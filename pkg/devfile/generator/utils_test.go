@@ -762,11 +762,16 @@ func TestGetServiceSpec(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
+			tt.filterOptions.ComponentOptions = common.ComponentOptions{
+				ComponentType: v1.ContainerComponentType,
+			}
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(tt.filterOptions)
+
 			// set up the mock data
 			if len(tt.filterOptions.Filter) == 0 {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
 			} else {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.filteredComponents, nil).AnyTimes()
 			}
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
 
@@ -1125,11 +1130,16 @@ func TestGetPortExposure(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
+			tt.filterOptions.ComponentOptions = common.ComponentOptions{
+				ComponentType: v1.ContainerComponentType,
+			}
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(tt.filterOptions)
+
 			// set up the mock data
 			if len(tt.filterOptions.Filter) == 0 {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
 			} else {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.filteredComponents, nil).AnyTimes()
 			}
 			devObj := parser.DevfileObj{
 				Data: mockDevfileData,

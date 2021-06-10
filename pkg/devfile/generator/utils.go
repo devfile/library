@@ -254,7 +254,10 @@ func getServiceSpec(devfileObj parser.DevfileObj, selectorLabels map[string]stri
 // exposure level: public > internal > none
 func getPortExposure(devfileObj parser.DevfileObj, options common.DevfileOptions) (map[int]v1.EndpointExposure, error) {
 	portExposureMap := make(map[int]v1.EndpointExposure)
-	containerComponents, err := devfileObj.Data.GetDevfileContainerComponents(options)
+	options.ComponentOptions = common.ComponentOptions{
+		ComponentType: v1.ContainerComponentType,
+	}
+	containerComponents, err := devfileObj.Data.GetComponents(options)
 	if err != nil {
 		return portExposureMap, err
 	}

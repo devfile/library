@@ -210,11 +210,16 @@ func TestGetContainers(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
+			tt.filterOptions.ComponentOptions = common.ComponentOptions{
+				ComponentType: v1.ContainerComponentType,
+			}
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(tt.filterOptions)
+
 			// set up the mock data
 			if len(tt.filterOptions.Filter) == 0 {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.containerComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
 			} else {
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(tt.filterOptions).Return(tt.filteredComponents, nil).AnyTimes()
+				mockGetComponents.Return(tt.filteredComponents, nil).AnyTimes()
 			}
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(projects, nil).AnyTimes()
 
@@ -399,15 +404,14 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			})
+
 			// set up the mock data
-			if tt.wantErr {
-				// if we have an error, just call the mock GetDevfileContainerComponents once for GetContainers() and a different
-				// one for GetVolumesAndVolumeMounts() below to simulate err from that function
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.components, nil).Times(1)
-			} else {
-				// no error, use this below mock for all the future GetDevfileContainerComponents in the test
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.components, nil).AnyTimes()
-			}
+			mockGetComponents.Return(tt.components, nil).AnyTimes()
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
 
 			devObj := parser.DevfileObj{
@@ -422,7 +426,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 
 			if tt.wantErr {
 				// simulate error condition
-				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(nil, fmt.Errorf("mock error")).Times(1)
+				mockGetComponents.Return(nil, fmt.Errorf("mock error"))
 
 			}
 
@@ -646,15 +650,20 @@ func TestGetInitContainers(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
+			mockGetCommands := mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{})
+
 			// set up the mock data
-			mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(containers, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetComponents(common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			}).Return(containers, nil).AnyTimes()
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
 			mockDevfileData.EXPECT().GetEvents().Return(preStartEvents).AnyTimes()
+			mockGetCommands.Return(append(applyCommands, compCommands...), nil).AnyTimes()
 
 			if tt.wantErr {
-				mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{}).Return(nil, fmt.Errorf("mock error")).AnyTimes()
-			} else {
-				mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{}).Return(append(applyCommands, compCommands...), nil).AnyTimes()
+				mockGetCommands.Return(nil, fmt.Errorf("mock error")).AnyTimes()
 			}
 
 			devObj := parser.DevfileObj{
