@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Bug Report
+    url: https://github.com/devfile/api/issues/new?assignees=&labels=&template=bug_report.md&title=
+    about: Please report bugs here.
+  - name: Feature Request
+    url: https://github.com/devfile/api/issues/new?assignees=&labels=&template=feature_request.md&title=
+    about: Please request new features here.
+  - name: Gitter Chat
+    url: https://gitter.im/devfile/community
+    about: gitter community channel
+  - name: Slack chat
+    url: https://coreos.slack.com/archives/C017YDKHQV6
+    about: CoreOS slack chat room
