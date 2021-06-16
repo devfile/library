@@ -154,7 +154,7 @@ func Test_VolumeComponentEdit(t *testing.T) {
 
 func Test_MultiComponent(t *testing.T) {
 	testContent := commonUtils.TestContent{}
-	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.KubernetesComponentType, schema.OpenshiftComponentType, schema.VolumeComponentType}
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
