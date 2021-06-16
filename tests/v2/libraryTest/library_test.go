@@ -80,6 +80,7 @@ func Test_MultiCommand(t *testing.T) {
 }
 
 func Test_ContainerComponent(t *testing.T) {
+
 	testContent := commonUtils.TestContent{}
 	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType}
 	testContent.EditContent = false
@@ -91,6 +92,42 @@ func Test_ContainerComponent(t *testing.T) {
 func Test_ContainerComponentEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType}
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_KubernetesComponent(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.ComponentTypes = []schema.ComponentType{schema.KubernetesComponentType}
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_KubernetesComponentEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.ComponentTypes = []schema.ComponentType{schema.KubernetesComponentType}
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_OpenshiftComponent(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.ComponentTypes = []schema.ComponentType{schema.OpenshiftComponentType}
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_OpenshiftComponentEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.ComponentTypes = []schema.ComponentType{schema.OpenshiftComponentType}
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)

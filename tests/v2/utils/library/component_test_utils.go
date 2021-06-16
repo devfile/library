@@ -34,6 +34,10 @@ func UpdateComponent(devfile *commonUtils.TestDevfile, componentName string) err
 		commonUtils.LogInfoMessage(fmt.Sprintf("....... Updating component name: %s", componentName))
 		if testComponent.Container != nil {
 			devfile.SetContainerComponentValues(testComponent)
+		} else if testComponent.Kubernetes != nil {
+			devfile.SetK8sComponentValues(testComponent)
+		} else if testComponent.Openshift != nil {
+			devfile.SetK8sComponentValues(testComponent)
 		} else if testComponent.Volume != nil {
 			devfile.SetVolumeComponentValues(testComponent)
 		} else {
