@@ -19,6 +19,7 @@ type TestContent struct {
 func Test_ExecCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -27,6 +28,7 @@ func Test_ExecCommand(t *testing.T) {
 func Test_ExecCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -36,6 +38,7 @@ func Test_ExecCommandEdit(t *testing.T) {
 func Test_ApplyCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -45,6 +48,7 @@ func Test_ApplyCommand(t *testing.T) {
 func Test_ApplyCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -54,6 +58,7 @@ func Test_ApplyCommandEdit(t *testing.T) {
 func Test_CompositeCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -62,6 +67,7 @@ func Test_CompositeCommand(t *testing.T) {
 func Test_CompositeCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -73,6 +79,7 @@ func Test_MultiCommand(t *testing.T) {
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType,
 		schema.CompositeCommandType,
 		schema.ApplyCommandType}
+	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -182,9 +189,24 @@ func Test_StarterProjects(t *testing.T) {
 func Test_Everything(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
-	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.KubernetesComponentType, schema.OpenshiftComponentType, schema.VolumeComponentType}
 	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
 	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.AddEvents = true
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+
+}
+
+func Test_EverythingEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.KubernetesComponentType, schema.OpenshiftComponentType, schema.VolumeComponentType}
+	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.AddEvents = true
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
