@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -323,6 +324,51 @@ func getIngressSpec(ingressSpecParams IngressSpecParams) *extensionsv1.IngressSp
 	secretNameLength := len(ingressSpecParams.TLSSecretName)
 	if secretNameLength != 0 {
 		ingressSpec.TLS = []extensionsv1.IngressTLS{
+			{
+				Hosts: []string{
+					ingressSpecParams.IngressDomain,
+				},
+				SecretName: ingressSpecParams.TLSSecretName,
+			},
+		}
+	}
+
+	return ingressSpec
+}
+
+// getNetworkingV1IngressSpec gets a networking v1 ingress spec
+func getNetworkingV1IngressSpec(ingressSpecParams IngressSpecParams) *networkingv1.IngressSpec {
+	path := "/"
+	if ingressSpecParams.Path != "" {
+		path = ingressSpecParams.Path
+	}
+	ingressSpec := &networkingv1.IngressSpec{
+		Rules: []networkingv1.IngressRule{
+			{
+				Host: ingressSpecParams.IngressDomain,
+				IngressRuleValue: networkingv1.IngressRuleValue{
+					HTTP: &networkingv1.HTTPIngressRuleValue{
+						Paths: []networkingv1.HTTPIngressPath{
+							{
+								Path: path,
+								Backend: networkingv1.IngressBackend{
+									Service: &networkingv1.IngressServiceBackend{
+										Name: ingressSpecParams.ServiceName,
+										Port: networkingv1.ServiceBackendPort{
+											Number: ingressSpecParams.PortNumber.IntVal,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	secretNameLength := len(ingressSpecParams.TLSSecretName)
+	if secretNameLength != 0 {
+		ingressSpec.TLS = []networkingv1.IngressTLS{
 			{
 				Hosts: []string{
 					ingressSpecParams.IngressDomain,

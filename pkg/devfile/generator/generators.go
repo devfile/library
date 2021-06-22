@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -240,6 +241,19 @@ func GetIngress(ingressParams IngressParams) *extensionsv1.Ingress {
 	ingressSpec := getIngressSpec(ingressParams.IngressSpecParams)
 
 	ingress := &extensionsv1.Ingress{
+		TypeMeta:   ingressParams.TypeMeta,
+		ObjectMeta: ingressParams.ObjectMeta,
+		Spec:       *ingressSpec,
+	}
+
+	return ingress
+}
+
+// GetNetworkingV1Ingress gets a networking v1 ingress
+func GetNetworkingV1Ingress(ingressParams IngressParams) *networkingv1.Ingress {
+	ingressSpec := getNetworkingV1IngressSpec(ingressParams.IngressSpecParams)
+
+	ingress := &networkingv1.Ingress{
 		TypeMeta:   ingressParams.TypeMeta,
 		ObjectMeta: ingressParams.ObjectMeta,
 		Spec:       *ingressSpec,

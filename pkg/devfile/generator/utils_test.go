@@ -1158,7 +1158,7 @@ func TestGetPortExposure(t *testing.T) {
 
 }
 
-func TestGenerateIngressSpec(t *testing.T) {
+func TestGetIngressSpec(t *testing.T) {
 
 	tests := []struct {
 		name      string
@@ -1192,6 +1192,50 @@ func TestGenerateIngressSpec(t *testing.T) {
 
 			if ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServiceName != tt.parameter.ServiceName {
 				t.Errorf("expected %s, actual %s", tt.parameter.ServiceName, ingressSpec.Rules[0].HTTP.Paths[0].Backend.ServiceName)
+			}
+
+			if ingressSpec.TLS[0].SecretName != tt.parameter.TLSSecretName {
+				t.Errorf("expected %s, actual %s", tt.parameter.TLSSecretName, ingressSpec.TLS[0].SecretName)
+			}
+
+		})
+	}
+}
+
+func TestGetNetworkingV1IngressSpec(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		parameter IngressSpecParams
+	}{
+		{
+			name: "1",
+			parameter: IngressSpecParams{
+				ServiceName:   "service1",
+				IngressDomain: "test.1.2.3.4.nip.io",
+				PortNumber: intstr.IntOrString{
+					IntVal: 8080,
+				},
+				TLSSecretName: "testTLSSecret",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ingressSpec := getNetworkingV1IngressSpec(tt.parameter)
+
+			if ingressSpec.Rules[0].Host != tt.parameter.IngressDomain {
+				t.Errorf("expected %s, actual %s", tt.parameter.IngressDomain, ingressSpec.Rules[0].Host)
+			}
+
+			if ingressSpec.Rules[0].HTTP.Paths[0].Backend.Service.Port.Number != tt.parameter.PortNumber.IntVal {
+				t.Errorf("expected %v, actual %v", tt.parameter.PortNumber, ingressSpec.Rules[0].HTTP.Paths[0].Backend.Service.Port.Number)
+			}
+
+			if ingressSpec.Rules[0].HTTP.Paths[0].Backend.Service.Name != tt.parameter.ServiceName {
+				t.Errorf("expected %s, actual %s", tt.parameter.ServiceName, ingressSpec.Rules[0].HTTP.Paths[0].Backend.Service.Name)
 			}
 
 			if ingressSpec.TLS[0].SecretName != tt.parameter.TLSSecretName {
