@@ -3,7 +3,7 @@ module github.com/devfile/library
 go 1.13
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20210615212757-b0014e012b86
+	github.com/devfile/api/v2 v2.0.0-20210623152004-b08e48618403
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gobwas/glob v0.2.3
@@ -25,3 +25,5 @@ require (
 	sigs.k8s.io/controller-runtime v0.7.0
 	sigs.k8s.io/yaml v1.2.0
 )
+
+
