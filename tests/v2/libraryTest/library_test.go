@@ -11,7 +11,6 @@ import (
 func Test_ExecCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -20,7 +19,6 @@ func Test_ExecCommand(t *testing.T) {
 func Test_ExecCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -30,7 +28,6 @@ func Test_ExecCommandEdit(t *testing.T) {
 func Test_ApplyCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -40,7 +37,6 @@ func Test_ApplyCommand(t *testing.T) {
 func Test_ApplyCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ApplyCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -50,7 +46,6 @@ func Test_ApplyCommandEdit(t *testing.T) {
 func Test_CompositeCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = false
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -59,7 +54,6 @@ func Test_CompositeCommand(t *testing.T) {
 func Test_CompositeCommandEdit(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.CompositeCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
@@ -172,6 +166,24 @@ func Test_Projects(t *testing.T) {
 func Test_StarterProjects(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_Events(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddEvents = true
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_EventsEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddEvents = true
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
