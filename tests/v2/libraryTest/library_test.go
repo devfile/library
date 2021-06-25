@@ -65,7 +65,6 @@ func Test_MultiCommand(t *testing.T) {
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType,
 		schema.CompositeCommandType,
 		schema.ApplyCommandType}
-	testContent.AddEvents = commonUtils.GetBinaryDecision()
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
