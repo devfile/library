@@ -8,14 +8,6 @@ import (
 	libraryUtils "github.com/devfile/library/tests/v2/utils/library"
 )
 
-// TestContent - structure used by a test to configure the tests to run
-type TestContent struct {
-	CommandTypes   []schema.CommandType
-	ComponentTypes []schema.ComponentType
-	FileName       string
-	EditContent    bool
-}
-
 func Test_ExecCommand(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType}
@@ -179,12 +171,65 @@ func Test_StarterProjects(t *testing.T) {
 	libraryUtils.RunMultiThreadTest(testContent, t)
 }
 
+func Test_Events(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddEvents = true
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_EventsEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddEvents = true
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_Metadata(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddMetaData = true
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
+func Test_MetadataEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddMetaData = true
+	testContent.EditContent = true
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+}
+
 func Test_Everything(t *testing.T) {
 	testContent := commonUtils.TestContent{}
 	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
-	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.VolumeComponentType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.KubernetesComponentType, schema.OpenshiftComponentType, schema.VolumeComponentType}
 	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
 	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.AddEvents = true
+	testContent.AddMetaData = true
+	testContent.EditContent = false
+	testContent.FileName = commonUtils.GetDevFileName()
+	libraryUtils.RunTest(testContent, t)
+	libraryUtils.RunMultiThreadTest(testContent, t)
+
+}
+
+func Test_EverythingEdit(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.CommandTypes = []schema.CommandType{schema.ExecCommandType, schema.CompositeCommandType, schema.ApplyCommandType}
+	testContent.ComponentTypes = []schema.ComponentType{schema.ContainerComponentType, schema.KubernetesComponentType, schema.OpenshiftComponentType, schema.VolumeComponentType}
+	testContent.ProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.StarterProjectTypes = []schema.ProjectSourceType{schema.GitProjectSourceType, schema.ZipProjectSourceType}
+	testContent.AddEvents = true
+	testContent.AddMetaData = true
 	testContent.EditContent = true
 	testContent.FileName = commonUtils.GetDevFileName()
 	libraryUtils.RunTest(testContent, t)
