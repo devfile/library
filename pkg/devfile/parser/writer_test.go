@@ -10,43 +10,12 @@ import (
 	"github.com/devfile/library/pkg/testingutil/filesystem"
 )
 
-func TestWriteJsonDevfile(t *testing.T) {
+func TestWriteYamlDevfile(t *testing.T) {
 
 	var (
 		schemaVersion = "2.0.0"
 		testName      = "TestName"
 	)
-
-	t.Run("write json devfile", func(t *testing.T) {
-
-		// Use fakeFs
-		fs := filesystem.NewFakeFs()
-
-		// DevfileObj
-		devfileObj := DevfileObj{
-			Ctx: devfileCtx.FakeContext(fs, OutputDevfileJsonPath),
-			Data: &v2.DevfileV2{
-				Devfile: v1.Devfile{
-					DevfileHeader: devfilepkg.DevfileHeader{
-						SchemaVersion: schemaVersion,
-						Metadata: devfilepkg.DevfileMetadata{
-							Name: testName,
-						},
-					},
-				},
-			},
-		}
-
-		// test func()
-		err := devfileObj.WriteJsonDevfile()
-		if err != nil {
-			t.Errorf("unexpected error: '%v'", err)
-		}
-
-		if _, err := fs.Stat(OutputDevfileJsonPath); err != nil {
-			t.Errorf("unexpected error: '%v'", err)
-		}
-	})
 
 	t.Run("write yaml devfile", func(t *testing.T) {
 

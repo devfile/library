@@ -19,9 +19,9 @@ import (
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/pkg/testingutil"
-	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
 	kubev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const schemaV200 = "2.0.0"
