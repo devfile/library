@@ -102,8 +102,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 	pluginProjectAlreadyDefinedErr := "Some Projects are already defined in plugin.* If you want to override them, you should do it in the plugin scope."
 	newCmdErr := "Some Commands do not override any existing element.* They should be defined in the main body, as new elements, not in the overriding section"
 	newCmpErr := "Some Components do not override any existing element.* They should be defined in the main body, as new elements, not in the overriding section"
+	newProjectErr := "Some Projects do not override any existing element.* They should be defined in the main body, as new elements, not in the overriding section"
 	importCycleErr := "devfile has an cycle in references: main devfile -> .*"
-	overrideInvalidErr := fmt.Sprintf(".*\n.*%s\n.*%s", newCmdErr, newCmpErr)
 
 	type args struct {
 		devFileObj DevfileObj
@@ -115,7 +115,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		pluginDevfile          DevfileObj
 		pluginOverride         v1.PluginOverrides
 		wantDevFile            DevfileObj
-		wantErr                *string
+		wantErr                []string
 		testRecursiveReference bool
 	}{
 		{
@@ -444,6 +444,12 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												},
 											},
 										},
+										Projects: []v1.ProjectParentOverride{
+											{
+												ClonePath: "/projects",
+												Name:      "nodejs-starter",
+											},
+										},
 									},
 								},
 							},
@@ -461,6 +467,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 								Commands:   []v1.Command{},
 								Components: []v1.Component{},
+								Projects:   []v1.Project{},
 							},
 						},
 					},
@@ -469,7 +476,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &overrideInvalidErr,
+			wantErr: []string{newCmpErr, newCmdErr, newProjectErr},
 		},
 		{
 			name: "error out if the same parent command is defined again in the local devfile",
@@ -522,7 +529,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &parentCmdAlreadyDefinedErr,
+			wantErr: []string{parentCmdAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the same parent component is defined again in the local devfile",
@@ -579,7 +586,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &parentCmpAlreadyDefinedErr,
+			wantErr: []string{parentCmpAlreadyDefinedErr},
 		},
 		{
 			name: "should not have error if the same event is defined again in the local devfile",
@@ -699,7 +706,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &parentProjectAlreadyDefinedErr,
+			wantErr: []string{parentProjectAlreadyDefinedErr},
 		},
 		{
 			name: "it should merge the plugin's uri data and add the local devfile's data",
@@ -1143,7 +1150,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &newCmdErr,
+			wantErr: []string{newCmdErr},
 		},
 		{
 			name: "error out if the same plugin command is defined again in the local devfile",
@@ -1196,7 +1203,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginCmdAlreadyDefinedErr,
+			wantErr: []string{pluginCmdAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the same plugin component is defined again in the local devfile",
@@ -1253,7 +1260,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginCmpAlreadyDefinedErr,
+			wantErr: []string{pluginCmpAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the plugin project is defined again in the local devfile",
@@ -1316,7 +1323,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginProjectAlreadyDefinedErr,
+			wantErr: []string{pluginProjectAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the same project is defined in the both plugin devfile and parent",
@@ -1407,7 +1414,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginProjectAlreadyDefinedErr,
+			wantErr: []string{pluginProjectAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the same command is defined in both plugin devfile and parent devfile",
@@ -1483,7 +1490,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginCmdAlreadyDefinedErr,
+			wantErr: []string{pluginCmdAlreadyDefinedErr},
 		},
 		{
 			name: "error out if the same component is defined in both plugin devfile and parent devfile",
@@ -1565,7 +1572,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginCmpAlreadyDefinedErr,
+			wantErr: []string{pluginCmpAlreadyDefinedErr},
 		},
 		{
 			name: "it should override the requested parent's data and plugin's data, and add the local devfile's data",
@@ -1881,7 +1888,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &pluginCmpAlreadyDefinedErr,
+			wantErr: []string{pluginCmpAlreadyDefinedErr},
 		},
 		{
 			name: "it should override with no errors if the plugin component is defined with a different component type in the plugin override",
@@ -2011,7 +2018,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr: &parentCmpAlreadyDefinedErr,
+			wantErr: []string{parentCmpAlreadyDefinedErr},
 		},
 		{
 			name: "it should override with no errors if the parent component is defined with a different component type in the parent override",
@@ -2136,7 +2143,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			wantDevFile: DevfileObj{
 				Data: &v2.DevfileV2{},
 			},
-			wantErr:                &importCycleErr,
+			wantErr:                []string{importCycleErr},
 			testRecursiveReference: true,
 		},
 	}
@@ -2228,7 +2235,9 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 			} else if err == nil && !reflect.DeepEqual(tt.args.devFileObj.Data, tt.wantDevFile.Data) {
 				t.Errorf("Test_parseParentAndPluginFromURI() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile.Data, tt.args.devFileObj.Data, pretty.Compare(tt.args.devFileObj.Data, tt.wantDevFile.Data))
 			} else if err != nil {
-				assert.Regexp(t, *tt.wantErr, err.Error(), "Test_parseParentAndPluginFromURI(): Error message should match")
+				for _, wantErr := range tt.wantErr {
+					assert.Regexp(t, wantErr, err.Error(), "Test_parseParentAndPluginFromURI(): Error message should match")
+				}
 			}
 		})
 	}
@@ -3399,7 +3408,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	invalidURLErr := "the provided registryURL: .* is not a valid URL"
 	URLNotFoundErr := "failed to retrieve .*, 404: Not Found"
 	missingRegistryURLErr := "failed to fetch from registry, registry URL is not provided"
-	invalidRegistryURLErr := "Get .* dial tcp: lookup http: no such host"
+	invalidRegistryURLErr := "Get .* dial tcp: lookup http: .*"
 
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var data []byte
