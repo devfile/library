@@ -339,6 +339,7 @@ func getIngressSpec(ingressSpecParams IngressSpecParams) *extensionsv1.IngressSp
 // getNetworkingV1IngressSpec gets a networking v1 ingress spec
 func getNetworkingV1IngressSpec(ingressSpecParams IngressSpecParams) *networkingv1.IngressSpec {
 	path := "/"
+	pathTypeImplementationSpecific := networkingv1.PathTypeImplementationSpecific
 	if ingressSpecParams.Path != "" {
 		path = ingressSpecParams.Path
 	}
@@ -359,6 +360,8 @@ func getNetworkingV1IngressSpec(ingressSpecParams IngressSpecParams) *networking
 										},
 									},
 								},
+								//Field is required to be set based on attempt to create the ingress
+								PathType: &pathTypeImplementationSpecific,
 							},
 						},
 					},
