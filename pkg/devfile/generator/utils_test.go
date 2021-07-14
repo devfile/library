@@ -391,7 +391,7 @@ func TestAddSyncFolder(t *testing.T) {
 
 			err := addSyncFolder(&container, sourceVolumePath, tt.projects)
 
-			if (tt.wantErr != nil) != (err != nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestAddSyncFolder() error: unexpected error %v, want %v", err, tt.wantErr)
 			} else if err == nil {
 				for _, env := range container.Env {

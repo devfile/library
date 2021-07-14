@@ -48,7 +48,7 @@ func TestGetContainers(t *testing.T) {
 		},
 	}
 
-	errMatches := "an expetced error"
+	errMatches := "an expected error"
 
 	tests := []struct {
 		name                  string
@@ -271,7 +271,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 		volumeName string
 	}
 
-	errMatches := "an expetced error"
+	errMatches := "an expected error"
 
 	tests := []struct {
 		name                string
@@ -446,7 +446,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			}
 
 			pvcVols, err := GetVolumesAndVolumeMounts(devObj, volumeParams, common.DevfileOptions{})
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetVolumesAndVolumeMounts() error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
 				// check if the pvc volumes returned are correct
@@ -596,7 +596,7 @@ func TestGetInitContainers(t *testing.T) {
 	longContainerName := "thisisaverylongcontainerandkuberneteshasalimitforanamesize-exec2"
 	trimmedLongContainerName := util.TruncateString(longContainerName, containerNameMaxLen)
 
-	errMatches := "an expetced error"
+	errMatches := "an expected error"
 
 	tests := []struct {
 		name              string

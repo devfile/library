@@ -67,7 +67,7 @@ func TestGetAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			attributes, err := tt.devfilev2.GetAttributes()
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetAttributes() error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
 				if !reflect.DeepEqual(attributes, tt.wantAttributes) {
@@ -150,7 +150,7 @@ func TestUpdateAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.devfilev2.UpdateAttributes(tt.key, tt.value)
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestUpdateAttributes() error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
 				attributes, err := tt.devfilev2.GetAttributes()
@@ -237,7 +237,7 @@ func TestAddAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.devfilev2.AddAttributes(tt.key, tt.value)
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestAddAttributes() error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
 				attributes, err := tt.devfilev2.GetAttributes()

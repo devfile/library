@@ -144,7 +144,7 @@ func TestAddSourceAttributesForOverrideAndMerge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := addSourceAttributesForOverrideAndMerge(tt.importReference, tt.template)
 
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_AddSourceAttributesForOverrideAndMerge() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(tt.template, tt.wantResult) {
 				t.Errorf("TestAddSourceAttributesForOverrideAndMerge() error: wanted: %v, got: %v, difference at %v", tt.wantResult, tt.template, pretty.Compare(tt.template, tt.wantResult))

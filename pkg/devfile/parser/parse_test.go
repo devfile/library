@@ -3359,7 +3359,7 @@ func Test_parseFromURI(t *testing.T) {
 				}
 			}
 			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromURI() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("Test_parseFromURI() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
@@ -3517,7 +3517,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseFromRegistry(tt.importReference, &resolutionContextTree{}, tt.tool)
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromRegistry() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("Test_parseFromRegistry() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
@@ -3619,7 +3619,7 @@ func Test_parseFromKubeCRD(t *testing.T) {
 				context:   context.Background(),
 			}
 			got, err := parseFromKubeCRD(tt.importReference, &resolutionContextTree{}, tool)
-			if (tt.wantErr == nil) != (err == nil) {
+			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromKubeCRD() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("Test_parseFromKubeCRD() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
