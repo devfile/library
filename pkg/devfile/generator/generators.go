@@ -62,9 +62,10 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 		return nil, err
 	}
 
-	// filter out init containers
+	// filter out containers for preStart and postStop events
 	preStartEvents := devfileObj.Data.GetEvents().PreStart
-	if len(preStartEvents) > 0 {
+	postStopEvents := devfileObj.Data.GetEvents().PostStop
+	if len(preStartEvents) > 0 || len(postStopEvents) > 0 {
 		var eventCommands []string
 		commands, err := devfileObj.Data.GetCommands(common.DevfileOptions{})
 		if err != nil {
@@ -74,6 +75,11 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 		commandsMap := common.GetCommandsMap(commands)
 
 		for _, event := range preStartEvents {
+			eventSubCommands := common.GetCommandsFromEvent(commandsMap, event)
+			eventCommands = append(eventCommands, eventSubCommands...)
+		}
+
+		for _, event := range postStopEvents {
 			eventSubCommands := common.GetCommandsFromEvent(commandsMap, event)
 			eventCommands = append(eventCommands, eventSubCommands...)
 		}

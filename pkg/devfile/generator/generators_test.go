@@ -218,7 +218,7 @@ func TestGetContainers(t *testing.T) {
 			},
 		},
 		{
-			name: "should not return init container",
+			name: "should not return containers for preStart and postStop events",
 			eventCommands: []string{
 				"apply1",
 			},
@@ -280,12 +280,13 @@ func TestGetContainers(t *testing.T) {
 			// to set up the prestartevent and apply command for init container
 			mockGetCommands := mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{})
 			mockGetCommands.Return(applyCommands, nil).AnyTimes()
-			preStartEvents := v1.Events{
+			events := v1.Events{
 				DevWorkspaceEvents: v1.DevWorkspaceEvents{
 					PreStart: tt.eventCommands,
+					PostStop: tt.eventCommands,
 				},
 			}
-			mockDevfileData.EXPECT().GetEvents().Return(preStartEvents).AnyTimes()
+			mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
 
 			devObj := parser.DevfileObj{
 				Data: mockDevfileData,
