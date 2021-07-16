@@ -27,8 +27,8 @@ func init() {
 
 func TestGetContainers(t *testing.T) {
 
-	containerNames := []string{"testcontainer1", "testcontainer2"}
-	containerImages := []string{"image1", "image2"}
+	containerNames := []string{"testcontainer1", "testcontainer2", "testcontainer3"}
+	containerImages := []string{"image1", "image2", "image3"}
 	trueMountSources := true
 	falseMountSources := false
 
@@ -48,10 +48,35 @@ func TestGetContainers(t *testing.T) {
 		},
 	}
 
+	applyCommands := []v1.Command{
+		{
+			Id: "apply1",
+			CommandUnion: v1.CommandUnion{
+				Apply: &v1.ApplyCommand{
+					Component: containerNames[1],
+				},
+			},
+		},
+		{
+			Id: "apply2",
+			CommandUnion: v1.CommandUnion{
+				Apply: &v1.ApplyCommand{
+					Component: containerNames[2],
+				},
+			},
+		},
+	}
+
 	errMatches := "an expected error"
+
+	type EventCommands struct {
+		preStart []string
+		postStop []string
+	}
 
 	tests := []struct {
 		name                  string
+		eventCommands         EventCommands
 		containerComponents   []v1.Component
 		filteredComponents    []v1.Component
 		filterOptions         common.DevfileOptions
@@ -206,6 +231,50 @@ func TestGetContainers(t *testing.T) {
 			},
 		},
 		{
+			name: "should not return containers for preStart and postStop events",
+			eventCommands: EventCommands{
+				preStart: []string{"apply1"},
+				postStop: []string{"apply2"},
+			},
+			containerComponents: []v1.Component{
+				{
+					Name: containerNames[0],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[0],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+				{
+					Name: containerNames[1],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[1],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+				{
+					Name: containerNames[2],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[2],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+			},
+			wantContainerName:  containerNames[0],
+			wantContainerImage: containerImages[0],
+		},
+		{
 			name:    "Simulating error case, check if error matches",
 			wantErr: &errMatches,
 		},
@@ -232,6 +301,17 @@ func TestGetContainers(t *testing.T) {
 				mockGetComponents.Return(nil, fmt.Errorf(*tt.wantErr))
 			}
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(projects, nil).AnyTimes()
+
+			// to set up the prestartevent and apply command for init container
+			mockGetCommands := mockDevfileData.EXPECT().GetCommands(common.DevfileOptions{})
+			mockGetCommands.Return(applyCommands, nil).AnyTimes()
+			events := v1.Events{
+				DevWorkspaceEvents: v1.DevWorkspaceEvents{
+					PreStart: tt.eventCommands.preStart,
+					PostStop: tt.eventCommands.postStop,
+				},
+			}
+			mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
 
 			devObj := parser.DevfileObj{
 				Data: mockDevfileData,
@@ -428,7 +508,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 				Data: mockDevfileData,
 			}
 
-			containers, err := GetContainers(devObj, common.DevfileOptions{})
+			containers, err := getAllContainers(devObj, common.DevfileOptions{})
 			if err != nil {
 				t.Errorf("TestGetVolumesAndVolumeMounts error - %v", err)
 				return
