@@ -27,8 +27,8 @@ func init() {
 
 func TestGetContainers(t *testing.T) {
 
-	containerNames := []string{"testcontainer1", "testcontainer2"}
-	containerImages := []string{"image1", "image2"}
+	containerNames := []string{"testcontainer1", "testcontainer2", "testcontainer3"}
+	containerImages := []string{"image1", "image2", "image3"}
 	trueMountSources := true
 	falseMountSources := false
 
@@ -57,13 +57,26 @@ func TestGetContainers(t *testing.T) {
 				},
 			},
 		},
+		{
+			Id: "apply2",
+			CommandUnion: v1.CommandUnion{
+				Apply: &v1.ApplyCommand{
+					Component: containerNames[2],
+				},
+			},
+		},
 	}
 
 	errMatches := "an expected error"
 
+	type EventCommands struct {
+		preStart []string
+		postStop []string
+	}
+
 	tests := []struct {
 		name                  string
-		eventCommands         []string
+		eventCommands         EventCommands
 		containerComponents   []v1.Component
 		filteredComponents    []v1.Component
 		filterOptions         common.DevfileOptions
@@ -219,8 +232,9 @@ func TestGetContainers(t *testing.T) {
 		},
 		{
 			name: "should not return containers for preStart and postStop events",
-			eventCommands: []string{
-				"apply1",
+			eventCommands: EventCommands{
+				preStart: []string{"apply1"},
+				postStop: []string{"apply2"},
 			},
 			containerComponents: []v1.Component{
 				{
@@ -240,6 +254,17 @@ func TestGetContainers(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Container: v1.Container{
 								Image:        containerImages[1],
+								MountSources: &falseMountSources,
+							},
+						},
+					},
+				},
+				{
+					Name: containerNames[2],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image:        containerImages[2],
 								MountSources: &falseMountSources,
 							},
 						},
@@ -282,8 +307,8 @@ func TestGetContainers(t *testing.T) {
 			mockGetCommands.Return(applyCommands, nil).AnyTimes()
 			events := v1.Events{
 				DevWorkspaceEvents: v1.DevWorkspaceEvents{
-					PreStart: tt.eventCommands,
-					PostStop: tt.eventCommands,
+					PreStart: tt.eventCommands.preStart,
+					PostStop: tt.eventCommands.postStop,
 				},
 			}
 			mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
