@@ -1,0 +1,46 @@
+schemaVersion: 2.1.0
+parent:
+  kubernetes:
+    name: testkubeparent1
+    namespace: default
+  commands:
+  - apply:
+      component: devbuild 
+      group:
+        kind: build #override
+        isDefault: false #override
+      label: testcontainerparent1 #override
+    id: applycommand 
+  components: 
+  - container:
+      image: updatedimage #override
+    name: devbuild 
+  projects: 
+    - name: parentproject
+      git:
+        remotes: 
+          neworigin: "https://github.com/spring-projects/spring-petclinic2.git" #override, should result in 2 remotes in flattened file
+        checkoutFrom:
+          remote: neworigin  #override
+          revision: main #override
+    - name: parentproject2
+      zip:
+        location: "https://github.com/spring-projects/spring-petclinic2.zip" #override
+  starterProjects: 
+    - name: parentstarterproject
+      git:
+        remotes: 
+          origin: "https://github.com/spring-projects/spring-petclinic2.git" #override
+        checkoutFrom:
+          remote: origin  
+          revision: master #override
+  attributes: # only applicable to v2.1.0
+    category: mainDevfile  #override
+    title: This is a main devfile  #override
+  variables: #only applicable to v2.1.0
+    version: 2.1.0 #override
+    tag: main #override     
+
+
+
+  

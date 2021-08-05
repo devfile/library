@@ -1,0 +1,82 @@
+schemaVersion: 2.1.0
+commands:
+- apply:
+    component: testcontainerparent1
+    group:
+      kind: test
+      isDefault: true
+    label: JXTVtfYNNsaiQcqFSwTavCaBlRGMaBOXaxXsgDRxFxsNxbuHfGQuQjBwJWJVmHd
+  id: testapplyparentcommand1
+- id: run
+  exec:
+    component: testcontainerparent1
+    commandLine: npm start
+    workingDir: /project
+    group:
+      kind: run
+      isDefault: true
+    hotReloadCapable: true
+- id: test
+  composite: 
+    commands: [testapplyparentcommand1]
+    group: 
+      kind: debug
+    label: testcompositeparent1
+    parallel: true
+components:
+  - container:
+      image: mKrpiOQnyGZ00003
+    name: testcontainerparent1
+  - kubernetes:
+      inlined: |
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: pi
+        spec:
+          template:
+            spec:
+              containers:
+              - name: job
+                image: myimage
+                command: ["some",  "command"]
+              restartPolicy: Never
+    name: testkubeparent1
+  - openshift:
+      uri: openshift.yaml
+    name: openshiftcomponent1
+projects: 
+  - name: petclinic
+    git:
+      remotes: 
+        origin: "https://github.com/spring-projects/spring-petclinic.git"
+      checkoutFrom:
+        remote: origin
+        revision: main 
+  - name: petclinic-dev
+    zip:
+      location: https://github.com/spring-projects/spring-petclinic/archive/refs/heads/main.zip
+    attributes:
+      editorFree: true
+      user: default
+starterProjects:
+  - name: user-app
+    git:
+      remotes:
+        origin: 'https://github.com/OpenLiberty/application-stack-starters.git'
+    description: An Open Liberty Starter project
+    subDir: /app    
+    attributes: 
+      workingDir: /home 
+  - name: user-app2
+    zip:
+      location: 'https://github.com/OpenLiberty/application-stack-starters.zip'      
+attributes: #only applicable to v2.1.0
+  category: parentdevfile
+  title: This is a parent devfile
+variables: #only applicable to v2.1.0
+  version: 2.0.0
+  tag: parent
+  lastUpdated: "2020"
+
+    
