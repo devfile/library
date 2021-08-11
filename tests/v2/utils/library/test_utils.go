@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -10,13 +11,13 @@ import (
 
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	header "github.com/devfile/api/v2/pkg/devfile"
+	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
 	devfilepkg "github.com/devfile/library/pkg/devfile"
 	"github.com/devfile/library/pkg/devfile/parser"
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	devfileData "github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
-
-	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
+	"github.com/devfile/library/pkg/util"
 )
 
 const (
@@ -29,6 +30,11 @@ const (
 // DevfileValidator struct for DevfileValidator interface.
 // The DevfileValidator interface is test/v200/utils/common/test_utils.go of the devfile/api repository.
 type DevfileValidator struct{}
+
+var parserArgs = parser.ParserArgs{}
+
+//directory where test devfiles are generated and/or copied
+const destDir = "tmp/library_test/"
 
 // WriteAndValidate implements DevfileValidator interface.
 // writes to disk and validates the specified devfile
@@ -131,7 +137,7 @@ func (devfileFollower DevfileFollower) UpdateMetaData(updateMetaData header.Devf
 	devfileFollower.LibraryData.SetMetadata(updateMetaData)
 }
 
-// SetMetaData sets the specified schemaVersion in the library data
+// SetSchemaVersion  sets the specified schemaVersion in the library data
 func (devfileFollower DevfileFollower) SetSchemaVersion(schemaVersion string) {
 	devfileFollower.LibraryData.SetSchemaVersion(schemaVersion)
 }
@@ -172,9 +178,16 @@ func validateDevfile(devfile *commonUtils.TestDevfile) error {
 	var err error
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
-	libraryObj, err := devfilepkg.ParseAndValidate(devfile.FileName)
+
+	parserArgs.Path = devfile.FileName
+	libraryObj, warning, err := devfilepkg.ParseDevfileAndValidate(parserArgs)
+
+	if len(warning.Commands) > 0 || len(warning.Components) > 0 || len(warning.Projects) > 0 || len(warning.StarterProjects) > 0 {
+		commonUtils.LogWarningMessage(fmt.Sprintf("top-level variables were not substituted successfully %+v\n", warning))
+	}
+
 	if err != nil {
-		commonUtils.LogErrorMessage(fmt.Sprintf("From ParseAndValidate %v : ", err))
+		commonUtils.LogErrorMessage(fmt.Sprintf("From ParseDevfileAndValidate %v : ", err))
 	} else {
 		follower := devfile.Follower.(DevfileFollower)
 		follower.LibraryData = libraryObj.Data
@@ -189,13 +202,10 @@ func RunMultiThreadTest(testContent commonUtils.TestContent, t *testing.T) {
 	commonUtils.LogMessage(fmt.Sprintf("Start Threaded test for %s", testContent.FileName))
 
 	devfileName := testContent.FileName
-	var i int
-	for i = 1; i < numThreads; i++ {
+	for i := 1; i < numThreads; i++ {
 		testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
 		go RunTest(testContent, t)
 	}
-	testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
-	RunTest(testContent, t)
 
 	commonUtils.LogMessage(fmt.Sprintf("Sleep 3 seconds to allow all threads to complete : %s", devfileName))
 	time.Sleep(3 * time.Second)
@@ -203,11 +213,65 @@ func RunMultiThreadTest(testContent commonUtils.TestContent, t *testing.T) {
 
 }
 
+// RunMultiThreadedParentTest : Runs the same test on multiple threads, the test is based on the content of the specified TestContent
+func RunMultiThreadedParentTest(testContent commonUtils.TestContent, t *testing.T) {
+
+	commonUtils.LogMessage(fmt.Sprintf("Start Threaded parent test for %s", testContent.FileName))
+	devfileName := testContent.FileName
+	for i := 1; i < numThreads+1; i++ {
+		testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
+		duplicateDevfileSample(t, devfileName, testContent.FileName)
+		go RunParentTest(testContent, t)
+	}
+
+	commonUtils.LogMessage(fmt.Sprintf("Sleep 3 seconds to allow all threads to complete : %s", devfileName))
+	time.Sleep(3 * time.Second)
+	commonUtils.LogMessage(fmt.Sprintf("Sleep complete : %s", devfileName))
+
+}
+
+// SetParserArgs :  Used when parser args other than filename are set in the library tests
+func SetParserArgs(args parser.ParserArgs) {
+	parserArgs = args
+}
+
+// CopyDevfileSamples : Copies existing artifacts from the devfiles/samples directory to the tmp/library_test directory.  Used in parent tests
+func CopyDevfileSamples(t *testing.T, testDevfiles []string) {
+
+	srcDir := "../devfiles/samples/"
+	dstDir := commonUtils.CreateTempDir("library_test")
+
+	for i := range testDevfiles {
+		srcPath := srcDir + testDevfiles[i]
+		destPath := dstDir + testDevfiles[i]
+
+		file, err := os.Stat(srcPath)
+		if err != nil {
+			t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
+		} else {
+			commonUtils.LogMessage(fmt.Sprintf("copy file from %s to %s ", srcPath, destPath))
+			util.CopyFile(srcPath, destPath, file)
+		}
+	}
+}
+
+//duplicateDevfileSample: Makes a copy of the parent devfile test artifact that is expected to exist in the tmp/library_test directory.
+//This is used in the multi-threaded parent test scenarios
+func duplicateDevfileSample(t *testing.T, src string, dst string) {
+	srcPath := destDir + src
+	destPath := destDir + dst
+	file, err := os.Stat(srcPath)
+	if err != nil {
+		t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
+	} else {
+		commonUtils.LogMessage(fmt.Sprintf("duplicate file %s to %s ", srcPath, destPath))
+		util.CopyFile(srcPath, destDir+dst, file)
+	}
+}
+
 // RunTest : Runs a test to create and verify a devfile based on the content of the specified TestContent
 func RunTest(testContent commonUtils.TestContent, t *testing.T) {
-
 	commonUtils.LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
-
 	devfileName := testContent.FileName
 	for i := 1; i <= numDevfiles; i++ {
 
@@ -259,6 +323,20 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 
 			validator.WriteAndValidate(&testDevfile)
 		}
+	}
+}
+
+//RunParentTest : Runs parent tests based on pre-existing artifacts
+func RunParentTest(testContent commonUtils.TestContent, t *testing.T) {
+	commonUtils.LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
+	follower := DevfileFollower{}
+	validator := DevfileValidator{}
+	testfileName := destDir + testContent.FileName
+	testDevfile, _ := commonUtils.GetDevfile(testfileName, follower, validator)
+	testDevfile.SchemaDevFile.Parent = &schema.Parent{}
+	err := validateDevfile(&testDevfile)
+	if err != nil {
+		t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error validating testDevfile %v ", err)))
 	}
 }
 

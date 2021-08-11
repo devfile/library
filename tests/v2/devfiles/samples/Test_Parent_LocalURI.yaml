@@ -1,0 +1,95 @@
+schemaVersion: 2.1.0
+parent:
+  uri: "Parent.yaml"
+  commands:
+  - apply:
+      component: testcontainer1 #override, point to a container in the main devfile
+      group:
+        kind: test
+        isDefault: false #override
+      label: testcontainerparent #override
+    id: testapplyparentcommand1 
+  - id: run
+    exec:
+      component: testcontainerparent1
+      commandLine: npm install #override
+      workingDir: /project2 #override
+      env:  #addition, does not exist in parent
+      -  name: PATH
+         value: /dir
+      -  name: USER
+         value: user1
+      group:
+        kind: build #override
+        isDefault: false #override
+      hotReloadCapable: false #override
+  - id: test        
+    composite: 
+      commands: [testapplyparentcommand1, run] #override
+      group: 
+        kind: debug
+      label: testcompositeparent1     
+      parallel: false #override   
+  components:
+    - kubernetes:
+        inlined: |  #override 
+          apiVersion: batch/v1
+          kind: Pod
+          metadata:
+            name: pi
+            namespace: dev
+          spec:
+            template:
+              spec:
+                containers:
+                - name: newJob
+                  image: myimage
+                  command: ["some",  "command"]
+                restartPolicy: Never
+      name: testkubeparent1
+    - openshift:
+        uri: openshift2.yaml  #override
+      name: openshiftcomponent1
+    - container:
+        image: updatedimage #override
+      name: testcontainerparent1 
+  projects: 
+    - name: petclinic
+      git:
+        remotes: 
+          neworigin: "https://github.com/spring-projects/spring-petclinic2.git" #override, should result in 2 remotes in flattened file
+        checkoutFrom:
+          remote: neworigin  #override
+          revision: master #override
+    - name: petclinic-dev
+      zip:
+        location: https://github.com/spring-projects/spring-petclinic/petclinic.zip #override
+      clonePath: /petclinic #overrides the default
+      attributes:
+        editorFree: false #override
+        user: user1    #override  
+  starterProjects:
+    - name: user-app
+      git:
+        remotes:
+          origin: 'https://github.com/OpenLiberty/application-stack-starters-new.git' #override
+      description: An Open Liberty Starter project override #override
+      subDir: /newapp    #override
+      attributes:  #add additional attributes
+        env: test
+        user: user1 
+  attributes: # only applicable to v2.1.0
+    category: mainDevfile  #override
+    title: This is a main devfile  #override  
+  variables: #only applicable to v2.1.0
+    version: 2.1.0 #override
+    tag: main #override
+    lastUpdated: "2021" #override
+components:
+- container:
+    image: mKrpiOQnyGZ00003
+  name: testcontainer1 
+
+
+
+  

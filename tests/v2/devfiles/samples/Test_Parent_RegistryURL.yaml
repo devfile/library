@@ -1,0 +1,29 @@
+schemaVersion: 2.1.0
+parent:
+  id: nodejs
+  registryUrl: "https://registry.stage.devfile.io"
+  commands:
+  - id: run
+    exec:
+      component: runtime
+      commandLine: npm install #override
+      workingDir: /project2 #override
+  components:
+  - name: runtime
+    container:
+      image: registry.access.redhat.com/ubi8/nodejs-14:dev #override
+      memoryLimit: 2048Mi   #override
+      mountSources: false  #override
+      sourceMapping: /project2 #override
+      endpoints:
+        - name: http-9080 #this will result in a second endpoint
+          targetPort: 9080 
+  starterProjects:
+    - name: nodejs-starter
+      git:
+        remotes:
+          origin: "https://github.com/odo-devfiles/nodejs-ex2.git" #override
+
+
+
+  
