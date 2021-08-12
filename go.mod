@@ -3,7 +3,7 @@ module github.com/devfile/library
 go 1.15
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20210804191700-4f7b6856e70a
+	github.com/devfile/api/v2 v2.0.0-20210812170628-ad569a8c7a49
 	github.com/fatih/color v1.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.5.0
