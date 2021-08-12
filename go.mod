@@ -1,6 +1,6 @@
 module github.com/devfile/library
 
-go 1.13
+go 1.15
 
 require (
 	github.com/devfile/api/v2 v2.0.0-20210713153530-f78ab9de1a30
