@@ -3,12 +3,13 @@ module github.com/devfile/library
 go 1.15
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20210812170628-ad569a8c7a49
+	github.com/devfile/api/v2 v2.0.0-20210812215717-9227ef221c84
 	github.com/fatih/color v1.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
