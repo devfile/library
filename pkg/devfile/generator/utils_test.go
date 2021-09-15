@@ -22,6 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+var isTrue bool = true
+
 func TestConvertEnvs(t *testing.T) {
 	envVarsNames := []string{"test", "sample-var", "myvar"}
 	envVarsValues := []string{"value1", "value2", "value3"}
@@ -984,7 +986,7 @@ func TestGetPortExposure(t *testing.T) {
 								{
 									Name:       urlName2,
 									TargetPort: 9090,
-									Secure:     true,
+									Secure:     &isTrue,
 									Path:       "/testpath",
 									Exposure:   v1.InternalEndpointExposure,
 									Protocol:   v1.HTTPSEndpointProtocol,
@@ -1038,7 +1040,7 @@ func TestGetPortExposure(t *testing.T) {
 								{
 									Name:       urlName2,
 									TargetPort: 9090,
-									Secure:     true,
+									Secure:     &isTrue,
 									Path:       "/testpath",
 									Exposure:   v1.InternalEndpointExposure,
 									Protocol:   v1.HTTPSEndpointProtocol,

@@ -239,7 +239,7 @@ func setClientAndContextParserArgs() *parser.ParserArgs {
 								BaseCommand: schema.BaseCommand{
 									Group: &schema.CommandGroup{
 										Kind:      schema.TestCommandGroupKind,
-										IsDefault: true,
+										IsDefault: &isTrue,
 									},
 								},
 							},
