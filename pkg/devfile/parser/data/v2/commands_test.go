@@ -235,6 +235,7 @@ func TestDevfile200_AddCommands(t *testing.T) {
 		name            string
 		currentCommands []v1.Command
 		newCommands     []v1.Command
+		wantCommands    []v1.Command
 		wantErr         *string
 	}{
 		{
@@ -248,6 +249,26 @@ func TestDevfile200_AddCommands(t *testing.T) {
 				},
 			},
 			newCommands: []v1.Command{
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command3",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+			},
+			wantCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
 				{
 					Id: "command2",
 					CommandUnion: v1.CommandUnion{
@@ -299,6 +320,26 @@ func TestDevfile200_AddCommands(t *testing.T) {
 					},
 				},
 			},
+			wantCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command3",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+			},
 			wantErr: &multipleDupError,
 		},
 	}
@@ -321,9 +362,8 @@ func TestDevfile200_AddCommands(t *testing.T) {
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "TestDevfile200_AddCommands(): Error message should match")
 			} else {
-				wantCommands := append(tt.currentCommands, tt.newCommands...)
-				if !reflect.DeepEqual(d.Commands, wantCommands) {
-					t.Errorf("TestDevfile200_AddCommands() wanted: %v, got: %v, difference at %v", wantCommands, d.Commands, pretty.Compare(wantCommands, d.Commands))
+				if !reflect.DeepEqual(d.Commands, tt.wantCommands) {
+					t.Errorf("TestDevfile200_AddCommands() wanted: %v, got: %v, difference at %v", tt.wantCommands, d.Commands, pretty.Compare(tt.wantCommands, d.Commands))
 				}
 			}
 

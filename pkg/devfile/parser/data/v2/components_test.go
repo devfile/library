@@ -20,6 +20,7 @@ func TestDevfile200_AddComponent(t *testing.T) {
 		name              string
 		currentComponents []v1.Component
 		newComponents     []v1.Component
+		wantComponents    []v1.Component
 		wantErr           *string
 	}{
 		{
@@ -39,6 +40,26 @@ func TestDevfile200_AddComponent(t *testing.T) {
 				},
 			},
 			newComponents: []v1.Component{
+				{
+					Name: "component3",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
+			wantComponents: []v1.Component{
+				{
+					Name: "component1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "component2",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
 				{
 					Name: "component3",
 					ComponentUnion: v1.ComponentUnion{
@@ -84,6 +105,26 @@ func TestDevfile200_AddComponent(t *testing.T) {
 					},
 				},
 			},
+			wantComponents: []v1.Component{
+				{
+					Name: "component1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "component2",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+				{
+					Name: "component3",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
 			wantErr: &multipleDupError,
 		},
 	}
@@ -106,9 +147,8 @@ func TestDevfile200_AddComponent(t *testing.T) {
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "TestDevfile200_AddComponents(): Error message should match")
 			} else {
-				wantComponents := append(tt.currentComponents, tt.newComponents...)
-				if !reflect.DeepEqual(d.Components, wantComponents) {
-					t.Errorf("TestDevfile200_AddComponents() wanted: %v, got: %v, difference at %v", wantComponents, d.Components, pretty.Compare(wantComponents, d.Components))
+				if !reflect.DeepEqual(d.Components, tt.wantComponents) {
+					t.Errorf("TestDevfile200_AddComponents() wanted: %v, got: %v, difference at %v", tt.wantComponents, d.Components, pretty.Compare(tt.wantComponents, d.Components))
 				}
 			}
 		})
