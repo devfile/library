@@ -8,6 +8,8 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 )
 
+var isTrue bool = true
+
 func TestGetGroup(t *testing.T) {
 
 	tests := []struct {
@@ -24,7 +26,7 @@ func TestGetGroup(t *testing.T) {
 						LabeledCommand: v1.LabeledCommand{
 							BaseCommand: v1.BaseCommand{
 								Group: &v1.CommandGroup{
-									IsDefault: true,
+									IsDefault: &isTrue,
 									Kind:      v1.RunCommandGroupKind,
 								},
 							},
@@ -33,7 +35,7 @@ func TestGetGroup(t *testing.T) {
 				},
 			},
 			want: &v1.CommandGroup{
-				IsDefault: true,
+				IsDefault: &isTrue,
 				Kind:      v1.RunCommandGroupKind,
 			},
 		},
@@ -46,7 +48,7 @@ func TestGetGroup(t *testing.T) {
 						LabeledCommand: v1.LabeledCommand{
 							BaseCommand: v1.BaseCommand{
 								Group: &v1.CommandGroup{
-									IsDefault: true,
+									IsDefault: &isTrue,
 									Kind:      v1.BuildCommandGroupKind,
 								},
 							},
@@ -55,7 +57,7 @@ func TestGetGroup(t *testing.T) {
 				},
 			},
 			want: &v1.CommandGroup{
-				IsDefault: true,
+				IsDefault: &isTrue,
 				Kind:      v1.BuildCommandGroupKind,
 			},
 		},
@@ -73,7 +75,7 @@ func TestGetGroup(t *testing.T) {
 						LabeledCommand: v1.LabeledCommand{
 							BaseCommand: v1.BaseCommand{
 								Group: &v1.CommandGroup{
-									IsDefault: true,
+									IsDefault: &isTrue,
 									Kind:      v1.TestCommandGroupKind,
 								},
 							},
@@ -82,7 +84,7 @@ func TestGetGroup(t *testing.T) {
 				},
 			},
 			want: &v1.CommandGroup{
-				IsDefault: true,
+				IsDefault: &isTrue,
 				Kind:      v1.TestCommandGroupKind,
 			},
 		},
@@ -95,7 +97,7 @@ func TestGetGroup(t *testing.T) {
 						LabeledCommand: v1.LabeledCommand{
 							BaseCommand: v1.BaseCommand{
 								Group: &v1.CommandGroup{
-									IsDefault: true,
+									IsDefault: &isTrue,
 									Kind:      v1.BuildCommandGroupKind,
 								},
 							},
@@ -104,7 +106,7 @@ func TestGetGroup(t *testing.T) {
 				},
 			},
 			want: &v1.CommandGroup{
-				IsDefault: true,
+				IsDefault: &isTrue,
 				Kind:      v1.BuildCommandGroupKind,
 			},
 		},

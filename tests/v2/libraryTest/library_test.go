@@ -225,6 +225,7 @@ func Test_Parent_Local_URI(t *testing.T) {
 
 //Create kube client and context and set as ParserArgs for Parent Kubernetes reference test.  Corresponding main devfile is ../devfile/samples/TestParent_KubeCRD.yaml
 func setClientAndContextParserArgs() *parser.ParserArgs {
+	isTrue := true
 	name := "testkubeparent1"
 	parentSpec := schema.DevWorkspaceTemplateSpec{
 		DevWorkspaceTemplateSpecContent: schema.DevWorkspaceTemplateSpecContent{
@@ -239,7 +240,7 @@ func setClientAndContextParserArgs() *parser.ParserArgs {
 								BaseCommand: schema.BaseCommand{
 									Group: &schema.CommandGroup{
 										Kind:      schema.TestCommandGroupKind,
-										IsDefault: true,
+										IsDefault: &isTrue,
 									},
 								},
 							},

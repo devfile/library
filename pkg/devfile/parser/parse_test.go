@@ -3,6 +3,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	"github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net"
@@ -25,7 +26,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const schemaV200 = "2.0.0"
+const schemaV210 = string(data.APISchemaVersion210)
+
+var isTrue bool = true
+var isFalse bool = false
 
 func Test_parseParentAndPluginFromURI(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
@@ -41,7 +45,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -50,8 +54,33 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								Id: "devrun",
 								CommandUnion: v1.CommandUnion{
 									Exec: &v1.ExecCommand{
-										WorkingDir:  "/projects",
-										CommandLine: "npm run",
+										WorkingDir:       "/projects",
+										CommandLine:      "npm run",
+										HotReloadCapable: &isTrue,
+									},
+								},
+							},
+							{
+								Id: "testrun",
+								CommandUnion: v1.CommandUnion{
+									Apply: &v1.ApplyCommand{
+										LabeledCommand: v1.LabeledCommand{
+											BaseCommand: v1.BaseCommand{
+												Group: &v1.CommandGroup{
+													Kind:      v1.TestCommandGroupKind,
+													IsDefault: &isTrue,
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Id: "allcmds",
+								CommandUnion: v1.CommandUnion{
+									Composite: &v1.CompositeCommand{
+										Commands: []string{"testrun", "devrun"},
+										Parallel: &isTrue,
 									},
 								},
 							},
@@ -62,7 +91,44 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Container: &v1.ContainerComponent{
 										Container: v1.Container{
-											Image: "quay.io/nodejs-10",
+											Image:        "quay.io/nodejs-10",
+											DedicatedPod: &isTrue,
+										},
+										Endpoints: []v1.Endpoint{
+											{
+												Name:       "log",
+												TargetPort: 443,
+												Secure:     &isFalse,
+											},
+										},
+									},
+								},
+							},
+							{
+								Name: "volume",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size:      "2Gi",
+											Ephemeral: &isFalse,
+										},
+									},
+								},
+							},
+							{
+								Name: "openshift",
+								ComponentUnion: v1.ComponentUnion{
+									Openshift: &v1.OpenshiftComponent{
+										K8sLikeComponent: v1.K8sLikeComponent{
+											K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+												Uri: "https://xyz.com/dir/file.yaml",
+											},
+											Endpoints: []v1.Endpoint{
+												{
+													Name:       "metrics",
+													TargetPort: 8080,
+												},
+											},
 										},
 									},
 								},
@@ -133,7 +199,31 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												Id: "devrun",
 												CommandUnionParentOverride: v1.CommandUnionParentOverride{
 													Exec: &v1.ExecCommandParentOverride{
-														WorkingDir: "/projects/nodejs-starter",
+														WorkingDir:       "/projects/nodejs-starter",
+														HotReloadCapable: &isFalse,
+													},
+												},
+											},
+											{
+												Id: "testrun",
+												CommandUnionParentOverride: v1.CommandUnionParentOverride{
+													Apply: &v1.ApplyCommandParentOverride{
+														LabeledCommandParentOverride: v1.LabeledCommandParentOverride{
+															BaseCommandParentOverride: v1.BaseCommandParentOverride{
+																Group: &v1.CommandGroupParentOverride{
+																	Kind:      v1.CommandGroupKindParentOverride(v1.BuildCommandGroupKind),
+																	IsDefault: &isFalse,
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Id: "allcmds",
+												CommandUnionParentOverride: v1.CommandUnionParentOverride{
+													Composite: &v1.CompositeCommandParentOverride{
+														Parallel: &isFalse,
 													},
 												},
 											},
@@ -144,7 +234,43 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
 													Container: &v1.ContainerComponentParentOverride{
 														ContainerParentOverride: v1.ContainerParentOverride{
-															Image: "quay.io/nodejs-12",
+															Image:        "quay.io/nodejs-12",
+															DedicatedPod: &isFalse,
+															MountSources: &isTrue, //overrides an unset value to true
+														},
+														Endpoints: []v1.EndpointParentOverride{
+															{
+																Name:       "log",
+																TargetPort: 443,
+																Secure:     &isTrue,
+															},
+														},
+													},
+												},
+											},
+											{
+												Name: "volume",
+												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+													Volume: &v1.VolumeComponentParentOverride{
+														VolumeParentOverride: v1.VolumeParentOverride{
+															Size:      "2Gi",
+															Ephemeral: &isTrue,
+														},
+													},
+												},
+											},
+											{
+												Name: "openshift",
+												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+													Openshift: &v1.OpenshiftComponentParentOverride{
+														K8sLikeComponentParentOverride: v1.K8sLikeComponentParentOverride{
+															Endpoints: []v1.EndpointParentOverride{
+																{
+																	Name:       "metrics",
+																	TargetPort: 8080,
+																	Secure:     &isFalse, //explicitly set an unset value to false
+																},
+															},
 														},
 													},
 												},
@@ -210,8 +336,35 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												CommandLine: "npm run",
-												WorkingDir:  "/projects/nodejs-starter",
+												CommandLine:      "npm run",
+												WorkingDir:       "/projects/nodejs-starter",
+												HotReloadCapable: &isFalse,
+											},
+										},
+									},
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Id:         "testrun",
+										CommandUnion: v1.CommandUnion{
+											Apply: &v1.ApplyCommand{
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.BuildCommandGroupKind,
+															IsDefault: &isFalse,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Id:         "allcmds",
+										CommandUnion: v1.CommandUnion{
+											Composite: &v1.CompositeCommand{
+												Commands: []string{"testrun", "devrun"},
+												Parallel: &isFalse,
 											},
 										},
 									},
@@ -231,7 +384,48 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
+													Image:        "quay.io/nodejs-12",
+													DedicatedPod: &isFalse,
+													MountSources: &isTrue,
+												},
+												Endpoints: []v1.Endpoint{
+													{
+														Name:       "log",
+														TargetPort: 443,
+														Secure:     &isTrue,
+													},
+												},
+											},
+										},
+									},
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "volume",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size:      "2Gi",
+													Ephemeral: &isTrue,
+												},
+											},
+										},
+									},
+									{
+										Attributes: parentOverridesFromMainDevfile,
+										Name:       "openshift",
+										ComponentUnion: v1.ComponentUnion{
+											Openshift: &v1.OpenshiftComponent{
+												K8sLikeComponent: v1.K8sLikeComponent{
+													K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+														Uri: "https://xyz.com/dir/file.yaml",
+													},
+													Endpoints: []v1.Endpoint{
+														{
+															Name:       "metrics",
+															TargetPort: 8080,
+															Secure:     &isFalse,
+														},
+													},
 												},
 											},
 										},
@@ -311,6 +505,25 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												},
 											},
 										},
+										{
+											Name: "Kubernetes",
+											ComponentUnion: v1.ComponentUnion{
+												Kubernetes: &v1.KubernetesComponent{
+													K8sLikeComponent: v1.K8sLikeComponent{
+														K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+															Uri: "/devfiles",
+														},
+														Endpoints: []v1.Endpoint{
+															{
+																Name:       "messages",
+																TargetPort: 8080,
+																Secure:     &isTrue,
+															},
+														},
+													},
+												},
+											},
+										},
 									},
 									Events: &v1.Events{
 										DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -341,8 +554,35 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												CommandLine: "npm run",
-												WorkingDir:  "/projects",
+												CommandLine:      "npm run",
+												WorkingDir:       "/projects",
+												HotReloadCapable: &isTrue,
+											},
+										},
+									},
+									{
+										Attributes: importFromUri1,
+										Id:         "testrun",
+										CommandUnion: v1.CommandUnion{
+											Apply: &v1.ApplyCommand{
+												LabeledCommand: v1.LabeledCommand{
+													BaseCommand: v1.BaseCommand{
+														Group: &v1.CommandGroup{
+															Kind:      v1.TestCommandGroupKind,
+															IsDefault: &isTrue,
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Attributes: importFromUri1,
+										Id:         "allcmds",
+										CommandUnion: v1.CommandUnion{
+											Composite: &v1.CompositeCommand{
+												Commands: []string{"testrun", "devrun"},
+												Parallel: &isTrue,
 											},
 										},
 									},
@@ -362,7 +602,46 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image: "quay.io/nodejs-10",
+													Image:        "quay.io/nodejs-10",
+													DedicatedPod: &isTrue,
+												},
+												Endpoints: []v1.Endpoint{
+													{
+														Name:       "log",
+														TargetPort: 443,
+														Secure:     &isFalse,
+													},
+												},
+											},
+										},
+									},
+									{
+										Attributes: importFromUri1,
+										Name:       "volume",
+										ComponentUnion: v1.ComponentUnion{
+											Volume: &v1.VolumeComponent{
+												Volume: v1.Volume{
+													Size:      "2Gi",
+													Ephemeral: &isFalse,
+												},
+											},
+										},
+									},
+									{
+										Attributes: importFromUri1,
+										Name:       "openshift",
+										ComponentUnion: v1.ComponentUnion{
+											Openshift: &v1.OpenshiftComponent{
+												K8sLikeComponent: v1.K8sLikeComponent{
+													K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+														Uri: "https://xyz.com/dir/file.yaml",
+													},
+													Endpoints: []v1.Endpoint{
+														{
+															Name:       "metrics",
+															TargetPort: 8080,
+														},
+													},
 												},
 											},
 										},
@@ -373,6 +652,25 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
 													Image: "quay.io/nodejs-12",
+												},
+											},
+										},
+									},
+									{
+										Name: "Kubernetes",
+										ComponentUnion: v1.ComponentUnion{
+											Kubernetes: &v1.KubernetesComponent{
+												K8sLikeComponent: v1.K8sLikeComponent{
+													K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+														Uri: "/devfiles",
+													},
+													Endpoints: []v1.Endpoint{
+														{
+															Name:       "messages",
+															TargetPort: 8080,
+															Secure:     &isTrue,
+														},
+													},
 												},
 											},
 										},
@@ -461,7 +759,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -507,7 +805,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -562,7 +860,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -612,7 +910,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -679,7 +977,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -760,7 +1058,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -946,7 +1244,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1123,7 +1421,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1181,7 +1479,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1236,7 +1534,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1296,7 +1594,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1359,7 +1657,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1387,7 +1685,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1445,7 +1743,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1468,7 +1766,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1523,7 +1821,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1548,7 +1846,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1646,7 +1944,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1690,7 +1988,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1864,7 +2162,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1918,7 +2216,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1994,7 +2292,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2053,7 +2351,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2112,7 +2410,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV200,
+							SchemaVersion: schemaV210,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							Parent: &v1.Parent{
@@ -2286,7 +2584,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2323,7 +2621,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2477,7 +2775,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3144,7 +3442,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3194,7 +3492,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -3227,7 +3525,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3383,7 +3681,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV200,
+					SchemaVersion: schemaV210,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
