@@ -195,13 +195,30 @@ func TestDevfile200_AddProjects(t *testing.T) {
 	multipleDupError := fmt.Sprintf("%s\n%s", "project java-starter already exists in devfile", "project quarkus-starter already exists in devfile")
 
 	tests := []struct {
-		name    string
-		args    []v1.Project
-		wantErr *string
+		name         string
+		args         []v1.Project
+		wantProjects []v1.Project
+		wantErr      *string
 	}{
 		{
 			name: "It should add project",
 			args: []v1.Project{
+				{
+					Name: "nodejs",
+				},
+				{
+					Name: "spring-pet-clinic",
+				},
+			},
+			wantProjects: []v1.Project{
+				{
+					Name:      "java-starter",
+					ClonePath: "/project",
+				},
+				{
+					Name:      "quarkus-starter",
+					ClonePath: "/test",
+				},
 				{
 					Name: "nodejs",
 				},
@@ -222,6 +239,16 @@ func TestDevfile200_AddProjects(t *testing.T) {
 					Name: "quarkus-starter",
 				},
 			},
+			wantProjects: []v1.Project{
+				{
+					Name:      "java-starter",
+					ClonePath: "/project",
+				},
+				{
+					Name:      "quarkus-starter",
+					ClonePath: "/test",
+				},
+			},
 			wantErr: &multipleDupError,
 		},
 	}
@@ -234,10 +261,8 @@ func TestDevfile200_AddProjects(t *testing.T) {
 			} else if tt.wantErr != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "TestDevfile200_AddProjects(): Error message should match")
 			} else if err == nil {
-				wantProjects := append(currentProject, tt.args...)
-
-				if !reflect.DeepEqual(d.Projects, wantProjects) {
-					t.Errorf("TestDevfile200_AddProjects() error: wanted: %v, got: %v, difference at %v", wantProjects, d.Projects, pretty.Compare(wantProjects, d.Projects))
+				if !reflect.DeepEqual(d.Projects, tt.wantProjects) {
+					t.Errorf("TestDevfile200_AddProjects() error: wanted: %v, got: %v, difference at %v", tt.wantProjects, d.Projects, pretty.Compare(tt.wantProjects, d.Projects))
 				}
 			}
 		})
