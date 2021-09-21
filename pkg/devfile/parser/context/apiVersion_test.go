@@ -9,8 +9,9 @@ import (
 func TestSetDevfileAPIVersion(t *testing.T) {
 
 	const (
-		schemaVersion          = "2.0.0"
-		validJson              = `{"schemaVersion": "2.0.0"}`
+		schemaVersion          = "2.2.0"
+		validJson              = `{"schemaVersion": "2.2.0"}`
+		concreteSchema         = `{"schemaVersion": "2.2.0-latest"}`
 		emptyJson              = "{}"
 		emptySchemaVersionJson = `{"schemaVersion": ""}`
 		devfilePath            = "/testpath/devfile.yaml"
@@ -27,6 +28,12 @@ func TestSetDevfileAPIVersion(t *testing.T) {
 		{
 			name:       "valid schemaVersion",
 			devfileCtx: DevfileCtx{rawContent: []byte(validJson), absPath: devfilePath},
+			want:       schemaVersion,
+			wantErr:    nil,
+		},
+		{
+			name:       "concrete schemaVersion",
+			devfileCtx: DevfileCtx{rawContent: []byte(concreteSchema), absPath: devfilePath},
 			want:       schemaVersion,
 			wantErr:    nil,
 		},
