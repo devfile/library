@@ -151,6 +151,16 @@ func TestGetComponentType(t *testing.T) {
 			componentType: v1.PluginComponentType,
 		},
 		{
+			name: "Image component",
+			component: v1.Component{
+				Name: "name",
+				ComponentUnion: v1.ComponentUnion{
+					Image: &v1.ImageComponent{},
+				},
+			},
+			componentType: v1.ImageComponentType,
+		},
+		{
 			name: "Custom component",
 			component: v1.Component{
 				Name: "name",
