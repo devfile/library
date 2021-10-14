@@ -186,10 +186,10 @@ func TestGetResourceReqs(t *testing.T) {
 				ComponentUnion: v1.ComponentUnion{
 					Container: &v1.ContainerComponent{
 						Container: v1.Container{
-							MemoryLimit: memoryLimit,
+							MemoryLimit:   memoryLimit,
 							MemoryRequest: memoryRequest,
-							CpuRequest: cpuRequest,
-							CpuLimit: cpuLimit,
+							CpuRequest:    cpuRequest,
+							CpuLimit:      cpuLimit,
 						},
 					},
 				},
@@ -197,11 +197,11 @@ func TestGetResourceReqs(t *testing.T) {
 			want: corev1.ResourceRequirements{
 				Limits: corev1.ResourceList{
 					corev1.ResourceMemory: memoryLimitQuantity,
-					corev1.ResourceCPU: cpuLimitQuantity,
+					corev1.ResourceCPU:    cpuLimitQuantity,
 				},
 				Requests: corev1.ResourceList{
 					corev1.ResourceMemory: memoryRequestQuantity,
-					corev1.ResourceCPU: cpuRequestQuantity,
+					corev1.ResourceCPU:    cpuRequestQuantity,
 				},
 			},
 		},
