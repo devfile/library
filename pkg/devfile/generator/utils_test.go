@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"reflect"
@@ -178,6 +179,7 @@ func TestGetResourceReqs(t *testing.T) {
 		name      string
 		component v1.Component
 		want      corev1.ResourceRequirements
+		wantErr   []string
 	}{
 		{
 			name: "generate resource limit",
@@ -224,12 +226,39 @@ func TestGetResourceReqs(t *testing.T) {
 			},
 			want: corev1.ResourceRequirements{},
 		},
+		{
+			name: "test error case",
+			component: v1.Component{
+				Name: "testcomponent",
+				ComponentUnion: v1.ComponentUnion{
+					Container: &v1.ContainerComponent{
+						Container: v1.Container{
+							MemoryLimit:   "invalid",
+							MemoryRequest: "invalid",
+							CpuRequest:    "invalid",
+							CpuLimit:      "invalid",
+						},
+					},
+				},
+			},
+			wantErr: []string{
+				"error parsing memoryLimit requirement.*",
+				"error parsing cpuLimit requirement.*",
+				"error parsing memoryRequest requirement.*",
+				"error parsing cpuRequest requirement.*",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := getResourceReqs(tt.component)
-			if !reflect.DeepEqual(tt.want, req) {
+			req, err := getResourceReqs(tt.component)
+			if merr, ok := err.(*multierror.Error); ok && tt.wantErr != nil {
+				assert.Equal(t, len(tt.wantErr), len(merr.Errors), "Error list length should match")
+				for i := 0; i < len(merr.Errors); i++ {
+					assert.Regexp(t, tt.wantErr[i], merr.Errors[i].Error(), "Error message should match")
+				}
+			} else if !reflect.DeepEqual(tt.want, req) {
 				assert.Equal(t, tt.want, req, "TestGetResourceReqs(): The two values should be the same.")
 			}
 		})
