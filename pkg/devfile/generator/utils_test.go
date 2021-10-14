@@ -162,8 +162,15 @@ func TestConvertPorts(t *testing.T) {
 }
 
 func TestGetResourceReqs(t *testing.T) {
-	limit := "1024Mi"
-	quantity, err := resource.ParseQuantity(limit)
+	memoryLimit := "1024Mi"
+	memoryRequest := "1Gi"
+	cpuRequest := "1m"
+	cpuLimit := "1m"
+
+	memoryLimitQuantity, err := resource.ParseQuantity(memoryLimit)
+	memoryRequestQuantity, err := resource.ParseQuantity(memoryRequest)
+	cpuRequestQuantity, err := resource.ParseQuantity(cpuRequest)
+	cpuLimitQuantity, err := resource.ParseQuantity(cpuLimit)
 	if err != nil {
 		t.Errorf("TestGetResourceReqs() unexpected error: %v", err)
 	}
@@ -173,20 +180,28 @@ func TestGetResourceReqs(t *testing.T) {
 		want      corev1.ResourceRequirements
 	}{
 		{
-			name: "One Endpoint",
+			name: "generate resource limit",
 			component: v1.Component{
 				Name: "testcomponent",
 				ComponentUnion: v1.ComponentUnion{
 					Container: &v1.ContainerComponent{
 						Container: v1.Container{
-							MemoryLimit: "1024Mi",
+							MemoryLimit: memoryLimit,
+							MemoryRequest: memoryRequest,
+							CpuRequest: cpuRequest,
+							CpuLimit: cpuLimit,
 						},
 					},
 				},
 			},
 			want: corev1.ResourceRequirements{
 				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: quantity,
+					corev1.ResourceMemory: memoryLimitQuantity,
+					corev1.ResourceCPU: cpuLimitQuantity,
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceMemory: memoryRequestQuantity,
+					corev1.ResourceCPU: cpuRequestQuantity,
 				},
 			},
 		},
@@ -215,7 +230,7 @@ func TestGetResourceReqs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := getResourceReqs(tt.component)
 			if !reflect.DeepEqual(tt.want, req) {
-				t.Errorf("TestGetResourceReqs() error: expected %v, wanted %v", req, tt.want)
+				assert.Equal(t, tt.want, req, "TestGetResourceReqs(): The two values should be the same.")
 			}
 		})
 	}
