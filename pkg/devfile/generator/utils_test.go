@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"reflect"
@@ -162,8 +163,15 @@ func TestConvertPorts(t *testing.T) {
 }
 
 func TestGetResourceReqs(t *testing.T) {
-	limit := "1024Mi"
-	quantity, err := resource.ParseQuantity(limit)
+	memoryLimit := "1024Mi"
+	memoryRequest := "1Gi"
+	cpuRequest := "1m"
+	cpuLimit := "1m"
+
+	memoryLimitQuantity, err := resource.ParseQuantity(memoryLimit)
+	memoryRequestQuantity, err := resource.ParseQuantity(memoryRequest)
+	cpuRequestQuantity, err := resource.ParseQuantity(cpuRequest)
+	cpuLimitQuantity, err := resource.ParseQuantity(cpuLimit)
 	if err != nil {
 		t.Errorf("TestGetResourceReqs() unexpected error: %v", err)
 	}
@@ -171,22 +179,31 @@ func TestGetResourceReqs(t *testing.T) {
 		name      string
 		component v1.Component
 		want      corev1.ResourceRequirements
+		wantErr   []string
 	}{
 		{
-			name: "One Endpoint",
+			name: "generate resource limit",
 			component: v1.Component{
 				Name: "testcomponent",
 				ComponentUnion: v1.ComponentUnion{
 					Container: &v1.ContainerComponent{
 						Container: v1.Container{
-							MemoryLimit: "1024Mi",
+							MemoryLimit:   memoryLimit,
+							MemoryRequest: memoryRequest,
+							CpuRequest:    cpuRequest,
+							CpuLimit:      cpuLimit,
 						},
 					},
 				},
 			},
 			want: corev1.ResourceRequirements{
 				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: quantity,
+					corev1.ResourceMemory: memoryLimitQuantity,
+					corev1.ResourceCPU:    cpuLimitQuantity,
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceMemory: memoryRequestQuantity,
+					corev1.ResourceCPU:    cpuRequestQuantity,
 				},
 			},
 		},
@@ -209,13 +226,40 @@ func TestGetResourceReqs(t *testing.T) {
 			},
 			want: corev1.ResourceRequirements{},
 		},
+		{
+			name: "test error case",
+			component: v1.Component{
+				Name: "testcomponent",
+				ComponentUnion: v1.ComponentUnion{
+					Container: &v1.ContainerComponent{
+						Container: v1.Container{
+							MemoryLimit:   "invalid",
+							MemoryRequest: "invalid",
+							CpuRequest:    "invalid",
+							CpuLimit:      "invalid",
+						},
+					},
+				},
+			},
+			wantErr: []string{
+				"error parsing memoryLimit requirement.*",
+				"error parsing cpuLimit requirement.*",
+				"error parsing memoryRequest requirement.*",
+				"error parsing cpuRequest requirement.*",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := getResourceReqs(tt.component)
-			if !reflect.DeepEqual(tt.want, req) {
-				t.Errorf("TestGetResourceReqs() error: expected %v, wanted %v", req, tt.want)
+			req, err := getResourceReqs(tt.component)
+			if merr, ok := err.(*multierror.Error); ok && tt.wantErr != nil {
+				assert.Equal(t, len(tt.wantErr), len(merr.Errors), "Error list length should match")
+				for i := 0; i < len(merr.Errors); i++ {
+					assert.Regexp(t, tt.wantErr[i], merr.Errors[i].Error(), "Error message should match")
+				}
+			} else if !reflect.DeepEqual(tt.want, req) {
+				assert.Equal(t, tt.want, req, "TestGetResourceReqs(): The two values should be the same.")
 			}
 		})
 	}

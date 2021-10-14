@@ -2,7 +2,9 @@ package generator
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -58,17 +60,56 @@ func convertPorts(endpoints []v1.Endpoint) []corev1.ContainerPort {
 }
 
 // getResourceReqs creates a kubernetes ResourceRequirements object based on resource requirements set in the devfile
-func getResourceReqs(comp v1.Component) corev1.ResourceRequirements {
+func getResourceReqs(comp v1.Component) (corev1.ResourceRequirements, error) {
 	reqs := corev1.ResourceRequirements{}
 	limits := make(corev1.ResourceList)
-	if comp.Container != nil && comp.Container.MemoryLimit != "" {
-		memoryLimit, err := resource.ParseQuantity(comp.Container.MemoryLimit)
-		if err == nil {
-			limits[corev1.ResourceMemory] = memoryLimit
+	requests := make(corev1.ResourceList)
+	var returnedErr error
+	if comp.Container != nil {
+		if comp.Container.MemoryLimit != "" {
+			memoryLimit, err := resource.ParseQuantity(comp.Container.MemoryLimit)
+			if err != nil {
+				errMsg := fmt.Errorf("error parsing memoryLimit requirement for component %s: %v", comp.Name, err.Error())
+				returnedErr = multierror.Append(returnedErr, errMsg)
+			} else {
+				limits[corev1.ResourceMemory] = memoryLimit
+			}
 		}
-		reqs.Limits = limits
+		if comp.Container.CpuLimit != "" {
+			cpuLimit, err := resource.ParseQuantity(comp.Container.CpuLimit)
+			if err != nil {
+				errMsg := fmt.Errorf("error parsing cpuLimit requirement for component %s: %v", comp.Name, err.Error())
+				returnedErr = multierror.Append(returnedErr, errMsg)
+			} else {
+				limits[corev1.ResourceCPU] = cpuLimit
+			}
+		}
+		if comp.Container.MemoryRequest != "" {
+			memoryRequest, err := resource.ParseQuantity(comp.Container.MemoryRequest)
+			if err != nil {
+				errMsg := fmt.Errorf("error parsing memoryRequest requirement for component %s: %v", comp.Name, err.Error())
+				returnedErr = multierror.Append(returnedErr, errMsg)
+			} else {
+				requests[corev1.ResourceMemory] = memoryRequest
+			}
+		}
+		if comp.Container.CpuRequest != "" {
+			cpuRequest, err := resource.ParseQuantity(comp.Container.CpuRequest)
+			if err != nil {
+				errMsg := fmt.Errorf("error parsing cpuRequest requirement for component %s: %v", comp.Name, err.Error())
+				returnedErr = multierror.Append(returnedErr, errMsg)
+			} else {
+				requests[corev1.ResourceCPU] = cpuRequest
+			}
+		}
+		if !reflect.DeepEqual(limits, corev1.ResourceList{}) {
+			reqs.Limits = limits
+		}
+		if !reflect.DeepEqual(requests, corev1.ResourceList{}) {
+			reqs.Requests = requests
+		}
 	}
-	return reqs
+	return reqs, returnedErr
 }
 
 // addSyncRootFolder adds the sync root folder to the container env
@@ -517,7 +558,10 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 	}
 	for _, comp := range containerComponents {
 		envVars := convertEnvs(comp.Container.Env)
-		resourceReqs := getResourceReqs(comp)
+		resourceReqs, err := getResourceReqs(comp)
+		if err != nil {
+			return containers, err
+		}
 		ports := convertPorts(comp.Container.Endpoints)
 		containerParams := containerParams{
 			Name:         comp.Name,
