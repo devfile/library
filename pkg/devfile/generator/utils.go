@@ -526,6 +526,16 @@ func getPVC(volumeName, pvcName string) corev1.Volume {
 	}
 }
 
+// getEmptyDirVol gets a volume with emptyDir
+func getEmptyDirVol(volumeName string) corev1.Volume {
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
+}
+
 // addVolumeMountToContainers adds the Volume Mounts in containerNameToMountPaths to the containers for a given volumeName.
 // containerNameToMountPaths is a map of a container name to an array of its Mount Paths.
 func addVolumeMountToContainers(containers []corev1.Container, volumeName string, containerNameToMountPaths map[string][]string) {

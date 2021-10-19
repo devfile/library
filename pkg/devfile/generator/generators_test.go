@@ -352,17 +352,20 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 	}
 
 	errMatches := "an expected error"
+	trueEphemeral := true
 
 	tests := []struct {
 		name                string
-		components          []v1.Component
+		containerComponents []v1.Component
+		volumeComponents    []v1.Component
 		volumeNameToVolInfo map[string]VolumeInfo
 		wantContainerToVol  map[string][]testVolumeMountInfo
+		ephemeralVol        bool
 		wantErr             *string
 	}{
 		{
-			name:       "One volume mounted",
-			components: []v1.Component{testingutil.GetFakeContainerComponent("comp1"), testingutil.GetFakeContainerComponent("comp2")},
+			name:                "One volume mounted",
+			containerComponents: []v1.Component{testingutil.GetFakeContainerComponent("comp1"), testingutil.GetFakeContainerComponent("comp2")},
 			volumeNameToVolInfo: map[string]VolumeInfo{
 				"myvolume1": {
 					PVCName:    "volume1-pvc",
@@ -386,7 +389,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 		},
 		{
 			name: "One volume mounted at diff locations",
-			components: []v1.Component{
+			containerComponents: []v1.Component{
 				{
 					Name: "container1",
 					ComponentUnion: v1.ComponentUnion{
@@ -428,7 +431,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 		},
 		{
 			name: "One volume mounted at diff container components",
-			components: []v1.Component{
+			containerComponents: []v1.Component{
 				{
 					Name: "container1",
 					ComponentUnion: v1.ComponentUnion{
@@ -482,6 +485,53 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			},
 		},
 		{
+			name: "Ephemeral volume",
+			containerComponents: []v1.Component{
+				{
+					Name: "container1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								VolumeMounts: []v1.VolumeMount{
+									{
+										Name: "volume1",
+										Path: "/path1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			volumeComponents: []v1.Component{
+				{
+					Name: "volume1",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Ephemeral: &trueEphemeral,
+							},
+						},
+					},
+				},
+			},
+			volumeNameToVolInfo: map[string]VolumeInfo{
+				"volume1": {
+					PVCName:    "volume1-pvc",
+					VolumeName: "volume1-pvc-vol",
+				},
+			},
+			ephemeralVol: true,
+			wantContainerToVol: map[string][]testVolumeMountInfo{
+				"container1": {
+					{
+						mountPath:  "/path1",
+						volumeName: "volume1-pvc-vol",
+					},
+				},
+			},
+		},
+		{
 			name:    "Simulating error case, check if error matches",
 			wantErr: &errMatches,
 		},
@@ -494,14 +544,21 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 			defer ctrl.Finish()
 			mockDevfileData := data.NewMockDevfileData(ctrl)
 
-			mockGetComponents := mockDevfileData.EXPECT().GetComponents(common.DevfileOptions{
+			mockGetContainerComponents := mockDevfileData.EXPECT().GetComponents(common.DevfileOptions{
 				ComponentOptions: common.ComponentOptions{
 					ComponentType: v1.ContainerComponentType,
 				},
 			})
 
+			mockGetVolumeComponents := mockDevfileData.EXPECT().GetComponents(common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.VolumeComponentType,
+				},
+			})
+
 			// set up the mock data
-			mockGetComponents.Return(tt.components, nil).AnyTimes()
+			mockGetContainerComponents.Return(tt.containerComponents, nil).AnyTimes()
+			mockGetVolumeComponents.Return(tt.volumeComponents, nil).AnyTimes()
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(nil, nil).AnyTimes()
 
 			devObj := parser.DevfileObj{
@@ -516,7 +573,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 
 			if tt.wantErr != nil {
 				// simulate error condition
-				mockGetComponents.Return(nil, fmt.Errorf(*tt.wantErr))
+				mockGetContainerComponents.Return(nil, fmt.Errorf(*tt.wantErr))
 
 			}
 
@@ -533,7 +590,9 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 				for _, volInfo := range tt.volumeNameToVolInfo {
 					matched := false
 					for _, pvcVol := range pvcVols {
-						if volInfo.VolumeName == pvcVol.Name && pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName {
+						emptyDirVolCondition := tt.ephemeralVol && reflect.DeepEqual(pvcVol.EmptyDir, &corev1.EmptyDirVolumeSource{})
+						pvcCondition := pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName
+						if volInfo.VolumeName == pvcVol.Name && (emptyDirVolCondition || pvcCondition) {
 							matched = true
 						}
 					}
