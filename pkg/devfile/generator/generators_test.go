@@ -590,9 +590,9 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 				for _, volInfo := range tt.volumeNameToVolInfo {
 					matched := false
 					for _, pvcVol := range pvcVols {
-						if tt.ephemeralVol && volInfo.VolumeName == pvcVol.Name && reflect.DeepEqual(pvcVol.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-							matched = true
-						} else if volInfo.VolumeName == pvcVol.Name && pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName {
+						emptyDirVolCondition := tt.ephemeralVol && reflect.DeepEqual(pvcVol.EmptyDir, &corev1.EmptyDirVolumeSource{})
+						pvcCondition := pvcVol.PersistentVolumeClaim != nil && volInfo.PVCName == pvcVol.PersistentVolumeClaim.ClaimName
+						if volInfo.VolumeName == pvcVol.Name && (emptyDirVolCondition || pvcCondition) {
 							matched = true
 						}
 					}
