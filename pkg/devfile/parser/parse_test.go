@@ -311,7 +311,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 																	},
 																	DockerfileParentOverride: v1.DockerfileParentOverride{
 																		BuildContext: "/src",
-																		RootRequired: &isFalse,
+																		RootRequired: &isFalse, //override unset value
 																	},
 																},
 															},
@@ -416,8 +416,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -502,9 +501,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -659,8 +656,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default value
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -674,7 +670,6 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												Container: v1.Container{
 													Image:        "quay.io/nodejs-10",
 													DedicatedPod: &isTrue,
-													MountSources: &isFalse, //expected default
 												},
 												Endpoints: []v1.Endpoint{
 													{
@@ -711,7 +706,6 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 														{
 															Name:       "metrics",
 															TargetPort: 8080,
-															Secure:     &isFalse, //expected default
 														},
 													},
 												},
@@ -745,9 +739,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -1217,9 +1209,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												CommandLine:      "npm run",
-												WorkingDir:       "/projects",
-												HotReloadCapable: &isFalse, //expected default
+												CommandLine: "npm run",
+												WorkingDir:  "/projects",
 											},
 										},
 									},
@@ -1227,8 +1218,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -1240,9 +1230,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-10",
-													DedicatedPod: &isFalse, //expected Default
-													MountSources: &isTrue,  //expected Default
+													Image: "quay.io/nodejs-10",
 												},
 											},
 										},
@@ -1252,9 +1240,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected Default
-													MountSources: &isTrue,  //expected Default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -1479,9 +1465,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												CommandLine:      "npm build",
-												WorkingDir:       "/projects-new",
-												HotReloadCapable: &isFalse, //expected default
+												CommandLine: "npm build",
+												WorkingDir:  "/projects-new",
 											},
 										},
 									},
@@ -1489,8 +1474,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -1502,9 +1486,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -1536,9 +1518,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -2223,9 +2203,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devrun",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												CommandLine:      "npm run",
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												CommandLine: "npm run",
+												WorkingDir:  "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -2234,9 +2213,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id:         "devdebug",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects",
-												CommandLine:      "npm debug",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir:  "/projects",
+												CommandLine: "npm debug",
 											},
 										},
 									},
@@ -2244,8 +2222,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -2257,9 +2234,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -2269,9 +2244,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -2429,9 +2402,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -2566,9 +2537,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -3060,11 +3029,11 @@ func Test_parseParentFromRegistry(t *testing.T) {
 							ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
 								Image: &v1.ImageComponentParentOverride{
 									ImageParentOverride: v1.ImageParentOverride{
-										ImageName: "image:latest",
+										ImageName: "image:next", //override
 										ImageUnionParentOverride: v1.ImageUnionParentOverride{
 											Dockerfile: &v1.DockerfileImageParentOverride{
 												DockerfileSrcParentOverride: v1.DockerfileSrcParentOverride{
-													Uri: "/local/image",
+													Uri: "/local/image2", //override
 												},
 												DockerfileParentOverride: v1.DockerfileParentOverride{
 													BuildContext: "/src",
@@ -3129,8 +3098,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 						Id: "devbuild",
 						CommandUnion: v1.CommandUnion{
 							Exec: &v1.ExecCommand{
-								WorkingDir:       "/projects/nodejs-starter",
-								HotReloadCapable: &isFalse, //expected default
+								WorkingDir: "/projects/nodejs-starter",
 							},
 						},
 					},
@@ -3142,9 +3110,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 						ComponentUnion: v1.ComponentUnion{
 							Container: &v1.ContainerComponent{
 								Container: v1.Container{
-									Image:        "quay.io/nodejs-12",
-									DedicatedPod: &isFalse, //expected default
-									MountSources: &isTrue,  //expected default
+									Image: "quay.io/nodejs-12",
 								},
 							},
 						},
@@ -3155,11 +3121,11 @@ func Test_parseParentFromRegistry(t *testing.T) {
 						ComponentUnion: v1.ComponentUnion{
 							Image: &v1.ImageComponent{
 								Image: v1.Image{
-									ImageName: "image:latest",
+									ImageName: "image:next", //overidden value
 									ImageUnion: v1.ImageUnion{
 										Dockerfile: &v1.DockerfileImage{
 											DockerfileSrc: v1.DockerfileSrc{
-												Uri: "/local/image",
+												Uri: "/local/image2", //overidden value
 											},
 											Dockerfile: v1.Dockerfile{
 												BuildContext: "/src",
@@ -3176,9 +3142,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 						ComponentUnion: v1.ComponentUnion{
 							Container: &v1.ContainerComponent{
 								Container: v1.Container{
-									Image:        "quay.io/nodejs-12",
-									DedicatedPod: &isFalse, //expected default
-									MountSources: &isTrue,  //expected default
+									Image: "quay.io/nodejs-12",
 								},
 							},
 						},
@@ -3289,8 +3253,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -3302,8 +3265,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Volume: &v1.VolumeComponent{
 												Volume: v1.Volume{
-													Size:      "500Mi",
-													Ephemeral: &isFalse, //expected default
+													Size: "500Mi",
 												},
 											},
 										},
@@ -3322,7 +3284,6 @@ func Test_parseParentFromRegistry(t *testing.T) {
 															},
 															Dockerfile: v1.Dockerfile{
 																BuildContext: "/src",
-																RootRequired: &isFalse, //expected default value after merge
 															},
 														},
 													},
@@ -3335,9 +3296,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -3469,8 +3428,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
-	//this is a copy of parentSpec which can't be reused because defaults are being set erroneously on the SrcType and ImageType properties in the override code.  This is a
-	//workaround for now until this is a fix.
+	//this is a copy of parentSpec which can't be reused because defaults are being set on the SrcType and ImageType properties in the override code.
 	parentSpec2 := v1.DevWorkspaceTemplateSpec{
 		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
 			Components: []v1.Component{
@@ -3602,8 +3560,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -3615,9 +3572,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -3649,9 +3604,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse, //expected default
-													MountSources: &isTrue,  //expected default
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -3721,8 +3674,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										Id: "devbuild",
 										CommandUnion: v1.CommandUnion{
 											Exec: &v1.ExecCommand{
-												WorkingDir:       "/projects/nodejs-starter",
-												HotReloadCapable: &isFalse, //expected default
+												WorkingDir: "/projects/nodejs-starter",
 											},
 										},
 									},
@@ -3734,8 +3686,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Volume: &v1.VolumeComponent{
 												Volume: v1.Volume{
-													Size:      "500Mi",
-													Ephemeral: &isFalse, //expected default
+													Size: "500Mi",
 												},
 											},
 										},
@@ -3754,7 +3705,6 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 															},
 															Dockerfile: v1.Dockerfile{
 																BuildContext: "/src",
-																RootRequired: &isFalse, //expected value after merge
 															},
 														},
 													},
@@ -3767,9 +3717,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Image:        "quay.io/nodejs-12",
-													DedicatedPod: &isFalse,
-													MountSources: &isTrue,
+													Image: "quay.io/nodejs-12",
 												},
 											},
 										},
@@ -3882,7 +3830,19 @@ func Test_parseFromURI(t *testing.T) {
 	invalidURLErr := "parse .* invalid URI for request"
 
 	// prepare for local file
-	err := serializeTestDevfiles(localRelativeURI, localDevfile)
+	err := os.MkdirAll(path.Dir(localRelativeURI), 0755)
+	if err != nil {
+		fmt.Errorf("Test_parseFromURI() error: failed to create folder: %v, error: %v", path.Dir(localRelativeURI), err)
+	}
+	yamlData, err := yaml.Marshal(localDevfile.Data)
+	if err != nil {
+		fmt.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
+	}
+	err = ioutil.WriteFile(localRelativeURI, yamlData, 0644)
+	if err != nil {
+		fmt.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
+	}
+
 	if err != nil {
 		t.Error(err)
 	}
@@ -4120,8 +4080,7 @@ func Test_parseFromRegistry(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Volume: &v1.VolumeComponent{
 										Volume: v1.Volume{
-											Size:      "500Mi",
-											Ephemeral: &isFalse, //expected default
+											Size: "500Mi",
 										},
 									},
 								},
@@ -4356,593 +4315,4 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_parseBooleansMainDevfile(t *testing.T) {
-	const (
-		OutputDevfileUnsetValuesFile = "devfile_unset.yaml"
-		DevfileUnsetValues           = "testTmp/dir/devfile_unset.yaml"
-		DevfileSetValues             = "testTmp/dir/devfile_set.yaml"
-		OutputDevfileSetValuesFile   = "devfile_set.yaml"
-	)
-
-	//set up the artifacts for the first test to validate default boolean values are assigned to unset properties
-	mainDevfileUnsetValues, wantMainDevfileDefaultValues := initializeUnsetBooleansDevfileObjs(DevfileUnsetValues)
-	err := serializeTestDevfiles(DevfileUnsetValues, mainDevfileUnsetValues)
-	if err != nil {
-		t.Error(err)
-	}
-
-	//set up artifacts for the second test which validates explicitly set boolean values and ensures they are not overridden by defaults
-	mainDevfileSetValues, wantMainDevfileSetValues := initializeSetBooleansDevfileObjs(DevfileSetValues)
-	err = serializeTestDevfiles(DevfileSetValues, mainDevfileSetValues)
-	if err != nil {
-		t.Error(err)
-	}
-
-	defer os.RemoveAll("testTmp/")
-
-	tests := []struct {
-		name            string
-		curDevfileCtx   devfileCtx.DevfileCtx
-		importReference v1.ImportReference
-		wantDevFile     DevfileObj
-		wantErr         *string
-	}{
-		{
-			name:          "verify unset default values",
-			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileUnsetValuesFile),
-			wantDevFile:   wantMainDevfileDefaultValues,
-			importReference: v1.ImportReference{
-				ImportReferenceUnion: v1.ImportReferenceUnion{
-					Uri: DevfileUnsetValues,
-				},
-			},
-		},
-		{
-			name:          "verify set values are not overridden by defaults",
-			curDevfileCtx: devfileCtx.NewDevfileCtx(OutputDevfileSetValuesFile),
-			wantDevFile:   wantMainDevfileSetValues,
-			importReference: v1.ImportReference{
-				ImportReferenceUnion: v1.ImportReferenceUnion{
-					Uri: DevfileSetValues,
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// set absolute path for local file
-
-			err := tt.curDevfileCtx.SetAbsPath()
-			if err != nil {
-				t.Errorf("Test_defaultBooleansMainDevfile() unexpected error when setting absolute path: %v", err)
-				return
-			}
-
-			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
-			if err == nil {
-				if !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
-					t.Errorf("Test_booleansMainDevfile() default boolean values unmatched: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
-				}
-			} else {
-				t.Errorf("Test_defaultBooleansMainDevfile() unexpected parse error: %v", err)
-			}
-		})
-	}
-
-}
-
-//serializeTestDevfiles writes out in memory devfile objects to local disk
-func serializeTestDevfiles(localURI string, mainDevfile DevfileObj) error {
-	// prepare for local file
-	err := os.MkdirAll(path.Dir(localURI), 0755)
-	if err != nil {
-		return fmt.Errorf("Test_parseFromURI() error: failed to create folder: %v, error: %v", path.Dir(localURI), err)
-	}
-	yamlData, err := yaml.Marshal(mainDevfile.Data)
-	if err != nil {
-		return fmt.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
-	}
-	err = ioutil.WriteFile(localURI, yamlData, 0644)
-	if err != nil {
-		return fmt.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
-	}
-	return nil
-}
-
-//initializeUnsetBooleansDevfileObjs function returns the populated mainDevfile object which includes unset boolean properties
-//and the wantDevfile object populated with the default boolean values.
-
-func initializeUnsetBooleansDevfileObjs(filePath string) (mainDevfile DevfileObj, wantDevfile DevfileObj) {
-	mainDevfile = DevfileObj{
-		Ctx: devfileCtx.NewDevfileCtx(filePath),
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "runtime",
-								ComponentUnion: v1.ComponentUnion{
-									Container: &v1.ContainerComponent{
-										Container: v1.Container{
-											Image: "nodejs",
-										},
-									},
-								},
-							},
-							{
-								Name: "test",
-								ComponentUnion: v1.ComponentUnion{
-									Kubernetes: &v1.KubernetesComponent{
-										K8sLikeComponent: v1.K8sLikeComponent{
-											K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
-												Uri: "/tmp/devfile.yaml",
-											},
-											Endpoints: []v1.Endpoint{
-												{
-													Name:       "log",
-													TargetPort: 8080,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Name: "volume",
-								ComponentUnion: v1.ComponentUnion{
-									Volume: &v1.VolumeComponent{
-										Volume: v1.Volume{
-											Size: "2Gi",
-										},
-									},
-								},
-							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						Commands: []v1.Command{
-							{
-								Id: "apply",
-								CommandUnion: v1.CommandUnion{
-									Apply: &v1.ApplyCommand{
-										Component: "runtime",
-										LabeledCommand: v1.LabeledCommand{
-											BaseCommand: v1.BaseCommand{
-												Group: &v1.CommandGroup{
-													Kind: "run",
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "composite",
-								CommandUnion: v1.CommandUnion{
-									Composite: &v1.CompositeCommand{
-										Commands: []string{
-											"apply",
-											"exec",
-										},
-									},
-								},
-							},
-							{
-								Id: "exec",
-								CommandUnion: v1.CommandUnion{
-									Exec: &v1.ExecCommand{
-										WorkingDir:  "/projects",
-										CommandLine: "npm run",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	wantDevfile = DevfileObj{
-		Ctx: devfileCtx.NewDevfileCtx(filePath),
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "runtime",
-								ComponentUnion: v1.ComponentUnion{
-									Container: &v1.ContainerComponent{
-										Container: v1.Container{
-											Image:        "nodejs",
-											DedicatedPod: &isFalse, //expected default value
-											MountSources: &isTrue,  //expected default value
-										},
-									},
-								},
-							},
-							{
-								Name: "test",
-								ComponentUnion: v1.ComponentUnion{
-									Kubernetes: &v1.KubernetesComponent{
-										K8sLikeComponent: v1.K8sLikeComponent{
-											K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
-												Uri: "/tmp/devfile.yaml",
-											},
-											Endpoints: []v1.Endpoint{
-												{
-													Name:       "log",
-													TargetPort: 8080,
-													Secure:     &isFalse, //expected default value
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Name: "volume",
-								ComponentUnion: v1.ComponentUnion{
-									Volume: &v1.VolumeComponent{
-										Volume: v1.Volume{
-											Size:      "2Gi",
-											Ephemeral: &isFalse, //expected default value
-										},
-									},
-								},
-							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-														RootRequired: &isFalse, //expected default value
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						Commands: []v1.Command{
-							{
-								Id: "apply",
-								CommandUnion: v1.CommandUnion{
-									Apply: &v1.ApplyCommand{
-										Component: "runtime",
-										LabeledCommand: v1.LabeledCommand{
-											BaseCommand: v1.BaseCommand{
-												Group: &v1.CommandGroup{
-													Kind:      "run",
-													IsDefault: &isFalse, //expected default value
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "composite",
-								CommandUnion: v1.CommandUnion{
-									Composite: &v1.CompositeCommand{
-										Commands: []string{
-											"apply",
-											"exec",
-										},
-										Parallel: &isFalse, //expected default value
-									},
-								},
-							},
-							{
-								Id: "exec",
-								CommandUnion: v1.CommandUnion{
-									Exec: &v1.ExecCommand{
-										WorkingDir:       "/projects",
-										CommandLine:      "npm run",
-										HotReloadCapable: &isFalse, //expected default value
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return mainDevfile, wantDevfile
-}
-
-func initializeSetBooleansDevfileObjs(filePath string) (mainDevfile DevfileObj, wantDevfile DevfileObj) {
-	mainDevfile = DevfileObj{
-		Ctx: devfileCtx.NewDevfileCtx(filePath),
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "runtime",
-								ComponentUnion: v1.ComponentUnion{
-									Container: &v1.ContainerComponent{
-										Container: v1.Container{
-											Image:        "nodejs",
-											DedicatedPod: &isTrue,
-										},
-									},
-								},
-							},
-							{
-								Name: "test",
-								ComponentUnion: v1.ComponentUnion{
-									Kubernetes: &v1.KubernetesComponent{
-										K8sLikeComponent: v1.K8sLikeComponent{
-											K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
-												Uri: "/tmp/devfile.yaml",
-											},
-											Endpoints: []v1.Endpoint{
-												{
-													Name:       "log",
-													TargetPort: 8080,
-													Secure:     &isTrue,
-												},
-												{
-													Name:       "metrics",
-													TargetPort: 443,
-												}, {
-													Name:       "sip",
-													TargetPort: 5060,
-													Secure:     &isFalse,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Name: "volume",
-								ComponentUnion: v1.ComponentUnion{
-									Volume: &v1.VolumeComponent{
-										Volume: v1.Volume{
-											Size: "2Gi",
-										},
-									},
-								},
-							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-														RootRequired: &isTrue,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						Commands: []v1.Command{
-							{
-								Id: "apply",
-								CommandUnion: v1.CommandUnion{
-									Apply: &v1.ApplyCommand{
-										Component: "runtime",
-										LabeledCommand: v1.LabeledCommand{
-											BaseCommand: v1.BaseCommand{
-												Group: &v1.CommandGroup{
-													Kind:      "run",
-													IsDefault: &isTrue,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "composite",
-								CommandUnion: v1.CommandUnion{
-									Composite: &v1.CompositeCommand{
-										Commands: []string{
-											"apply",
-											"exec",
-										},
-									},
-								},
-							},
-							{
-								Id: "exec",
-								CommandUnion: v1.CommandUnion{
-									Exec: &v1.ExecCommand{
-										WorkingDir:  "/projects",
-										CommandLine: "npm run",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	wantDevfile = DevfileObj{
-		Ctx: devfileCtx.NewDevfileCtx(filePath),
-		Data: &v2.DevfileV2{
-			Devfile: v1.Devfile{
-				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
-				},
-				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-						Components: []v1.Component{
-							{
-								Name: "runtime",
-								ComponentUnion: v1.ComponentUnion{
-									Container: &v1.ContainerComponent{
-										Container: v1.Container{
-											Image:        "nodejs",
-											DedicatedPod: &isTrue,
-											MountSources: &isFalse, //expected default value when dedicatedPod is true
-										},
-									},
-								},
-							},
-							{
-								Name: "test",
-								ComponentUnion: v1.ComponentUnion{
-									Kubernetes: &v1.KubernetesComponent{
-										K8sLikeComponent: v1.K8sLikeComponent{
-											K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
-												Uri: "/tmp/devfile.yaml",
-											},
-											Endpoints: []v1.Endpoint{
-												{
-													Name:       "log",
-													TargetPort: 8080,
-													Secure:     &isTrue,
-												},
-												{
-													Name:       "metrics",
-													TargetPort: 443,
-													Secure:     &isFalse,
-												}, {
-													Name:       "sip",
-													TargetPort: 5060,
-													Secure:     &isFalse,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Name: "volume",
-								ComponentUnion: v1.ComponentUnion{
-									Volume: &v1.VolumeComponent{
-										Volume: v1.Volume{
-											Size:      "2Gi",
-											Ephemeral: &isFalse, //expected default value
-										},
-									},
-								},
-							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-														RootRequired: &isTrue,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						Commands: []v1.Command{
-							{
-								Id: "apply",
-								CommandUnion: v1.CommandUnion{
-									Apply: &v1.ApplyCommand{
-										Component: "runtime",
-										LabeledCommand: v1.LabeledCommand{
-											BaseCommand: v1.BaseCommand{
-												Group: &v1.CommandGroup{
-													Kind:      "run",
-													IsDefault: &isTrue,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "composite",
-								CommandUnion: v1.CommandUnion{
-									Composite: &v1.CompositeCommand{
-										Commands: []string{
-											"apply",
-											"exec",
-										},
-										Parallel: &isFalse, //expected default value
-									},
-								},
-							},
-							{
-								Id: "exec",
-								CommandUnion: v1.CommandUnion{
-									Exec: &v1.ExecCommand{
-										WorkingDir:       "/projects",
-										CommandLine:      "npm run",
-										HotReloadCapable: &isFalse, //expected default value
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return mainDevfile, wantDevfile
 }

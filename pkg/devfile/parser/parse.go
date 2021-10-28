@@ -110,7 +110,14 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		flattenedDevfile = *args.FlattenedDevfile
 	}
 
-	return populateAndParseDevfile(d, &resolutionContextTree{}, tool, flattenedDevfile)
+	d, err = populateAndParseDevfile(d, &resolutionContextTree{}, tool, flattenedDevfile)
+
+	//set defaults only if we are flattening parent and parsing succeeded
+	if flattenedDevfile && err == nil {
+		setDefaults(d)
+	}
+
+	return d, err
 }
 
 // resolverTools contains required structs and data for resolving remote components of a devfile (plugins and parents)
@@ -281,7 +288,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 	d.Data.SetDevfileWorkspaceSpecContent(*mergedContent)
 	// remove parent from flatterned devfile
 	d.Data.SetParent(nil)
-	setDefaults(d)
+	//setDefaults(d)
 
 	return nil
 }
@@ -439,34 +446,31 @@ func setDefaults(d DevfileObj) (err error) {
 	}
 
 	//set defaults on the commands
+	var cmdGroup *v1.CommandGroup
 	for i := range commands {
 		command := commands[i]
+		cmdGroup = nil
+
 		if command.Exec != nil {
 			exec := command.Exec
-			if exec.HotReloadCapable == nil {
-				val := exec.GetHotReloadCapable()
-				exec.HotReloadCapable = &val
-			}
+			val := exec.GetHotReloadCapable()
+			exec.HotReloadCapable = &val
+			cmdGroup = exec.Group
 
-			if exec.Group != nil {
-				setIsDefault(exec.Group)
-			}
 		} else if command.Composite != nil {
 			composite := command.Composite
-			if composite.Parallel == nil {
-				val := composite.GetParallel()
-				composite.Parallel = &val
-			}
+			val := composite.GetParallel()
+			composite.Parallel = &val
+			cmdGroup = composite.Group
 
-			if composite.Group != nil {
-				setIsDefault(composite.Group)
-			}
 		} else if command.Apply != nil {
-			apply := command.Apply
-			if apply.Group != nil {
-				setIsDefault(apply.Group)
-			}
+			cmdGroup = command.Apply.Group
 		}
+
+		if cmdGroup != nil {
+			setIsDefault(cmdGroup)
+		}
+
 	}
 
 	//set defaults on the components
@@ -477,47 +481,43 @@ func setDefaults(d DevfileObj) (err error) {
 		return err
 	}
 
+	var endpoints []v1.Endpoint
 	for i := range components {
 		component := components[i]
+		endpoints = nil
+
 		if component.Container != nil {
 			container := component.Container
-			if container.DedicatedPod == nil {
-				val := container.GetDedicatedPod()
-				container.DedicatedPod = &val
-			}
+			val := container.GetDedicatedPod()
+			container.DedicatedPod = &val
 
-			if container.MountSources == nil {
-				val := container.GetMountSources()
-				container.MountSources = &val
-			}
+			val = container.GetMountSources()
+			container.MountSources = &val
 
-			if container.Endpoints != nil {
-				setEndpoints(container.Endpoints)
-			}
+			endpoints = container.Endpoints
+
 		} else if component.Kubernetes != nil {
-			endpoints := component.Kubernetes.Endpoints
-			if endpoints != nil {
-				setEndpoints(endpoints)
-			}
+			endpoints = component.Kubernetes.Endpoints
+
 		} else if component.Openshift != nil {
-			endpoints := component.Openshift.Endpoints
-			if endpoints != nil {
-				setEndpoints(endpoints)
-			}
+
+			endpoints = component.Openshift.Endpoints
+
 		} else if component.Volume != nil {
 			volume := component.Volume
-			if volume.Ephemeral == nil {
-				val := volume.GetEphemeral()
-				volume.Ephemeral = &val
-			}
+			val := volume.GetEphemeral()
+			volume.Ephemeral = &val
+
 		} else if component.Image != nil {
 			dockerImage := component.Image.Dockerfile
 			if dockerImage != nil {
-				if dockerImage.RootRequired == nil {
-					val := dockerImage.GetRootRequired()
-					dockerImage.RootRequired = &val
-				}
+				val := dockerImage.GetRootRequired()
+				dockerImage.RootRequired = &val
 			}
+		}
+
+		if endpoints != nil {
+			setEndpoints(endpoints)
 		}
 	}
 
@@ -526,18 +526,14 @@ func setDefaults(d DevfileObj) (err error) {
 
 ///setIsDefault sets the default value of CommandGroup.IsDefault if nil
 func setIsDefault(cmdGroup *v1.CommandGroup) {
-	if cmdGroup.IsDefault == nil {
-		val := cmdGroup.GetIsDefault()
-		cmdGroup.IsDefault = &val
-	}
+	val := cmdGroup.GetIsDefault()
+	cmdGroup.IsDefault = &val
 }
 
 //setEndpoints sets the default value of Endpoint.Secure if nil
 func setEndpoints(endpoints []v1.Endpoint) {
 	for i := range endpoints {
-		if endpoints[i].Secure == nil {
-			val := endpoints[i].GetSecure()
-			endpoints[i].Secure = &val
-		}
+		val := endpoints[i].GetSecure()
+		endpoints[i].Secure = &val
 	}
 }
