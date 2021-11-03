@@ -288,7 +288,6 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 	d.Data.SetDevfileWorkspaceSpecContent(*mergedContent)
 	// remove parent from flatterned devfile
 	d.Data.SetParent(nil)
-	//setDefaults(d)
 
 	return nil
 }

@@ -32,6 +32,11 @@ const (
 
 var isTrue bool = true
 var isFalse bool = false
+var defaultDiv testingutil.DockerImageValues = testingutil.DockerImageValues{
+	ImageName:    "image:latest",
+	Uri:          "/local/image",
+	BuildContext: "/src",
+}
 
 func Test_parseParentAndPluginFromURI(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
@@ -42,6 +47,12 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		fmt.Sprintf("uri: http://%s", uri1)).PutString(parentOverrideAttribute, "main devfile")
 	pluginOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
 		fmt.Sprintf("uri: http://%s", uri2)).PutString(pluginOverrideAttribute, "main devfile")
+
+	divRRTrue := defaultDiv
+	divRRTrue.RootRequired = &isTrue
+
+	divRRFalse := divRRTrue
+	divRRFalse.RootRequired = &isFalse
 
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
@@ -135,27 +146,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-														RootRequired: &isTrue,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							testingutil.GetDockerImageTestComponent(divRRTrue, nil),
 						},
 						Events: &v1.Events{
 							DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -298,27 +289,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 													},
 												},
 											},
-											{
-												Name: "image",
-												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-													Image: &v1.ImageComponentParentOverride{
-														ImageParentOverride: v1.ImageParentOverride{
-															ImageName: "image:latest",
-															ImageUnionParentOverride: v1.ImageUnionParentOverride{
-																Dockerfile: &v1.DockerfileImageParentOverride{
-																	DockerfileSrcParentOverride: v1.DockerfileSrcParentOverride{
-																		Uri: "/local/image",
-																	},
-																	DockerfileParentOverride: v1.DockerfileParentOverride{
-																		BuildContext: "/src",
-																		RootRequired: &isFalse, //override unset value
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
+											testingutil.GetDockerImageTestComponentParentOverride(divRRFalse),
 										},
 										Projects: []v1.ProjectParentOverride{
 											{
@@ -474,28 +445,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: parentOverridesFromMainDevfile,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-																RootRequired: &isFalse, //expected override value
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(divRRFalse, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -712,28 +662,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: importFromUri1,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-																RootRequired: &isTrue,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									//no overrides so expected values are the same as the parent
+									testingutil.GetDockerImageTestComponent(divRRTrue, importFromUri1),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -1358,27 +1288,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									{
-										Name: "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-																RootRequired: &isFalse,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(divRRFalse, nil),
 								},
 								Events: &v1.Events{
 									DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -1419,28 +1329,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							},
 						},
 					},
-					{
-
-						Name: "image",
-						ComponentUnionPluginOverride: v1.ComponentUnionPluginOverride{
-							Image: &v1.ImageComponentPluginOverride{
-								ImagePluginOverride: v1.ImagePluginOverride{
-									ImageName: "image:latest",
-									ImageUnionPluginOverride: v1.ImageUnionPluginOverride{
-										Dockerfile: &v1.DockerfileImagePluginOverride{
-											DockerfileSrcPluginOverride: v1.DockerfileSrcPluginOverride{
-												Uri: "/local/image",
-											},
-											DockerfilePluginOverride: v1.DockerfilePluginOverride{
-												BuildContext: "/src",
-												RootRequired: &isTrue,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+					testingutil.GetDockerImageTestComponentPluginOverride(divRRTrue),
 				},
 				Commands: []v1.CommandPluginOverride{
 					{
@@ -1491,28 +1380,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: pluginOverridesFromMainDevfile,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-																RootRequired: &isTrue,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(divRRTrue, pluginOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -2943,26 +2811,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 									},
 								},
 							},
-							{
-								Name: "image",
-								ComponentUnion: v1.ComponentUnion{
-									Image: &v1.ImageComponent{
-										Image: v1.Image{
-											ImageName: "image:latest",
-											ImageUnion: v1.ImageUnion{
-												Dockerfile: &v1.DockerfileImage{
-													DockerfileSrc: v1.DockerfileSrc{
-														Uri: "/local/image",
-													},
-													Dockerfile: v1.Dockerfile{
-														BuildContext: "/src",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							testingutil.GetDockerImageTestComponent(defaultDiv, nil),
 						},
 					},
 				},
@@ -3003,6 +2852,9 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	testServer.Start()
 	defer testServer.Close()
 
+	div := defaultDiv
+	div.RootRequired = &isTrue
+
 	mainDevfileContent := v1.Devfile{
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 			Parent: &v1.Parent{
@@ -3024,27 +2876,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name: "image",
-							ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-								Image: &v1.ImageComponentParentOverride{
-									ImageParentOverride: v1.ImageParentOverride{
-										ImageName: "image:next", //override
-										ImageUnionParentOverride: v1.ImageUnionParentOverride{
-											Dockerfile: &v1.DockerfileImageParentOverride{
-												DockerfileSrcParentOverride: v1.DockerfileSrcParentOverride{
-													Uri: "/local/image2", //override
-												},
-												DockerfileParentOverride: v1.DockerfileParentOverride{
-													BuildContext: "/src",
-													RootRequired: &isTrue, //override the default with true
-												},
-											},
-										},
-									},
-								},
-							},
-						},
+						testingutil.GetDockerImageTestComponentParentOverride(div),
 					},
 				},
 			},
@@ -3115,28 +2947,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 							},
 						},
 					},
-					{
-						Attributes: parentOverridesFromMainDevfile,
-						Name:       "image",
-						ComponentUnion: v1.ComponentUnion{
-							Image: &v1.ImageComponent{
-								Image: v1.Image{
-									ImageName: "image:next", //overidden value
-									ImageUnion: v1.ImageUnion{
-										Dockerfile: &v1.DockerfileImage{
-											DockerfileSrc: v1.DockerfileSrc{
-												Uri: "/local/image2", //overidden value
-											},
-											Dockerfile: v1.Dockerfile{
-												BuildContext: "/src",
-												RootRequired: &isTrue, //expected override value
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+					testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
 					{
 						Name: "runtime2",
 						ComponentUnion: v1.ComponentUnion{
@@ -3270,27 +3081,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: importFromRegistry,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(defaultDiv, importFromRegistry),
 									{
 										Name: "runtime2",
 										ComponentUnion: v1.ComponentUnion{
@@ -3404,26 +3195,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						},
 					},
 				},
-				{
-					Name: "image",
-					ComponentUnion: v1.ComponentUnion{
-						Image: &v1.ImageComponent{
-							Image: v1.Image{
-								ImageName: "image:latest",
-								ImageUnion: v1.ImageUnion{
-									Dockerfile: &v1.DockerfileImage{
-										DockerfileSrc: v1.DockerfileSrc{
-											Uri: "/local/image",
-										},
-										Dockerfile: v1.Dockerfile{
-											BuildContext: "/src",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
 			},
 		},
 	}
@@ -3442,31 +3214,20 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						},
 					},
 				},
-				{
-					Name: "image",
-					ComponentUnion: v1.ComponentUnion{
-						Image: &v1.ImageComponent{
-							Image: v1.Image{
-								ImageName: "image:latest",
-								ImageUnion: v1.ImageUnion{
-									Dockerfile: &v1.DockerfileImage{
-										DockerfileSrc: v1.DockerfileSrc{
-											Uri: "/local/image",
-										},
-										Dockerfile: v1.Dockerfile{
-											BuildContext: "/src",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
 			},
 		},
 	}
 
 	crdNotFoundErr := "not found"
+
+	//override all properties
+	div := testingutil.DockerImageValues{
+		ImageName:    "image:next",
+		Uri:          "/local/image2",
+		BuildContext: "/src2",
+		RootRequired: &isTrue,
+	}
 
 	tests := []struct {
 		name                  string
@@ -3497,27 +3258,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 												},
 											},
 										},
-										{
-											Name: "image",
-											ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-												Image: &v1.ImageComponentParentOverride{
-													ImageParentOverride: v1.ImageParentOverride{
-														ImageName: "image:next", //override
-														ImageUnionParentOverride: v1.ImageUnionParentOverride{
-															Dockerfile: &v1.DockerfileImageParentOverride{
-																DockerfileSrcParentOverride: v1.DockerfileSrcParentOverride{
-																	Uri: "/local/image2", //override
-																},
-																DockerfileParentOverride: v1.DockerfileParentOverride{
-																	BuildContext: "/src2", //override
-																	RootRequired: &isTrue, //override unset value
-																},
-															},
-														},
-													},
-												},
-											},
-										},
+										testingutil.GetDockerImageTestComponentParentOverride(div),
 									},
 								},
 							},
@@ -3577,28 +3318,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: parentOverridesFromMainDevfile,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:next",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image2",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src2",
-																RootRequired: &isTrue, //override unset value
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -3691,27 +3411,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
-									{
-										Attributes: importFromKubeCRD,
-										Name:       "image",
-										ComponentUnion: v1.ComponentUnion{
-											Image: &v1.ImageComponent{
-												Image: v1.Image{
-													ImageName: "image:latest",
-													ImageUnion: v1.ImageUnion{
-														Dockerfile: &v1.DockerfileImage{
-															DockerfileSrc: v1.DockerfileSrc{
-																Uri: "/local/image",
-															},
-															Dockerfile: v1.Dockerfile{
-																BuildContext: "/src",
-															},
-														},
-													},
-												},
-											},
-										},
-									},
+									testingutil.GetDockerImageTestComponent(defaultDiv, importFromKubeCRD),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
