@@ -3,33 +3,37 @@ package parser
 import (
 	"context"
 	"fmt"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
+	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
+	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/testingutil"
+	"github.com/kylelemons/godebug/pretty"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	kubev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
 	"reflect"
+	"sigs.k8s.io/yaml"
 	"strings"
 	"testing"
-
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/api/v2/pkg/attributes"
-	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
-	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
-	"github.com/devfile/library/pkg/testingutil"
-	"github.com/kylelemons/godebug/pretty"
-	kubev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 )
 
 const schemaVersion = string(data.APISchemaVersion220)
 
 var isTrue bool = true
 var isFalse bool = false
+var defaultDiv testingutil.DockerImageValues = testingutil.DockerImageValues{
+	ImageName:    "image:latest",
+	Uri:          "/local/image",
+	BuildContext: "/src",
+}
 
 func Test_parseParentAndPluginFromURI(t *testing.T) {
 	const uri1 = "127.0.0.1:8080"
@@ -40,6 +44,12 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		fmt.Sprintf("uri: http://%s", uri1)).PutString(parentOverrideAttribute, "main devfile")
 	pluginOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
 		fmt.Sprintf("uri: http://%s", uri2)).PutString(pluginOverrideAttribute, "main devfile")
+
+	divRRTrue := defaultDiv
+	divRRTrue.RootRequired = &isTrue
+
+	divRRFalse := divRRTrue
+	divRRFalse.RootRequired = &isFalse
 
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
@@ -133,6 +143,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 							},
+							testingutil.GetDockerImageTestComponent(divRRTrue, nil),
 						},
 						Events: &v1.Events{
 							DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -268,13 +279,14 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 																{
 																	Name:       "metrics",
 																	TargetPort: 8080,
-																	Secure:     &isFalse, //explicitly set an unset value to false
+																	Secure:     &isFalse,
 																},
 															},
 														},
 													},
 												},
 											},
+											testingutil.GetDockerImageTestComponentParentOverride(divRRFalse),
 										},
 										Projects: []v1.ProjectParentOverride{
 											{
@@ -430,6 +442,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(divRRFalse, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -646,6 +659,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
+									//no overrides so expected values are the same as the parent
+									testingutil.GetDockerImageTestComponent(divRRTrue, importFromUri1),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -1270,6 +1285,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(divRRFalse, nil),
 								},
 								Events: &v1.Events{
 									DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -1310,6 +1326,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 							},
 						},
 					},
+					testingutil.GetDockerImageTestComponentPluginOverride(divRRTrue),
 				},
 				Commands: []v1.CommandPluginOverride{
 					{
@@ -1360,6 +1377,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(divRRTrue, pluginOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -2790,6 +2808,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 									},
 								},
 							},
+							testingutil.GetDockerImageTestComponent(defaultDiv, nil),
 						},
 					},
 				},
@@ -2830,6 +2849,9 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	testServer.Start()
 	defer testServer.Close()
 
+	div := defaultDiv
+	div.RootRequired = &isTrue
+
 	mainDevfileContent := v1.Devfile{
 		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 			Parent: &v1.Parent{
@@ -2851,6 +2873,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 								},
 							},
 						},
+						testingutil.GetDockerImageTestComponentParentOverride(div),
 					},
 				},
 			},
@@ -2921,6 +2944,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 							},
 						},
 					},
+					testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
 					{
 						Name: "runtime2",
 						ComponentUnion: v1.ComponentUnion{
@@ -3054,6 +3078,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(defaultDiv, importFromRegistry),
 									{
 										Name: "runtime2",
 										ComponentUnion: v1.ComponentUnion{
@@ -3167,11 +3192,39 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						},
 					},
 				},
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
+			},
+		},
+	}
+
+	//this is a copy of parentSpec which can't be reused because defaults are being set on the SrcType and ImageType properties in the override code.
+	parentSpec2 := v1.DevWorkspaceTemplateSpec{
+		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+			Components: []v1.Component{
+				{
+					Name: "parent-runtime",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{
+							Volume: v1.Volume{
+								Size: "500Mi",
+							},
+						},
+					},
+				},
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
 			},
 		},
 	}
 
 	crdNotFoundErr := "not found"
+
+	//override all properties
+	div := testingutil.DockerImageValues{
+		ImageName:    "image:next",
+		Uri:          "/local/image2",
+		BuildContext: "/src2",
+		RootRequired: &isTrue,
+	}
 
 	tests := []struct {
 		name                  string
@@ -3202,6 +3255,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 												},
 											},
 										},
+										testingutil.GetDockerImageTestComponentParentOverride(div),
 									},
 								},
 							},
@@ -3261,6 +3315,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -3353,6 +3408,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
+									testingutil.GetDockerImageTestComponent(defaultDiv, importFromKubeCRD),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -3375,7 +3431,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						Kind:       "DevWorkspaceTemplate",
 						APIVersion: apiVersion,
 					},
-					Spec: parentSpec,
+					Spec: parentSpec2,
 				},
 			},
 		},
@@ -3413,7 +3469,6 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 				context:   context.Background(),
 			}
 			err := parseParentAndPlugin(tt.mainDevfile, &resolutionContextTree{}, tool)
-
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseParentFromKubeCRD() unexpected error: %v, wantErr %v", err, tt.wantErr)
@@ -3452,7 +3507,9 @@ func Test_parseFromURI(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Container: &v1.ContainerComponent{
 										Container: v1.Container{
-											Image: "nodejs",
+											Image:        "nodejs",
+											DedicatedPod: &isFalse,
+											MountSources: &isTrue,
 										},
 									},
 								},
@@ -3472,19 +3529,21 @@ func Test_parseFromURI(t *testing.T) {
 	// prepare for local file
 	err := os.MkdirAll(path.Dir(localRelativeURI), 0755)
 	if err != nil {
-		t.Errorf("Test_parseFromURI() error: failed to create folder: %v, error: %v", path.Dir(localRelativeURI), err)
-		return
+		fmt.Errorf("Test_parseFromURI() error: failed to create folder: %v, error: %v", path.Dir(localRelativeURI), err)
 	}
 	yamlData, err := yaml.Marshal(localDevfile.Data)
 	if err != nil {
-		t.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
-		return
+		fmt.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
 	}
 	err = ioutil.WriteFile(localRelativeURI, yamlData, 0644)
 	if err != nil {
-		t.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
-		return
+		fmt.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
 	}
+
+	if err != nil {
+		t.Error(err)
+	}
+
 	defer os.RemoveAll("testTmp/")
 
 	parentDevfile := DevfileObj{
@@ -3535,7 +3594,8 @@ func Test_parseFromURI(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Volume: &v1.VolumeComponent{
 										Volume: v1.Volume{
-											Size: "500Mi",
+											Size:      "500Mi",
+											Ephemeral: &isFalse,
 										},
 									},
 								},
@@ -3703,6 +3763,32 @@ func Test_parseFromRegistry(t *testing.T) {
 		},
 	}
 
+	wantDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime2",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	invalidURLErr := "the provided registryURL: .* is not a valid URL"
 	URLNotFoundErr := "failed to retrieve .*, 404: Not Found"
 	missingRegistryURLErr := "failed to fetch from registry, registry URL is not provided"
@@ -3751,7 +3837,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	}{
 		{
 			name:        "should fail if provided registryUrl does not have protocol prefix",
-			wantDevFile: parentDevfile,
+			wantDevFile: wantDevfile,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
@@ -3762,7 +3848,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		},
 		{
 			name:        "should be able to parse from provided registryUrl with prefix",
-			wantDevFile: parentDevfile,
+			wantDevFile: wantDevfile,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
@@ -3772,7 +3858,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		},
 		{
 			name:        "should be able to parse from registry URL defined in tool",
-			wantDevFile: parentDevfile,
+			wantDevFile: wantDevfile,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,

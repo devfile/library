@@ -2,6 +2,7 @@ package testingutil
 
 import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
 )
 
 // GetFakeContainerComponent returns a fake container component for testing.
@@ -104,4 +105,113 @@ func GenerateDummyContainerComponent(name string, volMounts []v1.VolumeMount, en
 				},
 				Endpoints: endpoints,
 			}}}
+}
+
+//DockerImageValues struct can be used to set override or main component struct values
+type DockerImageValues struct {
+	//maps to Image.ImageName
+	ImageName string
+	//maps to Image.Dockerfile.DockerfileSrc.Uri
+	Uri string
+	//maps to Image.Dockerfile.BuildContext
+	BuildContext string
+	//maps to Image.Dockerfile.RootRequired
+	RootRequired *bool
+}
+
+//GetDockerImageTestComponent returns a docker image component that is used for testing.
+//The parameters allow customization of the content.  If they are set to nil, then the properties will not be set
+func GetDockerImageTestComponent(div DockerImageValues, attr attributes.Attributes) v1.Component {
+	comp := v1.Component{
+		Name: "image",
+		ComponentUnion: v1.ComponentUnion{
+			Image: &v1.ImageComponent{
+				Image: v1.Image{
+					ImageName: div.ImageName,
+					ImageUnion: v1.ImageUnion{
+						Dockerfile: &v1.DockerfileImage{
+							DockerfileSrc: v1.DockerfileSrc{
+								Uri: div.Uri,
+							},
+							Dockerfile: v1.Dockerfile{
+								BuildContext: div.BuildContext,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if div.RootRequired != nil {
+		comp.Image.Dockerfile.RootRequired = div.RootRequired
+	}
+
+	if attr != nil {
+		comp.Attributes = attr
+	}
+
+	return comp
+}
+
+//GetDockerImageTestComponentParentOverride returns a docker image parent override component that is used for testing.
+//The parameters allow customization of the content.  If they are set to nil, then the properties will not be set
+func GetDockerImageTestComponentParentOverride(div DockerImageValues) v1.ComponentParentOverride {
+	comp := v1.ComponentParentOverride{
+		Name: "image",
+		ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
+			Image: &v1.ImageComponentParentOverride{
+				ImageParentOverride: v1.ImageParentOverride{
+					ImageName: div.ImageName,
+					ImageUnionParentOverride: v1.ImageUnionParentOverride{
+						Dockerfile: &v1.DockerfileImageParentOverride{
+							DockerfileSrcParentOverride: v1.DockerfileSrcParentOverride{
+								Uri: div.Uri,
+							},
+							DockerfileParentOverride: v1.DockerfileParentOverride{
+								BuildContext: div.BuildContext,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if div.RootRequired != nil {
+		comp.Image.Dockerfile.RootRequired = div.RootRequired
+	}
+
+	return comp
+}
+
+//GetDockerImageTestComponentPluginOverride returns a docker image parent override component that is used for testing.
+//The parameters allow customization of the content.  If they are set to nil, then the properties will not be set
+func GetDockerImageTestComponentPluginOverride(div DockerImageValues) v1.ComponentPluginOverride {
+	comp := v1.ComponentPluginOverride{
+		Name: "image",
+		ComponentUnionPluginOverride: v1.ComponentUnionPluginOverride{
+			Image: &v1.ImageComponentPluginOverride{
+				ImagePluginOverride: v1.ImagePluginOverride{
+					ImageName: div.ImageName,
+					ImageUnionPluginOverride: v1.ImageUnionPluginOverride{
+						Dockerfile: &v1.DockerfileImagePluginOverride{
+							DockerfileSrcPluginOverride: v1.DockerfileSrcPluginOverride{
+								Uri: div.Uri,
+							},
+							DockerfilePluginOverride: v1.DockerfilePluginOverride{
+								BuildContext: div.BuildContext,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if div.RootRequired != nil {
+		comp.Image.Dockerfile.RootRequired = div.RootRequired
+	}
+
+	return comp
 }
