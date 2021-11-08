@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
@@ -863,13 +864,11 @@ func TestGetInitContainers(t *testing.T) {
 
 }
 
-
-
 func TestGetService(t *testing.T) {
 	trueBool := true
 
 	serviceParams := ServiceParams{
-		ObjectMeta:  metav1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"preserved-key": "preserved-value",
 			},
@@ -882,6 +881,8 @@ func TestGetService(t *testing.T) {
 		expected            corev1.Service
 	}{
 		{
+			// Currently dedicatedPod can only filter out annotations
+			// ToDo: dedicatedPod support: https://github.com/devfile/api/issues/670
 			name: "has dedicated pod",
 			containerComponents: []v1.Component{
 				testingutil.GenerateDummyContainerComponent("container1", nil, []v1.Endpoint{
@@ -901,10 +902,10 @@ func TestGetService(t *testing.T) {
 				}, &trueBool),
 			},
 			expected: corev1.Service{
-				ObjectMeta:  metav1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"preserved-key": "preserved-value",
-						"key1": "value1",
+						"key1":          "value1",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -938,11 +939,11 @@ func TestGetService(t *testing.T) {
 				}, nil),
 			},
 			expected: corev1.Service{
-				ObjectMeta:  metav1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"preserved-key": "preserved-value",
-						"key1": "value1",
-						"key2": "value2",
+						"key1":          "value1",
+						"key2":          "value2",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -984,6 +985,152 @@ func TestGetService(t *testing.T) {
 				t.Errorf("TestGetService(): unexpected error %v", err)
 			}
 			assert.Equal(t, tt.expected, *svc, "TestGetService(): The two values should be the same.")
+
+		})
+	}
+}
+
+func TestGetDeployment(t *testing.T) {
+	trueBool := true
+	containers := []corev1.Container{
+		{
+			Name: "container1",
+		},
+		{
+			Name: "container2",
+		},
+	}
+	deploymentParams := DeploymentParams{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"preserved-key": "preserved-value",
+			},
+		},
+		Containers: containers,
+	}
+
+	objectMeta := metav1.ObjectMeta{
+		Annotations: map[string]string{
+			"preserved-key": "preserved-value",
+			"key1":          "value1",
+			"key2":          "value2",
+		},
+	}
+
+	objectMetaDedicatedPod := metav1.ObjectMeta{
+		Annotations: map[string]string{
+			"preserved-key": "preserved-value",
+			"key1":          "value1",
+		},
+	}
+
+	tests := []struct {
+		name                string
+		containerComponents []v1.Component
+		expected            appsv1.Deployment
+	}{
+		{
+			// Currently dedicatedPod can only filter out annotations
+			// ToDo: dedicatedPod support: https://github.com/devfile/api/issues/670
+			name: "has dedicated pod",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, []v1.Endpoint{
+					{
+						Name:       "http-8080",
+						TargetPort: 8080,
+					},
+				}, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, &trueBool),
+			},
+			expected: appsv1.Deployment{
+				ObjectMeta: objectMetaDedicatedPod,
+				Spec: appsv1.DeploymentSpec{
+					Strategy: appsv1.DeploymentStrategy{
+						Type: appsv1.RecreateDeploymentStrategyType,
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: nil,
+					},
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: objectMetaDedicatedPod,
+						Spec: corev1.PodSpec{
+							Containers: containers,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no dedicated pod",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, []v1.Endpoint{
+					{
+						Name:       "http-8080",
+						TargetPort: 8080,
+					},
+				}, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, nil),
+			},
+			expected: appsv1.Deployment{
+				ObjectMeta: objectMeta,
+				Spec: appsv1.DeploymentSpec{
+					Strategy: appsv1.DeploymentStrategy{
+						Type: appsv1.RecreateDeploymentStrategyType,
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: nil,
+					},
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: objectMeta,
+						Spec: corev1.PodSpec{
+							Containers: containers,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			options := common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			}
+			// set up the mock data
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(options)
+			mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
+
+			devObj := parser.DevfileObj{
+				Data: mockDevfileData,
+			}
+			deploy, err := GetDeployment(devObj, deploymentParams)
+			// Checks for unexpected error cases
+			if err != nil {
+				t.Errorf("TestGetDeployment(): unexpected error %v", err)
+			}
+			assert.Equal(t, tt.expected, *deploy, "TestGetDeployment(): The two values should be the same.")
 
 		})
 	}

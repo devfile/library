@@ -616,7 +616,7 @@ func getContainerAnnotations(devfileObj parser.DevfileObj, options common.Devfil
 	annotations.Service = make(map[string]string)
 	annotations.Deployment = make(map[string]string)
 	for _, comp := range containerComponents {
-		// ToDo: dedicatedPod support for annotations: https://github.com/devfile/api/issues/670
+		// ToDo: dedicatedPod support: https://github.com/devfile/api/issues/670
 		if comp.Container.DedicatedPod != nil && *comp.Container.DedicatedPod {
 			continue
 		}
