@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const schemaV210 = string(data.APISchemaVersion210)
+const schemaVersion = string(data.APISchemaVersion220)
 
 var isTrue bool = true
 var isFalse bool = false
@@ -45,7 +45,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -759,7 +759,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -805,7 +805,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -860,7 +860,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -910,7 +910,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -977,7 +977,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1058,7 +1058,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1244,7 +1244,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1421,7 +1421,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1479,7 +1479,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1534,7 +1534,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1594,7 +1594,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1657,7 +1657,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1685,7 +1685,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1743,7 +1743,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1766,7 +1766,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1821,7 +1821,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1846,7 +1846,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1944,7 +1944,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1988,7 +1988,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2162,7 +2162,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2216,7 +2216,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2292,7 +2292,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2351,7 +2351,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2410,7 +2410,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							Parent: &v1.Parent{
@@ -2584,7 +2584,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2621,7 +2621,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2775,7 +2775,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3442,7 +3442,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3492,7 +3492,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -3525,7 +3525,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3681,7 +3681,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{

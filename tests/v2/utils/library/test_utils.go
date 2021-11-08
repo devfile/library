@@ -25,6 +25,8 @@ const (
 	numDevfiles = 5
 	// numThreads :  Number of threads used by multi-thread tests
 	numThreads = 5
+	// schemaVersion: Latest schemaVersion
+	schemaVersion = "2.2.0"
 )
 
 // DevfileValidator struct for DevfileValidator interface.
@@ -280,11 +282,11 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 
 		validator := DevfileValidator{}
 		follower := DevfileFollower{}
-		libraryData, err := devfileData.NewDevfileData("2.0.0")
+		libraryData, err := devfileData.NewDevfileData(schemaVersion)
 		if err != nil {
 			t.Fatalf(commonUtils.LogMessage(fmt.Sprintf("Error creating parser data : %v", err)))
 		}
-		libraryData.SetSchemaVersion("2.0.0")
+		libraryData.SetSchemaVersion(schemaVersion)
 		follower.LibraryData = libraryData
 		commonUtils.LogMessage(fmt.Sprintf("Parser data created with schema version : %s", follower.LibraryData.GetSchemaVersion()))
 

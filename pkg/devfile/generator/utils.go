@@ -603,7 +603,6 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 	return containers, nil
 }
 
-
 // getContainerAnnotations iterates through container components and returns all annotations
 func getContainerAnnotations(devfileObj parser.DevfileObj, options common.DevfileOptions) (v1.Annotation, error) {
 	options.ComponentOptions = common.ComponentOptions{
@@ -630,8 +629,11 @@ func getContainerAnnotations(devfileObj parser.DevfileObj, options common.Devfil
 	return annotations, nil
 }
 
-func mergeMaps( dest map[string]string, src map[string]string) map[string]string{
-	for k,v := range src {
+func mergeMaps(dest map[string]string, src map[string]string) map[string]string {
+	if dest == nil {
+		dest = make(map[string]string)
+	}
+	for k, v := range src {
 		dest[k] = v
 	}
 	return dest
