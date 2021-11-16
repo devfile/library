@@ -97,7 +97,7 @@ func GenerateDummyContainerComponent(name string, volMounts []v1.VolumeMount, en
 			Container: &v1.ContainerComponent{
 				Container: v1.Container{
 					Image:        image,
-					Annotation:   annotation,
+					Annotation:   &annotation,
 					Env:          envs,
 					VolumeMounts: volMounts,
 					MountSources: &mountSources,

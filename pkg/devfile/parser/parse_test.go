@@ -101,7 +101,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Container: &v1.ContainerComponent{
 										Container: v1.Container{
-											Annotation: v1.Annotation{
+											Annotation: &v1.Annotation{
 												Deployment: map[string]string{
 													"deploy-key1": "deploy-value1",
 													"deploy-key2": "deploy-value2",
@@ -259,7 +259,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
 													Container: &v1.ContainerComponentParentOverride{
 														ContainerParentOverride: v1.ContainerParentOverride{
-															Annotation: v1.AnnotationParentOverride{
+															Annotation: &v1.AnnotationParentOverride{
 																Deployment: map[string]string{
 																	"deploy-key2": "deploy-value3",
 																	"deploy-key3": "deploy-value3",
@@ -424,7 +424,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value3",
@@ -660,7 +660,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value2",
@@ -1153,7 +1153,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value2",
@@ -1226,7 +1226,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value2",
@@ -1359,7 +1359,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value2",
@@ -1420,7 +1420,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						ComponentUnionPluginOverride: v1.ComponentUnionPluginOverride{
 							Container: &v1.ContainerComponentPluginOverride{
 								ContainerPluginOverride: v1.ContainerPluginOverride{
-									Annotation: v1.AnnotationPluginOverride{
+									Annotation: &v1.AnnotationPluginOverride{
 										Deployment: map[string]string{
 											"deploy-key2": "deploy-value3",
 											"deploy-key3": "deploy-value3",
@@ -1491,7 +1491,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
-													Annotation: v1.Annotation{
+													Annotation: &v1.Annotation{
 														Deployment: map[string]string{
 															"deploy-key1": "deploy-value1",
 															"deploy-key2": "deploy-value3",

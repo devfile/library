@@ -620,7 +620,7 @@ func getContainerAnnotations(devfileObj parser.DevfileObj, options common.Devfil
 		if comp.Container.DedicatedPod != nil && *comp.Container.DedicatedPod {
 			continue
 		}
-		if !reflect.DeepEqual(comp.Container.Annotation, v1.Annotation{}) {
+		if comp.Container.Annotation != nil {
 			mergeMaps(annotations.Service, comp.Container.Annotation.Service)
 			mergeMaps(annotations.Deployment, comp.Container.Annotation.Deployment)
 		}
