@@ -1536,3 +1536,158 @@ func TestAddVolumeMountToContainers(t *testing.T) {
 		})
 	}
 }
+
+func TestGetContainerAnnotations(t *testing.T) {
+	trueBool := true
+
+	tests := []struct {
+		name                string
+		containerComponents []v1.Component
+		expected            v1.Annotation
+	}{
+		{
+			name: "no dedicated pod",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, nil, nil, v1.Annotation{
+					Service: map[string]string{
+						"key1": "value1",
+					},
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Service: map[string]string{
+						"key2": "value2",
+					},
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, nil),
+			},
+			expected: v1.Annotation{
+				Service: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				},
+				Deployment: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				},
+			},
+		},
+		{
+			name: "has dedicated pod",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, nil, nil, v1.Annotation{
+					Service: map[string]string{
+						"key1": "value1",
+					},
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Service: map[string]string{
+						"key2": "value2",
+					},
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, &trueBool),
+			},
+			expected: v1.Annotation{
+				Service: map[string]string{
+					"key1": "value1",
+				},
+				Deployment: map[string]string{
+					"key1": "value1",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockDevfileData := data.NewMockDevfileData(ctrl)
+
+			options := common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			}
+			// set up the mock data
+			mockGetComponents := mockDevfileData.EXPECT().GetComponents(options)
+			mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
+
+			devObj := parser.DevfileObj{
+				Data: mockDevfileData,
+			}
+			annotations, err := getContainerAnnotations(devObj, common.DevfileOptions{})
+			// Checks for unexpected error cases
+			if err != nil {
+				t.Errorf("TestGetContainerAnnotations(): unexpected error %v", err)
+			}
+			assert.Equal(t, tt.expected, annotations, "TestGetContainerAnnotations(): The two values should be the same.")
+
+		})
+	}
+}
+
+func TestMergeMaps(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		dest     map[string]string
+		src      map[string]string
+		expected map[string]string
+	}{
+		{
+			name: "dest is nil",
+			dest: nil,
+			src: map[string]string{
+				"key3": "value3",
+			},
+			expected: map[string]string{
+				"key3": "value3",
+			},
+		},
+		{
+			name: "src is nil",
+			dest: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+			},
+			src: nil,
+			expected: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		{
+			name: "no nil maps",
+			dest: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+			},
+			src: map[string]string{
+				"key3": "value3",
+			},
+			expected: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+				"key3": "value3",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := mergeMaps(tt.dest, tt.src)
+			assert.Equal(t, tt.expected, result, "TestmergeMaps(): The two values should be the same.")
+
+		})
+	}
+}

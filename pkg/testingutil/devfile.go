@@ -6,32 +6,17 @@ import (
 )
 
 // GetFakeContainerComponent returns a fake container component for testing.
+// Deprecated: use GenerateDummyContainerComponent instead
 func GetFakeContainerComponent(name string) v1.Component {
-	image := "docker.io/maven:latest"
-	memoryLimit := "128Mi"
 	volumeName := "myvolume1"
 	volumePath := "/my/volume/mount/path1"
-	mountSources := true
-
-	return v1.Component{
-		Name: name,
-		ComponentUnion: v1.ComponentUnion{
-			Container: &v1.ContainerComponent{
-				Container: v1.Container{
-					Image:       image,
-					Env:         []v1.EnvVar{},
-					MemoryLimit: memoryLimit,
-					VolumeMounts: []v1.VolumeMount{
-						{
-							Name: volumeName,
-							Path: volumePath,
-						},
-					},
-					MountSources: &mountSources,
-				},
-			},
+	VolumeMounts := []v1.VolumeMount{
+		{
+			Name: volumeName,
+			Path: volumePath,
 		},
 	}
+	return GenerateDummyContainerComponent(name, VolumeMounts, nil, []v1.EnvVar{}, v1.Annotation{}, nil)
 }
 
 // GetFakeVolumeComponent returns a fake volume component for testing
@@ -99,6 +84,27 @@ func GetFakeVolumeMountParentOverride(name, path string) v1.VolumeMountParentOve
 		Name: name,
 		Path: path,
 	}
+}
+
+// GenerateDummyContainerComponent returns a dummy container component for testing
+func GenerateDummyContainerComponent(name string, volMounts []v1.VolumeMount, endpoints []v1.Endpoint, envs []v1.EnvVar, annotation v1.Annotation, dedicatedPod *bool) v1.Component {
+	image := "docker.io/maven:latest"
+	mountSources := true
+
+	return v1.Component{
+		Name: name,
+		ComponentUnion: v1.ComponentUnion{
+			Container: &v1.ContainerComponent{
+				Container: v1.Container{
+					Image:        image,
+					Annotation:   &annotation,
+					Env:          envs,
+					VolumeMounts: volMounts,
+					MountSources: &mountSources,
+					DedicatedPod: dedicatedPod,
+				},
+				Endpoints: endpoints,
+			}}}
 }
 
 //DockerImageValues struct can be used to set override or main component struct values

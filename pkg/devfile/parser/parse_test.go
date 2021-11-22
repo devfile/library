@@ -25,10 +25,7 @@ import (
 	"testing"
 )
 
-const (
-	schemaV210 = string(data.APISchemaVersion210)
-	schemaV220 = string(data.APISchemaVersion220)
-)
+const schemaVersion = string(data.APISchemaVersion220)
 
 var isTrue bool = true
 var isFalse bool = false
@@ -58,7 +55,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -104,6 +101,16 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 								ComponentUnion: v1.ComponentUnion{
 									Container: &v1.ContainerComponent{
 										Container: v1.Container{
+											Annotation: &v1.Annotation{
+												Deployment: map[string]string{
+													"deploy-key1": "deploy-value1",
+													"deploy-key2": "deploy-value2",
+												},
+												Service: map[string]string{
+													"svc-key1": "svc-value1",
+													"svc-key2": "svc-value2",
+												},
+											},
 											Image:        "quay.io/nodejs-10",
 											DedicatedPod: &isTrue,
 										},
@@ -112,6 +119,10 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												Name:       "log",
 												TargetPort: 443,
 												Secure:     &isFalse,
+												Annotations: map[string]string{
+													"ingress-key1": "ingress-value1",
+													"ingress-key2": "ingress-value2",
+												},
 											},
 										},
 									},
@@ -248,6 +259,16 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 												ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
 													Container: &v1.ContainerComponentParentOverride{
 														ContainerParentOverride: v1.ContainerParentOverride{
+															Annotation: &v1.AnnotationParentOverride{
+																Deployment: map[string]string{
+																	"deploy-key2": "deploy-value3",
+																	"deploy-key3": "deploy-value3",
+																},
+																Service: map[string]string{
+																	"svc-key2": "svc-value3",
+																	"svc-key3": "svc-value3",
+																},
+															},
 															Image:        "quay.io/nodejs-12",
 															DedicatedPod: &isFalse,
 															MountSources: &isTrue, //overrides an unset value to true
@@ -257,6 +278,10 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 																Name:       "log",
 																TargetPort: 443,
 																Secure:     &isTrue,
+																Annotations: map[string]string{
+																	"ingress-key2": "ingress-value3",
+																	"ingress-key3": "ingress-value3",
+																},
 															},
 														},
 													},
@@ -399,6 +424,18 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value3",
+															"deploy-key3": "deploy-value3",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value3",
+															"svc-key3": "svc-value3",
+														},
+													},
 													Image:        "quay.io/nodejs-12",
 													DedicatedPod: &isFalse,
 													MountSources: &isTrue,
@@ -408,6 +445,11 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 														Name:       "log",
 														TargetPort: 443,
 														Secure:     &isTrue,
+														Annotations: map[string]string{
+															"ingress-key1": "ingress-value1",
+															"ingress-key2": "ingress-value3",
+															"ingress-key3": "ingress-value3",
+														},
 													},
 												},
 											},
@@ -618,6 +660,16 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value2",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value2",
+														},
+													},
 													Image:        "quay.io/nodejs-10",
 													DedicatedPod: &isTrue,
 												},
@@ -626,6 +678,10 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 														Name:       "log",
 														TargetPort: 443,
 														Secure:     &isFalse,
+														Annotations: map[string]string{
+															"ingress-key1": "ingress-value1",
+															"ingress-key2": "ingress-value2",
+														},
 													},
 												},
 											},
@@ -777,7 +833,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -823,7 +879,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -878,7 +934,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -928,7 +984,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -995,7 +1051,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1076,7 +1132,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV220,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1097,6 +1153,16 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value2",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value2",
+														},
+													},
 													Image: "quay.io/nodejs-10",
 												},
 											},
@@ -1160,6 +1226,16 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value2",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value2",
+														},
+													},
 													Image: "quay.io/nodejs-10",
 												},
 											},
@@ -1262,7 +1338,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV220,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1283,7 +1359,27 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value2",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value2",
+														},
+													},
 													Image: "quay.io/nodejs-10",
+												},
+												Endpoints: []v1.Endpoint{
+													{
+														Annotations: map[string]string{
+															"ingress-key1": "ingress-value1",
+															"ingress-key2": "ingress-value2",
+														},
+														Name:       "url",
+														TargetPort: 8080,
+													},
 												},
 											},
 										},
@@ -1324,7 +1420,27 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 						ComponentUnionPluginOverride: v1.ComponentUnionPluginOverride{
 							Container: &v1.ContainerComponentPluginOverride{
 								ContainerPluginOverride: v1.ContainerPluginOverride{
+									Annotation: &v1.AnnotationPluginOverride{
+										Deployment: map[string]string{
+											"deploy-key2": "deploy-value3",
+											"deploy-key3": "deploy-value3",
+										},
+										Service: map[string]string{
+											"svc-key2": "svc-value3",
+											"svc-key3": "svc-value3",
+										},
+									},
 									Image: "quay.io/nodejs-12",
+								},
+								Endpoints: []v1.EndpointPluginOverride{
+									{
+										Annotations: map[string]string{
+											"ingress-key2": "ingress-value3",
+											"ingress-key3": "ingress-value3",
+										},
+										Name:       "url",
+										TargetPort: 9090,
+									},
 								},
 							},
 						},
@@ -1375,7 +1491,30 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										ComponentUnion: v1.ComponentUnion{
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
+													Annotation: &v1.Annotation{
+														Deployment: map[string]string{
+															"deploy-key1": "deploy-value1",
+															"deploy-key2": "deploy-value3",
+															"deploy-key3": "deploy-value3",
+														},
+														Service: map[string]string{
+															"svc-key1": "svc-value1",
+															"svc-key2": "svc-value3",
+															"svc-key3": "svc-value3",
+														},
+													},
 													Image: "quay.io/nodejs-12",
+												},
+												Endpoints: []v1.Endpoint{
+													{
+														Annotations: map[string]string{
+															"ingress-key1": "ingress-value1",
+															"ingress-key2": "ingress-value3",
+															"ingress-key3": "ingress-value3",
+														},
+														Name:       "url",
+														TargetPort: 9090,
+													},
 												},
 											},
 										},
@@ -1442,7 +1581,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1500,7 +1639,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1555,7 +1694,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1615,7 +1754,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1678,7 +1817,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1706,7 +1845,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1764,7 +1903,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1787,7 +1926,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1842,7 +1981,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1867,7 +2006,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -1965,7 +2104,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2009,7 +2148,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2183,7 +2322,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2237,7 +2376,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2313,7 +2452,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2372,7 +2511,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -2431,7 +2570,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				Data: &v2.DevfileV2{
 					Devfile: v1.Devfile{
 						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaV210,
+							SchemaVersion: schemaVersion,
 						},
 						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 							Parent: &v1.Parent{
@@ -2605,7 +2744,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2642,7 +2781,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2796,7 +2935,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV220,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3500,7 +3639,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3554,7 +3693,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -3587,7 +3726,7 @@ func Test_parseFromURI(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3744,7 +3883,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3770,7 +3909,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
-					SchemaVersion: schemaV210,
+					SchemaVersion: schemaVersion,
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
