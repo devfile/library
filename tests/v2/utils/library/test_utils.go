@@ -176,7 +176,6 @@ func writeDevfile(devfile *commonUtils.TestDevfile) error {
 
 // validateDevfile uses the library to parse and validate a devfile on disk
 func validateDevfile(devfile *commonUtils.TestDevfile) error {
-
 	var err error
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
@@ -195,7 +194,39 @@ func validateDevfile(devfile *commonUtils.TestDevfile) error {
 		follower.LibraryData = libraryObj.Data
 	}
 
+	err = verifyEphemeralUnset(libraryObj)
+	if err != nil {
+		return err
+	}
+
 	return err
+}
+
+// verifyEphemeralUnset  verifies volume.Ephemeral is not set on schema version 2.0.0
+func verifyEphemeralUnset(libraryObj parser.DevfileObj) error {
+	version := libraryObj.Data.GetSchemaVersion()
+
+	//verify volume.Ephemeral is not set on schema version 2.0.0
+	if version == string(devfileData.APISchemaVersion200) {
+		volumes, err := libraryObj.Data.GetComponents(common.DevfileOptions{
+			ComponentOptions: common.ComponentOptions{
+				ComponentType: schema.VolumeComponentType,
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for i := range volumes {
+			volume := volumes[i].Volume
+			if volume != nil && volume.Ephemeral != nil {
+				return errors.New("ephemeral is not supported on schema version 2.0.0")
+			}
+		}
+	}
+
+	return nil
 }
 
 // RunMultiThreadTest : Runs the same test on multiple threads, the test is based on the content of the specified TestContent
@@ -215,15 +246,15 @@ func RunMultiThreadTest(testContent commonUtils.TestContent, t *testing.T) {
 
 }
 
-// RunMultiThreadedParentTest : Runs the same test on multiple threads, the test is based on the content of the specified TestContent
-func RunMultiThreadedParentTest(testContent commonUtils.TestContent, t *testing.T) {
+// RunMultiThreadedStaticTest : Runs the same test on multiple threads, the test is based on the content of the specified TestContent
+func RunMultiThreadedStaticTest(testContent commonUtils.TestContent, t *testing.T) {
 
-	commonUtils.LogMessage(fmt.Sprintf("Start Threaded parent test for %s", testContent.FileName))
+	commonUtils.LogMessage(fmt.Sprintf("Start Threaded static test for %s", testContent.FileName))
 	devfileName := testContent.FileName
 	for i := 1; i < numThreads+1; i++ {
 		testContent.FileName = commonUtils.AddSuffixToFileName(devfileName, "T"+strconv.Itoa(i)+"-")
 		duplicateDevfileSample(t, devfileName, testContent.FileName)
-		go RunParentTest(testContent, t)
+		go RunStaticTest(testContent, t)
 	}
 
 	commonUtils.LogMessage(fmt.Sprintf("Sleep 3 seconds to allow all threads to complete : %s", devfileName))
@@ -328,8 +359,8 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 	}
 }
 
-//RunParentTest : Runs parent tests based on pre-existing artifacts
-func RunParentTest(testContent commonUtils.TestContent, t *testing.T) {
+//RunStaticTest : Runs fixed tests based on pre-existing artifacts
+func RunStaticTest(testContent commonUtils.TestContent, t *testing.T) {
 	commonUtils.LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
 	follower := DevfileFollower{}
 	validator := DevfileValidator{}

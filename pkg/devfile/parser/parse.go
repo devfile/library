@@ -478,6 +478,7 @@ func convertDevWorskapceTemplateToDevObj(dwTemplate v1.DevWorkspaceTemplate) (d 
 
 //setDefaults sets the default values for nil boolean properties after the merging of devWorkspaceTemplateSpec is complete
 func setDefaults(d DevfileObj) (err error) {
+	schemaVersion := d.Data.GetSchemaVersion()
 	commands, err := d.Data.GetCommands(common.DevfileOptions{})
 
 	if err != nil {
@@ -542,12 +543,12 @@ func setDefaults(d DevfileObj) (err error) {
 
 			endpoints = component.Openshift.Endpoints
 
-		} else if component.Volume != nil {
+		} else if component.Volume != nil && schemaVersion != string(data.APISchemaVersion200) {
 			volume := component.Volume
 			val := volume.GetEphemeral()
 			volume.Ephemeral = &val
 
-		} else if component.Image != nil {
+		} else if component.Image != nil { //we don't need to do a schema version check since Image in v2.2.0.  If used in older specs, a parser error would occur
 			dockerImage := component.Image.Dockerfile
 			if dockerImage != nil {
 				val := dockerImage.GetRootRequired()
