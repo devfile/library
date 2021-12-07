@@ -112,10 +112,16 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	}
 
 	d, err = populateAndParseDevfile(d, &resolutionContextTree{}, tool, flattenedDevfile)
+	if err != nil {
+		return d, errors.Wrap(err, "failed to populateAndParseDevfile")
+	}
 
 	//set defaults only if we are flattening parent and parsing succeeded
 	if flattenedDevfile && err == nil {
-		setDefaults(d)
+		err = setDefaults(d)
+		if err != nil {
+			return d, errors.Wrap(err, "failed to setDefaults")
+		}
 	}
 
 	return d, err
@@ -478,7 +484,12 @@ func convertDevWorskapceTemplateToDevObj(dwTemplate v1.DevWorkspaceTemplate) (d 
 
 //setDefaults sets the default values for nil boolean properties after the merging of devWorkspaceTemplateSpec is complete
 func setDefaults(d DevfileObj) (err error) {
-	schemaVersion := d.Data.GetSchemaVersion()
+
+	var devfileVersion string
+	if devfileVersion = d.Ctx.GetApiVersion(); devfileVersion == "" {
+		devfileVersion = d.Data.GetSchemaVersion()
+	}
+
 	commands, err := d.Data.GetCommands(common.DevfileOptions{})
 
 	if err != nil {
@@ -531,8 +542,8 @@ func setDefaults(d DevfileObj) (err error) {
 			val := container.GetDedicatedPod()
 			container.DedicatedPod = &val
 
-			val = container.GetMountSources()
-			container.MountSources = &val
+			msVal := container.GetMountSources()
+			container.MountSources = &msVal
 
 			endpoints = container.Endpoints
 
@@ -543,7 +554,7 @@ func setDefaults(d DevfileObj) (err error) {
 
 			endpoints = component.Openshift.Endpoints
 
-		} else if component.Volume != nil && schemaVersion != string(data.APISchemaVersion200) {
+		} else if component.Volume != nil && devfileVersion != string(data.APISchemaVersion200) {
 			volume := component.Volume
 			val := volume.GetEphemeral()
 			volume.Ephemeral = &val
