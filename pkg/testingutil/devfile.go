@@ -5,6 +5,11 @@ import (
 	"github.com/devfile/api/v2/pkg/attributes"
 )
 
+var (
+	isFalse = false
+	isTrue  = true
+)
+
 // GetFakeContainerComponent returns a fake container component for testing.
 // Deprecated: use GenerateDummyContainerComponent instead
 func GetFakeContainerComponent(name string) v1.Component {

@@ -219,8 +219,38 @@ func Test_Parent_Local_URI(t *testing.T) {
 	testContent.FileName = "Test_Parent_LocalURI.yaml"
 	//copy the parent and main devfile from devfiles/samples
 	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName, "Parent.yaml"})
-	libraryUtils.RunParentTest(testContent, t)
-	libraryUtils.RunMultiThreadedParentTest(testContent, t)
+	libraryUtils.RunStaticTest(testContent, t)
+	libraryUtils.RunMultiThreadedStaticTest(testContent, t)
+}
+
+func Test_v200_Devfile(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddParent = false
+	testContent.EditContent = false
+	testContent.FileName = "Test_200.yaml"
+	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName})
+	libraryUtils.RunStaticTest(testContent, t)
+	libraryUtils.RunMultiThreadedStaticTest(testContent, t)
+}
+
+func Test_v210_Devfile(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddParent = false
+	testContent.EditContent = false
+	testContent.FileName = "Test_210.yaml"
+	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName})
+	libraryUtils.RunStaticTest(testContent, t)
+	libraryUtils.RunMultiThreadedStaticTest(testContent, t)
+}
+
+func Test_v220_Devfile(t *testing.T) {
+	testContent := commonUtils.TestContent{}
+	testContent.AddParent = false
+	testContent.EditContent = false
+	testContent.FileName = "Test_220.yaml"
+	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName})
+	libraryUtils.RunStaticTest(testContent, t)
+
 }
 
 //Create kube client and context and set as ParserArgs for Parent Kubernetes reference test.  Corresponding main devfile is ../devfile/samples/TestParent_KubeCRD.yaml
@@ -328,8 +358,8 @@ func Test_Parent_KubeCRD(t *testing.T) {
 	parserArgs := setClientAndContextParserArgs()
 	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName})
 	libraryUtils.SetParserArgs(*parserArgs)
-	libraryUtils.RunParentTest(testContent, t)
-	libraryUtils.RunMultiThreadedParentTest(testContent, t)
+	libraryUtils.RunStaticTest(testContent, t)
+	libraryUtils.RunMultiThreadedStaticTest(testContent, t)
 }
 
 func Test_Parent_RegistryURL(t *testing.T) {
@@ -338,8 +368,8 @@ func Test_Parent_RegistryURL(t *testing.T) {
 	testContent.EditContent = false
 	testContent.FileName = "Test_Parent_RegistryURL.yaml"
 	libraryUtils.CopyDevfileSamples(t, []string{testContent.FileName})
-	libraryUtils.RunParentTest(testContent, t)
-	libraryUtils.RunMultiThreadedParentTest(testContent, t)
+	libraryUtils.RunStaticTest(testContent, t)
+	libraryUtils.RunMultiThreadedStaticTest(testContent, t)
 }
 
 func Test_Everything(t *testing.T) {
