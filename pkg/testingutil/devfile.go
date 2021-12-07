@@ -3,6 +3,15 @@ package testingutil
 import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
+	"github.com/devfile/library/pkg/devfile/parser/data"
+	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+)
+
+var (
+	isFalse = false
+	isTrue  = true
 )
 
 // GetFakeContainerComponent returns a fake container component for testing.
@@ -214,4 +223,271 @@ func GetDockerImageTestComponentPluginOverride(div DockerImageValues) v1.Compone
 	}
 
 	return comp
+}
+
+// GetUnsetBooleanDevfileObj returns a DevfileData object that contains unset boolean properties
+func GetUnsetBooleanDevfileTestData(apiVersion string) (devfileData data.DevfileData, err error) {
+	devfileData = &v2.DevfileV2{
+		Devfile: v1.Devfile{
+			DevfileHeader: devfilepkg.DevfileHeader{
+				SchemaVersion: apiVersion,
+			},
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Commands: []v1.Command{
+						{
+							Id: "devrun",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{
+									CommandLine: "npm run",
+									WorkingDir:  "/projects/nodejs-starter",
+								},
+							},
+						},
+						{
+							Id: "testrun",
+							CommandUnion: v1.CommandUnion{
+								Apply: &v1.ApplyCommand{
+									LabeledCommand: v1.LabeledCommand{
+										BaseCommand: v1.BaseCommand{
+											Group: &v1.CommandGroup{
+												Kind: v1.BuildCommandGroupKind,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Id: "allcmds",
+							CommandUnion: v1.CommandUnion{
+								Composite: &v1.CompositeCommand{
+									Commands: []string{"testrun", "devrun"},
+								},
+							},
+						},
+					},
+					Components: []v1.Component{
+						{
+							Name: "nodejs",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Annotation: &v1.Annotation{
+											Deployment: map[string]string{
+												"deploy-key1": "deploy-value1",
+											},
+											Service: map[string]string{
+												"svc-key1": "svc-value1",
+												"svc-key2": "svc-value3",
+											},
+										},
+										Image: "quay.io/nodejs-12",
+									},
+									Endpoints: []v1.Endpoint{
+										{
+											Name:       "log",
+											TargetPort: 443,
+											Annotations: map[string]string{
+												"ingress-key1": "ingress-value1",
+												"ingress-key2": "ingress-value3",
+											},
+										},
+									},
+								},
+							},
+						},
+						GetFakeVolumeComponent("volume", "2Gi"),
+						{
+							Name: "openshift",
+							ComponentUnion: v1.ComponentUnion{
+								Openshift: &v1.OpenshiftComponent{
+									K8sLikeComponent: v1.K8sLikeComponent{
+										K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+											Uri: "https://xyz.com/dir/file.yaml",
+										},
+										Endpoints: []v1.Endpoint{
+											{
+												Name:       "metrics",
+												TargetPort: 8080,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Events: &v1.Events{
+						DevWorkspaceEvents: v1.DevWorkspaceEvents{
+							PostStart: []string{"post-start-0"},
+							PostStop:  []string{"post-stop"},
+							PreStop:   []string{},
+							PreStart:  []string{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if apiVersion != string(data.APISchemaVersion200) && apiVersion != string(data.APISchemaVersion210) {
+		comp := []v1.Component{GetDockerImageTestComponent(DockerImageValues{}, nil)}
+		err = devfileData.AddComponents(comp)
+	}
+
+	return devfileData, err
+
+}
+
+//GetBooleanDevfileTestData returns a DevfileData object that contains set values for the boolean properties.  If setDefault is true, an object with the default boolean values will be returned
+func GetBooleanDevfileTestData(apiVersion string, setDefault bool) (devfileData data.DevfileData, err error) {
+
+	type boolValues struct {
+		hotReloadCapable *bool
+		secure           *bool
+		parallel         *bool
+		dedicatedPod     *bool
+		mountSources     *bool
+		isDefault        *bool
+		rootRequired     *bool
+		ephemeral        *bool
+	}
+
+	//default values according to spec
+	defaultBools := boolValues{&isFalse, &isFalse, &isFalse, &isFalse, &isTrue, &isFalse, &isFalse, &isFalse}
+	//set values will be a mix of default and inverse values
+	setBools := boolValues{&isTrue, &isTrue, &isFalse, &isTrue, &isFalse, &isFalse, &isTrue, &isFalse}
+
+	var values boolValues
+
+	if setDefault {
+		values = defaultBools
+	} else {
+		values = setBools
+	}
+
+	devfileData = &v2.DevfileV2{
+		Devfile: v1.Devfile{
+			DevfileHeader: devfilepkg.DevfileHeader{
+				SchemaVersion: apiVersion,
+			},
+			DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+				DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+					Commands: []v1.Command{
+						{
+							Id: "devrun",
+							CommandUnion: v1.CommandUnion{
+								Exec: &v1.ExecCommand{
+									CommandLine:      "npm run",
+									WorkingDir:       "/projects/nodejs-starter",
+									HotReloadCapable: values.hotReloadCapable,
+								},
+							},
+						},
+						{
+							Id: "testrun",
+							CommandUnion: v1.CommandUnion{
+								Apply: &v1.ApplyCommand{
+									LabeledCommand: v1.LabeledCommand{
+										BaseCommand: v1.BaseCommand{
+											Group: &v1.CommandGroup{
+												Kind:      v1.BuildCommandGroupKind,
+												IsDefault: values.isDefault,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Id: "allcmds",
+							CommandUnion: v1.CommandUnion{
+								Composite: &v1.CompositeCommand{
+									Commands: []string{"testrun", "devrun"},
+									Parallel: values.parallel,
+								},
+							},
+						},
+					},
+					Components: []v1.Component{
+						{
+							Name: "nodejs",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Annotation: &v1.Annotation{
+											Deployment: map[string]string{
+												"deploy-key1": "deploy-value1",
+											},
+											Service: map[string]string{
+												"svc-key1": "svc-value1",
+												"svc-key2": "svc-value3",
+											},
+										},
+										Image:        "quay.io/nodejs-12",
+										DedicatedPod: values.dedicatedPod,
+										MountSources: values.mountSources,
+									},
+									Endpoints: []v1.Endpoint{
+										{
+											Name:       "log",
+											TargetPort: 443,
+											Annotations: map[string]string{
+												"ingress-key1": "ingress-value1",
+												"ingress-key2": "ingress-value3",
+											},
+											Secure: values.secure,
+										},
+									},
+								},
+							},
+						},
+						GetFakeVolumeComponent("volume", "2Gi"),
+						{
+							Name: "openshift",
+							ComponentUnion: v1.ComponentUnion{
+								Openshift: &v1.OpenshiftComponent{
+									K8sLikeComponent: v1.K8sLikeComponent{
+										K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+											Uri: "https://xyz.com/dir/file.yaml",
+										},
+										Endpoints: []v1.Endpoint{
+											{
+												Name:       "metrics",
+												TargetPort: 8080,
+												Secure:     values.secure,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Events: &v1.Events{
+						DevWorkspaceEvents: v1.DevWorkspaceEvents{
+							PostStart: []string{"post-start-0"},
+							PostStop:  []string{"post-stop"},
+							PreStop:   []string{},
+							PreStart:  []string{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if apiVersion != string(data.APISchemaVersion200) {
+		volComponent, _ := devfileData.GetComponents(common.DevfileOptions{ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.VolumeComponentType,
+		}})
+
+		volComponent[0].Volume.Ephemeral = values.ephemeral
+	}
+
+	if apiVersion != string(data.APISchemaVersion200) && apiVersion != string(data.APISchemaVersion210) {
+		comp := []v1.Component{GetDockerImageTestComponent(DockerImageValues{RootRequired: values.rootRequired}, nil)}
+		err = devfileData.AddComponents(comp)
+	}
+
+	return devfileData, err
 }

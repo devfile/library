@@ -29,6 +29,8 @@ const schemaVersion = string(data.APISchemaVersion220)
 
 var isTrue bool = true
 var isFalse bool = false
+var apiSchemaVersions = []string{data.APISchemaVersion200.String(), data.APISchemaVersion210.String(), data.APISchemaVersion220.String()}
+
 var defaultDiv testingutil.DockerImageValues = testingutil.DockerImageValues{
 	ImageName:    "image:latest",
 	Uri:          "/local/image",
@@ -4318,6 +4320,65 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			} else if err != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "Test_parseFromKubeCRD(): Error message should match")
 			}
+		})
+	}
+}
+
+func Test_setDefaults(t *testing.T) {
+	type testType struct {
+		name        string
+		dataObj     data.DevfileData
+		wantDevFile data.DevfileData
+	}
+
+	var tests []testType
+	var version string
+
+	// set up tests for unset boolean properties
+	for i := range apiSchemaVersions {
+		version = apiSchemaVersions[i]
+		testName := fmt.Sprintf("Verify defaults on unset boolean properties for devfile %s", version)
+		want, err := testingutil.GetBooleanDevfileTestData(version, true)
+		if err != nil {
+			t.Errorf("GetBooleanDevfileTestData() unexpected error %v ", err)
+		}
+		obj, err := testingutil.GetUnsetBooleanDevfileTestData(version)
+		if err != nil {
+			t.Errorf("GetUnsetBooleanDevfileTestData() unexpected error %v ", err)
+		}
+		tests = append(tests, testType{
+			name:        testName,
+			dataObj:     obj,
+			wantDevFile: want,
+		})
+	}
+
+	//repeat tests on set boolean properties
+	for i := range apiSchemaVersions {
+		version = apiSchemaVersions[i]
+		testName := fmt.Sprintf("Verify defaults on set boolean properties for devfile %s", version)
+		obj, err := testingutil.GetBooleanDevfileTestData(version, false)
+		if err != nil {
+			t.Errorf("GetBooleanDevfileTestData() unexpected error %v ", err)
+		}
+
+		tests = append(tests, testType{
+			name:        testName,
+			dataObj:     obj,
+			wantDevFile: obj, //setDefaults should not alter properties that are explicitly set, so "want" structure should be identical
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := DevfileObj{Data: tt.dataObj}
+			err := setDefaults(d)
+			if err != nil {
+				t.Errorf("Test_setDefaults() unexpected error setting defaults %v ", err)
+			} else if err == nil && !reflect.DeepEqual(d.Data, tt.wantDevFile) {
+				t.Errorf("Test_setDefaults() error: wanted: %v, got: %v, difference at %v/ ", tt.wantDevFile, d.Data, pretty.Compare(tt.wantDevFile, tt.dataObj))
+			}
+
 		})
 	}
 }
