@@ -458,7 +458,7 @@ const JsonSchema220 = `{
             ],
             "properties": {
               "autoBuild": {
-                "description": "Defines if the image should be built during startup Default is false",
+                "description": "Defines if the image should be built during startup.\n\nDefault value is 'false'",
                 "type": "boolean"
               },
               "dockerfile": {
@@ -582,7 +582,7 @@ const JsonSchema220 = `{
             ],
             "properties": {
               "deployByDefault": {
-                "description": "Defines if the component should be deployed during startup Default is false",
+                "description": "Defines if the component should be deployed during startup.\n\nDefault value is 'false'",
                 "type": "boolean"
               },
               "endpoints": {
@@ -683,7 +683,7 @@ const JsonSchema220 = `{
             ],
             "properties": {
               "deployByDefault": {
-                "description": "Defines if the component should be deployed during startup Default is false",
+                "description": "Defines if the component should be deployed during startup.\n\nDefault value is 'false'",
                 "type": "boolean"
               },
               "endpoints": {
@@ -1341,7 +1341,7 @@ const JsonSchema220 = `{
                 ],
                 "properties": {
                   "autoBuild": {
-                    "description": "Defines if the image should be built during startup Default is false",
+                    "description": "Defines if the image should be built during startup.\n\nDefault value is 'false'",
                     "type": "boolean"
                   },
                   "dockerfile": {
@@ -1459,7 +1459,7 @@ const JsonSchema220 = `{
                 ],
                 "properties": {
                   "deployByDefault": {
-                    "description": "Defines if the component should be deployed during startup Default is false",
+                    "description": "Defines if the component should be deployed during startup.\n\nDefault value is 'false'",
                     "type": "boolean"
                   },
                   "endpoints": {
@@ -1557,7 +1557,7 @@ const JsonSchema220 = `{
                 ],
                 "properties": {
                   "deployByDefault": {
-                    "description": "Defines if the component should be deployed during startup Default is false",
+                    "description": "Defines if the component should be deployed during startup.\n\nDefault value is 'false'",
                     "type": "boolean"
                   },
                   "endpoints": {
