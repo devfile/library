@@ -160,7 +160,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 									},
 								},
 							},
-							testingutil.GetDockerImageTestComponent(divRRTrue, nil),
+							testingutil.GetDockerImageTestComponent(divRRTrue, nil, nil),
 						},
 						Events: &v1.Events{
 							DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -498,7 +498,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(divRRFalse, parentOverridesFromMainDevfile),
+									testingutil.GetDockerImageTestComponent(divRRFalse, nil, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -736,7 +736,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 										},
 									},
 									//no overrides so expected values are the same as the parent
-									testingutil.GetDockerImageTestComponent(divRRTrue, importFromUri1),
+									testingutil.GetDockerImageTestComponent(divRRTrue, nil, importFromUri1),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -1462,7 +1462,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(divRRFalse, nil),
+									testingutil.GetDockerImageTestComponent(divRRFalse, nil, nil),
 								},
 								Events: &v1.Events{
 									DevWorkspaceEvents: v1.DevWorkspaceEvents{
@@ -1600,7 +1600,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(divRRTrue, pluginOverridesFromMainDevfile),
+									testingutil.GetDockerImageTestComponent(divRRTrue, nil, pluginOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -3107,7 +3107,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 									},
 								},
 							},
-							testingutil.GetDockerImageTestComponent(defaultDiv, nil),
+							testingutil.GetDockerImageTestComponent(defaultDiv, nil, nil),
 						},
 					},
 				},
@@ -3249,7 +3249,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 							},
 						},
 					},
-					testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
+					testingutil.GetDockerImageTestComponent(div, nil, parentOverridesFromMainDevfile),
 					{
 						Name: "runtime2",
 						ComponentUnion: v1.ComponentUnion{
@@ -3389,7 +3389,7 @@ func Test_parseParentFromRegistry(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(defaultDiv, importFromRegistry),
+									testingutil.GetDockerImageTestComponent(defaultDiv, nil, importFromRegistry),
 									{
 										Name: "runtime2",
 										ComponentUnion: v1.ComponentUnion{
@@ -3503,7 +3503,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						},
 					},
 				},
-				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil, nil),
 			},
 		},
 	}
@@ -3522,7 +3522,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 						},
 					},
 				},
-				testingutil.GetDockerImageTestComponent(defaultDiv, nil),
+				testingutil.GetDockerImageTestComponent(defaultDiv, nil, nil),
 			},
 		},
 	}
@@ -3626,7 +3626,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(div, parentOverridesFromMainDevfile),
+									testingutil.GetDockerImageTestComponent(div, nil, parentOverridesFromMainDevfile),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -3719,7 +3719,7 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 											},
 										},
 									},
-									testingutil.GetDockerImageTestComponent(defaultDiv, importFromKubeCRD),
+									testingutil.GetDockerImageTestComponent(defaultDiv, nil, importFromKubeCRD),
 									{
 										Name: "runtime",
 										ComponentUnion: v1.ComponentUnion{
@@ -4490,7 +4490,7 @@ func getUnsetBooleanDevfileTestData(apiVersion string) (devfileData data.Devfile
 	}
 
 	if apiVersion != string(data.APISchemaVersion200) && apiVersion != string(data.APISchemaVersion210) {
-		comp := []v1.Component{testingutil.GetDockerImageTestComponent(testingutil.DockerImageValues{}, nil)}
+		comp := []v1.Component{testingutil.GetDockerImageTestComponent(testingutil.DockerImageValues{}, nil, nil)}
 		err = devfileData.AddComponents(comp)
 	}
 
@@ -4510,12 +4510,14 @@ func getBooleanDevfileTestData(apiVersion string, setDefault bool) (devfileData 
 		isDefault        *bool
 		rootRequired     *bool
 		ephemeral        *bool
+		autoBuild        *bool
+		deployByDefaul   *bool
 	}
 
 	//default values according to spec
-	defaultBools := boolValues{&isFalse, &isFalse, &isFalse, &isFalse, &isTrue, &isFalse, &isFalse, &isFalse}
+	defaultBools := boolValues{&isFalse, &isFalse, &isFalse, &isFalse, &isTrue, &isFalse, &isFalse, &isFalse, &isFalse, &isFalse}
 	//set values will be a mix of default and inverse values
-	setBools := boolValues{&isTrue, &isTrue, &isFalse, &isTrue, &isFalse, &isFalse, &isTrue, &isFalse}
+	setBools := boolValues{&isTrue, &isTrue, &isFalse, &isTrue, &isFalse, &isFalse, &isTrue, &isFalse, &isTrue, &isFalse}
 
 	var values boolValues
 
@@ -4644,8 +4646,14 @@ func getBooleanDevfileTestData(apiVersion string, setDefault bool) (devfileData 
 	}
 
 	if apiVersion != string(data.APISchemaVersion200) && apiVersion != string(data.APISchemaVersion210) {
-		comp := []v1.Component{testingutil.GetDockerImageTestComponent(testingutil.DockerImageValues{RootRequired: values.rootRequired}, nil)}
+		comp := []v1.Component{testingutil.GetDockerImageTestComponent(testingutil.DockerImageValues{RootRequired: values.rootRequired}, values.autoBuild, nil)}
 		err = devfileData.AddComponents(comp)
+
+		openshiftComponent, _ := devfileData.GetComponents(common.DevfileOptions{ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.OpenshiftComponentType,
+		}})
+		openshiftComponent[0].Openshift.DeployByDefault = values.deployByDefaul
+
 	}
 
 	return devfileData, err
