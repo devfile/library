@@ -97,7 +97,7 @@ func TestConvertEnvs(t *testing.T) {
 }
 
 func TestConvertPorts(t *testing.T) {
-	endpointsNames := []string{"endpoint1", "endpoint2"}
+	endpointsNames := []string{"endpoint1", "endpoint2", "a-very-long-port-name-before-endpoint-length-limit-8080"}
 	endpointsPorts := []int{8080, 9090}
 	tests := []struct {
 		name      string
@@ -114,7 +114,23 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          "8080-tcp",
+					Name:          endpointsNames[0],
+					ContainerPort: int32(endpointsPorts[0]),
+					Protocol:      "TCP",
+				},
+			},
+		},
+		{
+			name: "One Endpoint with >15 chars length",
+			endpoints: []v1.Endpoint{
+				{
+					Name:       endpointsNames[2],
+					TargetPort: endpointsPorts[0],
+				},
+			},
+			want: []corev1.ContainerPort{
+				{
+					Name:          "port-8080",
 					ContainerPort: int32(endpointsPorts[0]),
 					Protocol:      "TCP",
 				},
@@ -134,12 +150,12 @@ func TestConvertPorts(t *testing.T) {
 			},
 			want: []corev1.ContainerPort{
 				{
-					Name:          "8080-tcp",
+					Name:          endpointsNames[0],
 					ContainerPort: int32(endpointsPorts[0]),
 					Protocol:      "TCP",
 				},
 				{
-					Name:          "9090-tcp",
+					Name:          endpointsNames[1],
 					ContainerPort: int32(endpointsPorts[1]),
 					Protocol:      "TCP",
 				},
@@ -652,7 +668,7 @@ func TestGetPodTemplateSpec(t *testing.T) {
 
 func TestGetServiceSpec(t *testing.T) {
 
-	endpointNames := []string{"port-8080-1", "port-8080-2", "port-9090"}
+	endpointNames := []string{"port-8080-url", "port-9090-url", "a-very-long-port-name-before-endpoint-length-limit-8080"}
 
 	tests := []struct {
 		name                string
@@ -662,36 +678,6 @@ func TestGetServiceSpec(t *testing.T) {
 		filterOptions       common.DevfileOptions
 		wantPorts           []corev1.ServicePort
 	}{
-		{
-			name: "multiple endpoints share the same port",
-			containerComponents: []v1.Component{
-				{
-					Name: "testcontainer1",
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Endpoints: []v1.Endpoint{
-								{
-									Name:       endpointNames[0],
-									TargetPort: 8080,
-								},
-								{
-									Name:       endpointNames[1],
-									TargetPort: 8080,
-								},
-							},
-						},
-					},
-				},
-			},
-			labels: map[string]string{},
-			wantPorts: []corev1.ServicePort{
-				{
-					Name:       "port-8080",
-					Port:       8080,
-					TargetPort: intstr.FromInt(8080),
-				},
-			},
-		},
 		{
 			name: "multiple endpoints have different ports",
 			containerComponents: []v1.Component{
@@ -705,8 +691,41 @@ func TestGetServiceSpec(t *testing.T) {
 									TargetPort: 8080,
 								},
 								{
-									Name:       endpointNames[2],
+									Name:       endpointNames[1],
 									TargetPort: 9090,
+								},
+							},
+						},
+					},
+				},
+			},
+			labels: map[string]string{
+				"component": "testcomponent",
+			},
+			wantPorts: []corev1.ServicePort{
+				{
+					Name:       endpointNames[0],
+					Port:       8080,
+					TargetPort: intstr.FromInt(8080),
+				},
+				{
+					Name:       endpointNames[1],
+					Port:       9090,
+					TargetPort: intstr.FromInt(9090),
+				},
+			},
+		},
+		{
+			name: "long port name before endpoint length limit to <=15",
+			containerComponents: []v1.Component{
+				{
+					Name: "testcontainer1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Endpoints: []v1.Endpoint{
+								{
+									Name:       endpointNames[2],
+									TargetPort: 8080,
 								},
 							},
 						},
@@ -721,11 +740,6 @@ func TestGetServiceSpec(t *testing.T) {
 					Name:       "port-8080",
 					Port:       8080,
 					TargetPort: intstr.FromInt(8080),
-				},
-				{
-					Name:       "port-9090",
-					Port:       9090,
-					TargetPort: intstr.FromInt(9090),
 				},
 			},
 		},
@@ -755,7 +769,7 @@ func TestGetServiceSpec(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Endpoints: []v1.Endpoint{
 								{
-									Name:       endpointNames[2],
+									Name:       endpointNames[1],
 									TargetPort: 9090,
 								},
 							},
@@ -768,7 +782,7 @@ func TestGetServiceSpec(t *testing.T) {
 			},
 			wantPorts: []corev1.ServicePort{
 				{
-					Name:       "port-9090",
+					Name:       endpointNames[1],
 					Port:       9090,
 					TargetPort: intstr.FromInt(9090),
 				},
@@ -784,7 +798,7 @@ func TestGetServiceSpec(t *testing.T) {
 						Container: &v1.ContainerComponent{
 							Endpoints: []v1.Endpoint{
 								{
-									Name:       endpointNames[2],
+									Name:       endpointNames[1],
 									TargetPort: 9090,
 								},
 							},

@@ -347,7 +347,7 @@ const JsonSchema220 = `{
                     },
                     "name": {
                       "type": "string",
-                      "maxLength": 63,
+                      "maxLength": 15,
                       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                     },
                     "path": {
@@ -372,6 +372,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
+                      "description": "The port number should be unique.",
                       "type": "integer"
                     }
                   },
@@ -618,7 +619,7 @@ const JsonSchema220 = `{
                     },
                     "name": {
                       "type": "string",
-                      "maxLength": 63,
+                      "maxLength": 15,
                       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                     },
                     "path": {
@@ -643,6 +644,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
+                      "description": "The port number should be unique.",
                       "type": "integer"
                     }
                   },
@@ -719,7 +721,7 @@ const JsonSchema220 = `{
                     },
                     "name": {
                       "type": "string",
-                      "maxLength": 63,
+                      "maxLength": 15,
                       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                     },
                     "path": {
@@ -744,6 +746,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
+                      "description": "The port number should be unique.",
                       "type": "integer"
                     }
                   },
@@ -1231,7 +1234,7 @@ const JsonSchema220 = `{
                         },
                         "name": {
                           "type": "string",
-                          "maxLength": 63,
+                          "maxLength": 15,
                           "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                         },
                         "path": {
@@ -1255,6 +1258,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
+                          "description": "The port number should be unique.",
                           "type": "integer"
                         }
                       },
@@ -1493,7 +1497,7 @@ const JsonSchema220 = `{
                         },
                         "name": {
                           "type": "string",
-                          "maxLength": 63,
+                          "maxLength": 15,
                           "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                         },
                         "path": {
@@ -1517,6 +1521,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
+                          "description": "The port number should be unique.",
                           "type": "integer"
                         }
                       },
@@ -1591,7 +1596,7 @@ const JsonSchema220 = `{
                         },
                         "name": {
                           "type": "string",
-                          "maxLength": 63,
+                          "maxLength": 15,
                           "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
                         },
                         "path": {
@@ -1615,6 +1620,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
+                          "description": "The port number should be unique.",
                           "type": "integer"
                         }
                       },
