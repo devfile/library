@@ -911,7 +911,7 @@ func TestGetService(t *testing.T) {
 				Spec: corev1.ServiceSpec{
 					Ports: []corev1.ServicePort{
 						{
-							Name:       "port-8080",
+							Name:       "http-8080",
 							Port:       8080,
 							TargetPort: intstr.FromInt(8080),
 						},
@@ -949,7 +949,7 @@ func TestGetService(t *testing.T) {
 				Spec: corev1.ServiceSpec{
 					Ports: []corev1.ServicePort{
 						{
-							Name:       "port-8080",
+							Name:       "http-8080",
 							Port:       8080,
 							TargetPort: intstr.FromInt(8080),
 						},
