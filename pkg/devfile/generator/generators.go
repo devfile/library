@@ -2,8 +2,6 @@ package generator
 
 import (
 	"fmt"
-	"k8s.io/utils/pointer"
-
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/pkg/devfile/parser"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
@@ -159,7 +157,7 @@ type DeploymentParams struct {
 	Containers        []corev1.Container
 	Volumes           []corev1.Volume
 	PodSelectorLabels map[string]string
-	Replicas          int32
+	Replicas          *int32
 }
 
 // GetDeployment gets a deployment object
@@ -189,8 +187,8 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		Spec:       *getDeploymentSpec(deploySpecParams),
 	}
 
-	if deployParams.Replicas != 0 {
-		deployment.Spec.Replicas = pointer.Int32Ptr(deployParams.Replicas)
+	if deployParams.Replicas != nil {
+		deployment.Spec.Replicas = deployParams.Replicas
 	}
 
 	return deployment, nil

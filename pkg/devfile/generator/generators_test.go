@@ -1051,7 +1051,7 @@ func TestGetDeployment(t *testing.T) {
 					},
 				},
 				Containers: containers,
-				Replicas:   1,
+				Replicas:   pointer.Int32Ptr(1),
 			},
 			expected: appsv1.Deployment{
 				ObjectMeta: objectMetaDedicatedPod,
