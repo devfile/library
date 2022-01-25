@@ -236,7 +236,7 @@ type deploymentSpecParams struct {
 }
 
 // getDeploymentSpec gets a deployment spec
-func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.DeploymentSpec {
+func getDeploymentSpec(deploySpecParams deploymentSpecParams, deployParams DeploymentParams) *appsv1.DeploymentSpec {
 	deploymentSpec := &appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
 			Type: appsv1.RecreateDeploymentStrategyType,
@@ -245,6 +245,10 @@ func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.Deployment
 			MatchLabels: deploySpecParams.PodSelectorLabels,
 		},
 		Template: deploySpecParams.PodTemplateSpec,
+	}
+
+	if deployParams.Replicas != nil {
+		deploymentSpec.Replicas = deployParams.Replicas
 	}
 
 	return deploymentSpec

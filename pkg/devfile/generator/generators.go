@@ -184,11 +184,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 	deployment := &appsv1.Deployment{
 		TypeMeta:   deployParams.TypeMeta,
 		ObjectMeta: deployParams.ObjectMeta,
-		Spec:       *getDeploymentSpec(deploySpecParams),
-	}
-
-	if deployParams.Replicas != nil {
-		deployment.Spec.Replicas = deployParams.Replicas
+		Spec:       *getDeploymentSpec(deploySpecParams, deployParams),
 	}
 
 	return deployment, nil
