@@ -173,6 +173,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 	deploySpecParams := deploymentSpecParams{
 		PodTemplateSpec:   *getPodTemplateSpec(podTemplateSpecParams),
 		PodSelectorLabels: deployParams.PodSelectorLabels,
+		Replicas:          deployParams.Replicas,
 	}
 
 	containerAnnotations, err := getContainerAnnotations(devfileObj, common.DevfileOptions{})
@@ -184,7 +185,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 	deployment := &appsv1.Deployment{
 		TypeMeta:   deployParams.TypeMeta,
 		ObjectMeta: deployParams.ObjectMeta,
-		Spec:       *getDeploymentSpec(deploySpecParams, deployParams),
+		Spec:       *getDeploymentSpec(deploySpecParams),
 	}
 
 	return deployment, nil

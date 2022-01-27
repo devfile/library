@@ -233,10 +233,11 @@ func getPodTemplateSpec(podTemplateSpecParams podTemplateSpecParams) *corev1.Pod
 type deploymentSpecParams struct {
 	PodTemplateSpec   corev1.PodTemplateSpec
 	PodSelectorLabels map[string]string
+	Replicas          *int32
 }
 
 // getDeploymentSpec gets a deployment spec
-func getDeploymentSpec(deploySpecParams deploymentSpecParams, deployParams DeploymentParams) *appsv1.DeploymentSpec {
+func getDeploymentSpec(deploySpecParams deploymentSpecParams) *appsv1.DeploymentSpec {
 	deploymentSpec := &appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
 			Type: appsv1.RecreateDeploymentStrategyType,
@@ -245,10 +246,7 @@ func getDeploymentSpec(deploySpecParams deploymentSpecParams, deployParams Deplo
 			MatchLabels: deploySpecParams.PodSelectorLabels,
 		},
 		Template: deploySpecParams.PodTemplateSpec,
-	}
-
-	if deployParams.Replicas != nil {
-		deploymentSpec.Replicas = deployParams.Replicas
+		Replicas: deploySpecParams.Replicas,
 	}
 
 	return deploymentSpec
