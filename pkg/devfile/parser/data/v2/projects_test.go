@@ -78,6 +78,48 @@ func TestDevfile200_GetProjects(t *testing.T) {
 			wantProjects: []string{"project1"},
 		},
 		{
+			name: "Get project with the specified name",
+			currentProjects: []v1.Project{
+				{
+					Name: "project1",
+					ProjectSource: v1.ProjectSource{
+						Git: &v1.GitProjectSource{},
+					},
+				},
+				{
+					Name: "project2",
+					ProjectSource: v1.ProjectSource{
+						Zip: &v1.ZipProjectSource{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "project2",
+			},
+			wantProjects: []string{"project2"},
+		},
+		{
+			name: "project name not found",
+			currentProjects: []v1.Project{
+				{
+					Name: "project1",
+					ProjectSource: v1.ProjectSource{
+						Git: &v1.GitProjectSource{},
+					},
+				},
+				{
+					Name: "project2",
+					ProjectSource: v1.ProjectSource{
+						Zip: &v1.ZipProjectSource{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "project3",
+			},
+			wantProjects: []string{},
+		},
+		{
 			name: "Wrong filter for projects",
 			currentProjects: []v1.Project{
 				{
@@ -492,6 +534,48 @@ func TestDevfile200_GetStarterProjects(t *testing.T) {
 				},
 			},
 			wantStarterProjects: []string{"project1", "project3"},
+		},
+		{
+			name: "Get starter project with specified name",
+			currentStarterProjects: []v1.StarterProject{
+				{
+					Name: "project1",
+					ProjectSource: v1.ProjectSource{
+						Git: &v1.GitProjectSource{},
+					},
+				},
+				{
+					Name: "project2",
+					ProjectSource: v1.ProjectSource{
+						Zip: &v1.ZipProjectSource{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "project2",
+			},
+			wantStarterProjects: []string{"project2"},
+		},
+		{
+			name: "starter project name not found",
+			currentStarterProjects: []v1.StarterProject{
+				{
+					Name: "project1",
+					ProjectSource: v1.ProjectSource{
+						Git: &v1.GitProjectSource{},
+					},
+				},
+				{
+					Name: "project2",
+					ProjectSource: v1.ProjectSource{
+						Zip: &v1.ZipProjectSource{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "project3",
+			},
+			wantStarterProjects: []string{},
 		},
 		{
 			name: "Wrong filter for starter projects",

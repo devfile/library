@@ -361,6 +361,54 @@ func TestGetDevfileComponents(t *testing.T) {
 			wantComponents: []string{"comp3"},
 		},
 		{
+			name: "Get component with the specified name",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp3",
+					ComponentUnion: v1.ComponentUnion{
+						Volume: &v1.VolumeComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "comp3",
+			},
+			wantComponents: []string{"comp3"},
+		},
+		{
+			name: "component name not found",
+			component: []v1.Component{
+				{
+					Name: "comp1",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+				{
+					Name: "comp2",
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "comp3",
+			},
+			wantComponents: []string{},
+		},
+		{
 			name: "Wrong filter for component",
 			component: []v1.Component{
 				{

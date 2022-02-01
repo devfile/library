@@ -138,6 +138,54 @@ func TestDevfile200_GetCommands(t *testing.T) {
 			wantCommands: []string{"command3"},
 		},
 		{
+			name: "Get command with the specified name",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+				{
+					Id: "command3",
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "command3",
+			},
+			wantCommands: []string{"command3"},
+		},
+		{
+			name: "command name not found",
+			currentCommands: []v1.Command{
+				{
+					Id: "command1",
+					CommandUnion: v1.CommandUnion{
+						Exec: &v1.ExecCommand{},
+					},
+				},
+				{
+					Id: "command2",
+					CommandUnion: v1.CommandUnion{
+						Composite: &v1.CompositeCommand{},
+					},
+				},
+			},
+			filterOptions: common.DevfileOptions{
+				FilterByName: "command3",
+			},
+			wantCommands: []string{},
+		},
+		{
 			name: "Wrong filter for commands",
 			currentCommands: []v1.Command{
 				{
