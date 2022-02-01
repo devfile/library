@@ -6,6 +6,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"reflect"
 	"strings"
 	"testing"
@@ -1000,14 +1001,6 @@ func TestGetDeployment(t *testing.T) {
 			Name: "container2",
 		},
 	}
-	deploymentParams := DeploymentParams{
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{
-				"preserved-key": "preserved-value",
-			},
-		},
-		Containers: containers,
-	}
 
 	objectMeta := metav1.ObjectMeta{
 		Annotations: map[string]string{
@@ -1027,6 +1020,7 @@ func TestGetDeployment(t *testing.T) {
 	tests := []struct {
 		name                string
 		containerComponents []v1.Component
+		deploymentParams    DeploymentParams
 		expected            appsv1.Deployment
 	}{
 		{
@@ -1050,6 +1044,15 @@ func TestGetDeployment(t *testing.T) {
 					},
 				}, &trueBool),
 			},
+			deploymentParams: DeploymentParams{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"preserved-key": "preserved-value",
+					},
+				},
+				Containers: containers,
+				Replicas:   pointer.Int32Ptr(1),
+			},
 			expected: appsv1.Deployment{
 				ObjectMeta: objectMetaDedicatedPod,
 				Spec: appsv1.DeploymentSpec{
@@ -1065,6 +1068,7 @@ func TestGetDeployment(t *testing.T) {
 							Containers: containers,
 						},
 					},
+					Replicas: pointer.Int32Ptr(1),
 				},
 			},
 		},
@@ -1086,6 +1090,14 @@ func TestGetDeployment(t *testing.T) {
 						"key2": "value2",
 					},
 				}, nil),
+			},
+			deploymentParams: DeploymentParams{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"preserved-key": "preserved-value",
+					},
+				},
+				Containers: containers,
 			},
 			expected: appsv1.Deployment{
 				ObjectMeta: objectMeta,
@@ -1125,7 +1137,7 @@ func TestGetDeployment(t *testing.T) {
 			devObj := parser.DevfileObj{
 				Data: mockDevfileData,
 			}
-			deploy, err := GetDeployment(devObj, deploymentParams)
+			deploy, err := GetDeployment(devObj, tt.deploymentParams)
 			// Checks for unexpected error cases
 			if err != nil {
 				t.Errorf("TestGetDeployment(): unexpected error %v", err)
