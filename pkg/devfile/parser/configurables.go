@@ -60,7 +60,8 @@ func (d DevfileObj) RemoveEnvVars(keys []string) (err error) {
 	return d.WriteYamlDevfile()
 }
 
-// SetPorts converts ports to endpoints, adds to a devfile
+// SetPorts accepts a map of container name and the port numbers to be set;
+// it converts ports to endpoints, and adds to a devfile
 // Example of portsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
 func (d DevfileObj) SetPorts(portsMap map[string][]string) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
@@ -80,7 +81,8 @@ func (d DevfileObj) SetPorts(portsMap map[string][]string) error {
 	return d.WriteYamlDevfile()
 }
 
-// RemovePorts removes all container endpoints from a devfile
+// RemovePorts accepts a map of container name and the port numbers to be removed;
+// it removes the container endpoints with the specified port numbers from a devfile
 // Example of portsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
 func (d DevfileObj) RemovePorts(portsMap map[string][]string) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
@@ -238,7 +240,7 @@ func GetContainerPortsFromStrings(ports []string) ([]corev1.ContainerPort, error
 	return containerPorts, nil
 }
 
-// RemovePortsFromList removes the ports based on the ports provided
+// RemovePortsFromList removes the ports from a given Endpoint list based on the provided port numbers
 // and returns a new list of Endpoint
 func RemovePortsFromList(endpoints []v1.Endpoint, ports []string) ([]v1.Endpoint, error) {
 	// create an array of ports of the endpoints to easily search for port(s)
