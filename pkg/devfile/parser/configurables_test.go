@@ -22,6 +22,7 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 		listToRemove   []string
 		currentDevfile DevfileObj
 		wantDevFile    DevfileObj
+		wantRemoveErr  bool
 	}{
 		{
 			name: "add and remove env vars",
@@ -122,6 +123,21 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "remove non-existent env vars",
+			listToAdd: []v1.EnvVar{
+				{
+					Name:  "DATABASE_PASSWORD",
+					Value: "苦痛",
+				},
+			},
+			listToRemove: []string{
+				"PORT",
+				"NON_EXISTENT_KEY",
+			},
+			currentDevfile: testDevfileObj(fs),
+			wantRemoveErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -135,11 +151,11 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 
 			err = tt.currentDevfile.RemoveEnvVars(tt.listToRemove)
 
-			if err != nil {
+			if (err != nil) != tt.wantRemoveErr {
 				t.Errorf("TestAddAndRemoveEnvVars() unexpected error while removing env vars %+v", err.Error())
 			}
 
-			if !reflect.DeepEqual(tt.currentDevfile.Data, tt.wantDevFile.Data) {
+			if !tt.wantRemoveErr && !reflect.DeepEqual(tt.currentDevfile.Data, tt.wantDevFile.Data) {
 				t.Errorf("TestAddAndRemoveEnvVars() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, tt.currentDevfile, pretty.Compare(tt.currentDevfile.Data, tt.wantDevFile.Data))
 			}
 
@@ -159,6 +175,7 @@ func TestSetAndRemovePorts(t *testing.T) {
 		portToRemove   map[string][]string
 		currentDevfile DevfileObj
 		wantDevFile    DevfileObj
+		wantRemoveErr  bool
 	}{
 		{
 			name:           "add and remove ports",
@@ -240,6 +257,13 @@ func TestSetAndRemovePorts(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:           "remove non-existent ports",
+			portToSet:      map[string][]string{"runtime": {"9000"}},
+			portToRemove:   map[string][]string{"runtime": {"3050"}},
+			currentDevfile: testDevfileObj(fs),
+			wantRemoveErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -253,14 +277,13 @@ func TestSetAndRemovePorts(t *testing.T) {
 
 			err = tt.currentDevfile.RemovePorts(tt.portToRemove)
 
-			if err != nil {
+			if (err != nil) != tt.wantRemoveErr {
 				t.Errorf("TestSetAndRemovePorts() unexpected error while removing ports %+v", err.Error())
 			}
 
-			if !reflect.DeepEqual(tt.currentDevfile.Data, tt.wantDevFile.Data) {
+			if !tt.wantRemoveErr && !reflect.DeepEqual(tt.currentDevfile.Data, tt.wantDevFile.Data) {
 				t.Errorf("TestSetAndRemovePorts() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, tt.currentDevfile, pretty.Compare(tt.currentDevfile.Data, tt.wantDevFile.Data))
 			}
-
 		})
 	}
 

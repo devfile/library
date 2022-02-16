@@ -61,7 +61,7 @@ func (d DevfileObj) RemoveEnvVars(keys []string) (err error) {
 }
 
 // SetPorts accepts a map of container name and the port numbers to be set;
-// it converts ports to endpoints, and adds to a devfile
+// it converts ports to endpoints, sets the endpoint to a given container name, and adds to a devfile
 // Example of portsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
 func (d DevfileObj) SetPorts(portsMap map[string][]string) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
@@ -243,26 +243,36 @@ func GetContainerPortsFromStrings(ports []string) ([]corev1.ContainerPort, error
 // RemovePortsFromList removes the ports from a given Endpoint list based on the provided port numbers
 // and returns a new list of Endpoint
 func RemovePortsFromList(endpoints []v1.Endpoint, ports []string) ([]v1.Endpoint, error) {
-	// create an array of ports of the endpoints to easily search for port(s)
+	// convert the array of Endpoint to a map such that it can easily search for port(s)
 	// to remove from the component
-	portList := []string{}
+	portInEndpoint := map[string]bool{}
 	for _, ep := range endpoints {
-		portList = append(portList, strconv.Itoa(ep.TargetPort))
+		port := strconv.Itoa(ep.TargetPort)
+		if !portInEndpoint[port] {
+			portInEndpoint[port] = true
+		}
 	}
 
+	// convert the array of ports to a map so that it can do a fast search for port(s)
+	// to remove from the component
+	portsToBeRemoved := map[string]bool{}
+
 	// now check if the port(s) requested for removal exists in
-	// the ports set for the component
+	// the ports currently present in the component;
+	// if a port requested for removal is not currently present, then raise an error
+	// else add the port to the portsToBeRemoved map
 	for _, port := range ports {
-		if !InArray(portList, port) {
+		if !portInEndpoint[port] {
 			return nil, fmt.Errorf("unable to find port %q in the component", port)
 		}
+		portsToBeRemoved[port] = true
 	}
 
 	// finally, let's remove the port(s) requested by the user
 	newEndpointsList := []v1.Endpoint{}
 	for _, ep := range endpoints {
-		// if the port is in the ports we skip it
-		if InArray(ports, strconv.Itoa(ep.TargetPort)) {
+		// if the port is in the port(s)(to be removed), we skip it
+		if portsToBeRemoved[strconv.Itoa(ep.TargetPort)] {
 			continue
 		}
 		newEndpointsList = append(newEndpointsList, ep)
@@ -273,26 +283,34 @@ func RemovePortsFromList(endpoints []v1.Endpoint, ports []string) ([]v1.Endpoint
 // RemoveEnvVarsFromList removes the env variables based on the keys provided
 // and returns a new EnvVarList
 func RemoveEnvVarsFromList(envVarList []v1.EnvVar, keys []string) ([]v1.EnvVar, error) {
-	// convert the envVarList map to an array to easily search for env var(s)
+	// convert the array of envVarList to a map such that it can easily search for env var(s)
 	// to remove from the component
-	envVarListArray := []string{}
+	envVarListMap := map[string]bool{}
 	for _, env := range envVarList {
-		envVarListArray = append(envVarListArray, env.Name)
+		if !envVarListMap[env.Name] {
+			envVarListMap[env.Name] = true
+		}
 	}
 
+	// convert the array of keys to a map so that it can do a fast search for environment variable(s)
+	// to remove from the component
+	envVarToBeRemoved := map[string]bool{}
 	// now check if the environment variable(s) requested for removal exists in
-	// the env vars set for the component
+	// the env vars currently set in the component
+	// if an env var requested for removal is not currently set, then raise an error
+	// else add the env var to the envVarToBeRemoved map
 	for _, key := range keys {
-		if !InArray(envVarListArray, key) {
+		if !envVarListMap[key] {
 			return nil, fmt.Errorf("unable to find environment variable %s in the component", key)
 		}
+		envVarToBeRemoved[key] = true
 	}
 
 	// finally, let's remove the environment variables(s) requested by the user
 	newEnvVarList := []v1.EnvVar{}
 	for _, envVar := range envVarList {
-		// if the env is in the keys we skip it
-		if InArray(keys, envVar.Name) {
+		// if the env is in the keys(env var(s) to be removed), we skip it
+		if envVarToBeRemoved[envVar.Name] {
 			continue
 		}
 		newEnvVarList = append(newEnvVarList, envVar)
@@ -321,14 +339,4 @@ func Merge(original []v1.EnvVar, other []v1.EnvVar) []v1.EnvVar {
 
 	return dedupNewEvl
 
-}
-
-// In checks if the value is in the array
-func InArray(arr []string, value string) bool {
-	for _, item := range arr {
-		if item == value {
-			return true
-		}
-	}
-	return false
 }
