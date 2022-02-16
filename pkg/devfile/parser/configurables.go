@@ -27,30 +27,33 @@ func (d DevfileObj) SetMetadataName(name string) error {
 	return d.WriteYamlDevfile()
 }
 
-// AddEnvVars adds environment variables to all the components in a devfile
-func (d DevfileObj) AddEnvVars(otherList []v1.EnvVar) error {
+// AddEnvVars accepts a map of container name mapped to an array of the env vars to be set;
+// it adds the envirnoment variables to a given container name, and writes to the devfile
+// Example of containerEnvMap : {"runtime": {{Name: "Foo", Value: "Bar"}}}
+func (d DevfileObj) AddEnvVars(containerEnvMap map[string][]v1.EnvVar) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
 		return err
 	}
 	for _, component := range components {
 		if component.Container != nil {
-			component.Container.Env = Merge(component.Container.Env, otherList)
+			component.Container.Env = Merge(component.Container.Env, containerEnvMap[component.Name])
 			d.Data.UpdateComponent(component)
 		}
 	}
 	return d.WriteYamlDevfile()
 }
 
-// RemoveEnvVars removes the environment variables which have the keys from all the components in a devfile
-func (d DevfileObj) RemoveEnvVars(keys []string) (err error) {
+// RemoveEnvVars accepts a map of container name mapped to an array of environment variables to be removed;
+// it removes the env vars from the specified container name and writes it to the devfile
+func (d DevfileObj) RemoveEnvVars(containerEnvMap map[string][]string) (err error) {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
 		return err
 	}
 	for _, component := range components {
 		if component.Container != nil {
-			component.Container.Env, err = RemoveEnvVarsFromList(component.Container.Env, keys)
+			component.Container.Env, err = RemoveEnvVarsFromList(component.Container.Env, containerEnvMap[component.Name])
 			if err != nil {
 				return err
 			}
@@ -60,16 +63,16 @@ func (d DevfileObj) RemoveEnvVars(keys []string) (err error) {
 	return d.WriteYamlDevfile()
 }
 
-// SetPorts accepts a map of container name and the port numbers to be set;
-// it converts ports to endpoints, sets the endpoint to a given container name, and adds to a devfile
-// Example of portsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
-func (d DevfileObj) SetPorts(portsMap map[string][]string) error {
+// SetPorts accepts a map of container name mapped to an array of port numbers to be set;
+// it converts ports to endpoints, sets the endpoint to a given container name, and writes to the devfile
+// Example of containerPortsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
+func (d DevfileObj) SetPorts(containerPortsMap map[string][]string) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
 		return err
 	}
 	for _, component := range components {
-		endpoints, err := portsToEndpoints(portsMap[component.Name]...)
+		endpoints, err := portsToEndpoints(containerPortsMap[component.Name]...)
 		if err != nil {
 			return err
 		}
@@ -81,17 +84,17 @@ func (d DevfileObj) SetPorts(portsMap map[string][]string) error {
 	return d.WriteYamlDevfile()
 }
 
-// RemovePorts accepts a map of container name and the port numbers to be removed;
-// it removes the container endpoints with the specified port numbers from a devfile
-// Example of portsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
-func (d DevfileObj) RemovePorts(portsMap map[string][]string) error {
+// RemovePorts accepts a map of container name mapped to an array of port numbers to be removed;
+// it removes the container endpoints with the specified port numbers of the specified container, and writes to the devfile
+// Example of containerPortsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
+func (d DevfileObj) RemovePorts(containerPortsMap map[string][]string) error {
 	components, err := d.Data.GetComponents(common.DevfileOptions{})
 	if err != nil {
 		return err
 	}
 	for _, component := range components {
 		if component.Container != nil {
-			component.Container.Endpoints, err = RemovePortsFromList(component.Container.Endpoints, portsMap[component.Name])
+			component.Container.Endpoints, err = RemovePortsFromList(component.Container.Endpoints, containerPortsMap[component.Name])
 			if err != nil {
 				return err
 			}

@@ -18,30 +18,32 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		listToAdd      []v1.EnvVar
-		listToRemove   []string
+		listToAdd      map[string][]v1.EnvVar
+		listToRemove   map[string][]string
 		currentDevfile DevfileObj
 		wantDevFile    DevfileObj
 		wantRemoveErr  bool
 	}{
 		{
 			name: "add and remove env vars",
-			listToAdd: []v1.EnvVar{
-				{
-					Name:  "DATABASE_PASSWORD",
-					Value: "苦痛",
+			listToAdd: map[string][]v1.EnvVar{
+				"runtime": {
+					{
+						Name:  "DATABASE_PASSWORD",
+						Value: "苦痛",
+					},
 				},
-				{
-					Name:  "PORT",
-					Value: "3003",
-				},
-				{
-					Name:  "PORT",
-					Value: "4342",
+				"loadbalancer": {
+					{
+						Name:  "DATABASE_PASSWORD",
+						Value: "苦痛",
+					},
 				},
 			},
-			listToRemove: []string{
-				"PORT",
+			listToRemove: map[string][]string{
+				"loadbalancer": {
+					"DATABASE_PASSWORD",
+				},
 			},
 			currentDevfile: testDevfileObj(fs),
 			wantDevFile: DevfileObj{
@@ -89,12 +91,7 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 											Container: &v1.ContainerComponent{
 												Container: v1.Container{
 													Image: "quay.io/nginx",
-													Env: []v1.EnvVar{
-														{
-															Name:  "DATABASE_PASSWORD",
-															Value: "苦痛",
-														},
-													},
+													Env:   []v1.EnvVar{},
 												},
 											},
 										},
@@ -125,15 +122,18 @@ func TestAddAndRemoveEnvVars(t *testing.T) {
 		},
 		{
 			name: "remove non-existent env vars",
-			listToAdd: []v1.EnvVar{
-				{
-					Name:  "DATABASE_PASSWORD",
-					Value: "苦痛",
+			listToAdd: map[string][]v1.EnvVar{
+				"runtime": {
+					{
+						Name:  "DATABASE_PASSWORD",
+						Value: "苦痛",
+					},
 				},
 			},
-			listToRemove: []string{
-				"PORT",
-				"NON_EXISTENT_KEY",
+			listToRemove: map[string][]string{
+				"runtime": {
+					"NON_EXISTENT_KEY",
+				},
 			},
 			currentDevfile: testDevfileObj(fs),
 			wantRemoveErr:  true,
