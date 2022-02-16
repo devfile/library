@@ -10,6 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// AddEnvVars accepts a map of container name mapped to an array of the env vars to be set;
+// it adds the envirnoment variables to a given container name of the DevfileV2 object
+// Example of containerEnvMap : {"runtime": {{Name: "Foo", Value: "Bar"}}}
 func (d *DevfileV2) AddEnvVars(containerEnvMap map[string][]v1alpha2.EnvVar) error {
 	components, err := d.GetComponents(common.DevfileOptions{})
 	if err != nil {
@@ -24,6 +27,8 @@ func (d *DevfileV2) AddEnvVars(containerEnvMap map[string][]v1alpha2.EnvVar) err
 	return nil
 }
 
+// RemoveEnvVars accepts a map of container name mapped to an array of environment variables to be removed;
+// it removes the env vars from the specified container name of the DevfileV2 object
 func (d *DevfileV2) RemoveEnvVars(containerEnvMap map[string][]string) error {
 	components, err := d.GetComponents(common.DevfileOptions{})
 	if err != nil {
@@ -40,6 +45,10 @@ func (d *DevfileV2) RemoveEnvVars(containerEnvMap map[string][]string) error {
 	}
 	return nil
 }
+
+// SetPorts accepts a map of container name mapped to an array of port numbers to be set;
+// it converts ports to endpoints, sets the endpoint to a given container name of the DevfileV2 object
+// Example of containerPortsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
 func (d *DevfileV2) SetPorts(containerPortsMap map[string][]string) error {
 	components, err := d.GetComponents(common.DevfileOptions{})
 	if err != nil {
@@ -59,6 +68,9 @@ func (d *DevfileV2) SetPorts(containerPortsMap map[string][]string) error {
 	return nil
 }
 
+// RemovePorts accepts a map of container name mapped to an array of port numbers to be removed;
+// it removes the container endpoints with the specified port numbers of the specified container of the DevfileV2 object
+// Example of containerPortsMap: {"runtime": {"8080", "9000"}, "wildfly": {"12956"}}
 func (d *DevfileV2) RemovePorts(containerPortsMap map[string][]string) error {
 	components, err := d.GetComponents(common.DevfileOptions{})
 	if err != nil {
@@ -178,6 +190,7 @@ func merge(original []v1alpha2.EnvVar, other []v1alpha2.EnvVar) []v1alpha2.EnvVa
 
 }
 
+// portsToEndpoints converts an array of ports to an array of v1alpha2.Endpoint
 func portsToEndpoints(ports ...string) ([]v1alpha2.Endpoint, error) {
 	var endpoints []v1alpha2.Endpoint
 	conPorts, err := getContainerPortsFromStrings(ports)
@@ -197,6 +210,7 @@ func portsToEndpoints(ports ...string) ([]v1alpha2.Endpoint, error) {
 
 }
 
+// addEndpoints appends two arrays of v1alpha2.Endpoint objects
 func addEndpoints(current []v1alpha2.Endpoint, other []v1alpha2.Endpoint) []v1alpha2.Endpoint {
 	newList := make([]v1alpha2.Endpoint, len(current))
 	copy(newList, current)
