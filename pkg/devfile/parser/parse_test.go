@@ -4074,6 +4074,32 @@ func Test_parseFromRegistry(t *testing.T) {
 		},
 	}
 
+	latestParentDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime-latest",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	wantDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -4100,6 +4126,32 @@ func Test_parseFromRegistry(t *testing.T) {
 		},
 	}
 
+	latestWantDevfile := DevfileObj{
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+				},
+				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+					DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+						Components: []v1.Component{
+							{
+								Name: "runtime-latest",
+								ComponentUnion: v1.ComponentUnion{
+									Volume: &v1.VolumeComponent{
+										Volume: v1.Volume{
+											Size: "500Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	invalidURLErr := "the provided registryURL: .* is not a valid URL"
 	URLNotFoundErr := "failed to retrieve .*, 404: Not Found"
 	missingRegistryURLErr := "failed to fetch from registry, registry URL is not provided"
@@ -4109,7 +4161,16 @@ func Test_parseFromRegistry(t *testing.T) {
 		var data []byte
 		var err error
 		if strings.Contains(r.URL.Path, "/devfiles/"+registryId) {
-			data, err = yaml.Marshal(parentDevfile.Data)
+			if strings.Contains(r.URL.Path, "latest") {
+				data, err = yaml.Marshal(latestParentDevfile.Data)
+			} else if strings.Contains(r.URL.Path, "1.1.0") {
+				data, err = yaml.Marshal(parentDevfile.Data)
+			} else if r.URL.Path == fmt.Sprintf("/devfiles/%s/",registryId){
+				data, err = yaml.Marshal(parentDevfile.Data)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -4178,6 +4239,39 @@ func Test_parseFromRegistry(t *testing.T) {
 			tool: resolverTools{
 				registryURLs: []string{"http://" + registry},
 			},
+		},
+		{
+			name:        "should be able to parse from provided registryUrl with latest version specified",
+			wantDevFile: latestWantDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				Version: "latest",
+				RegistryUrl: httpPrefix + registry,
+			},
+		},
+		{
+			name:        "should be able to parse from provided registryUrl with version specified",
+			wantDevFile: wantDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				Version: "1.1.0",
+				RegistryUrl: httpPrefix + registry,
+			},
+		},
+		{
+			name: "should fail if version does not exist",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				Version: "999.9.9",
+				RegistryUrl: httpPrefix + registry,
+			},
+			wantErr: &URLNotFoundErr,
 		},
 		{
 			name: "should fail if registryId does not exist",

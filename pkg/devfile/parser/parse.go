@@ -378,7 +378,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(id, registryURL)
+		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -392,7 +392,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			devfileContent, err := getDevfileFromRegistry(id, registryURL)
+			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
@@ -411,12 +411,12 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
 }
 
-func getDevfileFromRegistry(id, registryURL string) ([]byte, error) {
+func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
 	}
 	param := util.HTTPRequestParams{
-		URL: fmt.Sprintf("%s/devfiles/%s", registryURL, id),
+		URL: fmt.Sprintf("%s/devfiles/%s/%s", registryURL, id, version),
 	}
 	return util.HTTPGetRequest(param, 0)
 }
