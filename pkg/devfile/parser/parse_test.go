@@ -4165,7 +4165,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				data, err = yaml.Marshal(latestParentDevfile.Data)
 			} else if strings.Contains(r.URL.Path, "1.1.0") {
 				data, err = yaml.Marshal(parentDevfile.Data)
-			} else if r.URL.Path == fmt.Sprintf("/devfiles/%s/",registryId){
+			} else if r.URL.Path == fmt.Sprintf("/devfiles/%s/", registryId) {
 				data, err = yaml.Marshal(parentDevfile.Data)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
@@ -4247,7 +4247,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
 				},
-				Version: "latest",
+				Version:     "latest",
 				RegistryUrl: httpPrefix + registry,
 			},
 		},
@@ -4258,7 +4258,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
 				},
-				Version: "1.1.0",
+				Version:     "1.1.0",
 				RegistryUrl: httpPrefix + registry,
 			},
 		},
@@ -4268,7 +4268,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
 				},
-				Version: "999.9.9",
+				Version:     "999.9.9",
 				RegistryUrl: httpPrefix + registry,
 			},
 			wantErr: &URLNotFoundErr,
