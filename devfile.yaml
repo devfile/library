@@ -10,6 +10,7 @@ parent:
   # uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
   id: nodejs
   registryUrl: "https://registry.devfile.io"
+  version: latest
   commands:
   - id: install
     exec:
