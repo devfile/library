@@ -146,17 +146,6 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    err = devfile.WriteYamlDevfile()
    ```
 
-## Updating Library Schema
-
-Executing `./scripts/updateApi.sh` fetches the latest `github.com/devfile/api` go mod and updates the schema saved under `pkg/devfile/parser/data`
-
-The script also accepts a version number as an argument to update the devfile schema for a specific devfile version.
-For example, running the following command will update the devfile schema for 2.0.0
-```
-./updateApi.sh 2.0.0
-```
-Running the script with no arguments will default to update the latest devfile version.
-
 ## Projects using devfile/library
 
 The following projects are consuming this library as a Golang dependency
@@ -179,4 +168,3 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 For devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
 
-Note: To generate a changelog for a new release, execute `./scripts/changelog-script.sh v1.x.y` for all the changes since the release v1.x.y
