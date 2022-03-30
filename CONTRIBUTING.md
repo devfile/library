@@ -11,6 +11,9 @@ The following are required to work on devfile library:
 - Git
 - Go 1.15 or later
 
+## Code of Conduct
+Before contributing to this repository, see [contributor code of conduct](https://github.com/devfile/api/blob/main/CODE_OF_CONDUCT.md#contributor-covenant-code-of-conduct)
+
 ## How to Contribute
 
 ### Issues
@@ -55,7 +58,3 @@ Running the script with no arguments will default to update the latest devfile v
 Currently devfile library does not have schedule for new releases. A new version is being generated and released on demand. 
 A new branch is expected to be created for a new release.
 To generate a changelog for a new release, execute `./scripts/changelog-script.sh v1.x.y` for all the changes since the release v1.x.y
-
-
-## Code of Conduct
-See [contributor code of conduct](https://github.com/devfile/api/blob/main/CODE_OF_CONDUCT.md#contributor-covenant-code-of-conduct)
