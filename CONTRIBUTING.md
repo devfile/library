@@ -32,6 +32,13 @@ make test
 
 ### Submitting Pull Request
 
+**Note:** All commits must be signed off with the footer:
+```
+Signed-off-by: First Lastname <email@email.com>
+```
+
+You can easily add this footer to your commits by adding `-s` when running `git commit`.
+
 When you think the code is ready for review, create a pull request and link the issue associated with it. 
 Owners of the repository will watch out for and review new PR‘s. 
 By default for each change in the PR, Travis CI runs all the tests against it. If tests are failing make sure to address the failures. 
