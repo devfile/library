@@ -52,6 +52,8 @@ func TestReadKubernetesYaml(t *testing.T) {
 	testServer.Start()
 	defer testServer.Close()
 
+	badData := append(data, 59)
+
 	tests := []struct {
 		name                string
 		src                 YamlSrc
@@ -107,6 +109,14 @@ func TestReadKubernetesYaml(t *testing.T) {
 			name: "Bad Path",
 			src: YamlSrc{
 				Path: "$%^&",
+			},
+			fs:      filesystem.DefaultFs{},
+			wantErr: true,
+		},
+		{
+			name: "Bad Data",
+			src: YamlSrc{
+				Data: badData,
 			},
 			fs:      filesystem.DefaultFs{},
 			wantErr: true,
