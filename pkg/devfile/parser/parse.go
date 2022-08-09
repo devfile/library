@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/devfile/api/v2/pkg/attributes"
 	"net/url"
 	"path"
 	"strings"
@@ -47,6 +48,11 @@ func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolver
 	err = json.Unmarshal(d.Ctx.GetDevfileContent(), &d.Data)
 	if err != nil {
 		return d, errors.Wrapf(err, "failed to decode devfile content")
+	}
+
+	err = parseKubeComponentFromURI(d)
+	if err != nil {
+		return d, errors.Wrapf(err, "failed to parse kubernetes component from uri to inlined")
 	}
 
 	if flattenedDevfile {
@@ -598,4 +604,78 @@ func setEndpoints(endpoints []v1.Endpoint) {
 		val := endpoints[i].GetSecure()
 		endpoints[i].Secure = &val
 	}
+}
+
+func parseKubeComponentFromURI(devObj DevfileObj) error {
+	getKubeCompOptions := common.DevfileOptions{
+		ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.KubernetesComponentType,
+		},
+	}
+	kubeComponents, err := devObj.Data.GetComponents(getKubeCompOptions)
+	if err != nil {
+		return err
+	}
+	for _, kubeComp := range kubeComponents {
+		if kubeComp.Kubernetes.Uri != "" {
+			err := convertKubeCompUriToInlined(&kubeComp, devObj.Ctx)
+			if err != nil {
+				return errors.Wrapf(err, "failed to convert Kubernetes Uri to inlined for component '%s'", kubeComp.Name)
+			}
+			err = devObj.Data.UpdateComponent(kubeComp)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func convertKubeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx) error{
+	uri := component.Kubernetes.Uri
+	// validate URI
+	err := validation.ValidateURI(uri)
+	if err != nil {
+		return err
+	}
+
+	absoluteURL := strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://")
+	var newUri string
+	var data []byte
+	// relative path on disk
+		if !absoluteURL && d.GetAbsPath() != "" {
+			newUri = path.Join(path.Dir(d.GetAbsPath()), uri)
+			fs := d.GetFs()
+			data, err = fs.ReadFile(newUri)
+			if err != nil {
+				return errors.Wrapf(err, "failed to read kubernetes resources definition from path '%s'", newUri)
+			}
+		} else if absoluteURL || d.GetURL() != ""{
+			if d.GetURL() != "" {
+				// relative path to a URL
+				u, err := url.Parse(d.GetURL())
+				if err != nil {
+					return err
+				}
+				u.Path = path.Join(path.Dir(u.Path), uri)
+				newUri = u.String()
+			} else{
+				// absolute URL address
+				newUri = uri
+			}
+			data, err = util.DownloadFileInMemory(newUri)
+			if err != nil {
+				return errors.Wrapf(err, "error getting kubernetes resources definition info from url '%s'", newUri)
+			}
+	}
+
+
+	component.Kubernetes.Inlined = string(data)
+	component.Kubernetes.Uri = ""
+	if component.Attributes == nil {
+		component.Attributes = attributes.Attributes{}
+	}
+	component.Attributes.PutString(KubeComponentOriginalURIKey, uri)
+
+	return nil
 }
