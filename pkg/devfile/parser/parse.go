@@ -606,6 +606,7 @@ func setEndpoints(endpoints []v1.Endpoint) {
 	}
 }
 
+//parseKubeComponentFromURI iterate through all kubernetes components, and parse from uri and update the content to inlined field in devfileObj
 func parseKubeComponentFromURI(devObj DevfileObj) error {
 	getKubeCompOptions := common.DevfileOptions{
 		ComponentOptions: common.ComponentOptions{
@@ -631,6 +632,7 @@ func parseKubeComponentFromURI(devObj DevfileObj) error {
 	return nil
 }
 
+//convertKubeCompUriToInlined read in kubernetes resources definition from uri and converts to kubernetest inlined field
 func convertKubeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx) error{
 	uri := component.Kubernetes.Uri
 	// validate URI

@@ -1,7 +1,12 @@
 package devfile
 
 import (
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/devfile/api/v2/pkg/validation/variables"
@@ -10,6 +15,56 @@ import (
 )
 
 func TestParseDevfileAndValidate(t *testing.T) {
+	KubeComponentOriginalURIKey := "devfile.io/kubeComponent-originalURI"
+	outerloopDeployContent := `
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: my-python
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-app
+  template:
+    metadata:
+      labels:
+        app: python-app
+    spec:
+      containers:
+        - name: my-python
+          image: my-python-image:{{ PARAMS }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+`
+	uri := "127.0.0.1:8080"
+	var testServer *httptest.Server
+	testServer = httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(outerloopDeployContent))
+		if err != nil {
+			t.Errorf("unexpected error while writing outerloop-deploy.yaml: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l, err := net.Listen("tcp", uri)
+	if err != nil {
+		t.Errorf("Test_parseParentAndPluginFromURI() unexpected error while creating listener: %v", err)
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer.Listener.Close()
+	testServer.Listener = l
+
+	testServer.Start()
+	defer testServer.Close()
+
 	devfileContent := `commands:
 - exec:
     commandLine: ./main {{ PARAMS }}
@@ -28,6 +83,9 @@ components:
     memoryLimit: 1024Mi
     mountSources: true
   name: runtime
+- kubernetes:
+    uri: http://127.0.0.1:8080/outerloop-deploy.yaml
+  name: outerloop-deploy
 metadata:
   description: Stack with the latest Go version
   displayName: Go Runtime
@@ -38,7 +96,7 @@ metadata:
   tags:
   - Go
   version: 1.0.0
-schemaVersion: 2.1.0
+schemaVersion: 2.2.0
 `
 
 	devfileContentWithVariable := devfileContent + `variables:
@@ -51,6 +109,7 @@ schemaVersion: 2.1.0
 		args            args
 		wantVarWarning  variables.VariableWarning
 		wantCommandLine string
+		wantKubernetesInline string
 		wantVariables   map[string]string
 	}{
 		{
@@ -63,7 +122,7 @@ schemaVersion: 2.1.0
 					Data: []byte(devfileContentWithVariable),
 				},
 			},
-
+			wantKubernetesInline: "image: my-python-image:bar",
 			wantCommandLine: "./main bar",
 			wantVariables: map[string]string{
 				"PARAMS": "bar",
@@ -85,7 +144,7 @@ schemaVersion: 2.1.0
 					Data: []byte(devfileContentWithVariable),
 				},
 			},
-
+			wantKubernetesInline: "image: my-python-image:foo",
 			wantCommandLine: "./main foo",
 			wantVariables: map[string]string{
 				"PARAMS": "foo",
@@ -107,7 +166,7 @@ schemaVersion: 2.1.0
 					Data: []byte(devfileContent),
 				},
 			},
-
+			wantKubernetesInline: "image: my-python-image:baz",
 			wantCommandLine: "./main baz",
 			wantVariables: map[string]string{
 				"PARAMS": "baz",
@@ -135,6 +194,31 @@ schemaVersion: 2.1.0
 			if expectedCommandLine != tt.wantCommandLine {
 				t.Errorf("command line is %q, should be %q", expectedCommandLine, tt.wantCommandLine)
 			}
+			getKubeCompOptions := common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.KubernetesComponentType,
+				},
+			}
+			kubeComponents, err := gotD.Data.GetComponents(getKubeCompOptions)
+			if err != nil {
+				t.Errorf("unexpected error getting kubernetes component")
+			}
+			kubenetesComponent := kubeComponents[0]
+			if kubenetesComponent.Kubernetes.Uri != "" || kubenetesComponent.Kubernetes.Inlined == "" ||
+				!strings.Contains(kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline) {
+				t.Errorf("unexpected kubenetes component inlined, got %s, want include %s", kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline)
+			}
+
+			if kubenetesComponent.Attributes != nil {
+				if originalUri := kubenetesComponent.Attributes.GetString(KubeComponentOriginalURIKey, &err);
+				err != nil || originalUri != "http://127.0.0.1:8080/outerloop-deploy.yaml"{
+					t.Errorf("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, '%s', expected http://127.0.0.1:8080/outerloop-deploy.yaml, got %s",
+						KubeComponentOriginalURIKey, originalUri)
+				}
+			} else {
+				t.Error("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, but got empty Attributes")
+			}
+
 			if !reflect.DeepEqual(gotVarWarning, tt.wantVarWarning) {
 				t.Errorf("ParseDevfileAndValidate() gotVarWarning = %v, want %v", gotVarWarning, tt.wantVarWarning)
 			}

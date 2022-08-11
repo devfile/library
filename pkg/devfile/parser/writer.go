@@ -13,6 +13,8 @@ import (
 
 // WriteYamlDevfile creates a devfile.yaml file
 func (d *DevfileObj) WriteYamlDevfile() error {
+
+	// Check kubernetes components, and restore original uri content
 	err := restoreKubeCompURI(d)
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore kubernetes component uri field")
