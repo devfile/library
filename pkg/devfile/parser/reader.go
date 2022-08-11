@@ -13,23 +13,33 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1 "k8s.io/api/extensions/v1beta1"
 )
 
 // YamlSrc specifies the src of the yaml in either Path, URL or Data format
 type YamlSrc struct {
-	// Path is a relative or absolute yaml path.
+	// Path to the yaml file
 	Path string
-	// URL is the URL address of the specific yaml.
+	// URL of the yaml file
 	URL string
-	// Data is the yaml content in []byte format.
+	// Data is the yaml content in []byte format
 	Data []byte
 }
 
+// KubernetesResources struct contains the Deployments, Services,
+// Routes and Ingresses resources
+type KubernetesResources struct {
+	Deployments []appsv1.Deployment
+	Services    []corev1.Service
+	Routes      []routev1.Route
+	Ingresses   []extensionsv1.Ingress
+}
+
 // ReadKubernetesYaml reads a yaml Kubernetes file from either the Path, URL or Data provided.
-// It returns Deployments, Services, Routes resources as the primary Kubernetes resources.
-// Other Kubernetes resources are returned as []byte type. Consumers interested in other Kubernetes resources
-// are expected to Unmarshal it to the struct of the respective resource.
-func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]appsv1.Deployment, []corev1.Service, []routev1.Route, [][]byte, error) {
+// It returns all the parsed Kubernetes objects as an array of interface.
+// Consumers interested in the Kubernetes resources are expected to Unmarshal
+// it to the struct of the respective Kubernetes resource.
+func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]interface{}, error) {
 
 	var data []byte
 	var err error
@@ -37,16 +47,12 @@ func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]appsv1.Deploym
 	if src.URL != "" {
 		data, err = util.DownloadFileInMemory(src.URL)
 		if err != nil {
-			return nil, nil, nil, nil, errors.Wrapf(err, "failed to download file %q", src.URL)
+			return nil, errors.Wrapf(err, "failed to download file %q", src.URL)
 		}
 	} else if src.Path != "" {
-		absPath, err := util.GetAbsPath(src.Path)
+		data, err = fs.ReadFile(src.Path)
 		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-		data, err = fs.ReadFile(absPath)
-		if err != nil {
-			return nil, nil, nil, nil, errors.Wrapf(err, "failed to read yaml from path %q", src.Path)
+			return nil, errors.Wrapf(err, "failed to read yaml from path %q", src.Path)
 		}
 	} else if len(src.Data) > 0 {
 		data = src.Data
@@ -61,24 +67,34 @@ func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]appsv1.Deploym
 			if err == io.EOF {
 				break
 			}
-			return nil, nil, nil, nil, err
+			return nil, err
 		}
 		values = append(values, value)
 	}
 
+	return values, nil
+}
+
+// ParseKubernetesYaml Unmarshals the interface array of the Kubernetes resources
+// and returns it as a KubernetesResources struct. Only Deployment, Service, Route
+// and Ingress are processed. Consumers interested in other Kubernetes resources
+// are expected to parse the values interface array an Unmarshal it to their
+// desired Kuberenetes struct
+func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 	var deployments []appsv1.Deployment
 	var services []corev1.Service
 	var routes []routev1.Route
-	var otherResources [][]byte
+	var ingresses []extensionsv1.Ingress
 
 	for _, value := range values {
 		var deployment appsv1.Deployment
 		var service corev1.Service
 		var route routev1.Route
+		var ingress extensionsv1.Ingress
 
 		byteData, err := k8yaml.Marshal(value)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return KubernetesResources{}, err
 		}
 
 		kubernetesMap := value.(map[string]interface{})
@@ -94,14 +110,20 @@ func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]appsv1.Deploym
 		case "Route":
 			err = k8yaml.Unmarshal(byteData, &route)
 			routes = append(routes, route)
-		default:
-			otherResources = append(otherResources, byteData)
+		case "Ingress":
+			err = k8yaml.Unmarshal(byteData, &ingress)
+			ingresses = append(ingresses, ingress)
 		}
 
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return KubernetesResources{}, err
 		}
 	}
 
-	return deployments, services, routes, otherResources, nil
+	return KubernetesResources{
+		Deployments: deployments,
+		Services:    services,
+		Routes:      routes,
+		Ingresses:   ingresses,
+	}, nil
 }
