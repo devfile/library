@@ -633,7 +633,7 @@ func parseKubeComponentFromURI(devObj DevfileObj) error {
 }
 
 //convertKubeCompUriToInlined read in kubernetes resources definition from uri and converts to kubernetest inlined field
-func convertKubeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx) error{
+func convertKubeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx) error {
 	uri := component.Kubernetes.Uri
 	// validate URI
 	err := validation.ValidateURI(uri)
@@ -645,32 +645,31 @@ func convertKubeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCt
 	var newUri string
 	var data []byte
 	// relative path on disk
-		if !absoluteURL && d.GetAbsPath() != "" {
-			newUri = path.Join(path.Dir(d.GetAbsPath()), uri)
-			fs := d.GetFs()
-			data, err = fs.ReadFile(newUri)
+	if !absoluteURL && d.GetAbsPath() != "" {
+		newUri = path.Join(path.Dir(d.GetAbsPath()), uri)
+		fs := d.GetFs()
+		data, err = fs.ReadFile(newUri)
+		if err != nil {
+			return errors.Wrapf(err, "failed to read kubernetes resources definition from path '%s'", newUri)
+		}
+	} else if absoluteURL || d.GetURL() != "" {
+		if d.GetURL() != "" {
+			// relative path to a URL
+			u, err := url.Parse(d.GetURL())
 			if err != nil {
-				return errors.Wrapf(err, "failed to read kubernetes resources definition from path '%s'", newUri)
+				return err
 			}
-		} else if absoluteURL || d.GetURL() != ""{
-			if d.GetURL() != "" {
-				// relative path to a URL
-				u, err := url.Parse(d.GetURL())
-				if err != nil {
-					return err
-				}
-				u.Path = path.Join(path.Dir(u.Path), uri)
-				newUri = u.String()
-			} else{
-				// absolute URL address
-				newUri = uri
-			}
-			data, err = util.DownloadFileInMemory(newUri)
-			if err != nil {
-				return errors.Wrapf(err, "error getting kubernetes resources definition info from url '%s'", newUri)
-			}
+			u.Path = path.Join(path.Dir(u.Path), uri)
+			newUri = u.String()
+		} else {
+			// absolute URL address
+			newUri = uri
+		}
+		data, err = util.DownloadFileInMemory(newUri)
+		if err != nil {
+			return errors.Wrapf(err, "error getting kubernetes resources definition info from url '%s'", newUri)
+		}
 	}
-
 
 	component.Kubernetes.Inlined = string(data)
 	component.Kubernetes.Uri = ""

@@ -39,7 +39,6 @@ func (d *DevfileObj) WriteYamlDevfile() error {
 	return nil
 }
 
-
 func restoreKubeCompURI(devObj *DevfileObj) error {
 	getKubeCompOptions := common.DevfileOptions{
 		ComponentOptions: common.ComponentOptions{
@@ -58,7 +57,7 @@ func restoreKubeCompURI(devObj *DevfileObj) error {
 		}
 		kubeComp.Kubernetes.Uri = uri
 		kubeComp.Kubernetes.Inlined = ""
-		delete(kubeComp.Attributes,KubeComponentOriginalURIKey)
+		delete(kubeComp.Attributes, KubeComponentOriginalURIKey)
 		err = devObj.Data.UpdateComponent(kubeComp)
 		if err != nil {
 			return err

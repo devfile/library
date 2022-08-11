@@ -7,7 +7,7 @@ import (
 
 // Default filenames for create devfile
 const (
-	OutputDevfileYamlPath = "devfile.yaml"
+	OutputDevfileYamlPath       = "devfile.yaml"
 	KubeComponentOriginalURIKey = "devfile.io/kubeComponent-originalURI"
 )
 

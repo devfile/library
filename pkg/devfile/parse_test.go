@@ -105,12 +105,12 @@ schemaVersion: 2.2.0
 		args parser.ParserArgs
 	}
 	tests := []struct {
-		name            string
-		args            args
-		wantVarWarning  variables.VariableWarning
-		wantCommandLine string
+		name                 string
+		args                 args
+		wantVarWarning       variables.VariableWarning
+		wantCommandLine      string
 		wantKubernetesInline string
-		wantVariables   map[string]string
+		wantVariables        map[string]string
 	}{
 		{
 			name: "with external overriding variables",
@@ -123,7 +123,7 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:bar",
-			wantCommandLine: "./main bar",
+			wantCommandLine:      "./main bar",
 			wantVariables: map[string]string{
 				"PARAMS": "bar",
 			},
@@ -145,7 +145,7 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:foo",
-			wantCommandLine: "./main foo",
+			wantCommandLine:      "./main foo",
 			wantVariables: map[string]string{
 				"PARAMS": "foo",
 				"OTHER":  "other",
@@ -167,7 +167,7 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:baz",
-			wantCommandLine: "./main baz",
+			wantCommandLine:      "./main baz",
 			wantVariables: map[string]string{
 				"PARAMS": "baz",
 			},
@@ -210,8 +210,7 @@ schemaVersion: 2.2.0
 			}
 
 			if kubenetesComponent.Attributes != nil {
-				if originalUri := kubenetesComponent.Attributes.GetString(KubeComponentOriginalURIKey, &err);
-				err != nil || originalUri != "http://127.0.0.1:8080/outerloop-deploy.yaml"{
+				if originalUri := kubenetesComponent.Attributes.GetString(KubeComponentOriginalURIKey, &err); err != nil || originalUri != "http://127.0.0.1:8080/outerloop-deploy.yaml" {
 					t.Errorf("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, '%s', expected http://127.0.0.1:8080/outerloop-deploy.yaml, got %s",
 						KubeComponentOriginalURIKey, originalUri)
 				}
