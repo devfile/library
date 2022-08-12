@@ -15,7 +15,8 @@ import (
 )
 
 func TestParseDevfileAndValidate(t *testing.T) {
-	KubeComponentOriginalURIKey := "devfile.io/kubeComponent-originalURI"
+	convertUriToInline := false
+	K8sLikeComponentOriginalURIKey := "devfile.io/k8sLikeComponent-originalURI"
 	outerloopDeployContent := `
 kind: Deployment
 apiVersion: apps/v1
@@ -43,13 +44,37 @@ spec:
               memory: "128Mi"
               cpu: "500m"
 `
+	outerloopServiceContent := `
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: python-app
+  name: python-app-svc
+spec:
+  ports:
+    - name: http-8081
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+  selector:
+    app: python-app
+	variable: {{ PARAMS }}
+  type: LoadBalancer
+`
 	uri := "127.0.0.1:8080"
 	var testServer *httptest.Server
 	testServer = httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(outerloopDeployContent))
-		if err != nil {
-			t.Errorf("unexpected error while writing outerloop-deploy.yaml: %v", err)
+		var err error
+		if strings.Contains(r.URL.Path, "/outerloop-deploy.yaml") {
+			_, err = w.Write([]byte(outerloopDeployContent))
+		} else if strings.Contains(r.URL.Path, "/outerloop-service.yaml") {
+			_, err = w.Write([]byte(outerloopServiceContent))
 		}
+		if err != nil {
+			t.Errorf("unexpected error while writing yaml: %v", err)
+		}
+
 	}))
 	// create a listener with the desired port.
 	l, err := net.Listen("tcp", uri)
@@ -86,6 +111,9 @@ components:
 - kubernetes:
     uri: http://127.0.0.1:8080/outerloop-deploy.yaml
   name: outerloop-deploy
+- openshift:
+    uri: http://127.0.0.1:8080/outerloop-service.yaml
+  name: outerloop-deploy2
 metadata:
   description: Stack with the latest Go version
   displayName: Go Runtime
@@ -110,6 +138,7 @@ schemaVersion: 2.2.0
 		wantVarWarning       variables.VariableWarning
 		wantCommandLine      string
 		wantKubernetesInline string
+		wantOpenshiftInline  string
 		wantVariables        map[string]string
 	}{
 		{
@@ -123,6 +152,7 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:bar",
+			wantOpenshiftInline:  "variable: bar",
 			wantCommandLine:      "./main bar",
 			wantVariables: map[string]string{
 				"PARAMS": "bar",
@@ -145,6 +175,7 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:foo",
+			wantOpenshiftInline:  "variable: foo",
 			wantCommandLine:      "./main foo",
 			wantVariables: map[string]string{
 				"PARAMS": "foo",
@@ -167,7 +198,29 @@ schemaVersion: 2.2.0
 				},
 			},
 			wantKubernetesInline: "image: my-python-image:baz",
+			wantOpenshiftInline:  "variable: baz",
 			wantCommandLine:      "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		}, {
+			name: "with external variables and covertUriToInline is false",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					ConvertKubernetesContentInUri: &convertUriToInline,
+					Data:                          []byte(devfileContent),
+				},
+			},
+			wantCommandLine: "./main baz",
 			wantVariables: map[string]string{
 				"PARAMS": "baz",
 			},
@@ -194,6 +247,7 @@ schemaVersion: 2.2.0
 			if expectedCommandLine != tt.wantCommandLine {
 				t.Errorf("command line is %q, should be %q", expectedCommandLine, tt.wantCommandLine)
 			}
+
 			getKubeCompOptions := common.DevfileOptions{
 				ComponentOptions: common.ComponentOptions{
 					ComponentType: v1.KubernetesComponentType,
@@ -204,18 +258,63 @@ schemaVersion: 2.2.0
 				t.Errorf("unexpected error getting kubernetes component")
 			}
 			kubenetesComponent := kubeComponents[0]
-			if kubenetesComponent.Kubernetes.Uri != "" || kubenetesComponent.Kubernetes.Inlined == "" ||
-				!strings.Contains(kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline) {
-				t.Errorf("unexpected kubenetes component inlined, got %s, want include %s", kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline)
-			}
 
-			if kubenetesComponent.Attributes != nil {
-				if originalUri := kubenetesComponent.Attributes.GetString(KubeComponentOriginalURIKey, &err); err != nil || originalUri != "http://127.0.0.1:8080/outerloop-deploy.yaml" {
-					t.Errorf("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, '%s', expected http://127.0.0.1:8080/outerloop-deploy.yaml, got %s",
-						KubeComponentOriginalURIKey, originalUri)
+			// check openshift component uri -> inline conversion and value substitution
+			getOpenshiftCompOptions := common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.OpenshiftComponentType,
+				},
+			}
+			openshiftComponents, err := gotD.Data.GetComponents(getOpenshiftCompOptions)
+			if err != nil {
+				t.Errorf("unexpected error getting openshift component")
+			}
+			openshiftComponent := openshiftComponents[0]
+
+			if tt.args.args.ConvertKubernetesContentInUri == nil || *tt.args.args.ConvertKubernetesContentInUri != false {
+				// check kubernetes component uri -> inline conversion and value substitution
+				if kubenetesComponent.Kubernetes.Uri != "" || kubenetesComponent.Kubernetes.Inlined == "" ||
+					!strings.Contains(kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline) {
+					t.Errorf("unexpected kubenetes component inlined, got %s, want include %s", kubenetesComponent.Kubernetes.Inlined, tt.wantKubernetesInline)
+				}
+
+				if kubenetesComponent.Attributes != nil {
+					if originalUri := kubenetesComponent.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err); err != nil || originalUri != "http://127.0.0.1:8080/outerloop-deploy.yaml" {
+						t.Errorf("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, '%s', expected http://127.0.0.1:8080/outerloop-deploy.yaml, got %s",
+							K8sLikeComponentOriginalURIKey, originalUri)
+					}
+				} else {
+					t.Error("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, but got empty Attributes")
+				}
+
+				// check openshift component uri -> inline conversion and value substitution
+				if openshiftComponent.Openshift.Uri != "" || openshiftComponent.Openshift.Inlined == "" ||
+					!strings.Contains(openshiftComponent.Openshift.Inlined, tt.wantOpenshiftInline) {
+					t.Errorf("unexpected openshift component inlined, got %s, want include %s", openshiftComponent.Openshift.Inlined, tt.wantOpenshiftInline)
+				}
+
+				if openshiftComponent.Attributes != nil {
+					if originalUri := openshiftComponent.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err); err != nil || originalUri != "http://127.0.0.1:8080/outerloop-service.yaml" {
+						t.Errorf("ParseDevfileAndValidate() should set openshiftComponent.Attributes, '%s', expected http://127.0.0.1:8080/outerloop-service.yaml, got %s",
+							K8sLikeComponentOriginalURIKey, originalUri)
+					}
+				} else {
+					t.Error("ParseDevfileAndValidate() should set openshiftComponent.Attributes, but got empty Attributes")
 				}
 			} else {
-				t.Error("ParseDevfileAndValidate() should set kubenetesComponent.Attributes, but got empty Attributes")
+				if kubenetesComponent.Kubernetes.Uri == "" || kubenetesComponent.Kubernetes.Inlined != "" {
+					t.Errorf("unexpected Kubernetes component inlined, got %s, want empty", kubenetesComponent.Kubernetes.Inlined)
+				}
+				if kubenetesComponent.Attributes != nil {
+					t.Errorf("unexpected Kubernetes component attribute, got %v, want empty", kubenetesComponent.Attributes)
+				}
+
+				if openshiftComponent.Openshift.Uri == "" || openshiftComponent.Openshift.Inlined != "" {
+					t.Errorf("unexpected Openshift component inlined, got %s, want empty", openshiftComponent.Openshift.Inlined)
+				}
+				if kubenetesComponent.Attributes != nil {
+					t.Errorf("unexpected Openshift component attribute, got %v, want empty", openshiftComponent.Attributes)
+				}
 			}
 
 			if !reflect.DeepEqual(gotVarWarning, tt.wantVarWarning) {

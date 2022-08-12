@@ -1,106 +1,121 @@
-schemaVersion: 2.2.0-latest
-metadata:
-  name: nodejs
-  version: 1.0.0
-  attributes:
-    alpha.build-dockerfile: /relative/path/to/Dockerfile
-variables:
-  test: testValue
-parent:
-  # uri: https://raw.githubusercontent.com/odo-devfiles/registry/master/devfiles/nodejs/devfile.yaml
-  id: nodejs
-  registryUrl: "https://registry.devfile.io"
-  version: latest
-  commands:
-  - id: install
-    exec:
-      component: runtime
-      commandLine: npm install
-      workingDir: /project-starter
-      group:
-        kind: build
-        isDefault: true
-starterProjects:
-- name: nodejs-starter2
-  git:
-    remotes:
-      origin: https://github.com/odo-devfiles/nodejs-ex.git
 components:
-- name: runtime2
-  attributes:
-    tool: console-import
-    import:
-      strategy: Dockerfile
-  container:
-    endpoints:
-    - name: http-8888
-      targetPort: 8888
-    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
-    memoryLimit: 1024Mi
-    mountSources: true
-    sourceMapping: /project
-    command:
-      - npm install
-- name: runtime3
-  attributes:
-    tool: odo
-    cli:
-      usage: deploy
-  container:
-    endpoints:
-    - name: http-8080
-      targetPort: 8080
-    image: registry.access.redhat.com/ubi8/nodejs-12:1-45
-    memoryLimit: 1024Mi
-    mountSources: true
-    sourceMapping: /project
-- name: runtime4
-  attributes:
-    tool: workspace-operator
-  container:
-    endpoints:
-    - name: http-9090
-      targetPort: 9090
-    image: "{{invalid-var}}"
-    memoryLimit: 1024Mi
-    mountSources: true
-    sourceMapping: /project
-commands:
-- exec:
-    commandLine: npm install
-    component: runtime2
-    group:
-      isDefault: false
-      kind: build
-    workingDir: "{{test}}"
-  id: install2
-  attributes:
-    tool: odo
-    mandatory: false
-- exec:
-    commandLine: npm start
-    component: runtime2
-    group:
-      isDefault: false
-      kind: run
-    workingDir: /project
-  id: run2
-  attributes:
-    tool: odo
-    mandatory: true
-- exec:
-    commandLine: npm run debug
-    component: runtime2
-    group:
-      isDefault: false
-      kind: debug
-    workingDir: /project
-  id: debug2
-- exec:
-    commandLine: npm test
-    component: runtime2
-    group:
-      isDefault: false
-      kind: test
-    workingDir: /project
-  id: test2
+  - kubernetes:
+      endpoints:
+        - name: jsct05850
+          secure: false
+          targetPort: 4061
+        - exposure: internal
+          name: fttrf05851
+          secure: false
+          targetPort: 2794
+        - name: pediv05852
+          path: /Path_GpjjJ
+          secure: false
+          targetPort: 4061
+        - name: w05853
+          protocol: tcp
+          secure: false
+          targetPort: 4061
+        - name: ve05854
+          path: /Path_rUnibQXIL
+          secure: true
+          targetPort: 4061
+    name: sxi05849
+  - kubernetes:
+      endpoints:
+        - name: bj05856
+          path: /Path_QEqKHLrqVSS
+          secure: false
+          targetPort: 1985
+        - exposure: internal
+          name: udbeo05857
+          secure: true
+          targetPort: 1985
+        - exposure: internal
+          name: yol05858
+          protocol: wss
+          secure: false
+          targetPort: 1985
+    name: lsk05855
+  - kubernetes: {}
+    name: shf05859
+  - kubernetes:
+      endpoints:
+        - name: grmex05861
+          protocol: tcp
+          secure: true
+          targetPort: 429
+        - name: ork05862
+          path: /Path_MofEhbd
+          protocol: wss
+          secure: false
+          targetPort: 3214
+    name: zrk05860
+  - kubernetes: {}
+    name: igh05863
+  - kubernetes:
+      endpoints:
+        - name: emf05865
+          path: /Path_ZkPBw
+          protocol: wss
+          secure: true
+          targetPort: 970
+        - name: wqnaf05866
+          path: /Path_UpxBmbMJDr
+          secure: true
+          targetPort: 1863
+        - exposure: internal
+          name: rbk05867
+          path: /Path_TTlXWYESKJwelJ
+          protocol: udp
+          secure: true
+          targetPort: 2706
+        - exposure: none
+          name: zjiv05868
+          path: /Path_JUQlS
+          protocol: udp
+          secure: true
+          targetPort: 970
+    name: ecw05864
+  - kubernetes:
+      endpoints:
+        - exposure: none
+          name: i05870
+          protocol: tcp
+          secure: true
+          targetPort: 565
+        - name: yln05871
+          protocol: https
+          secure: true
+          targetPort: 4386
+        - name: qyrrk05872
+          path: /Path_gtsayNeeuFJ
+          secure: false
+          targetPort: 3546
+        - exposure: none
+          name: vv05873
+          secure: false
+          targetPort: 2295
+        - name: dat05874
+          path: /Path_kWxdWGLbCmZYf
+          protocol: wss
+          secure: false
+          targetPort: 2474
+    name: lgv05869
+  - kubernetes:
+      endpoints:
+        - name: koac05876
+          secure: false
+          targetPort: 4318
+        - name: lelw05877
+          path: /Path_EhnGCYPmFHrZPA
+          protocol: ws
+          secure: true
+          targetPort: 592
+        - name: j05878
+          protocol: tcp
+          secure: false
+          targetPort: 4318
+    name: qcu05875
+metadata: {}
+schemaVersion: 2.2.0

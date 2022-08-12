@@ -18,7 +18,9 @@ func TestWriteYamlDevfile(t *testing.T) {
 		schemaVersion = "2.2.0"
 		testName      = "TestName"
 		uri           = "./relative/path/deploy.yaml"
-		attributes    = apiAttributes.Attributes{}.PutString(KubeComponentOriginalURIKey, uri)
+		uri2          = "./relative/path/deploy2.yaml"
+		attributes    = apiAttributes.Attributes{}.PutString(K8sLikeComponentOriginalURIKey, uri)
+		attributes2   = apiAttributes.Attributes{}.PutString(K8sLikeComponentOriginalURIKey, uri2)
 	)
 
 	t.Run("write yaml devfile", func(t *testing.T) {
@@ -53,6 +55,19 @@ func TestWriteYamlDevfile(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:       "openshiftComp",
+									Attributes: attributes2,
+									ComponentUnion: v1.ComponentUnion{
+										Openshift: &v1.OpenshiftComponent{
+											K8sLikeComponent: v1.K8sLikeComponent{
+												K8sLikeComponentLocation: v1.K8sLikeComponentLocation{
+													Inlined: "placeholder",
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -75,11 +90,14 @@ func TestWriteYamlDevfile(t *testing.T) {
 			t.Errorf("TestWriteYamlDevfile() unexpected error: '%v'", err)
 		} else {
 			content := string(data)
-			if strings.Contains(content, "inlined") || strings.Contains(content, KubeComponentOriginalURIKey) {
-				t.Errorf("TestWriteYamlDevfile() failed: kubernetes component should not contain inlined or %s", KubeComponentOriginalURIKey)
+			if strings.Contains(content, "inlined") || strings.Contains(content, K8sLikeComponentOriginalURIKey) {
+				t.Errorf("TestWriteYamlDevfile() failed: kubernetes component should not contain inlined or %s", K8sLikeComponentOriginalURIKey)
 			}
 			if !strings.Contains(content, fmt.Sprintf("uri: %s", uri)) {
 				t.Errorf("TestWriteYamlDevfile() failed: kubernetes component does not contain uri")
+			}
+			if !strings.Contains(content, fmt.Sprintf("uri: %s", uri2)) {
+				t.Errorf("TestWriteYamlDevfile() failed: openshift component does not contain uri")
 			}
 		}
 	})

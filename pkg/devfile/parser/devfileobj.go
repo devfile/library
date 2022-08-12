@@ -7,8 +7,8 @@ import (
 
 // Default filenames for create devfile
 const (
-	OutputDevfileYamlPath       = "devfile.yaml"
-	KubeComponentOriginalURIKey = "devfile.io/kubeComponent-originalURI"
+	OutputDevfileYamlPath          = "devfile.yaml"
+	K8sLikeComponentOriginalURIKey = "devfile.io/k8sLikeComponent-originalURI"
 )
 
 // DevfileObj is the runtime devfile object

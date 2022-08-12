@@ -15,7 +15,7 @@ import (
 func (d *DevfileObj) WriteYamlDevfile() error {
 
 	// Check kubernetes components, and restore original uri content
-	err := restoreKubeCompURI(d)
+	err := restoreK8sCompURI(d)
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore kubernetes component uri field")
 	}
@@ -39,28 +39,56 @@ func (d *DevfileObj) WriteYamlDevfile() error {
 	return nil
 }
 
-func restoreKubeCompURI(devObj *DevfileObj) error {
+func restoreK8sCompURI(devObj *DevfileObj) error {
 	getKubeCompOptions := common.DevfileOptions{
 		ComponentOptions: common.ComponentOptions{
 			ComponentType: v1.KubernetesComponentType,
+		},
+	}
+	getOpenshiftCompOptions := common.DevfileOptions{
+		ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.OpenshiftComponentType,
 		},
 	}
 	kubeComponents, err := devObj.Data.GetComponents(getKubeCompOptions)
 	if err != nil {
 		return err
 	}
+	openshiftComponents, err := devObj.Data.GetComponents(getOpenshiftCompOptions)
+	if err != nil {
+		return err
+	}
 	for _, kubeComp := range kubeComponents {
-		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: KubeComponentOriginalURIKey}
-		uri := kubeComp.Attributes.GetString(KubeComponentOriginalURIKey, &err)
+		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: K8sLikeComponentOriginalURIKey}
+		uri := kubeComp.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err)
 		if err != nil && err.Error() != keyNotFoundErr.Error() {
 			return err
 		}
-		kubeComp.Kubernetes.Uri = uri
-		kubeComp.Kubernetes.Inlined = ""
-		delete(kubeComp.Attributes, KubeComponentOriginalURIKey)
-		err = devObj.Data.UpdateComponent(kubeComp)
-		if err != nil {
+		if uri != "" {
+			kubeComp.Kubernetes.Uri = uri
+			kubeComp.Kubernetes.Inlined = ""
+			delete(kubeComp.Attributes, K8sLikeComponentOriginalURIKey)
+			err = devObj.Data.UpdateComponent(kubeComp)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, openshiftComp := range openshiftComponents {
+		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: K8sLikeComponentOriginalURIKey}
+		uri := openshiftComp.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err)
+		if err != nil && err.Error() != keyNotFoundErr.Error() {
 			return err
+		}
+		if uri != "" {
+			openshiftComp.Openshift.Uri = uri
+			openshiftComp.Openshift.Inlined = ""
+			delete(openshiftComp.Attributes, K8sLikeComponentOriginalURIKey)
+			err = devObj.Data.UpdateComponent(openshiftComp)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
