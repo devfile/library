@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
@@ -19,6 +21,8 @@ import (
 	"k8s.io/klog"
 
 	"reflect"
+
+	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiOverride "github.com/devfile/api/v2/pkg/utils/overriding"
@@ -380,10 +384,20 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
+	destDir := "."
+	tempDir, err := ioutil.TempDir("", "")
+	defer os.RemoveAll(tempDir)
+
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+		err = registryLibrary.PullStackFromRegistry(registryURL, id, tempDir, registryLibrary.RegistryOptions{})
+		err = util.CopyAllDirFiles(tempDir, destDir)
+
+		devfileContent, err := ioutil.ReadFile(path.Join(tempDir, "devfile.yaml"))
 		if err != nil {
-			return DevfileObj{}, err
+			devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
+			if err != nil {
+				return DevfileObj{}, err
+			}
 		}
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 		if err != nil {
@@ -395,7 +409,13 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+			err = registryLibrary.PullStackFromRegistry(registryURL, id, tempDir, registryLibrary.RegistryOptions{})
+			err = util.CopyAllDirFiles(tempDir, destDir)
+
+			devfileContent, err := ioutil.ReadFile(path.Join(tempDir, "devfile.yaml"))
+			if err != nil {
+				devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
+			}
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {

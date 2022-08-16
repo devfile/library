@@ -3,21 +3,21 @@ module github.com/devfile/library
 go 1.15
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20220309195345-48ebbf1e51cf
+	github.com/devfile/api/v2 v2.0.0-20220614133608-351f05b7c2b1
+	github.com/devfile/registry-support/index/generator v0.0.0-20220527155645-8328a8a883be // indirect
+	github.com/devfile/registry-support/registry-library v0.0.0-20220627163229-4aa39fcb0c0a
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gobwas/glob v0.2.3
-	github.com/golang/mock v1.5.0
-	github.com/google/go-cmp v0.5.5
+	github.com/golang/mock v1.6.0
+	github.com/google/go-cmp v0.5.6
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-version v1.3.0
+	github.com/hashicorp/go-version v1.4.0
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
-	github.com/mattn/go-colorable v0.1.2 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/openshift/api v0.0.0-20200930075302-db52bc4ef99f
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/afero v1.2.2
+	github.com/spf13/afero v1.6.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	k8s.io/api v0.21.3

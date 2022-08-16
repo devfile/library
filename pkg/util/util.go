@@ -1155,6 +1155,44 @@ func CopyFile(srcPath string, dstPath string, info os.FileInfo) error {
 	return nil
 }
 
+// CopyAllDirFiles recursively copies a source directory to a destination directory
+func CopyAllDirFiles(srcDir string, destDir string) error {
+	var info os.FileInfo
+
+	files, err := ioutil.ReadDir(srcDir)
+	if err != nil {
+		return errors.Wrapf(err, "failed reading dir %v", srcDir)
+	}
+
+	for _, file := range files {
+		srcPath := path.Join(srcDir, file.Name())
+		destPath := path.Join(destDir, file.Name())
+
+		if file.IsDir() {
+			if info, err = os.Stat(srcPath); err != nil {
+				return err
+			}
+			if err = os.MkdirAll(destPath, info.Mode()); err != nil {
+				return err
+			}
+			if err = CopyAllDirFiles(srcPath, destPath); err != nil {
+				return err
+			}
+		} else {
+			if file.Name() == "devfile.yaml" {
+				continue
+			}
+			// Only copy files that do not exist in the destination directory
+			if _, err := os.Stat(destPath); errors.Is(err, os.ErrNotExist) {
+				if err := CopyFile(srcPath, destPath, file); err != nil {
+					return errors.Wrapf(err, "failed to copy %s to %s", srcPath, destPath)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // PathEqual compare the paths to determine if they are equal
 func PathEqual(firstPath string, secondPath string) bool {
 	firstAbsPath, _ := GetAbsPath(firstPath)
