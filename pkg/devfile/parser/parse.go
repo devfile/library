@@ -50,13 +50,6 @@ func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolver
 		return d, errors.Wrapf(err, "failed to decode devfile content")
 	}
 
-	if tool.convertUriToInlined {
-		err = parseKubeResourceFromURI(d)
-		if err != nil {
-			return d, errors.Wrapf(err, "failed to parse kubernetes/openshift component from uri to inlined")
-		}
-	}
-
 	if flattenedDevfile {
 		err = parseParentAndPlugin(d, resolveCtx, tool)
 		if err != nil {
@@ -113,16 +106,11 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		return d, errors.Wrap(err, "the devfile source is not provided")
 	}
 
-	convertUriToInlined := true
-	if args.ConvertKubernetesContentInUri != nil {
-		convertUriToInlined = *args.ConvertKubernetesContentInUri
-	}
 	tool := resolverTools{
-		defaultNamespace:    args.DefaultNamespace,
-		registryURLs:        args.RegistryURLs,
-		context:             args.Context,
-		k8sClient:           args.K8sClient,
-		convertUriToInlined: convertUriToInlined,
+		defaultNamespace: args.DefaultNamespace,
+		registryURLs:     args.RegistryURLs,
+		context:          args.Context,
+		k8sClient:        args.K8sClient,
 	}
 
 	flattenedDevfile := true
@@ -143,6 +131,19 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		}
 	}
 
+	convertUriToInlined := true
+	if args.ConvertKubernetesContentInUri != nil {
+		convertUriToInlined = *args.ConvertKubernetesContentInUri
+	}
+
+	if convertUriToInlined {
+		d.Ctx.SetConvertUriToInlined(true)
+		err = parseKubeResourceFromURI(d)
+		if err != nil {
+			return d, errors.Wrapf(err, "failed to parse kubernetes/openshift component from uri to inlined")
+		}
+	}
+
 	return d, err
 }
 
@@ -157,8 +158,6 @@ type resolverTools struct {
 	context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
 	k8sClient client.Client
-	// convertUriToInlined defines if want to convert kubernetes resource definition from uri to inlined
-	convertUriToInlined bool
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -639,7 +638,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 		return err
 	}
 	for _, kubeComp := range kubeComponents {
-		if kubeComp.Kubernetes.Uri != "" {
+		if kubeComp.Kubernetes != nil && kubeComp.Kubernetes.Uri != "" {
 			err := convertK8sLikeCompUriToInlined(&kubeComp, devObj.Ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert Kubernetes Uri to inlined for component '%s'", kubeComp.Name)
@@ -651,7 +650,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 		}
 	}
 	for _, openshiftComp := range openshiftComponents {
-		if openshiftComp.Openshift.Uri != "" {
+		if openshiftComp.Openshift != nil && openshiftComp.Openshift.Uri != "" {
 			err := convertK8sLikeCompUriToInlined(&openshiftComp, devObj.Ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert Openshift Uri to inlined for component '%s'", openshiftComp.Name)

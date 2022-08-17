@@ -74,6 +74,7 @@ func TestWriteYamlDevfile(t *testing.T) {
 				},
 			},
 		}
+		devfileObj.Ctx.SetConvertUriToInlined(true)
 
 		// test func()
 		err := devfileObj.WriteYamlDevfile()

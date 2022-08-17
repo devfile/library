@@ -15,9 +15,11 @@ import (
 func (d *DevfileObj) WriteYamlDevfile() error {
 
 	// Check kubernetes components, and restore original uri content
-	err := restoreK8sCompURI(d)
-	if err != nil {
-		return errors.Wrapf(err, "failed to restore kubernetes component uri field")
+	if d.Ctx.GetConvertUriToInlined() {
+		err := restoreK8sCompURI(d)
+		if err != nil {
+			return errors.Wrapf(err, "failed to restore kubernetes component uri field")
+		}
 	}
 	// Encode data into YAML format
 	yamlData, err := yaml.Marshal(d.Data)
@@ -58,11 +60,13 @@ func restoreK8sCompURI(devObj *DevfileObj) error {
 	if err != nil {
 		return err
 	}
+
 	for _, kubeComp := range kubeComponents {
-		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: K8sLikeComponentOriginalURIKey}
 		uri := kubeComp.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err)
-		if err != nil && err.Error() != keyNotFoundErr.Error() {
-			return err
+		if err != nil {
+			if _, ok := err.(*apiAttributes.KeyNotFoundError); !ok {
+				return err
+			}
 		}
 		if uri != "" {
 			kubeComp.Kubernetes.Uri = uri
@@ -76,10 +80,11 @@ func restoreK8sCompURI(devObj *DevfileObj) error {
 	}
 
 	for _, openshiftComp := range openshiftComponents {
-		var keyNotFoundErr = &apiAttributes.KeyNotFoundError{Key: K8sLikeComponentOriginalURIKey}
 		uri := openshiftComp.Attributes.GetString(K8sLikeComponentOriginalURIKey, &err)
-		if err != nil && err.Error() != keyNotFoundErr.Error() {
-			return err
+		if err != nil {
+			if _, ok := err.(*apiAttributes.KeyNotFoundError); !ok {
+				return err
+			}
 		}
 		if uri != "" {
 			openshiftComp.Openshift.Uri = uri

@@ -16,7 +16,7 @@ import (
 
 func TestParseDevfileAndValidate(t *testing.T) {
 	convertUriToInline := false
-	K8sLikeComponentOriginalURIKey := "devfile.io/k8sLikeComponent-originalURI"
+	K8sLikeComponentOriginalURIKey := "api.devfile.io/k8sLikeComponent-originalURI"
 	outerloopDeployContent := `
 kind: Deployment
 apiVersion: apps/v1
