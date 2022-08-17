@@ -1,0 +1,279 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: deploy-sample
+  namespace: application-service-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: component-sample
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/instance: component-sample
+    spec:
+      containers:
+      - env:
+        - name: FOO
+          value: foo1
+        - name: BAR
+          value: bar1
+        image: quay.io/redhat-appstudio/user-workload:application-service-system-component-sample
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 1111
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        name: container-image
+        ports:
+        - containerPort: 1111
+        readinessProbe:
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          tcpSocket:
+            port: 1111
+        resources:
+          limits:
+            cpu: "2"
+            memory: 500Mi
+            storage: 400Mi
+          requests:
+            cpu: 700m
+            memory: 400Mi
+            storage: 200Mi
+status: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: deploy-sample-2
+  namespace: application-service-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: component-sample
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/instance: component-sample
+    spec:
+      containers:
+      - env:
+        - name: FOO
+          value: foo1
+        - name: BAR
+          value: bar1
+        image: quay.io/redhat-appstudio/user-workload:application-service-system-component-sample
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 1111
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        name: container-image
+        ports:
+        - containerPort: 1111
+        readinessProbe:
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          tcpSocket:
+            port: 1111
+        resources:
+          limits:
+            cpu: "2"
+            memory: 500Mi
+            storage: 400Mi
+          requests:
+            cpu: 700m
+            memory: 400Mi
+            storage: 200Mi
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: service-sample
+  namespace: application-service-system
+spec:
+  ports:
+  - port: 1111
+    targetPort: 1111
+  selector:
+    app.kubernetes.io/instance: component-sample
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: service-sample-2
+  namespace: application-service-system
+spec:
+  ports:
+  - port: 1111
+    targetPort: 1111
+  selector:
+    app.kubernetes.io/instance: component-sample
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: route-sample
+  namespace: application-service-system
+spec:
+  host: route111
+  port:
+    targetPort: 1111
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: component-sample
+    weight: 100
+status: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/created-by: application-service
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: application-sample
+  name: route-sample-2
+  namespace: application-service-system
+spec:
+  host: route111
+  port:
+    targetPort: 1111
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: component-sample
+    weight: 100
+status: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-sample
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+  - http:
+      paths:
+      - path: /testpath
+        pathType: Prefix
+        backend:
+          service:
+            name: test
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-sample-2
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+  - http:
+      paths:
+      - path: /testpath
+        pathType: Prefix
+        backend:
+          service:
+            name: test
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-sample
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: slow
+  selector:
+    matchLabels:
+      release: "stable"
+    matchExpressions:
+      - {key: environment, operator: In, values: [dev]}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-sample-2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: slow
+  selector:
+    matchLabels:
+      release: "stable"
+    matchExpressions:
+      - {key: environment, operator: In, values: [dev]}
