@@ -179,8 +179,9 @@ func validateDevfile(devfile *commonUtils.TestDevfile) error {
 	var err error
 
 	commonUtils.LogInfoMessage(fmt.Sprintf("Parse and Validate %s : ", devfile.FileName))
-
+	parseK8sDefinitionFromURI := false
 	parserArgs.Path = devfile.FileName
+	parserArgs.ConvertKubernetesContentInUri = &parseK8sDefinitionFromURI
 	libraryObj, warning, err := devfilepkg.ParseDevfileAndValidate(parserArgs)
 
 	if len(warning.Commands) > 0 || len(warning.Components) > 0 || len(warning.Projects) > 0 || len(warning.StarterProjects) > 0 {
@@ -189,6 +190,7 @@ func validateDevfile(devfile *commonUtils.TestDevfile) error {
 
 	if err != nil {
 		commonUtils.LogErrorMessage(fmt.Sprintf("From ParseDevfileAndValidate %v : ", err))
+		return err
 	} else {
 		follower := devfile.Follower.(DevfileFollower)
 		follower.LibraryData = libraryObj.Data
