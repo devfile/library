@@ -372,7 +372,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
-                      "description": "The port number should be unique.",
+                      "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                       "type": "integer"
                     }
                   },
@@ -491,7 +491,7 @@ const JsonSchema220 = `{
                     }
                   },
                   "buildContext": {
-                    "description": "Path of source directory to establish build context. Defaults to ${PROJECT_ROOT} in the container",
+                    "description": "Path of source directory to establish build context. Defaults to ${PROJECT_SOURCE} in the container",
                     "type": "string"
                   },
                   "devfileRegistry": {
@@ -644,7 +644,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
-                      "description": "The port number should be unique.",
+                      "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                       "type": "integer"
                     }
                   },
@@ -746,7 +746,7 @@ const JsonSchema220 = `{
                       "type": "boolean"
                     },
                     "targetPort": {
-                      "description": "The port number should be unique.",
+                      "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                       "type": "integer"
                     }
                   },
@@ -1258,7 +1258,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
-                          "description": "The port number should be unique.",
+                          "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                           "type": "integer"
                         }
                       },
@@ -1377,7 +1377,7 @@ const JsonSchema220 = `{
                         }
                       },
                       "buildContext": {
-                        "description": "Path of source directory to establish build context. Defaults to ${PROJECT_ROOT} in the container",
+                        "description": "Path of source directory to establish build context. Defaults to ${PROJECT_SOURCE} in the container",
                         "type": "string"
                       },
                       "devfileRegistry": {
@@ -1521,7 +1521,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
-                          "description": "The port number should be unique.",
+                          "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                           "type": "integer"
                         }
                       },
@@ -1620,7 +1620,7 @@ const JsonSchema220 = `{
                           "type": "boolean"
                         },
                         "targetPort": {
-                          "description": "The port number should be unique.",
+                          "description": "Port number to be used within the container component. The same port cannot be used by two different container components.",
                           "type": "integer"
                         }
                       },

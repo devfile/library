@@ -145,6 +145,14 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    // write to the devfile on disk
    err = devfile.WriteYamlDevfile()
    ```
+6. To parse the outerloop Kubernetes/OpenShift component's uri or inline content, call the read and parse functions
+   ```go
+   // Read the YAML content
+   values, err := ReadKubernetesYaml(src, fs)
+
+   // Get the Kubernetes resources
+   resources, err := ParseKubernetesYaml(values)
+   ```
 
 ## Projects using devfile/library
 
