@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/devfile/api/v2/pkg/attributes"
+	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -22,8 +23,6 @@ import (
 	"k8s.io/klog"
 
 	"reflect"
-
-	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiOverride "github.com/devfile/api/v2/pkg/utils/overriding"
@@ -402,14 +401,17 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
 	destDir := "."
-	tempDir, err := ioutil.TempDir("", "")
+
+	// contains the downloaded stack from the registry
+	tempDir, _ := ioutil.TempDir("", "")
 	defer os.RemoveAll(tempDir)
 
 	if registryURL != "" {
-		err = registryLibrary.PullStackFromRegistry(registryURL, id, tempDir, registryLibrary.RegistryOptions{})
-		err = util.CopyAllDirFiles(tempDir, destDir)
-
-		devfileContent, err := ioutil.ReadFile(path.Join(tempDir, "devfile.yaml"))
+		err = getStackFromRegistry(id, registryURL, tempDir, destDir)
+		if err != nil {
+			return DevfileObj{}, err
+		}
+		devfileContent, err := getDevfileFromDir(tempDir)
 		if err != nil {
 			devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
 			if err != nil {
@@ -426,10 +428,11 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			err = registryLibrary.PullStackFromRegistry(registryURL, id, tempDir, registryLibrary.RegistryOptions{})
-			err = util.CopyAllDirFiles(tempDir, destDir)
-
-			devfileContent, err := ioutil.ReadFile(path.Join(tempDir, "devfile.yaml"))
+			err = getStackFromRegistry(id, registryURL, tempDir, destDir)
+			if err != nil {
+				return DevfileObj{}, err
+			}
+			devfileContent, err := getDevfileFromDir(tempDir)
 			if err != nil {
 				devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
 			}
@@ -449,6 +452,24 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	}
 
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
+}
+
+func getStackFromRegistry(id, registryURL, stackDir, destDir string) error {
+	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
+		return fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
+	}
+	registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
+	util.CopyAllDirFiles(stackDir, destDir)
+
+	return nil
+}
+
+func getDevfileFromDir(dir string) ([]byte, error) {
+	devfileContent, err := ioutil.ReadFile(path.Join(dir, "devfile.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get devfile from stack registry")
+	}
+	return devfileContent, err
 }
 
 func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
