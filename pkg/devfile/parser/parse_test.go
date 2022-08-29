@@ -20,7 +20,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"sigs.k8s.io/yaml"
 	"strings"
@@ -4313,52 +4312,6 @@ func Test_parseFromRegistry(t *testing.T) {
 				t.Errorf("Test_parseFromRegistry() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
 			} else if err != nil {
 				assert.Regexp(t, *tt.wantErr, err.Error(), "Test_parseFromRegistry(): Error message should match")
-			}
-		})
-	}
-}
-
-func Test_getDevfileFromDir(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	devfile := filepath.Join(tempDir, "devfile.yaml")
-	if err := ioutil.WriteFile(devfile, []byte(""), 0666); err != nil {
-		t.Errorf("Failed to create temp devfile, error: %v", err)
-	}
-
-	missingDevfileDir := "no/devfile/here"
-
-	tests := []struct {
-		name    string
-		dir     string
-		wantErr bool
-	}{
-		{
-			name:    "should be able to get devfile from dir",
-			dir:     tempDir,
-			wantErr: false,
-		},
-		{
-			name:    "should fail if directory doesn't have devfile",
-			dir:     missingDevfileDir,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotErr := false
-			_, err = getDevfileFromDir(tt.dir)
-			if err != nil {
-				gotErr = true
-			}
-
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
 			}
 		})
 	}

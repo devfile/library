@@ -400,24 +400,14 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
-	destDir := "."
-
-	// contains the downloaded stack from the registry
-	tempDir, _ := ioutil.TempDir("", "")
-	defer os.RemoveAll(tempDir)
+	destDir := d.Ctx.GetAbsPath()
 
 	if registryURL != "" {
-		err = getStackFromRegistry(id, registryURL, tempDir, destDir)
+		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
 		if err != nil {
 			return DevfileObj{}, err
 		}
-		devfileContent, err := getDevfileFromDir(tempDir)
-		if err != nil {
-			devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
-			if err != nil {
-				return DevfileObj{}, err
-			}
-		}
+		getStackFromRegistry(id, registryURL, destDir)
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 		if err != nil {
 			return d, errors.Wrap(err, "failed to set devfile content from bytes")
@@ -428,14 +418,8 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			err = getStackFromRegistry(id, registryURL, tempDir, destDir)
-			if err != nil {
-				return DevfileObj{}, err
-			}
-			devfileContent, err := getDevfileFromDir(tempDir)
-			if err != nil {
-				devfileContent, err = getDevfileFromRegistry(id, registryURL, importReference.Version)
-			}
+			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+			getStackFromRegistry(id, registryURL, destDir)
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
@@ -454,24 +438,6 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
 }
 
-func getStackFromRegistry(id, registryURL, stackDir, destDir string) error {
-	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
-		return fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
-	}
-	registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
-	util.CopyAllDirFiles(stackDir, destDir)
-
-	return nil
-}
-
-func getDevfileFromDir(dir string) ([]byte, error) {
-	devfileContent, err := ioutil.ReadFile(path.Join(dir, "devfile.yaml"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get devfile from stack registry")
-	}
-	return devfileContent, err
-}
-
 func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
@@ -480,6 +446,15 @@ func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
 		URL: fmt.Sprintf("%s/devfiles/%s/%s", registryURL, id, version),
 	}
 	return util.HTTPGetRequest(param, 0)
+}
+
+func getStackFromRegistry(id, registryURL, destDir string) {
+	stackDir, _ := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-%s", id))
+	defer os.RemoveAll(stackDir)
+
+	registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
+	util.CopyAllDirFiles(stackDir, destDir)
+	return
 }
 
 func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
