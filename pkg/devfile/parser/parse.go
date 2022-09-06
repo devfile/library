@@ -377,10 +377,32 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	if !absoluteURL && curDevfileCtx.GetAbsPath() != "" {
 		newUri = path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri)
 		d.Ctx = devfileCtx.NewDevfileCtx(newUri)
+		if util.ValidateFile(newUri) != nil {
+			return DevfileObj{}, fmt.Errorf("the provided path is not a valid filepath %s", newUri)
+		}
+		srcDir := path.Dir(newUri)
+		destDir := path.Dir(curDevfileCtx.GetAbsPath())
+		if srcDir != destDir {
+			err := util.CopyAllDirFiles(srcDir, destDir)
+			if err != nil {
+				return DevfileObj{}, err
+			}
+		}
 	} else if absoluteURL {
 		// absolute URL address
 		newUri = uri
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
+		if strings.Contains(newUri, "raw.githubusercontent.com") {
+			urlComponents, err := util.GetGitUrlComponentsFromRaw(newUri)
+			if err != nil {
+				return DevfileObj{}, err
+			}
+			destDir := path.Dir(curDevfileCtx.GetAbsPath())
+			err = getStackFromGit(urlComponents, destDir)
+			if err != nil {
+				return DevfileObj{}, err
+			}
+		}
 	} else if curDevfileCtx.GetURL() != "" {
 		// relative path to a URL
 		u, err := url.Parse(curDevfileCtx.GetURL())
@@ -397,29 +419,53 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
+func getStackFromGit(gitUrlComponents map[string]string, destDir string) error {
+	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-git"))
+	if err != nil {
+		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
+	}
+	defer os.RemoveAll(stackDir)
+
+	err = util.CloneGitRepo(gitUrlComponents, stackDir)
+	if err != nil {
+		return err
+	}
+
+	dir := path.Dir(path.Join(stackDir, gitUrlComponents["file"]))
+	err = util.CopyAllDirFiles(dir, destDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
-	destDir := d.Ctx.GetAbsPath()
+	destDir := path.Dir(d.Ctx.GetAbsPath())
 
 	if registryURL != "" {
 		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
 		if err != nil {
 			return DevfileObj{}, err
 		}
-		getStackFromRegistry(id, registryURL, destDir)
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 		if err != nil {
 			return d, errors.Wrap(err, "failed to set devfile content from bytes")
 		}
 		newResolveCtx := resolveCtx.appendNode(importReference)
 
+		err = getStackFromRegistry(id, registryURL, destDir)
+		if err != nil {
+			return DevfileObj{}, err
+		}
+
 		return populateAndParseDevfile(d, newResolveCtx, tool, true)
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
 			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
-			getStackFromRegistry(id, registryURL, destDir)
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
@@ -427,6 +473,11 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 				}
 				importReference.RegistryUrl = registryURL
 				newResolveCtx := resolveCtx.appendNode(importReference)
+
+				err := getStackFromRegistry(id, registryURL, destDir)
+				if err != nil {
+					return DevfileObj{}, err
+				}
 
 				return populateAndParseDevfile(d, newResolveCtx, tool, true)
 			}
@@ -448,13 +499,24 @@ func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
 	return util.HTTPGetRequest(param, 0)
 }
 
-func getStackFromRegistry(id, registryURL, destDir string) {
-	stackDir, _ := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-%s", id))
+func getStackFromRegistry(id, registryURL, destDir string) error {
+	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-%s", id))
+	if err != nil {
+		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
+	}
 	defer os.RemoveAll(stackDir)
 
-	registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
-	util.CopyAllDirFiles(stackDir, destDir)
-	return
+	err = registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to pull stack from registry %s", registryURL)
+	}
+
+	err = util.CopyAllDirFiles(stackDir, destDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {

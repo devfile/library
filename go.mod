@@ -8,6 +8,7 @@ require (
 	github.com/devfile/registry-support/registry-library v0.0.0-20220627163229-4aa39fcb0c0a
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.6

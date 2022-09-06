@@ -2992,15 +2992,9 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 	defer testServer1.Close()
 
 	testServer2 := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var data []byte
-		if strings.Contains(r.URL.Path, "/devfiles/nodejs") {
-			data, err = yaml.Marshal(parentDevfile2.Data)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+		data, err := yaml.Marshal(parentDevfile2.Data)
 		if err != nil {
-			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() unexpected error while writing data: %v", err)
+			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() unexpected error while doing yaml marshal: %v", err)
 		}
 		_, err = w.Write(data)
 		if err != nil {
@@ -3025,9 +3019,8 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Parent: &v1.Parent{
 			ImportReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
-					Id: "nodejs",
+					Uri: httpPrefix + uri2,
 				},
-				RegistryUrl: httpPrefix + uri2,
 			},
 		},
 		DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
@@ -3065,8 +3058,8 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		}
 
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
-		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> name: testcrd, namespace: defaultnamespace -> id: nodejs, registryURL: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
-		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> id: nodejs, registryURL: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
+		// devfile has an cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> name: testcrd, namespace: defaultnamespace -> uri: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
+		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
 			httpPrefix, uri2, httpPrefix, uri1)
 		// Unexpected error
 		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
@@ -3151,134 +3144,6 @@ func Test_parseParentFromRegistry(t *testing.T) {
 	div := defaultDiv
 	div.RootRequired = &isTrue
 
-	mainDevfileContent := v1.Devfile{
-		DevfileHeader: devfilepkg.DevfileHeader{
-			SchemaVersion: schemaVersion,
-		},
-		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-			Parent: &v1.Parent{
-				ImportReference: v1.ImportReference{
-					RegistryUrl: "http://" + validRegistry,
-					ImportReferenceUnion: v1.ImportReferenceUnion{
-						Id: "nodejs",
-					},
-				},
-				ParentOverrides: v1.ParentOverrides{
-					Components: []v1.ComponentParentOverride{
-						{
-							Name: "parent-runtime",
-							ComponentUnionParentOverride: v1.ComponentUnionParentOverride{
-								Container: &v1.ContainerComponentParentOverride{
-									ContainerParentOverride: v1.ContainerParentOverride{
-										Image: "quay.io/nodejs-12",
-									},
-								},
-							},
-						},
-						testingutil.GetDockerImageTestComponentParentOverride(div),
-					},
-				},
-			},
-			DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-				Commands: []v1.Command{
-					{
-						Id: "devbuild",
-						CommandUnion: v1.CommandUnion{
-							Exec: &v1.ExecCommand{
-								WorkingDir: "/projects/nodejs-starter",
-							},
-						},
-					},
-				},
-				Components: []v1.Component{
-					{
-						Name: "runtime2",
-						ComponentUnion: v1.ComponentUnion{
-							Container: &v1.ContainerComponent{
-								Container: v1.Container{
-									Image: "quay.io/nodejs-12",
-								},
-							},
-						},
-					},
-				},
-				Events: &v1.Events{
-					DevWorkspaceEvents: v1.DevWorkspaceEvents{
-						PostStop: []string{"post-stop"},
-					},
-				},
-				Projects: []v1.Project{
-					{
-						ClonePath: "/projects",
-						Name:      "nodejs-starter-build",
-					},
-				},
-			},
-		},
-	}
-
-	importFromRegistry := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(mainDevfileContent.Parent.ImportReference))
-	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
-		resolveImportReference(mainDevfileContent.Parent.ImportReference)).PutString(parentOverrideAttribute, "main devfile")
-
-	wantDevfileContent := v1.Devfile{
-		DevfileHeader: devfilepkg.DevfileHeader{
-			SchemaVersion: schemaVersion,
-		},
-		DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-			DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-				Commands: []v1.Command{
-					{
-						Id: "devbuild",
-						CommandUnion: v1.CommandUnion{
-							Exec: &v1.ExecCommand{
-								WorkingDir: "/projects/nodejs-starter",
-							},
-						},
-					},
-				},
-				Components: []v1.Component{
-					{
-						Attributes: parentOverridesFromMainDevfile,
-						Name:       "parent-runtime",
-						ComponentUnion: v1.ComponentUnion{
-							Container: &v1.ContainerComponent{
-								Container: v1.Container{
-									Image: "quay.io/nodejs-12",
-								},
-							},
-						},
-					},
-					testingutil.GetDockerImageTestComponent(div, nil, parentOverridesFromMainDevfile),
-					{
-						Name: "runtime2",
-						ComponentUnion: v1.ComponentUnion{
-							Container: &v1.ContainerComponent{
-								Container: v1.Container{
-									Image: "quay.io/nodejs-12",
-								},
-							},
-						},
-					},
-				},
-				Events: &v1.Events{
-					DevWorkspaceEvents: v1.DevWorkspaceEvents{
-						PostStart: []string{},
-						PostStop:  []string{"post-stop"},
-						PreStop:   []string{},
-						PreStart:  []string{},
-					},
-				},
-				Projects: []v1.Project{
-					{
-						ClonePath: "/projects",
-						Name:      "nodejs-starter-build",
-					},
-				},
-			},
-		},
-	}
-
 	tests := []struct {
 		name                   string
 		mainDevfile            DevfileObj
@@ -3287,126 +3152,6 @@ func Test_parseParentFromRegistry(t *testing.T) {
 		wantErr                *string
 		testRecursiveReference bool
 	}{
-		{
-			name: "it should override the requested parent's data from provided registryURL and add the local devfile's data",
-			mainDevfile: DevfileObj{
-				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
-				Data: &v2.DevfileV2{
-					Devfile: mainDevfileContent,
-				},
-			},
-			wantDevFile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: wantDevfileContent,
-				},
-			},
-		},
-		{
-			name: "it should override the requested parent's data from registryURLs set in context and add the local devfile's data",
-			mainDevfile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: mainDevfileContent,
-				},
-			},
-			wantDevFile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: wantDevfileContent,
-				},
-			},
-		},
-		{
-			name: "it should merge the requested parent's data from provided registryURL if no override is set",
-			mainDevfile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaVersion,
-						},
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							Parent: &v1.Parent{
-								ImportReference: v1.ImportReference{
-									RegistryUrl: "http://" + validRegistry,
-									ImportReferenceUnion: v1.ImportReferenceUnion{
-										Id: "nodejs",
-									},
-								},
-							},
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantDevFile: DevfileObj{
-				Data: &v2.DevfileV2{
-					Devfile: v1.Devfile{
-						DevfileHeader: devfilepkg.DevfileHeader{
-							SchemaVersion: schemaVersion,
-						},
-						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
-							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
-								Commands: []v1.Command{
-									{
-										Id: "devbuild",
-										CommandUnion: v1.CommandUnion{
-											Exec: &v1.ExecCommand{
-												WorkingDir: "/projects/nodejs-starter",
-											},
-										},
-									},
-								},
-								Components: []v1.Component{
-									{
-										Attributes: importFromRegistry,
-										Name:       "parent-runtime",
-										ComponentUnion: v1.ComponentUnion{
-											Volume: &v1.VolumeComponent{
-												Volume: v1.Volume{
-													Size: "500Mi",
-												},
-											},
-										},
-									},
-									testingutil.GetDockerImageTestComponent(defaultDiv, nil, importFromRegistry),
-									{
-										Name: "runtime2",
-										ComponentUnion: v1.ComponentUnion{
-											Container: &v1.ContainerComponent{
-												Container: v1.Container{
-													Image: "quay.io/nodejs-12",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 		{
 			name: "it should error out with invalid registry provided",
 			mainDevfile: DevfileObj{
@@ -3832,8 +3577,7 @@ func Test_parseFromURI(t *testing.T) {
 		},
 	}
 
-	invalidFilePathErr := "the provided path is not a valid yaml filepath, and devfile.yaml or .devfile.yaml not found in the provided path.*"
-	readDevfileErr := "failed to read devfile from path.*"
+	invalidFilePathErr := "the provided path is not a valid filepath.*"
 	URLNotFoundErr := "error getting devfile info from url: failed to retrieve .*, 404: Not Found"
 	invalidURLErr := "parse .* invalid URI for request"
 
@@ -3994,7 +3738,7 @@ func Test_parseFromURI(t *testing.T) {
 					Uri: notExistURI,
 				},
 			},
-			wantErr: &readDevfileErr,
+			wantErr: &invalidFilePathErr,
 		},
 		{
 			name:          "should fail if url not exist",
@@ -4046,6 +3790,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		notExistId      = "notexist"
 		invalidRegistry = "http//invalid.com"
 		registryId      = "nodejs"
+		stagingRegistry = "https://registry.stage.devfile.io"
 	)
 
 	parentDevfile := DevfileObj{
@@ -4219,13 +3964,12 @@ func Test_parseFromRegistry(t *testing.T) {
 			wantErr: &invalidURLErr,
 		},
 		{
-			name:        "should be able to parse from provided registryUrl with prefix",
-			wantDevFile: wantDevfile,
+			name: "should be able to parse from provided registryUrl",
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Id: registryId,
 				},
-				RegistryUrl: httpPrefix + registry,
+				RegistryUrl: stagingRegistry,
 			},
 		},
 		{
@@ -4237,7 +3981,7 @@ func Test_parseFromRegistry(t *testing.T) {
 				},
 			},
 			tool: resolverTools{
-				registryURLs: []string{"http://" + registry},
+				registryURLs: []string{stagingRegistry},
 			},
 		},
 		{
@@ -4248,18 +3992,7 @@ func Test_parseFromRegistry(t *testing.T) {
 					Id: registryId,
 				},
 				Version:     "latest",
-				RegistryUrl: httpPrefix + registry,
-			},
-		},
-		{
-			name:        "should be able to parse from provided registryUrl with version specified",
-			wantDevFile: wantDevfile,
-			importReference: v1.ImportReference{
-				ImportReferenceUnion: v1.ImportReferenceUnion{
-					Id: registryId,
-				},
-				Version:     "1.1.0",
-				RegistryUrl: httpPrefix + registry,
+				RegistryUrl: stagingRegistry,
 			},
 		},
 		{
@@ -4305,9 +4038,17 @@ func Test_parseFromRegistry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gotErr := false
 			got, err := parseFromRegistry(tt.importReference, &resolutionContextTree{}, tt.tool)
+			if err != nil {
+				gotErr = true
+			}
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromRegistry() unexpected error: %v, wantErr %v", err, tt.wantErr)
+			} else if strings.Contains(tt.name, "should be able to parse") {
+				if !reflect.DeepEqual(gotErr, false) {
+					t.Errorf("Got error: %t, want error: %t", gotErr, false)
+				}
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("Test_parseFromRegistry() error: wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
 			} else if err != nil {

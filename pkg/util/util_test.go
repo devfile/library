@@ -1000,6 +1000,78 @@ func TestValidateFile(t *testing.T) {
 	}
 }
 
+func TestGetGitUrlComponentsFromRaw(t *testing.T) {
+	validRawGitUrl := "https://raw.githubusercontent.com/username/project/branch/file/path"
+	invalidUrl := "github.com/not/valid/url"
+
+	tests := []struct {
+		name    string
+		url     string
+		wantErr bool
+	}{
+		{
+			name:    "should be able to get git url components",
+			url:     validRawGitUrl,
+			wantErr: false,
+		},
+		{
+			name:    "should fail with invalid raw git url",
+			url:     invalidUrl,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotErr := false
+			_, err := GetGitUrlComponentsFromRaw(tt.url)
+			if err != nil {
+				gotErr = true
+			}
+
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCloneGitRepo(t *testing.T) {
+	invalidGitUrl := map[string]string{
+		"username": "devfile",
+		"project":  "nonexistent",
+		"branch":   "nonexistent",
+	}
+
+	tests := []struct {
+		name             string
+		gitUrlComponents map[string]string
+		destDir          string
+		wantErr          bool
+	}{
+		{
+			name:             "should fail with invalid git url",
+			gitUrlComponents: invalidGitUrl,
+			destDir:          filepath.Join(os.TempDir(), "nonexistent"),
+			wantErr:          true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotErr := false
+			err := CloneGitRepo(tt.gitUrlComponents, tt.destDir)
+			if err != nil {
+				gotErr = true
+			}
+
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestCopyFile(t *testing.T) {
 	// Create temp dir
 	tempDir, err := ioutil.TempDir("", "")
