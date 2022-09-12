@@ -20,12 +20,14 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    ```go
    // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
    parserArgs := parser.ParserArgs{
-		Path:              path,
-		FlattenedDevfile:  &flattenedDevfile,
-		RegistryURLs:      registryURLs,
-		DefaultNamespace:  defaultNamespace,
-		Context:           context,
-		K8sClient:         client,
+		Path:                           path,
+		FlattenedDevfile:               &flattenedDevfile,
+		ConvertKubernetesContentInUri:  &convertKubernetesContentInUri
+		RegistryURLs:                   registryURLs,
+		DefaultNamespace:               defaultNamespace,
+		Context:                        context,
+		K8sClient:                      client,
+   		ExternalVariables:              externalVariables,
 	}
 
    // Parses the devfile and validates the devfile data
@@ -176,3 +178,6 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 For devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
 
+## Contributing
+
+Please see our [contributing.md](./CONTRIBUTING.md).
