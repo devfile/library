@@ -4,6 +4,13 @@ This document is a new contributor guide, which outlines the requirements for co
 
 To get an overview of the project, read the [README](README.md). For more information on devfiles, check the official [devfile docs](https://devfile.io/docs/devfile/2.1.0/user-guide/).
 
+## Certificate of Origin
+
+By contributing to this project you agree to the Developer Certificate of
+Origin (DCO). This document was created by the Linux Kernel community and is a
+simple statement that you, as a contributor, have the legal right to make the
+contribution. See the [DCO](./DCO) file for details.
+
 ## Prerequisites
 
 The following are required to work on devfile library:
