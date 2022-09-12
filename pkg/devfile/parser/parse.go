@@ -5,19 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/devfile/api/v2/pkg/attributes"
-	"net/url"
-	"path"
-	"strings"
-
-	"github.com/devfile/library/pkg/util"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/pkg/util"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
+	"net/url"
+	"path"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 
 	"reflect"
 
@@ -88,6 +86,8 @@ type ParserArgs struct {
 	K8sClient client.Client
 	// ExternalVariables override variables defined in the Devfile
 	ExternalVariables map[string]string
+	// HTTPTimeout overrides the request and response timeout values for reading a parent devfile reference from the registry.  If a negative value is specified, the default timeout will be used.
+	HTTPTimeout *int
 }
 
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
@@ -111,6 +111,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		registryURLs:     args.RegistryURLs,
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
+		httpTimeout:      args.HTTPTimeout,
 	}
 
 	flattenedDevfile := true
@@ -158,6 +159,8 @@ type resolverTools struct {
 	context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
 	k8sClient client.Client
+	// httpTimeout is the timeout value in seconds passed in from the client.
+	httpTimeout *int
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -398,7 +401,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	id := importReference.Id
 	registryURL := importReference.RegistryUrl
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version, tool.httpTimeout)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -412,7 +415,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version, tool.httpTimeout)
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
@@ -431,13 +434,16 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
 }
 
-func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
+func getDevfileFromRegistry(id, registryURL, version string, httpTimeout *int) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
 	}
 	param := util.HTTPRequestParams{
 		URL: fmt.Sprintf("%s/devfiles/%s/%s", registryURL, id, version),
 	}
+
+	param.Timeout = httpTimeout
+
 	return util.HTTPGetRequest(param, 0)
 }
 

@@ -695,6 +695,9 @@ func TestGetRemoteFilesMarkedForDeletion(t *testing.T) {
 }
 
 func TestHTTPGetRequest(t *testing.T) {
+	invalidHTTPTimeout := -1
+	validHTTPTimeout := 20
+
 	// Start a local HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// Send response to be tested
@@ -707,9 +710,10 @@ func TestHTTPGetRequest(t *testing.T) {
 	defer server.Close()
 
 	tests := []struct {
-		name string
-		url  string
-		want []byte
+		name    string
+		url     string
+		want    []byte
+		timeout *int
 	}{
 		{
 			name: "Case 1: Input url is valid",
@@ -723,12 +727,25 @@ func TestHTTPGetRequest(t *testing.T) {
 			url:  "invalid",
 			want: nil,
 		},
+		{
+			name:    "Case 3: Test invalid httpTimeout, default timeout will be used",
+			url:     server.URL,
+			timeout: &invalidHTTPTimeout,
+			want:    []byte{79, 75},
+		},
+		{
+			name:    "Case 4: Test valid httpTimeout",
+			url:     server.URL,
+			timeout: &validHTTPTimeout,
+			want:    []byte{79, 75},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := HTTPRequestParams{
-				URL: tt.url,
+				URL:     tt.url,
+				Timeout: tt.timeout,
 			}
 			got, err := HTTPGetRequest(request, 0)
 
