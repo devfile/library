@@ -45,12 +45,15 @@ jobs:
 
     - name: Check license
       run: |
-        make check_license
-        if [[ ! -z $(git status -s) ]]
+        go install github.com/google/addlicense@latest
+        git reset HEAD --hard
+        make check_license          
+        if [[ $? != 0 ]]
         then
-          echo "license headers are missing : $(git status -s)"
+          echo "not well formatted sources are found:"
+          git --no-pager diff
           exit 1
-        fi        
+        fi      
 
     - name: Run Go Tests
       run: make test
