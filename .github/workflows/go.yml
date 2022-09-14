@@ -43,6 +43,15 @@ jobs:
           exit 1
         fi
 
+    - name: Check license
+      run: |
+        make check_license
+        if [[ ! -z $(git status -s) ]]
+        then
+          echo "license headers are missing : $(git status -s)"
+          exit 1
+        fi        
+
     - name: Run Go Tests
       run: make test
 
