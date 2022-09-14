@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 	k8yaml "sigs.k8s.io/yaml"
 
@@ -39,7 +39,7 @@ type KubernetesResources struct {
 // It returns all the parsed Kubernetes objects as an array of interface.
 // Consumers interested in the Kubernetes resources are expected to Unmarshal
 // it to the struct of the respective Kubernetes resource.
-func ReadKubernetesYaml(src YamlSrc, fs filesystem.Filesystem) ([]interface{}, error) {
+func ReadKubernetesYaml(src YamlSrc, fs afero.Afero) ([]interface{}, error) {
 
 	var data []byte
 	var err error
