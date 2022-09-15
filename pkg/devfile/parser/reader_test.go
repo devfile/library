@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +31,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 	const serverIP = "127.0.0.1:9080"
 	var data []byte
 
-	fs := filesystem.DefaultFs{}
+	fs := afero.Afero{Fs: afero.NewOsFs()}
 	absPath, err := util.GetAbsPath("../../../tests/yamls/resources.yaml")
 	if err != nil {
 		t.Error(err)
@@ -71,7 +71,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 	tests := []struct {
 		name                string
 		src                 YamlSrc
-		fs                  filesystem.Filesystem
+		fs                  afero.Afero
 		wantErr             bool
 		wantDeploymentNames []string
 		wantServiceNames    []string
@@ -84,7 +84,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://" + serverIP,
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -96,7 +96,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "../../../tests/yamls/resources.yaml",
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -108,7 +108,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: data,
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -120,7 +120,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://badurl",
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 		{
@@ -128,7 +128,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "$%^&",
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 		{
@@ -136,7 +136,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: badData,
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 	}
