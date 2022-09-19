@@ -1040,24 +1040,30 @@ func TestGetGitUrlComponentsFromRaw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := false
 			_, err := GetGitUrlComponentsFromRaw(tt.url)
-			if err != nil {
-				gotErr = true
-			}
-
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}
 		})
 	}
 }
 
 func TestCloneGitRepo(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
+	}
+	defer os.RemoveAll(tempDir)
+
 	invalidGitUrl := map[string]string{
 		"username": "devfile",
 		"project":  "nonexistent",
 		"branch":   "nonexistent",
+	}
+	validGitUrl := map[string]string{
+		"username": "devfile",
+		"project":  "library",
+		"branch":   "main",
 	}
 
 	tests := []struct {
@@ -1072,18 +1078,19 @@ func TestCloneGitRepo(t *testing.T) {
 			destDir:          filepath.Join(os.TempDir(), "nonexistent"),
 			wantErr:          true,
 		},
+		{
+			name:             "should be able to clone valid git url",
+			gitUrlComponents: validGitUrl,
+			destDir:          tempDir,
+			wantErr:          false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := false
 			err := CloneGitRepo(tt.gitUrlComponents, tt.destDir)
-			if err != nil {
-				gotErr = true
-			}
-
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}
 		})
 	}
@@ -1155,8 +1162,11 @@ func TestCopyAllDirFiles(t *testing.T) {
 	fs.MkdirAll("/path/to/dest", 0755)
 	fs.WriteFile("/path/to/src/devfile.yaml", []byte(""), 0755)
 	fs.WriteFile("/path/to/src/file.txt", []byte(""), 0755)
+	fs.WriteFile("/path/to/src/subdir/devfile.yaml", []byte(""), 0755)
+	fs.WriteFile("/path/to/src/subdir/file.txt", []byte(""), 0755)
 
 	srcDir := "/path/to/src"
+	srcSubDir := "/path/to/src/subdir"
 	destDir := "/path/to/dest"
 	missingDir := "/invalid/path/to/dir"
 
@@ -1173,6 +1183,12 @@ func TestCopyAllDirFiles(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "should be able to copy subdir files to destination path",
+			srcDir:  srcSubDir,
+			destDir: destDir,
+			wantErr: false,
+		},
+		{
 			name:    "should fail if source path is invalid",
 			srcDir:  missingDir,
 			destDir: destDir,
@@ -1182,14 +1198,9 @@ func TestCopyAllDirFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := false
 			err := copyAllDirFilesOnFS(tt.srcDir, tt.destDir, fs)
-			if err != nil {
-				gotErr = true
-			}
-
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}
 		})
 	}

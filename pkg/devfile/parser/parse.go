@@ -406,9 +406,22 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 				return DevfileObj{}, err
 			}
 		}
-	} else if absoluteURL {
-		// absolute URL address
-		newUri = uri
+	} else {
+		if absoluteURL {
+			// absolute URL address
+			newUri = uri
+		} else if curDevfileCtx.GetURL() != "" {
+			// relative path to a URL
+			u, err := url.Parse(curDevfileCtx.GetURL())
+			if err != nil {
+				return DevfileObj{}, err
+			}
+			u.Path = path.Join(u.Path, uri)
+			newUri = u.String()
+		} else {
+			return DevfileObj{}, fmt.Errorf("failed to resolve parent uri, devfile context is missing absolute url and path to devfile. %s", resolveImportReference(importReference))
+		}
+
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 		if strings.Contains(newUri, "raw.githubusercontent.com") {
 			urlComponents, err := util.GetGitUrlComponentsFromRaw(newUri)
@@ -416,20 +429,11 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 				return DevfileObj{}, err
 			}
 			destDir := path.Dir(curDevfileCtx.GetAbsPath())
-			err = getStackFromGit(urlComponents, destDir)
+			err = getResourcesFromGit(urlComponents, destDir)
 			if err != nil {
 				return DevfileObj{}, err
 			}
 		}
-	} else if curDevfileCtx.GetURL() != "" {
-		// relative path to a URL
-		u, err := url.Parse(curDevfileCtx.GetURL())
-		if err != nil {
-			return DevfileObj{}, err
-		}
-		u.Path = path.Join(path.Dir(u.Path), uri)
-		newUri = u.String()
-		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 	}
 	importReference.Uri = newUri
 	newResolveCtx := resolveCtx.appendNode(importReference)
@@ -437,8 +441,8 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
-func getStackFromGit(gitUrlComponents map[string]string, destDir string) error {
-	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-git"))
+func getResourcesFromGit(gitUrlComponents map[string]string, destDir string) error {
+	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
 	if err != nil {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 	}
@@ -474,7 +478,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 		}
 		newResolveCtx := resolveCtx.appendNode(importReference)
 
-		err = getStackFromRegistry(id, registryURL, destDir)
+		err = getResourcesFromRegistry(id, registryURL, destDir)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -492,7 +496,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 				importReference.RegistryUrl = registryURL
 				newResolveCtx := resolveCtx.appendNode(importReference)
 
-				err := getStackFromRegistry(id, registryURL, destDir)
+				err := getResourcesFromRegistry(id, registryURL, destDir)
 				if err != nil {
 					return DevfileObj{}, err
 				}
@@ -520,8 +524,8 @@ func getDevfileFromRegistry(id, registryURL, version string, httpTimeout *int) (
 	return util.HTTPGetRequest(param, 0)
 }
 
-func getStackFromRegistry(id, registryURL, destDir string) error {
-	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("stack-%s", id))
+func getResourcesFromRegistry(id, registryURL, destDir string) error {
+	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("registry-resources-%s", id))
 	if err != nil {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 	}
