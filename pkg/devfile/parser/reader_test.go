@@ -1,3 +1,18 @@
+//
+// Copyright 2022 Red Hat, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package parser
 
 import (
@@ -7,8 +22,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/devfile/library/pkg/util"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +31,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 	const serverIP = "127.0.0.1:9080"
 	var data []byte
 
-	fs := filesystem.DefaultFs{}
+	fs := afero.Afero{Fs: afero.NewOsFs()}
 	absPath, err := util.GetAbsPath("../../../tests/yamls/resources.yaml")
 	if err != nil {
 		t.Error(err)
@@ -56,7 +71,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 	tests := []struct {
 		name                string
 		src                 YamlSrc
-		fs                  filesystem.Filesystem
+		fs                  afero.Afero
 		wantErr             bool
 		wantDeploymentNames []string
 		wantServiceNames    []string
@@ -69,7 +84,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://" + serverIP,
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -81,7 +96,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "../../../tests/yamls/resources.yaml",
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -93,7 +108,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: data,
 			},
-			fs:                  filesystem.DefaultFs{},
+			fs:                  fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -105,7 +120,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://badurl",
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 		{
@@ -113,7 +128,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "$%^&",
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 		{
@@ -121,7 +136,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: badData,
 			},
-			fs:      filesystem.DefaultFs{},
+			fs:      fs,
 			wantErr: true,
 		},
 	}

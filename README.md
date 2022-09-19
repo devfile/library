@@ -20,20 +20,33 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    ```go
    // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
    parserArgs := parser.ParserArgs{
-		Path:              path,
-		FlattenedDevfile:  &flattenedDevfile,
-		RegistryURLs:      registryURLs,
-		DefaultNamespace:  defaultNamespace,
-		Context:           context,
-		K8sClient:         client,
+		Path:                           path,
+		FlattenedDevfile:               &flattenedDevfile,
+		ConvertKubernetesContentInUri:  &convertKubernetesContentInUri
+		RegistryURLs:                   registryURLs,
+		DefaultNamespace:               defaultNamespace,
+		Context:                        context,
+		K8sClient:                      client,
+   		ExternalVariables:              externalVariables,
 	}
 
    // Parses the devfile and validates the devfile data
    // if top-level variables are not substituted successfully, the warnings can be logged by parsing variableWarning
    devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(parserArgs)
    ```
+
+
+2. To override the HTTP request and response timeouts for a devfile with a parent reference from a registry URL, specify the HTTPTimeout value in the parser arguments
+   ```go
+      // specify the timeout in seconds  
+      httpTimeout := 20 
+      parserArgs := parser.ParserArgs{
+         HTTPTimeout: &httpTimeout
+	  }
+   ```
+
    
-2. To get specific content from devfile
+3. To get specific content from devfile
    ```go
    // To get all the components from the devfile
    components, err := devfile.Data.GetComponents(DevfileOptions{})
@@ -65,7 +78,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    })
    ```
    
-3. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
+4. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
    ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
     containers, err := generator.GetContainers(devfile)
@@ -82,7 +95,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 	deployment := generator.GetDeployment(deployParams)
    ```
    
-4. To update devfile content
+5. To update devfile content
    ```go
    // To update an existing component in devfile object
    err := devfile.Data.UpdateComponent(v1.Component{
@@ -114,7 +127,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    err := devfile.Data.DeleteComponent(componentName)
    ```
 
-5. To write to a devfile, visit [writer.go source file](pkg/devfile/parser/writer.go)
+6. To write to a devfile, visit [writer.go source file](pkg/devfile/parser/writer.go)
    ```go
    // If the devfile object has been created with devfile path already set, can simply call WriteYamlDevfile to writes the devfile
    err := devfile.WriteYamlDevfile()
@@ -145,7 +158,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    // write to the devfile on disk
    err = devfile.WriteYamlDevfile()
    ```
-6. To parse the outerloop Kubernetes/OpenShift component's uri or inline content, call the read and parse functions
+7. To parse the outerloop Kubernetes/OpenShift component's uri or inline content, call the read and parse functions
    ```go
    // Read the YAML content
    values, err := ReadKubernetesYaml(src, fs)
@@ -153,6 +166,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    // Get the Kubernetes resources
    resources, err := ParseKubernetesYaml(values)
    ```
+
 
 ## Projects using devfile/library
 
@@ -176,3 +190,6 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 For devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
 
+## Contributing
+
+Please see our [contributing.md](./CONTRIBUTING.md).

@@ -1,3 +1,18 @@
+//
+// Copyright 2022 Red Hat, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package parser
 
 import (
@@ -12,17 +27,15 @@ import (
 	"path"
 	"strings"
 
-	"github.com/devfile/library/pkg/util"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
 	"github.com/devfile/library/pkg/devfile/parser/data"
 	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/pkg/util"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
-
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiOverride "github.com/devfile/api/v2/pkg/utils/overriding"
@@ -91,6 +104,8 @@ type ParserArgs struct {
 	K8sClient client.Client
 	// ExternalVariables override variables defined in the Devfile
 	ExternalVariables map[string]string
+	// HTTPTimeout overrides the request and response timeout values for reading a parent devfile reference from the registry.  If a negative value is specified, the default timeout will be used.
+	HTTPTimeout *int
 }
 
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
@@ -114,6 +129,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		registryURLs:     args.RegistryURLs,
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
+		httpTimeout:      args.HTTPTimeout,
 	}
 
 	flattenedDevfile := true
@@ -161,6 +177,8 @@ type resolverTools struct {
 	context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
 	k8sClient client.Client
+	// httpTimeout is the timeout value in seconds passed in from the client.
+	httpTimeout *int
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -446,7 +464,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	destDir := path.Dir(d.Ctx.GetAbsPath())
 
 	if registryURL != "" {
-		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+		devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version, tool.httpTimeout)
 		if err != nil {
 			return DevfileObj{}, err
 		}
@@ -465,7 +483,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 	} else if tool.registryURLs != nil {
 		for _, registryURL := range tool.registryURLs {
-			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version)
+			devfileContent, err := getDevfileFromRegistry(id, registryURL, importReference.Version, tool.httpTimeout)
 			if devfileContent != nil && err == nil {
 				d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 				if err != nil {
@@ -489,13 +507,16 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
 }
 
-func getDevfileFromRegistry(id, registryURL, version string) ([]byte, error) {
+func getDevfileFromRegistry(id, registryURL, version string, httpTimeout *int) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
 		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
 	}
 	param := util.HTTPRequestParams{
 		URL: fmt.Sprintf("%s/devfiles/%s/%s", registryURL, id, version),
 	}
+
+	param.Timeout = httpTimeout
+
 	return util.HTTPGetRequest(param, 0)
 }
 

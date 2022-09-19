@@ -19,10 +19,29 @@ bin:
 
 .PHONY: test
 test:
-	go test -coverprofile tests/v2/lib-test-coverage.out -v ./...
-	go tool cover -html=tests/v2/lib-test-coverage.out -o tests/v2/lib-test-coverage.html
+	go test -coverprofile cover.out -v ./...
 
 .PHONY: clean
 clean:
 	@rm -rf $(FILES)
+
+### fmt_license: ensure license header is set on all files
+fmt_license:
+ifneq ($(shell command -v addlicense 2> /dev/null),)
+	@echo 'addlicense -v -f license_header.txt **/*.go'
+	@addlicense -v -f license_header.txt $$(find . -name '*.go')
+else
+	$(error addlicense must be installed for this rule: go get -u github.com/google/addlicense)
+endif
+
+### check_fmt: Checks for missing licenses on files in repo
+check_license:
+  ifeq ($(shell command -v addlicense 2> /dev/null),)
+	  $(error "error addlicense must be installed for this rule: go get -u github.com/google/addlicense")
+  endif
+
+	  if ! addlicense -check -f license_header.txt $$(find . -not -path '*/\.*' -name '*.go'); then \
+	    echo "Licenses are not formatted; run 'make fmt_license'"; exit 1 ;\
+	  fi \
+
 
