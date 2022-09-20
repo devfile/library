@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
+	"github.com/go-git/go-git/v5/plumbing"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -43,6 +44,7 @@ import (
 
 	"github.com/devfile/library/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
+	gitpkg "github.com/go-git/go-git/v5"
 	"github.com/gobwas/glob"
 	"github.com/gregjones/httpcache"
 	"github.com/gregjones/httpcache/diskcache"
@@ -436,7 +438,11 @@ func FetchResourceQuantity(resourceType corev1.ResourceName, min string, max str
 
 // CheckPathExists checks if a path exists or not
 func CheckPathExists(path string) bool {
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	return checkPathExistsOnFS(path, filesystem.DefaultFs{})
+}
+
+func checkPathExistsOnFS(path string, fs filesystem.Filesystem) bool {
+	if _, err := fs.Stat(path); !os.IsNotExist(err) {
 		// path to file does exist
 		return true
 	}
@@ -1144,6 +1150,57 @@ func ValidateFile(filePath string) error {
 	return nil
 }
 
+// GetGitUrlComponentsFromRaw converts a raw GitHub file link to a map of the url components
+func GetGitUrlComponentsFromRaw(rawGitURL string) (map[string]string, error) {
+	var urlComponents map[string]string
+
+	err := ValidateURL(rawGitURL)
+	if err != nil {
+		return nil, err
+	}
+
+	u, _ := url.Parse(rawGitURL)
+	// the url scheme (e.g. https://) is removed before splitting into the 5 components
+	urlPath := strings.SplitN(u.Host+u.Path, "/", 5)
+
+	// raw GitHub url: https://raw.githubusercontent.com/devfile/registry/main/stacks/nodejs/devfile.yaml
+	// host: raw.githubusercontent.com
+	// username: devfile
+	// project: registry
+	// branch: main
+	// file: stacks/nodejs/devfile.yaml
+	if len(urlPath) == 5 {
+		urlComponents = map[string]string{
+			"host":     urlPath[0],
+			"username": urlPath[1],
+			"project":  urlPath[2],
+			"branch":   urlPath[3],
+			"file":     urlPath[4],
+		}
+	}
+
+	return urlComponents, nil
+}
+
+// CloneGitRepo clones a GitHub repo to a destination directory
+func CloneGitRepo(gitUrlComponents map[string]string, destDir string) error {
+	gitUrl := fmt.Sprintf("https://github.com/%s/%s.git", gitUrlComponents["username"], gitUrlComponents["project"])
+	branch := fmt.Sprintf("refs/heads/%s", gitUrlComponents["branch"])
+
+	cloneOptions := &gitpkg.CloneOptions{
+		URL:           gitUrl,
+		ReferenceName: plumbing.ReferenceName(branch),
+		SingleBranch:  true,
+		Depth:         1,
+	}
+
+	_, err := gitpkg.PlainClone(destDir, false, cloneOptions)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // CopyFile copies file from source path to destination path
 func CopyFile(srcPath string, dstPath string, info os.FileInfo) error {
 	// In order to avoid file overriding issue, do nothing if source path is equal to destination path
@@ -1183,6 +1240,82 @@ func CopyFile(srcPath string, dstPath string, info os.FileInfo) error {
 	}
 
 	return nil
+}
+
+// CopyAllDirFiles recursively copies a source directory to a destination directory
+func CopyAllDirFiles(srcDir, destDir string) error {
+	return copyAllDirFilesOnFS(srcDir, destDir, filesystem.DefaultFs{})
+}
+
+func copyAllDirFilesOnFS(srcDir, destDir string, fs filesystem.Filesystem) error {
+	var info os.FileInfo
+
+	files, err := fs.ReadDir(srcDir)
+	if err != nil {
+		return errors.Wrapf(err, "failed reading dir %v", srcDir)
+	}
+
+	for _, file := range files {
+		srcPath := path.Join(srcDir, file.Name())
+		destPath := path.Join(destDir, file.Name())
+
+		if file.IsDir() {
+			if info, err = fs.Stat(srcPath); err != nil {
+				return err
+			}
+			if err = fs.MkdirAll(destPath, info.Mode()); err != nil {
+				return err
+			}
+			if err = copyAllDirFilesOnFS(srcPath, destPath, fs); err != nil {
+				return err
+			}
+		} else {
+			if file.Name() == "devfile.yaml" {
+				continue
+			}
+			// Only copy files that do not exist in the destination directory
+			if !checkPathExistsOnFS(destPath, fs) {
+				if err := copyFileOnFs(srcPath, destPath, fs); err != nil {
+					return errors.Wrapf(err, "failed to copy %s to %s", srcPath, destPath)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// copied from: https://github.com/devfile/registry-support/blob/main/index/generator/library/util.go
+func copyFileOnFs(src, dst string, fs filesystem.Filesystem) error {
+	var err error
+	var srcinfo os.FileInfo
+
+	srcfd, err := fs.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if e := srcfd.Close(); e != nil {
+			fmt.Printf("err occurred while closing file: %v", e)
+		}
+	}()
+
+	dstfd, err := fs.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if e := dstfd.Close(); e != nil {
+			fmt.Printf("err occurred while closing file: %v", e)
+		}
+	}()
+
+	if _, err = io.Copy(dstfd, srcfd); err != nil {
+		return err
+	}
+	if srcinfo, err = fs.Stat(src); err != nil {
+		return err
+	}
+	return fs.Chmod(dst, srcinfo.Mode())
 }
 
 // PathEqual compare the paths to determine if they are equal
