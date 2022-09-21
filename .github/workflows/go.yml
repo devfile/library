@@ -22,17 +22,6 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Run Gosec Security Scanner
-      uses: securego/gosec@master
-      with:
-        args: -no-fail -fmt=json -out=gosec.json -exclude-dir pkg/testingutil  -exclude-dir tests ./...
-
-    - name: Upload Gosec results
-      uses: actions/upload-artifact@v2
-      with:
-        name: gosec.json
-        path: .
-
     - name: Check go mod status
       run: |
         make gomod_tidy
@@ -68,6 +57,17 @@ jobs:
 
     - name: Run Go Tests
       run: make test
+
+    - name: Run Gosec Security Scanner
+      uses: securego/gosec@master
+      with:
+        args: -no-fail -fmt=json -out=gosec.json -exclude-dir pkg/testingutil  -exclude-dir tests ./...
+
+    - name: Upload Gosec results
+      uses: actions/upload-artifact@v2
+      with:
+        name: gosec-results
+        path: gosec.json
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2.1.0
