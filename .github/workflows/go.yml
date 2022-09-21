@@ -59,9 +59,14 @@ jobs:
       run: make test
 
     - name: Run Gosec Security Scanner
-      uses: securego/gosec@master
-      with:
-        args: -no-fail -fmt=json -out=gosec.json -exclude-dir pkg/testingutil  -exclude-dir tests ./...
+      run: |
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        make gosec
+        if [[ $? != 0 ]]
+        then
+          echo "gosec scanner failed to run "
+          exit 1
+        fi   
 
     - name: Upload Gosec results
       uses: actions/upload-artifact@v2
