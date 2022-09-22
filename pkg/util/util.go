@@ -1015,8 +1015,8 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 		_, err = io.Copy(outFile, limited)
 
 		// Close the file without defer to close before next iteration of loop
-		outFile.Close()
-		rc.Close()
+		_ = outFile.Close()
+		_ = rc.Close()
 
 		if err != nil {
 			return filenames, err
