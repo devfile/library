@@ -32,7 +32,7 @@ Testing and documentation do not need to be complete in order for this PR to be 
   <!-- _Do we have anything that can break our clients?  If so, open a notifying issue_ -->
 
 - [ ] Gosec scans
-  <!-- _Review scan results from the PR by downloading the `gosec-results` artifact. Fix all MEDIUM and higher findings and/or annotate a finding per gosec instructions: https://github.com/securego/gosec#annotating-code to address why a finding is not a security issue_ -->
+  <!-- _Review scan results from the PR.  Fix all MEDIUM and higher findings and/or annotate a finding per gosec instructions: https://github.com/securego/gosec#annotating-code to address why a finding is not a security issue_-->
 
 
 ### How to test changes / Special notes to the reviewer:
