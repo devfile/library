@@ -38,7 +38,7 @@ func ReplaceSchemaFile() {
 	fmt.Printf("Writing to file: %s\n", filePath)
 	fileContent := fmt.Sprintf("package %s\n\n// %s\nconst %s = `%s\n`\n", packageVersion, schemaURL, jsonSchemaVersion, newSchema)
 
-	if err := ioutil.WriteFile(filePath, []byte(fileContent), 0755); err != nil {
+	if err := ioutil.WriteFile(filePath, []byte(fileContent), 0644); err != nil {
 		printErr(err)
 		os.Exit(1)
 	}
