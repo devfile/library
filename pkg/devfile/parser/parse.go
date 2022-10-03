@@ -742,6 +742,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 	}
 	for _, kubeComp := range kubeComponents {
 		if kubeComp.Kubernetes != nil && kubeComp.Kubernetes.Uri != "" {
+			/* #nosec G601 -- not an issue, kubeComp is de-referenced in sequence*/
 			err := convertK8sLikeCompUriToInlined(&kubeComp, devObj.Ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert Kubernetes Uri to inlined for component '%s'", kubeComp.Name)
@@ -754,6 +755,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 	}
 	for _, openshiftComp := range openshiftComponents {
 		if openshiftComp.Openshift != nil && openshiftComp.Openshift.Uri != "" {
+			/* #nosec G601 -- not an issue, openshiftComp is de-referenced in sequence*/
 			err := convertK8sLikeCompUriToInlined(&openshiftComp, devObj.Ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert Openshift Uri to inlined for component '%s'", openshiftComp.Name)

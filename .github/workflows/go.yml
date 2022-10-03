@@ -58,5 +58,21 @@ jobs:
     - name: Run Go Tests
       run: make test
 
+    - name: Run Gosec Security Scanner
+      run: |
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        make gosec
+        if [[ $? != 0 ]]
+        then
+          echo "gosec scanner failed to run "
+          exit 1
+        fi   
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        # Path to SARIF file relative to the root of the repository
+        sarif_file: gosec.sarif
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2.1.0

@@ -494,7 +494,7 @@ func GetIgnoreRulesFromDirectory(directory string) ([]string, error) {
 		}
 	}
 
-	file, err := os.Open(pathIgnore)
+	file, err := os.Open(filepath.Clean(pathIgnore))
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +707,7 @@ func HTTPGetFreePort() (int, error) {
 // shamelessly taken from: https://stackoverflow.com/questions/30697324/how-to-check-if-directory-on-path-is-empty
 // this helps detect any edge cases where an empty directory is copied over
 func IsEmpty(name string) (bool, error) {
-	f, err := os.Open(name)
+	f, err := os.Open(filepath.Clean(name))
 	if err != nil {
 		return false, err
 	}
@@ -997,7 +997,7 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 			return filenames, err
 		}
 
-		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, ModeReadWriteFile)
+		outFile, err := os.OpenFile(filepath.Clean(fpath), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, ModeReadWriteFile)
 		if err != nil {
 			return filenames, err
 		}
@@ -1015,8 +1015,8 @@ func Unzip(src, dest, pathToUnzip string) ([]string, error) {
 		_, err = io.Copy(outFile, limited)
 
 		// Close the file without defer to close before next iteration of loop
-		outFile.Close()
-		rc.Close()
+		_ = outFile.Close()
+		_ = rc.Close()
 
 		if err != nil {
 			return filenames, err
@@ -1214,14 +1214,14 @@ func CopyFile(srcPath string, dstPath string, info os.FileInfo) error {
 	}
 
 	// Open source file
-	srcFile, err := os.Open(srcPath)
+	srcFile, err := os.Open(filepath.Clean(srcPath))
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close() // #nosec G307
 
 	// Create destination file
-	dstFile, err := os.Create(dstPath)
+	dstFile, err := os.Create(filepath.Clean(dstPath))
 	if err != nil {
 		return err
 	}
