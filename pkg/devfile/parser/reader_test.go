@@ -71,7 +71,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 	tests := []struct {
 		name                string
 		src                 YamlSrc
-		fs                  afero.Afero
+		fs                  *afero.Afero
 		wantErr             bool
 		wantDeploymentNames []string
 		wantServiceNames    []string
@@ -84,7 +84,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://" + serverIP,
 			},
-			fs:                  fs,
+			fs:                  nil,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -96,7 +96,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "../../../tests/yamls/resources.yaml",
 			},
-			fs:                  fs,
+			fs:                  &fs,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -104,11 +104,19 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			wantOtherNames:      []string{"pvc-sample", "pvc-sample-2"},
 		},
 		{
+			name: "Read the YAML from the Path with no fs passed",
+			src: YamlSrc{
+				Path: "../../../tests/yamls/resources.yaml",
+			},
+			fs:      nil,
+			wantErr: true,
+		},
+		{
 			name: "Read the YAML from the Data",
 			src: YamlSrc{
 				Data: data,
 			},
-			fs:                  fs,
+			fs:                  nil,
 			wantDeploymentNames: []string{"deploy-sample", "deploy-sample-2"},
 			wantServiceNames:    []string{"service-sample", "service-sample-2"},
 			wantRouteNames:      []string{"route-sample", "route-sample-2"},
@@ -120,7 +128,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				URL: "http://badurl",
 			},
-			fs:      fs,
+			fs:      nil,
 			wantErr: true,
 		},
 		{
@@ -128,7 +136,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Path: "$%^&",
 			},
-			fs:      fs,
+			fs:      &fs,
 			wantErr: true,
 		},
 		{
@@ -136,7 +144,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: badData,
 			},
-			fs:      fs,
+			fs:      nil,
 			wantErr: true,
 		},
 	}
