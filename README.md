@@ -20,20 +20,28 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    ```go
    // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
    parserArgs := parser.ParserArgs{
-		Path:              path,
-		FlattenedDevfile:  &flattenedDevfile,
-		RegistryURLs:      registryURLs,
-		DefaultNamespace:  defaultNamespace,
-		Context:           context,
-		K8sClient:         client,
-	}
+        Path:              path,
+        FlattenedDevfile:  &flattenedDevfile,
+        RegistryURLs:      registryURLs,
+        DefaultNamespace:  defaultNamespace,
+        Context:           context,
+        K8sClient:         client,
+    }
 
    // Parses the devfile and validates the devfile data
    // if top-level variables are not substituted successfully, the warnings can be logged by parsing variableWarning
    devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(parserArgs)
    ```
-   
-2. To get specific content from devfile
+
+2. To override the HTTP request and response timeouts for a devfile with a parent reference from a registry URL, specify the HTTPTimeout value in the parser arguments
+   ```go
+      // specify the timeout in seconds  
+      httpTimeout := 20 
+      parserArgs := parser.ParserArgs{
+         HTTPTimeout: &httpTimeout
+      }
+   ```
+3. To get specific content from devfile
    ```go
    // To get all the components from the devfile
    components, err := devfile.Data.GetComponents(DevfileOptions{})
@@ -42,55 +50,55 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    // & import: {strategy: Dockerfile}
    components, err := devfile.Data.GetComponents(DevfileOptions{
       Filter: map[string]interface{}{
-			"tool": "console-import",
-			"import": map[string]interface{}{
-				"strategy": "Dockerfile",
-			},
-		},
+            "tool": "console-import",
+            "import": map[string]interface{}{
+                "strategy": "Dockerfile",
+            },
+        },
    })
 
    // To get all the volume components
    components, err := devfile.Data.GetComponents(DevfileOptions{
-		ComponentOptions: ComponentOptions{
-			ComponentType: v1.VolumeComponentType,
-		},
+        ComponentOptions: ComponentOptions{
+            ComponentType: v1.VolumeComponentType,
+        },
    })
 
    // To get all the exec commands that belong to the build group
    commands, err := devfile.Data.GetCommands(DevfileOptions{
-		CommandOptions: CommandOptions{
-			CommandType: v1.ExecCommandType,
-			CommandGroupKind: v1.BuildCommandGroupKind,
-		},
+        CommandOptions: CommandOptions{
+            CommandType: v1.ExecCommandType,
+            CommandGroupKind: v1.BuildCommandGroupKind,
+        },
    })
    ```
    
-3. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
+4. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
    ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
     containers, err := generator.GetContainers(devfile)
 
     // To generate a Kubernetes deployment of type v1.Deployment
     deployParams := generator.DeploymentParams{
-		TypeMeta:          generator.GetTypeMeta(deploymentKind, deploymentAPIVersion),
-		ObjectMeta:        generator.GetObjectMeta(name, namespace, labels, annotations),
-		InitContainers:    initContainers,
-		Containers:        containers,
-		Volumes:           volumes,
-		PodSelectorLabels: labels,
-	}
-	deployment := generator.GetDeployment(deployParams)
+        TypeMeta:          generator.GetTypeMeta(deploymentKind, deploymentAPIVersion),
+        ObjectMeta:        generator.GetObjectMeta(name, namespace, labels, annotations),
+        InitContainers:    initContainers,
+        Containers:        containers,
+        Volumes:           volumes,
+        PodSelectorLabels: labels,
+    }
+    deployment := generator.GetDeployment(deployParams)
    ```
    
-4. To update devfile content
+5. To update devfile content
    ```go
    // To update an existing component in devfile object
    err := devfile.Data.UpdateComponent(v1.Component{
-   	    Name: "component1",
-   	    ComponentUnion: v1.ComponentUnion{
-   	    	Container: &v1.ContainerComponent{
-   	    		Container: v1.Container{
-   	    			Image: "image1",
+           Name: "component1",
+           ComponentUnion: v1.ComponentUnion{
+               Container: &v1.ContainerComponent{
+                   Container: v1.Container{
+                       Image: "image1",
                 },
             },
         },
@@ -114,7 +122,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    err := devfile.Data.DeleteComponent(componentName)
    ```
 
-5. To write to a devfile, visit [writer.go source file](pkg/devfile/parser/writer.go)
+6. To write to a devfile, visit [writer.go source file](pkg/devfile/parser/writer.go)
    ```go
    // If the devfile object has been created with devfile path already set, can simply call WriteYamlDevfile to writes the devfile
    err := devfile.WriteYamlDevfile()
@@ -138,8 +146,8 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
    // create devfile object with the new DevfileCtx and DevfileData
    devfile := parser.DevfileObj{
-		Ctx:  ctx,
-		Data: devfileData,
+        Ctx:  ctx,
+        Data: devfileData,
    }
     
    // write to the devfile on disk
