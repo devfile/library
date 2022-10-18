@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/devfile/library/pkg/util"
+	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"

@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 )
 
 // AddVolumeMounts adds the volume mounts to the specified container component

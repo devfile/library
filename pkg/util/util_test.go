@@ -17,7 +17,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/devfile/library/pkg/testingutil/filesystem"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"net"

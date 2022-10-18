@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
-	"github.com/devfile/library/pkg/util"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/devfile/library/v2/pkg/util"
 	"k8s.io/klog"
 )
 

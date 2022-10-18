@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	v1alpha2 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	corev1 "k8s.io/api/core/v1"
 )
 

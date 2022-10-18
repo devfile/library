@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/devfile/library/pkg/devfile/parser/data"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
 )

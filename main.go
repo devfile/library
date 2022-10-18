@@ -21,10 +21,10 @@ import (
 	"reflect"
 	"strings"
 
-	devfilepkg "github.com/devfile/library/pkg/devfile"
-	"github.com/devfile/library/pkg/devfile/parser"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	devfilepkg "github.com/devfile/library/v2/pkg/devfile"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	v2 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 )
 
 func main() {

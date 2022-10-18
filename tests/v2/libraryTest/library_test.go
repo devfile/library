@@ -22,9 +22,9 @@ import (
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
-	"github.com/devfile/library/pkg/devfile/parser"
-	"github.com/devfile/library/pkg/testingutil"
-	libraryUtils "github.com/devfile/library/tests/v2/utils/library"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	"github.com/devfile/library/v2/pkg/testingutil"
+	libraryUtils "github.com/devfile/library/v2/tests/v2/utils/library"
 	kubev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

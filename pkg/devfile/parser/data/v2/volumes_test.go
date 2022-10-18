@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/library/pkg/testingutil"
+	"github.com/devfile/library/v2/pkg/testingutil"
 	"github.com/stretchr/testify/assert"
 )
 

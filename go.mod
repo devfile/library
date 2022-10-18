@@ -1,9 +1,9 @@
-module github.com/devfile/library
+module github.com/devfile/library/v2
 
 go 1.15
 
 require (
-	github.com/devfile/api/v2 v2.0.0-20220614133608-351f05b7c2b1
+	github.com/devfile/api/v2 v2.2.0
 	github.com/devfile/registry-support/index/generator v0.0.0-20220527155645-8328a8a883be // indirect
 	github.com/devfile/registry-support/registry-library v0.0.0-20220627163229-4aa39fcb0c0a
 	github.com/fatih/color v1.7.0
