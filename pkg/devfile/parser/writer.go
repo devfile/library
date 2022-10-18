@@ -18,10 +18,10 @@ package parser
 import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiAttributes "github.com/devfile/api/v2/pkg/attributes"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"sigs.k8s.io/yaml"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
 )

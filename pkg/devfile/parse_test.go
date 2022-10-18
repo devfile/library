@@ -25,8 +25,8 @@ import (
 	"testing"
 
 	"github.com/devfile/api/v2/pkg/validation/variables"
-	"github.com/devfile/library/pkg/devfile/parser"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 )
 
 func TestParseDevfileAndValidate(t *testing.T) {

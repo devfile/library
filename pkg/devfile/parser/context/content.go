@@ -19,7 +19,7 @@ import (
 	"bytes"
 	"unicode"
 
-	"github.com/devfile/library/pkg/util"
+	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
 	"sigs.k8s.io/yaml"

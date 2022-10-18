@@ -24,10 +24,10 @@ import (
 	"testing"
 
 	"github.com/devfile/api/v2/pkg/attributes"
-	"github.com/devfile/library/pkg/devfile/parser"
-	"github.com/devfile/library/pkg/devfile/parser/data"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
-	"github.com/devfile/library/pkg/testingutil"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/testingutil"
 	"github.com/golang/mock/gomock"
 	buildv1 "github.com/openshift/api/build/v1"
 

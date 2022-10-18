@@ -17,8 +17,8 @@ package devfile
 
 import (
 	"github.com/devfile/api/v2/pkg/validation/variables"
-	"github.com/devfile/library/pkg/devfile/parser"
-	"github.com/devfile/library/pkg/devfile/validate"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	"github.com/devfile/library/v2/pkg/devfile/validate"
 )
 
 // ParseFromURLAndValidate func parses the devfile data from the url

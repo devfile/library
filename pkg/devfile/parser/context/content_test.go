@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 )
 
 const (

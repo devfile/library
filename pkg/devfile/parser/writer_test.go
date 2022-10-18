@@ -20,9 +20,9 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiAttributes "github.com/devfile/api/v2/pkg/attributes"
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
-	devfileCtx "github.com/devfile/library/pkg/devfile/parser/context"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
-	"github.com/devfile/library/pkg/testingutil/filesystem"
+	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
+	v2 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"strings"
 	"testing"
 )

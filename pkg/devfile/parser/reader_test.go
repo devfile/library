@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/devfile/library/pkg/util"
+	"github.com/devfile/library/v2/pkg/util"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )

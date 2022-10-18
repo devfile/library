@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	v200 "github.com/devfile/library/pkg/devfile/parser/data/v2/2.0.0"
+	v200 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2/2.0.0"
 )
 
 const (

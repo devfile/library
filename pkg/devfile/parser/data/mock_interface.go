@@ -10,7 +10,7 @@ import (
 	v1alpha2 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	attributes "github.com/devfile/api/v2/pkg/attributes"
 	devfile "github.com/devfile/api/v2/pkg/devfile"
-	common "github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	common "github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	gomock "github.com/golang/mock/gomock"
 )
 

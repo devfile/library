@@ -18,9 +18,9 @@ package validate
 import (
 	"fmt"
 	v2Validation "github.com/devfile/api/v2/pkg/validation"
-	devfileData "github.com/devfile/library/pkg/devfile/parser/data"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
+	devfileData "github.com/devfile/library/v2/pkg/devfile/parser/data"
+	v2 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/hashicorp/go-multierror"
 )
 

@@ -15,7 +15,7 @@
 
 package parser
 
-import "github.com/devfile/library/pkg/testingutil/filesystem"
+import "github.com/devfile/library/v2/pkg/testingutil/filesystem"
 
 // GetFs returns the filesystem object
 func (d *DevfileCtx) GetFs() filesystem.Filesystem {

@@ -42,7 +42,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devfile/library/pkg/testingutil/filesystem"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
 	gitpkg "github.com/go-git/go-git/v5"
 	"github.com/gobwas/glob"
