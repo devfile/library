@@ -4,8 +4,7 @@ go 1.15
 
 require (
 	github.com/devfile/api/v2 v2.2.0
-	github.com/devfile/registry-support/index/generator v0.0.0-20220527155645-8328a8a883be // indirect
-	github.com/devfile/registry-support/registry-library v0.0.0-20220627163229-4aa39fcb0c0a
+	github.com/devfile/registry-support/registry-library v0.0.0-20221018213054-47b3ffaeadba
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-git/go-git/v5 v5.4.2
