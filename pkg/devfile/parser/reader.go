@@ -49,6 +49,7 @@ type KubernetesResources struct {
 	Services    []corev1.Service
 	Routes      []routev1.Route
 	Ingresses   []extensionsv1.Ingress
+	Others      []interface{}
 }
 
 // ReadKubernetesYaml reads a yaml Kubernetes file from either the Path, URL or Data provided.
@@ -105,12 +106,14 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 	var services []corev1.Service
 	var routes []routev1.Route
 	var ingresses []extensionsv1.Ingress
+	var otherResources []interface{}
 
 	for _, value := range values {
 		var deployment appsv1.Deployment
 		var service corev1.Service
 		var route routev1.Route
 		var ingress extensionsv1.Ingress
+		var otherResource interface{}
 
 		byteData, err := k8yaml.Marshal(value)
 		if err != nil {
@@ -133,6 +136,9 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 		case "Ingress":
 			err = k8yaml.Unmarshal(byteData, &ingress)
 			ingresses = append(ingresses, ingress)
+		default:
+			err = k8yaml.Unmarshal(byteData, &otherResource)
+			otherResources = append(otherResources, otherResource)
 		}
 
 		if err != nil {
@@ -145,5 +151,6 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 		Services:    services,
 		Routes:      routes,
 		Ingresses:   ingresses,
+		Others:      otherResources,
 	}, nil
 }
