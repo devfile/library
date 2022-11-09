@@ -192,6 +192,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 					services := resources.Services
 					routes := resources.Routes
 					ingresses := resources.Ingresses
+					otherResources := resources.Others
 
 					for _, deploy := range deployments {
 						assert.Contains(t, tt.wantDeploymentNames, deploy.Name)
@@ -204,6 +205,13 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 					}
 					for _, ingress := range ingresses {
 						assert.Contains(t, tt.wantIngressNames, ingress.Name)
+					}
+					for _, resource := range otherResources {
+						kubernetesMap := resource.(map[string]interface{})
+						metadata := kubernetesMap["metadata"]
+						metadataMap := metadata.(map[string]interface{})
+						name := metadataMap["name"]
+						assert.Contains(t, tt.wantOtherNames, name)
 					}
 				}
 			}
