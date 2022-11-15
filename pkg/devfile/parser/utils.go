@@ -20,17 +20,18 @@ import (
 	"reflect"
 
 	devfilev1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 )
 
 // GetDeployComponents gets the default deploy command associated components
-func GetDeployComponents(devfileObj DevfileObj) (map[string]string, error) {
+func GetDeployComponents(devfileData data.DevfileData) (map[string]string, error) {
 	deployCommandFilter := common.DevfileOptions{
 		CommandOptions: common.CommandOptions{
 			CommandGroupKind: devfilev1.DeployCommandGroupKind,
 		},
 	}
-	deployCommands, err := devfileObj.Data.GetCommands(deployCommandFilter)
+	deployCommands, err := devfileData.GetCommands(deployCommandFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,7 @@ func GetDeployComponents(devfileObj DevfileObj) (map[string]string, error) {
 			CommandType: devfilev1.ApplyCommandType,
 		},
 	}
-	applyCommands, err := devfileObj.Data.GetCommands(applyCommandFilter)
+	applyCommands, err := devfileData.GetCommands(applyCommandFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -77,14 +78,14 @@ func GetDeployComponents(devfileObj DevfileObj) (map[string]string, error) {
 }
 
 // GetImageBuildComponent gets the image build component from the deploy associated components
-func GetImageBuildComponent(devfileObj DevfileObj, deployAssociatedComponents map[string]string) (devfilev1.Component, error) {
+func GetImageBuildComponent(devfileData data.DevfileData, deployAssociatedComponents map[string]string) (devfilev1.Component, error) {
 	imageComponentFilter := common.DevfileOptions{
 		ComponentOptions: common.ComponentOptions{
 			ComponentType: devfilev1.ImageComponentType,
 		},
 	}
 
-	imageComponents, err := devfileObj.Data.GetComponents(imageComponentFilter)
+	imageComponents, err := devfileData.GetComponents(imageComponentFilter)
 	if err != nil {
 		return devfilev1.Component{}, err
 	}

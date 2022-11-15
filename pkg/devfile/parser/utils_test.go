@@ -196,7 +196,7 @@ func TestGetDeployComponents(t *testing.T) {
 				Data: mockDevfileData,
 			}
 
-			componentMap, err := GetDeployComponents(devObj)
+			componentMap, err := GetDeployComponents(devObj.Data)
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetDeployComponents() error: %v, wantErr %v", err, tt.wantErr)
@@ -372,7 +372,7 @@ func TestGetImageBuildComponent(t *testing.T) {
 				Data: mockDevfileData,
 			}
 
-			component, err := GetImageBuildComponent(devObj, tt.deployAssociatedComponents)
+			component, err := GetImageBuildComponent(devObj.Data, tt.deployAssociatedComponents)
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetImageBuildComponent() error: %v, wantErr %v", err, tt.wantErr)
