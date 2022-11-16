@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/devfile/api/v2 v2.2.0
+	github.com/devfile/library v1.2.1-0.20220308191614-f0f7e11b17de
 	github.com/devfile/registry-support/registry-library v0.0.0-20221018213054-47b3ffaeadba
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
@@ -17,11 +18,13 @@ require (
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/openshift/api v0.0.0-20200930075302-db52bc4ef99f
 	github.com/pkg/errors v0.9.1
+	github.com/qjebbs/go-jsons v0.0.0-20221021030617-ee43abc0a749
 	github.com/spf13/afero v1.6.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.21.3
+	k8s.io/apiextensions-apiserver v0.21.3
 	k8s.io/apimachinery v0.21.3
 	k8s.io/client-go v0.21.3
 	k8s.io/klog v1.0.0

@@ -16,8 +16,8 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -25,14 +25,18 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/hashicorp/go-multierror"
 	buildv1 "github.com/openshift/api/build/v1"
 	routev1 "github.com/openshift/api/route/v1"
+	jsons "github.com/qjebbs/go-jsons"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -619,9 +623,69 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 				return nil, err
 			}
 		}
-		containers = append(containers, *container)
+		modifiedContainer, err := containerOverridesHandler(comp, container)
+		if err != nil {
+			return nil, err
+		}
+		if modifiedContainer != nil {
+			containers = append(containers, *modifiedContainer)
+		} else {
+			containers = append(containers, *container)
+		}
 	}
 	return containers, nil
+}
+
+// containerOverridesHandler modifies the container component to include any container-overrides values in the devfile.
+// It does so by merging the devfile JSON with the JSON string representation of container-overrides field
+func containerOverridesHandler(comp v1.Component, container *corev1.Container) (*corev1.Container, error) {
+	var errHandler *error
+	val := comp.Attributes.Get("container-overrides", errHandler)
+	if errHandler != nil {
+		return nil, *errHandler
+	}
+	// no need to continue any further if container-overrides wasn't used for the container component
+	if val == nil {
+		return nil, nil
+	}
+	v, err := json.Marshal(val)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredContainer, err := convertResourceToUnstructured(container)
+	if err != nil {
+		return nil, err
+	}
+	u, err := json.Marshal(unstructuredContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := jsons.Merge(u, v)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(result, &unstructuredContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	err = convertUnstructuredToResource(unstructured.Unstructured{Object: unstructuredContainer}, container)
+	if err != nil {
+		return nil, err
+	}
+	return container, nil
+}
+
+// convertResourceToUnstructured converts a resource to map[string]interface{} which is the element of unstructured.Unstructured
+func convertResourceToUnstructured(obj interface{}) (map[string]interface{}, error) {
+	return runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+}
+
+// convertUnstructuredToResource converts an unstructured.Unstructured object to type of object passed to it
+func convertUnstructuredToResource(u unstructured.Unstructured, obj interface{}) error {
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(u.UnstructuredContent(), obj)
 }
 
 // getContainerAnnotations iterates through container components and returns all annotations

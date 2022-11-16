@@ -16,12 +16,15 @@
 package generator
 
 import (
-	"github.com/hashicorp/go-multierror"
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/stretchr/testify/assert"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
@@ -1717,6 +1720,58 @@ func TestMergeMaps(t *testing.T) {
 			result := mergeMaps(tt.dest, tt.src)
 			assert.Equal(t, tt.expected, result, "TestmergeMaps(): The two values should be the same.")
 
+		})
+	}
+}
+
+func Test_containerOverridesHandler(t *testing.T) {
+	name := "testcontainer"
+	image := "quay.io/some/image"
+	command := []string{"tail"}
+	argsSlice := []string{"-f", "/dev/null"}
+	containerOverridesString := "container-overrides"
+
+	type args struct {
+		comp      v1.Component
+		container *corev1.Container
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *corev1.Container
+		wantErr error
+	}{
+		{
+			name: "Case 1: No container-overrides field in the container component",
+			args: args{
+				comp: v1.Component{
+					Name:       "component1",
+					Attributes: nil,
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
+			},
+			want:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "Case 2: Override the image of the container component",
+			args: args{
+				comp: v1.Component{
+					Name: "component2",
+					Attributes: attributes.Attributes{
+						containerOverridesString: apiextensionsv1.JSON{Raw: []byte("{\"image\": \"quay.io/other/image\"}")}},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
+			},
+			want:    getContainer(containerParams{Name: name, Image: "quay.io/other/image", Command: command, Args: argsSlice}),
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := containerOverridesHandler(tt.args.comp, tt.args.container)
+			assert.Equalf(t, tt.wantErr, err, fmt.Sprintf("Expected %v and %v to be equal", tt.wantErr, err))
+			assert.Equalf(t, tt.want, got, "containerOverridesHandler(%v, %v)", tt.args.comp, tt.args.container)
 		})
 	}
 }
