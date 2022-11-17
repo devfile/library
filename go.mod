@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/devfile/api/v2 v2.2.0
-	github.com/devfile/library v1.2.1-0.20220308191614-f0f7e11b17de
 	github.com/devfile/registry-support/registry-library v0.0.0-20221018213054-47b3ffaeadba
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
