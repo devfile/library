@@ -17,12 +17,14 @@ package generator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"reflect"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/hashicorp/go-multierror"
@@ -639,9 +641,11 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 // containerOverridesHandler modifies the container component to include any container-overrides values in the devfile.
 // It does so by merging the devfile JSON with the JSON string representation of container-overrides field
 func containerOverridesHandler(comp v1.Component, container *corev1.Container) (*corev1.Container, error) {
-	var errHandler *error
-	val := comp.Attributes.Get("container-overrides", errHandler)
-	if errHandler != nil {
+	errHandler := new(error)
+	key := "container-overrides"
+
+	val := comp.Attributes.Get(key, errHandler)
+	if *errHandler != nil && !errors.Is(*errHandler, &attributes.KeyNotFoundError{Key: key}) {
 		return nil, *errHandler
 	}
 	// no need to continue any further if container-overrides wasn't used for the container component

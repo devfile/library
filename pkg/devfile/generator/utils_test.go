@@ -16,7 +16,6 @@
 package generator
 
 import (
-	"fmt"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -1739,7 +1738,7 @@ func Test_containerOverridesHandler(t *testing.T) {
 		name    string
 		args    args
 		want    *corev1.Container
-		wantErr error
+		wantErr bool
 	}{
 		{
 			name: "Case 1: No container-overrides field in the container component",
@@ -1751,7 +1750,7 @@ func Test_containerOverridesHandler(t *testing.T) {
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},
 			want:    nil,
-			wantErr: nil,
+			wantErr: false,
 		},
 		{
 			name: "Case 2: Override the image of the container component",
@@ -1764,13 +1763,30 @@ func Test_containerOverridesHandler(t *testing.T) {
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},
 			want:    getContainer(containerParams{Name: name, Image: "quay.io/other/image", Command: command, Args: argsSlice}),
-			wantErr: nil,
+			wantErr: false,
+		},
+		{
+			name: "Case 3: Invalid JSON for container-overrides",
+			args: args{
+				comp: v1.Component{
+					Name: "component3",
+					Attributes: attributes.Attributes{
+						containerOverridesString: apiextensionsv1.JSON{Raw: []byte(`{"image quay.io/other/image"}`)}},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := containerOverridesHandler(tt.args.comp, tt.args.container)
-			assert.Equalf(t, tt.wantErr, err, fmt.Sprintf("Expected %v and %v to be equal", tt.wantErr, err))
+			if tt.wantErr {
+				assert.NotNil(t, err, tt.name)
+			} else {
+				assert.Nil(t, err, tt.name)
+			}
 			assert.Equalf(t, tt.want, got, "containerOverridesHandler(%v, %v)", tt.args.comp, tt.args.container)
 		})
 	}
