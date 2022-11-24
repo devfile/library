@@ -67,7 +67,9 @@ func (d *DevfileCtx) SetDevfileContent() error {
 	var err error
 	var data []byte
 	if d.url != "" {
-		data, err = util.DownloadFileInMemory(d.url)
+		// set the client identifier for telemetry
+		params := util.HTTPRequestParams{URL: d.url, TelemetryClientName: util.TelemetryClientName}
+		data, err = util.DownloadInMemory(params)
 		if err != nil {
 			return errors.Wrap(err, "error getting devfile info from url")
 		}

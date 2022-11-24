@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -42,6 +41,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
+
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
 	gitpkg "github.com/go-git/go-git/v5"
@@ -57,9 +58,11 @@ import (
 )
 
 const (
-	HTTPRequestResponseTimeout = 30 * time.Second // HTTPRequestTimeout configures timeout of all HTTP requests
-	ModeReadWriteFile          = 0600             // default Permission for a file
-	CredentialPrefix           = "odo-"           // CredentialPrefix is the prefix of the credential that uses to access secure registry
+	HTTPRequestResponseTimeout   = 30 * time.Second           // HTTPRequestTimeout configures timeout of all HTTP requests
+	ModeReadWriteFile            = 0600                       // default Permission for a file
+	CredentialPrefix             = "odo-"                     // CredentialPrefix is the prefix of the credential that uses to access secure registry
+	TelemetryClientName          = "devfile-library"          //TelemetryClientName is the name of the devfile library client
+	TelemetryIndirectDevfileCall = "devfile-library-indirect" //TelemetryIndirectDevfileCall is used to identify calls made to retrieve the parent or plugin devfile
 )
 
 // httpCacheDir determines directory where odo will cache HTTP respones
@@ -86,9 +89,10 @@ type ResourceRequirementInfo struct {
 
 // HTTPRequestParams holds parameters of forming http request
 type HTTPRequestParams struct {
-	URL     string
-	Token   string
-	Timeout *int
+	URL                 string
+	Token               string
+	Timeout             *int
+	TelemetryClientName string //optional client name for telemetry
 }
 
 // DownloadParams holds parameters of forming file download request
@@ -744,6 +748,9 @@ func HTTPGetRequest(request HTTPRequestParams, cacheFor int) ([]byte, error) {
 		req.Header.Add("Authorization", bearer)
 	}
 
+	//add the telemetry client name
+	req.Header.Add("Client", request.TelemetryClientName)
+
 	overriddenTimeout := HTTPRequestResponseTimeout
 	timeout := request.Timeout
 	if timeout != nil {
@@ -1056,11 +1063,40 @@ func DownloadFile(params DownloadParams) error {
 }
 
 // DownloadFileInMemory uses the url to download the file and return bytes
+// Deprecated, use DownloadInMemory() instead
 func DownloadFileInMemory(url string) ([]byte, error) {
 	var httpClient = &http.Client{Transport: &http.Transport{
 		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
 	}, Timeout: HTTPRequestResponseTimeout}
 	resp, err := httpClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	// We have a non 1xx / 2xx status, return an error
+	if (resp.StatusCode - 300) > 0 {
+		return nil, errors.Errorf("failed to retrieve %s, %v: %s", url, resp.StatusCode, http.StatusText(resp.StatusCode))
+	}
+	defer resp.Body.Close()
+
+	return ioutil.ReadAll(resp.Body)
+}
+
+// DownloadInMemory uses HTTPRequestParams to download the file and return bytes
+func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
+
+	var httpClient = &http.Client{Transport: &http.Transport{
+		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
+	}, Timeout: HTTPRequestResponseTimeout}
+
+	url := params.URL
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	//add the telemetry client name in the header
+	req.Header.Add("Client", params.TelemetryClientName)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

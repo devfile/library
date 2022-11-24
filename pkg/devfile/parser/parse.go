@@ -19,13 +19,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devfile/api/v2/pkg/attributes"
-	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/devfile/api/v2/pkg/attributes"
+	registryLibrary "github.com/devfile/registry-support/registry-library/library"
+
+	"reflect"
 
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
@@ -34,7 +37,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
@@ -520,7 +522,8 @@ func getDevfileFromRegistry(id, registryURL, version string, httpTimeout *int) (
 	}
 
 	param.Timeout = httpTimeout
-
+	//suppress telemetry for parent uri references
+	param.TelemetryClientName = util.TelemetryIndirectDevfileCall
 	return util.HTTPGetRequest(param, 0)
 }
 
@@ -530,8 +533,8 @@ func getResourcesFromRegistry(id, registryURL, destDir string) error {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 	}
 	defer os.RemoveAll(stackDir)
-
-	err = registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{})
+	//suppress telemetry for downloading resources from parent reference
+	err = registryLibrary.PullStackFromRegistry(registryURL, id, stackDir, registryLibrary.RegistryOptions{Telemetry: registryLibrary.TelemetryData{Client: util.TelemetryIndirectDevfileCall}})
 	if err != nil {
 		return fmt.Errorf("failed to pull stack from registry %s", registryURL)
 	}
@@ -828,7 +831,8 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 			// absolute URL address
 			newUri = uri
 		}
-		data, err = util.DownloadFileInMemory(newUri)
+		params := util.HTTPRequestParams{URL: newUri}
+		data, err = util.DownloadInMemory(params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting kubernetes resources definition info from url '%s'", newUri)
 		}
