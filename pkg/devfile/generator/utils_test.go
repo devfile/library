@@ -16,26 +16,27 @@
 package generator
 
 import (
-	"github.com/hashicorp/go-multierror"
-	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/golang/mock/gomock"
+	"github.com/hashicorp/go-multierror"
+	buildv1 "github.com/openshift/api/build/v1"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
+
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/v2/pkg/testingutil"
-	"github.com/golang/mock/gomock"
-	buildv1 "github.com/openshift/api/build/v1"
-
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 var isTrue bool = true
@@ -1717,6 +1718,127 @@ func TestMergeMaps(t *testing.T) {
 			result := mergeMaps(tt.dest, tt.src)
 			assert.Equal(t, tt.expected, result, "TestmergeMaps(): The two values should be the same.")
 
+		})
+	}
+}
+
+func Test_containerOverridesHandler(t *testing.T) {
+	name := "testcontainer"
+	image := "quay.io/some/image"
+	command := []string{"tail"}
+	argsSlice := []string{"-f", "/dev/null"}
+
+	actualResourcesReqs, _ := testingutil.FakeResourceRequirements("5Mi", "300Mi")
+
+	type args struct {
+		comp      v1.Component
+		container *corev1.Container
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *corev1.Container
+		wantErr bool
+	}{
+		{
+			name: "Override the resource requirements of the container component",
+			args: args{
+				comp: v1.Component{
+					Name: "component2",
+					Attributes: attributes.Attributes{
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"resources\": {\"limits\": {\"nvidia.com/gpu\": \"1\"}}, \"requests\": {\"nvidia.com/gpu\": \"1\"}}")},
+					},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice, ResourceReqs: actualResourcesReqs}),
+			},
+			want: func() *corev1.Container {
+				wantResourcesReqs := actualResourcesReqs
+				qty, _ := resource.ParseQuantity("1")
+				wantResourcesReqs.Limits["nvidia.com/gpu"] = qty
+				wantResourcesReqs.Requests["nvidia.com/gpu"] = qty
+				return getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice, ResourceReqs: wantResourcesReqs})
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "Override securityContext of the container component with replace patchDirective",
+			args: args{
+				comp: v1.Component{
+					Attributes: attributes.Attributes{
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"securityContext\": {\"runAsUser\": 1001, \"$patch\": \"replace\"}}")},
+					},
+				},
+				container: func() *corev1.Container {
+					container := getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice})
+					container.SecurityContext = &corev1.SecurityContext{
+						RunAsUser:  pointer.Int64(1000),
+						RunAsGroup: pointer.Int64(2000),
+					}
+					return container
+				}(),
+			},
+			want: func() *corev1.Container {
+				container := getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice})
+				container.SecurityContext = &corev1.SecurityContext{
+					RunAsUser: pointer.Int64(1001),
+				}
+				return container
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "Override securityContext of the container with delete patchDirective",
+			args: args{
+				comp: v1.Component{
+					Attributes: attributes.Attributes{
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"securityContext\": {\"$patch\": \"delete\"}}")},
+					},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice, IsPrivileged: true}),
+			},
+			want: func() *corev1.Container {
+				container := getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice})
+				container.SecurityContext = &corev1.SecurityContext{}
+				return container
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "Should not Override the image of the container component",
+			args: args{
+				comp: v1.Component{
+					Name: "component2",
+					Attributes: attributes.Attributes{
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"image\": \"quay.io/other/image\"}")}},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Invalid JSON for container-overrides",
+			args: args{
+				comp: v1.Component{
+					Name: "component3",
+					Attributes: attributes.Attributes{
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte(`{"image quay.io/other/image"}`)}},
+				},
+				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := containerOverridesHandler(tt.args.comp, tt.args.container)
+			if tt.wantErr {
+				assert.NotNil(t, err, tt.name)
+			} else {
+				assert.Nil(t, err, tt.name)
+			}
+			assert.Equalf(t, tt.want, got, "containerOverridesHandler(%v, %v)", tt.args.comp, tt.args.container)
 		})
 	}
 }
