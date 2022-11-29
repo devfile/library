@@ -1804,12 +1804,12 @@ func Test_containerOverridesHandler(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Should not Override the image of the container component",
+			name: "Should not override restricted fields of the container component",
 			args: args{
 				comp: v1.Component{
 					Name: "component2",
 					Attributes: attributes.Attributes{
-						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"image\": \"quay.io/other/image\"}")}},
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"name\": \"othername\",\"image\": \"quay.io/other/image\", \"command\": \"echo\", \"args\": [\"hello world\"], \"ports\": [{\"containerPort\": \"9090\"}], \"env\": [{\"name\":\"somename\", \"value\":\"somevalue\"}], \"volumeMounts\": [{\"name\":\"volume1\",\"mountPath\":\"/var/www\"}]}")}},
 				},
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},

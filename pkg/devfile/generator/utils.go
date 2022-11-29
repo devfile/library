@@ -627,7 +627,10 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 		}
 		// Check if there is an override attribute
 		if comp.Attributes.Exists(ContainerOverridesAttribute) {
-			patched, _ := containerOverridesHandler(comp, container)
+			patched, err := containerOverridesHandler(comp, container)
+			if err != nil {
+				return nil, err
+			}
 			containers = append(containers, *patched)
 		} else {
 			containers = append(containers, *container)
@@ -645,30 +648,34 @@ func containerOverridesHandler(comp v1.Component, container *corev1.Container) (
 	}
 
 	restrictContainerOverride := func(override *corev1.Container) error {
-		invalidField := ""
+		var invalidFields []string
 		if override.Name != "" {
-			invalidField = "name"
+			invalidFields = append(invalidFields, "name")
 		}
 		if override.Image != "" {
-			invalidField = "image"
+			invalidFields = append(invalidFields, "image")
 		}
 		if override.Command != nil {
-			invalidField = "command"
+			invalidFields = append(invalidFields, "command")
+
 		}
 		if override.Args != nil {
-			invalidField = "args"
+			invalidFields = append(invalidFields, "args")
+
 		}
 		if override.Ports != nil {
-			invalidField = "ports"
+			invalidFields = append(invalidFields, "ports")
+
 		}
 		if override.VolumeMounts != nil {
-			invalidField = "volumeMounts"
+			invalidFields = append(invalidFields, "volumeMounts")
+
 		}
 		if override.Env != nil {
-			invalidField = "env"
+			invalidFields = append(invalidFields, "env")
 		}
-		if invalidField != "" {
-			return fmt.Errorf("cannot use %s to override container %s", ContainerOverridesAttribute, invalidField)
+		if len(invalidFields) != 0 {
+			return fmt.Errorf("cannot use %s to override container %s", ContainerOverridesAttribute, strings.Join(invalidFields, ", "))
 		}
 		return nil
 	}
