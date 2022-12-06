@@ -24,7 +24,6 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/golang/mock/gomock"
-	"github.com/hashicorp/go-multierror"
 	buildv1 "github.com/openshift/api/build/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -33,9 +32,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
-	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/v2/pkg/testingutil"
 )
 
@@ -1809,7 +1809,7 @@ func Test_containerOverridesHandler(t *testing.T) {
 				comp: v1.Component{
 					Name: "component2",
 					Attributes: attributes.Attributes{
-						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"name\": \"othername\",\"image\": \"quay.io/other/image\", \"command\": \"echo\", \"args\": [\"hello world\"], \"ports\": [{\"containerPort\": \"9090\"}], \"env\": [{\"name\":\"somename\", \"value\":\"somevalue\"}], \"volumeMounts\": [{\"name\":\"volume1\",\"mountPath\":\"/var/www\"}]}")}},
+						ContainerOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"name\": \"othername\",\"image\": \"quay.io/other/image\", \"command\": [\"echo\"], \"args\": [\"hello world\"], \"ports\": [{\"containerPort\":9090}], \"env\": [{\"name\":\"somename\", \"value\":\"somevalue\"}], \"volumeMounts\": [{\"name\":\"volume1\",\"mountPath\":\"/var/www\"}]}")}},
 				},
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},
