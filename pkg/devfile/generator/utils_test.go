@@ -16,27 +16,29 @@
 package generator
 
 import (
+	"github.com/hashicorp/go-multierror"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/pointer"
+
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/testingutil"
 	"github.com/golang/mock/gomock"
 	buildv1 "github.com/openshift/api/build/v1"
-	"github.com/stretchr/testify/assert"
+
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
-
-	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
-
-	"github.com/devfile/library/v2/pkg/devfile/parser"
-	"github.com/devfile/library/v2/pkg/devfile/parser/data"
-	"github.com/devfile/library/v2/pkg/testingutil"
 )
 
 var isTrue bool = true
