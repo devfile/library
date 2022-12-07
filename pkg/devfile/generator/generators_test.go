@@ -48,6 +48,12 @@ func TestGetContainers(t *testing.T) {
 
 	containerNames := []string{"testcontainer1", "testcontainer2", "testcontainer3"}
 	containerImages := []string{"image1", "image2", "image3"}
+	defaultPullPolicy := corev1.PullAlways
+	defaultEnv := []corev1.EnvVar{
+		{Name: "PROJECTS_ROOT", Value: "/projects"},
+		{Name: "PROJECT_SOURCE", Value: "/projects/test-project"},
+	}
+
 	trueMountSources := true
 	falseMountSources := false
 
@@ -94,16 +100,17 @@ func TestGetContainers(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		eventCommands         EventCommands
-		containerComponents   []v1.Component
-		filteredComponents    []v1.Component
-		filterOptions         common.DevfileOptions
-		wantContainerName     string
-		wantContainerImage    string
-		wantContainerEnv      []corev1.EnvVar
-		wantContainerVolMount []corev1.VolumeMount
-		wantErr               *string
+		name                      string
+		eventCommands             EventCommands
+		containerComponents       []v1.Component
+		filteredComponents        []v1.Component
+		filterOptions             common.DevfileOptions
+		wantContainerName         string
+		wantContainerImage        string
+		wantContainerEnv          []corev1.EnvVar
+		wantContainerVolMount     []corev1.VolumeMount
+		wantContainerOverrideData *corev1.Container
+		wantErr                   *string
 	}{
 		{
 			name: "Container with default project root",
@@ -297,6 +304,36 @@ func TestGetContainers(t *testing.T) {
 			name:    "Simulating error case, check if error matches",
 			wantErr: &errMatches,
 		},
+		{
+			name: "container with container-overrides",
+			containerComponents: []v1.Component{
+				{
+					Name: containerNames[0],
+					ComponentUnion: v1.ComponentUnion{
+						Container: &v1.ContainerComponent{
+							Container: v1.Container{
+								Image: containerImages[0],
+							},
+						},
+					},
+					Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+						"container-overrides": map[string]interface{}{"securityContext": map[string]int64{"runAsGroup": 3000}},
+					}, nil),
+				},
+			},
+			wantContainerName:  containerNames[0],
+			wantContainerImage: containerImages[0],
+			wantContainerEnv:   defaultEnv,
+			wantContainerOverrideData: &corev1.Container{
+				Name:            containerNames[0],
+				Image:           containerImages[0],
+				Env:             defaultEnv,
+				ImagePullPolicy: defaultPullPolicy,
+				SecurityContext: &corev1.SecurityContext{
+					RunAsGroup: pointer.Int64(3000),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -353,6 +390,9 @@ func TestGetContainers(t *testing.T) {
 					}
 					if len(container.VolumeMounts) > 0 && !reflect.DeepEqual(container.VolumeMounts, tt.wantContainerVolMount) {
 						t.Errorf("TestGetContainers() error: Vol Mount mismatch - got: %+v, wanted: %+v", container.VolumeMounts, tt.wantContainerVolMount)
+					}
+					if tt.wantContainerOverrideData != nil && !reflect.DeepEqual(container, *tt.wantContainerOverrideData) {
+						t.Errorf("TestGetContainers() error: Container override mismatch - got: %+v, wanted: %+v", container, *tt.wantContainerOverrideData)
 					}
 				}
 			} else {

@@ -1737,10 +1737,11 @@ func Test_containerOverridesHandler(t *testing.T) {
 		container *corev1.Container
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *corev1.Container
-		wantErr bool
+		name      string
+		args      args
+		want      *corev1.Container
+		wantErr   bool
+		errString string
 	}{
 		{
 			name: "Override the resource requirements of the container component",
@@ -1815,8 +1816,9 @@ func Test_containerOverridesHandler(t *testing.T) {
 				},
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},
-			want:    nil,
-			wantErr: true,
+			want:      nil,
+			wantErr:   true,
+			errString: "cannot use container-overrides to override container name, image, command, args, ports, volumeMounts, env",
 		},
 		{
 			name: "Invalid JSON for container-overrides",
@@ -1828,8 +1830,9 @@ func Test_containerOverridesHandler(t *testing.T) {
 				},
 				container: getContainer(containerParams{Name: name, Image: image, Command: command, Args: argsSlice}),
 			},
-			want:    nil,
-			wantErr: true,
+			want:      nil,
+			wantErr:   true,
+			errString: "failed to parse container-overrides attribute on component component3",
 		},
 	}
 	for _, tt := range tests {
@@ -1837,6 +1840,7 @@ func Test_containerOverridesHandler(t *testing.T) {
 			got, err := containerOverridesHandler(tt.args.comp, tt.args.container)
 			if tt.wantErr {
 				assert.NotNil(t, err, tt.name)
+				assert.Contains(t, err.Error(), tt.errString, "containerOverridesHandler() error does not match")
 			} else {
 				assert.Nil(t, err, tt.name)
 			}
