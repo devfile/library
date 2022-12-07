@@ -16,6 +16,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"path/filepath"
@@ -34,7 +35,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
+
+const ContainerOverridesAttribute = "container-overrides"
 
 // convertEnvs converts environment variables from the devfile structure to kubernetes structure
 func convertEnvs(vars []v1.EnvVar) []corev1.EnvVar {
@@ -422,7 +426,7 @@ func getNetworkingV1IngressSpec(ingressSpecParams IngressSpecParams) *networking
 										},
 									},
 								},
-								//Field is required to be set based on attempt to create the ingress
+								// Field is required to be set based on attempt to create the ingress
 								PathType: &pathTypeImplementationSpecific,
 							},
 						},
@@ -619,9 +623,85 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 				return nil, err
 			}
 		}
-		containers = append(containers, *container)
+		// Check if there is an override attribute
+		if comp.Attributes.Exists(ContainerOverridesAttribute) {
+			patched, err := containerOverridesHandler(comp, container)
+			if err != nil {
+				return nil, err
+			}
+			containers = append(containers, *patched)
+		} else {
+			containers = append(containers, *container)
+		}
 	}
 	return containers, nil
+}
+
+// containerOverridesHandler overrides the attributes of a container component as defined inside ContainerOverridesAttribute by a strategic merge patch.
+func containerOverridesHandler(comp v1.Component, container *corev1.Container) (*corev1.Container, error) {
+	// Apply the override
+	override := &corev1.Container{}
+	if err := comp.Attributes.GetInto(ContainerOverridesAttribute, override); err != nil {
+		return nil, fmt.Errorf("failed to parse %s attribute on component %s: %w", ContainerOverridesAttribute, comp.Name, err)
+	}
+
+	restrictContainerOverride := func(override *corev1.Container) error {
+		var invalidFields []string
+		if override.Name != "" {
+			invalidFields = append(invalidFields, "name")
+		}
+		if override.Image != "" {
+			invalidFields = append(invalidFields, "image")
+		}
+		if override.Command != nil {
+			invalidFields = append(invalidFields, "command")
+
+		}
+		if override.Args != nil {
+			invalidFields = append(invalidFields, "args")
+
+		}
+		if override.Ports != nil {
+			invalidFields = append(invalidFields, "ports")
+
+		}
+		if override.VolumeMounts != nil {
+			invalidFields = append(invalidFields, "volumeMounts")
+
+		}
+		if override.Env != nil {
+			invalidFields = append(invalidFields, "env")
+		}
+		if len(invalidFields) != 0 {
+			return fmt.Errorf("cannot use %s to override container %s", ContainerOverridesAttribute, strings.Join(invalidFields, ", "))
+		}
+		return nil
+	}
+	// check if the override key is allowed
+	if err := restrictContainerOverride(override); err != nil {
+		return nil, fmt.Errorf("failed to parse %s attribute on component %s: %w", ContainerOverridesAttribute, comp.Name, err)
+	}
+
+	// get the container-overrides data
+	overrideJSON := comp.Attributes[ContainerOverridesAttribute]
+
+	originalBytes, err := json.Marshal(container)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal container to yaml: %w", err)
+	}
+	patchedBytes, err := strategicpatch.StrategicMergePatch(originalBytes, overrideJSON.Raw, &corev1.Container{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply container overrides: %w", err)
+	}
+	patched := &corev1.Container{}
+	if err := json.Unmarshal(patchedBytes, patched); err != nil {
+		return nil, fmt.Errorf("error applying container overrides: %w", err)
+	}
+	// Applying the patch will overwrite the container's name and image as corev1.Container.Name
+	// does not have the omitempty json tag.
+	patched.Name = container.Name
+	patched.Image = container.Image
+	return patched, nil
 }
 
 // getContainerAnnotations iterates through container components and returns all annotations
