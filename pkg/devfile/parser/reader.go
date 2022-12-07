@@ -29,7 +29,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 )
 
 // YamlSrc specifies the src of the yaml in either Path, URL or Data format
@@ -48,7 +48,7 @@ type KubernetesResources struct {
 	Deployments []appsv1.Deployment
 	Services    []corev1.Service
 	Routes      []routev1.Route
-	Ingresses   []extensionsv1.Ingress
+	Ingresses   []networkingv1.Ingress
 	Others      []interface{}
 }
 
@@ -106,14 +106,14 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 	var deployments []appsv1.Deployment
 	var services []corev1.Service
 	var routes []routev1.Route
-	var ingresses []extensionsv1.Ingress
+	var ingresses []networkingv1.Ingress
 	var otherResources []interface{}
 
 	for _, value := range values {
 		var deployment appsv1.Deployment
 		var service corev1.Service
 		var route routev1.Route
-		var ingress extensionsv1.Ingress
+		var ingress networkingv1.Ingress
 		var otherResource interface{}
 
 		byteData, err := k8yaml.Marshal(value)
