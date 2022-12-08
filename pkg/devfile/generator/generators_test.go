@@ -17,14 +17,16 @@ package generator
 
 import (
 	"fmt"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-	"reflect"
-	"strings"
-	"testing"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
@@ -1077,6 +1079,7 @@ func TestGetDeployment(t *testing.T) {
 		containerComponents []v1.Component
 		deploymentParams    DeploymentParams
 		expected            appsv1.Deployment
+		attributes          attributes.Attributes
 	}{
 		{
 			// Currently dedicatedPod can only filter out annotations
@@ -1172,6 +1175,55 @@ func TestGetDeployment(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "pod should have pod-overrides attribute",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, []v1.Endpoint{
+					{
+						Name:       "http-8080",
+						TargetPort: 8080,
+					},
+				}, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, nil),
+			},
+			attributes: attributes.Attributes{
+				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+			},
+			deploymentParams: DeploymentParams{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"preserved-key": "preserved-value",
+					},
+				},
+				Containers: containers,
+			},
+			expected: appsv1.Deployment{
+				ObjectMeta: objectMeta,
+				Spec: appsv1.DeploymentSpec{
+					Strategy: appsv1.DeploymentStrategy{
+						Type: appsv1.RecreateDeploymentStrategyType,
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: nil,
+					},
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: objectMeta,
+						Spec: corev1.PodSpec{
+							Containers:         containers,
+							ServiceAccountName: "new-service-account",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1186,8 +1238,9 @@ func TestGetDeployment(t *testing.T) {
 				},
 			}
 			// set up the mock data
-			mockGetComponents := mockDevfileData.EXPECT().GetComponents(options)
-			mockGetComponents.Return(tt.containerComponents, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetAttributes().Return(tt.attributes, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.containerComponents, nil).AnyTimes()
+			mockDevfileData.EXPECT().GetComponents(options).Return(tt.containerComponents, nil).AnyTimes()
 
 			devObj := parser.DevfileObj{
 				Data: mockDevfileData,

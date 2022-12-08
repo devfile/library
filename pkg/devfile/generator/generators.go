@@ -185,13 +185,12 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		Containers:     deployParams.Containers,
 		Volumes:        deployParams.Volumes,
 	}
+
 	globalAttributes, err := devfileObj.Data.GetAttributes()
 	if err != nil {
 		return nil, err
 	}
-	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{
-		FilterByName: "",
-	})
+	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
 	if err != nil {
 		return nil, err
 	}

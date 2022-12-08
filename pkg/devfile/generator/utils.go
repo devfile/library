@@ -256,6 +256,7 @@ func getPodTemplateSpec(globalAttributes attributes.Attributes, components []v1.
 		if err != nil {
 			return nil, err
 		}
+		patchedPodTemplateSpec.ObjectMeta = podTemplateSpecParams.ObjectMeta
 		podTemplateSpec = patchedPodTemplateSpec
 	}
 
