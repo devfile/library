@@ -18,27 +18,33 @@ package generator
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"path/filepath"
 	"reflect"
 	"strings"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
+
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/hashicorp/go-multierror"
 	buildv1 "github.com/openshift/api/build/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
-const ContainerOverridesAttribute = "container-overrides"
+const (
+	ContainerOverridesAttribute = "container-overrides"
+	PodOverridesAttribute       = "pod-overrides"
+)
 
 // convertEnvs converts environment variables from the devfile structure to kubernetes structure
 func convertEnvs(vars []v1.EnvVar) []corev1.EnvVar {
@@ -235,7 +241,7 @@ type podTemplateSpecParams struct {
 }
 
 // getPodTemplateSpec gets a pod template spec that can be used to create a deployment spec
-func getPodTemplateSpec(podTemplateSpecParams podTemplateSpecParams) *corev1.PodTemplateSpec {
+func getPodTemplateSpec(globalAttributes attributes.Attributes, components []v1.Component, podTemplateSpecParams podTemplateSpecParams) (*corev1.PodTemplateSpec, error) {
 	podTemplateSpec := &corev1.PodTemplateSpec{
 		ObjectMeta: podTemplateSpecParams.ObjectMeta,
 		Spec: corev1.PodSpec{
@@ -245,7 +251,114 @@ func getPodTemplateSpec(podTemplateSpecParams podTemplateSpecParams) *corev1.Pod
 		},
 	}
 
-	return podTemplateSpec
+	if needsPodOverrides(globalAttributes, components) {
+		patchedPodTemplateSpec, err := applyPodOverrides(globalAttributes, components, podTemplateSpec)
+		if err != nil {
+			return nil, err
+		}
+		podTemplateSpec = patchedPodTemplateSpec
+	}
+
+	return podTemplateSpec, nil
+}
+
+// needsPodOverrides returns true if PodOverridesAttribute is present at Devfile or Container level attributes
+func needsPodOverrides(globalAttributes attributes.Attributes, components []v1.Component) bool {
+	if globalAttributes.Exists(PodOverridesAttribute) {
+		return true
+	}
+	for _, component := range components {
+		if component.Attributes.Exists(PodOverridesAttribute) {
+			return true
+		}
+	}
+	return false
+}
+
+// applyPodOverrides returns a list of all the PodOverridesAttribute set at Devfile and Container level attributes
+func applyPodOverrides(globalAttributes attributes.Attributes, components []v1.Component, podTemplateSpec *corev1.PodTemplateSpec) (*corev1.PodTemplateSpec, error) {
+	overrides, err := getPodOverrides(globalAttributes, components)
+	if err != nil {
+		return nil, err
+	}
+	// Workaround: the definition for corev1.PodSpec does not make containers optional, so even a nil list
+	// will be interpreted as "delete all containers" as the serialized patch will include "containers": null.
+	// To avoid this, save the original containers and reset them at the end.
+	originalContainers := podTemplateSpec.Spec.Containers
+	// Save fields we do not allow to be configured in pod-overrides
+	originalInitContainers := podTemplateSpec.Spec.InitContainers
+	originalVolumes := podTemplateSpec.Spec.Volumes
+
+	patchedTemplateBytes, err := json.Marshal(podTemplateSpec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal deployment to yaml: %w", err)
+	}
+	for _, override := range overrides {
+		patchedTemplateBytes, err = strategicpatch.StrategicMergePatch(patchedTemplateBytes, override.Raw, &corev1.PodTemplateSpec{})
+		if err != nil {
+			return nil, fmt.Errorf("error applying pod overrides: %w", err)
+		}
+	}
+	patchedPodTemplateSpec := corev1.PodTemplateSpec{}
+	if err := json.Unmarshal(patchedTemplateBytes, &patchedPodTemplateSpec); err != nil {
+		return nil, fmt.Errorf("error applying pod overrides: %w", err)
+	}
+	patchedPodTemplateSpec.Spec.Containers = originalContainers
+	patchedPodTemplateSpec.Spec.InitContainers = originalInitContainers
+	patchedPodTemplateSpec.Spec.Volumes = originalVolumes
+	return &patchedPodTemplateSpec, nil
+}
+
+// getPodOverrides returns PodTemplateSpecOverrides for every instance of the pod overrides attribute
+// present in the DevWorkspace. The order of elements is
+// 1. Pod overrides defined on Container components, in the order they appear in the DevWorkspace
+// 2. Pod overrides defined in the global attributes field (.spec.template.attributes)
+func getPodOverrides(globalAttributes attributes.Attributes, components []v1.Component) ([]apiext.JSON, error) {
+	var allOverrides []apiext.JSON
+
+	for _, component := range components {
+		if component.Attributes.Exists(PodOverridesAttribute) {
+			override := corev1.PodTemplateSpec{}
+			// Check format of pod-overrides to detect errors early
+			if err := component.Attributes.GetInto(PodOverridesAttribute, &override); err != nil {
+				return nil, fmt.Errorf("failed to parse %s attribute on component %s: %w", PodOverridesAttribute, component.Name, err)
+			}
+			// Do not allow overriding containers or volumes
+			if override.Spec.Containers != nil {
+				return nil, fmt.Errorf("cannot use %s to override pod containers (component %s)", PodOverridesAttribute, component.Name)
+			}
+			if override.Spec.InitContainers != nil {
+				return nil, fmt.Errorf("cannot use %s to override pod initContainers (component %s)", PodOverridesAttribute, component.Name)
+			}
+			if override.Spec.Volumes != nil {
+				return nil, fmt.Errorf("cannot use %s to override pod volumes (component %s)", PodOverridesAttribute, component.Name)
+			}
+			patchData := component.Attributes[PodOverridesAttribute]
+			allOverrides = append(allOverrides, patchData)
+		}
+	}
+
+	if globalAttributes.Exists(PodOverridesAttribute) {
+		override := corev1.PodTemplateSpec{}
+		err := globalAttributes.GetInto(PodOverridesAttribute, &override)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s attribute for pod: %w", PodOverridesAttribute, err)
+		}
+		// Do not allow overriding containers or volumes
+		if override.Spec.Containers != nil {
+			return nil, fmt.Errorf("cannot use pod-overrides to override pod containers")
+		}
+		if override.Spec.InitContainers != nil {
+			return nil, fmt.Errorf("cannot use pod-overrides to override pod initContainers")
+		}
+		if override.Spec.Volumes != nil {
+			return nil, fmt.Errorf("cannot use pod-overrides to override pod volumes")
+		}
+		patchData := globalAttributes[PodOverridesAttribute]
+		allOverrides = append(allOverrides, patchData)
+	}
+
+	return allOverrides, nil
 }
 
 // deploymentSpecParams is a struct that contains the required data to create a deployment spec object

@@ -185,9 +185,22 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		Containers:     deployParams.Containers,
 		Volumes:        deployParams.Volumes,
 	}
-
+	globalAttributes, err := devfileObj.Data.GetAttributes()
+	if err != nil {
+		return nil, err
+	}
+	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{
+		FilterByName: "",
+	})
+	if err != nil {
+		return nil, err
+	}
+	podTemplateSpec, err := getPodTemplateSpec(globalAttributes, components, podTemplateSpecParams)
+	if err != nil {
+		return nil, err
+	}
 	deploySpecParams := deploymentSpecParams{
-		PodTemplateSpec:   *getPodTemplateSpec(podTemplateSpecParams),
+		PodTemplateSpec:   *podTemplateSpec,
 		PodSelectorLabels: deployParams.PodSelectorLabels,
 		Replicas:          deployParams.Replicas,
 	}
