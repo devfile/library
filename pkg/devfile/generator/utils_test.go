@@ -16,6 +16,7 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/pointer"
@@ -1857,23 +1858,41 @@ func Test_containerOverridesHandler(t *testing.T) {
 func Test_applyPodOverrides(t *testing.T) {
 
 	name := "runtime"
-	image := "docker.io/maven:latest"
-	command := []string{"tail"}
-	argsSlice := []string{"-f", "/dev/null"}
-	devfileContainer1 := testingutil.GenerateDummyContainerComponent(name, nil, nil, nil, v1.Annotation{}, pointer.Bool(true))
-	k8sContainer1 := getContainer(containerParams{Name: name, Image: image, Args: argsSlice, Command: command})
+	devfileContainer := testingutil.GenerateDummyContainerComponent(name, []v1.VolumeMount{{Name: "volume-1", Path: "/projects/test"}}, nil, nil, v1.Annotation{}, pointer.Bool(true))
+	k8sContainer := getContainer(containerParams{Name: name, Image: "docker.io/maven:latest"})
+
+	defaultPodSpec := corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-nodejs-app",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{*k8sContainer},
+			InitContainers: []corev1.Container{
+				{
+					Name:  "sidecar",
+					Image: "nginx",
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "volume-1",
+				},
+			},
+		},
+	}
+
 	type args struct {
 		globalAttributes attributes.Attributes
 		components       []v1.Component
 		podTemplateSpec  *corev1.PodTemplateSpec
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *corev1.PodTemplateSpec
-		wantErr bool
+		name      string
+		args      args
+		want      *corev1.PodTemplateSpec
+		wantErr   bool
+		errString *string
 	}{
-		// TODO: Add test cases.
 		{
 			name: "Should override field as defined inside pod-overrides Devfile level attribute",
 			args: args{
@@ -1881,26 +1900,15 @@ func Test_applyPodOverrides(t *testing.T) {
 					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
 				},
 				components: []v1.Component{
-					devfileContainer1,
+					devfileContainer,
 				},
-				podTemplateSpec: &corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "my-nodejs-app",
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{*k8sContainer1},
-					},
-				},
+				podTemplateSpec: &defaultPodSpec,
 			},
-			want: &corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "my-nodejs-app",
-				},
-				Spec: corev1.PodSpec{
-					Containers:         []corev1.Container{*k8sContainer1},
-					ServiceAccountName: "new-service-account",
-				},
-			},
+			want: func() *corev1.PodTemplateSpec {
+				podSpec := defaultPodSpec
+				podSpec.Spec.ServiceAccountName = "new-service-account"
+				return &podSpec
+			}(),
 			wantErr: false,
 		},
 		{
@@ -1911,32 +1919,21 @@ func Test_applyPodOverrides(t *testing.T) {
 				},
 				components: []v1.Component{
 					func() v1.Component {
-						container := devfileContainer1
+						container := devfileContainer
 						container.Attributes = attributes.Attributes{
 							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"schedulerName\": \"stork\"}}")},
 						}
 						return container
 					}(),
 				},
-				podTemplateSpec: &corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "my-nodejs-app",
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{*k8sContainer1},
-					},
-				},
+				podTemplateSpec: &defaultPodSpec,
 			},
-			want: &corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "my-nodejs-app",
-				},
-				Spec: corev1.PodSpec{
-					Containers:         []corev1.Container{*k8sContainer1},
-					ServiceAccountName: "new-service-account",
-					SchedulerName:      "stork",
-				},
-			},
+			want: func() *corev1.PodTemplateSpec {
+				podSpec := defaultPodSpec
+				podSpec.Spec.ServiceAccountName = "new-service-account"
+				podSpec.Spec.SchedulerName = "stork"
+				return &podSpec
+			}(),
 		},
 		{
 			name: "Should override field as defined inside pod-overrides attribute with delete $patch directive",
@@ -1944,34 +1941,20 @@ func Test_applyPodOverrides(t *testing.T) {
 				globalAttributes: attributes.Attributes{
 					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"securityContext\": {\"$patch\": \"delete\"}}}")},
 				},
-				components: []v1.Component{
-					devfileContainer1,
-				},
-				podTemplateSpec: &corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "my-nodejs-app",
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							*k8sContainer1,
-						},
-						SecurityContext: &corev1.PodSecurityContext{
-							RunAsNonRoot: pointer.Bool(true),
-						},
-					},
-				},
+				components: []v1.Component{devfileContainer},
+				podTemplateSpec: func() *corev1.PodTemplateSpec {
+					podSpec := defaultPodSpec
+					podSpec.Spec.SecurityContext = &corev1.PodSecurityContext{
+						RunAsNonRoot: pointer.Bool(true),
+					}
+					return &podSpec
+				}(),
 			},
-			want: &corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "my-nodejs-app",
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						*k8sContainer1,
-					},
-					SecurityContext: &corev1.PodSecurityContext{},
-				},
-			},
+			want: func() *corev1.PodTemplateSpec {
+				podSpec := defaultPodSpec
+				podSpec.Spec.SecurityContext = &corev1.PodSecurityContext{}
+				return &podSpec
+			}(),
 			wantErr: false,
 		},
 		{
@@ -1980,39 +1963,150 @@ func Test_applyPodOverrides(t *testing.T) {
 				globalAttributes: attributes.Attributes{
 					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"securityContext\": {\"runAsNonRoot\": false, \"$patch\": \"replace\"}}}\n")},
 				},
-				components: []v1.Component{
-					devfileContainer1,
-				},
-				podTemplateSpec: &corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "my-nodejs-app",
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							*k8sContainer1,
-						},
-						SecurityContext: &corev1.PodSecurityContext{
-							RunAsGroup:   pointer.Int64(3000),
-							RunAsUser:    pointer.Int64(1000),
-							RunAsNonRoot: pointer.Bool(true),
-						},
-					},
-				},
+				components: []v1.Component{devfileContainer},
+				podTemplateSpec: func() *corev1.PodTemplateSpec {
+					podSpec := defaultPodSpec
+					podSpec.Spec.SecurityContext = &corev1.PodSecurityContext{
+						RunAsGroup:   pointer.Int64(3000),
+						RunAsUser:    pointer.Int64(1000),
+						RunAsNonRoot: pointer.Bool(true),
+					}
+					return &podSpec
+				}(),
 			},
-			want: &corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "my-nodejs-app",
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						*k8sContainer1,
-					},
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsNonRoot: pointer.Bool(false),
-					},
-				},
-			},
+			want: func() *corev1.PodTemplateSpec {
+				podSpec := defaultPodSpec
+				podSpec.Spec.SecurityContext = &corev1.PodSecurityContext{
+					RunAsNonRoot: pointer.Bool(false),
+				}
+				return &podSpec
+			}(),
 			wantErr: false,
+		},
+		{
+			name: "Should fail to override invalid json in pod-overrides attribute defined at Devfile level",
+			args: args{
+				globalAttributes: attributes.Attributes{
+					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": \"containers\": []}")},
+				},
+				components:      nil,
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("failed to parse %s attribute for pod", PodOverridesAttribute)),
+		},
+		{
+			name: "Should fail to override invalid json in pod-overrides attribute defined at component level",
+			args: args{
+				globalAttributes: nil,
+				components: []v1.Component{
+					func() v1.Component {
+						container := devfileContainer
+						container.Attributes = attributes.Attributes{
+							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": \"containers\": []}")},
+						}
+						return container
+					}(),
+				},
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("failed to parse %s attribute on component %s", PodOverridesAttribute, devfileContainer.Name)),
+		},
+		{
+			name: "Should fail to override restricted fields 'containers' at Devfile attribute level",
+			args: args{
+				globalAttributes: attributes.Attributes{
+					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"containers\": [{\"name\": \"container-1\", \"image\": \"busybox\"}]}}")},
+				},
+				components:      nil,
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod containers", PodOverridesAttribute)),
+		},
+		{
+			name: "Should fail to override restricted fields 'initContainers' at Devfile attribute level",
+			args: args{
+				globalAttributes: attributes.Attributes{
+					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"initContainers\": [{\"name\": \"sidecar-1\", \"image\": \"nginx:1.0.0\"}]}}")},
+				},
+				components:      nil,
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod initContainers", PodOverridesAttribute)),
+		},
+		{
+			name: "Should fail to override restricted fields 'volumes' at Devfile attribute level",
+			args: args{
+				globalAttributes: attributes.Attributes{
+					PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"volumes\": [{\"name\": \"volume-2\"}]}}")},
+				},
+				components:      nil,
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod volumes", PodOverridesAttribute)),
+		},
+		{
+			name: "Should fail to override restricted fields 'containers' at component attribute level",
+			args: args{
+				components: []v1.Component{
+					func() v1.Component {
+						container := devfileContainer
+						container.Attributes = attributes.Attributes{
+							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"containers\": [{\"name\": \"container-1\", \"image\": \"busybox\"}]}}")},
+						}
+						return container
+					}(),
+				},
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod containers (component %s)", PodOverridesAttribute, devfileContainer.Name)),
+		},
+		{
+			name: "Should fail to override restricted fields 'initContainers'  at component attribute level",
+			args: args{
+				components: []v1.Component{
+					func() v1.Component {
+						container := devfileContainer
+						container.Attributes = attributes.Attributes{
+							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"initContainers\": [{\"name\": \"sidecar-1\", \"image\": \"nginx:1.0.0\"}]}}")},
+						}
+						return container
+					}(),
+				},
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod initContainers (component %s)", PodOverridesAttribute, devfileContainer.Name)),
+		},
+		{
+			name: "Should fail to override restricted fields 'volumes' at component attribute level",
+			args: args{
+				components: []v1.Component{
+					func() v1.Component {
+						container := devfileContainer
+						container.Attributes = attributes.Attributes{
+							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"volumes\": [{\"name\": \"volume-2\"}]}}")},
+						}
+						return container
+					}(),
+				},
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want:      nil,
+			wantErr:   true,
+			errString: pointer.String(fmt.Sprintf("cannot use %s to override pod volumes (component %s)", PodOverridesAttribute, devfileContainer.Name)),
 		},
 	}
 	for _, tt := range tests {
@@ -2020,7 +2114,9 @@ func Test_applyPodOverrides(t *testing.T) {
 			got, err := applyPodOverrides(tt.args.globalAttributes, tt.args.components, tt.args.podTemplateSpec)
 			if !tt.wantErr == (err != nil) {
 				t.Errorf("ApplyPodOverrides() error: %v, wantErr %v", err, tt.wantErr)
-				return
+			}
+			if tt.wantErr {
+				assert.Contains(t, err.Error(), *tt.errString)
 			}
 			assert.Equalf(t, tt.want, got, "ApplyPodOverrides(%v, %v, %v)", tt.args.globalAttributes, tt.args.components, tt.args.podTemplateSpec)
 		})

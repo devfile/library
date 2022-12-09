@@ -347,13 +347,13 @@ func getPodOverrides(globalAttributes attributes.Attributes, components []v1.Com
 		}
 		// Do not allow overriding containers or volumes
 		if override.Spec.Containers != nil {
-			return nil, fmt.Errorf("cannot use pod-overrides to override pod containers")
+			return nil, fmt.Errorf("cannot use %s to override pod containers", PodOverridesAttribute)
 		}
 		if override.Spec.InitContainers != nil {
-			return nil, fmt.Errorf("cannot use pod-overrides to override pod initContainers")
+			return nil, fmt.Errorf("cannot use %s to override pod initContainers", PodOverridesAttribute)
 		}
 		if override.Spec.Volumes != nil {
-			return nil, fmt.Errorf("cannot use pod-overrides to override pod volumes")
+			return nil, fmt.Errorf("cannot use %s to override pod volumes", PodOverridesAttribute)
 		}
 		patchData := globalAttributes[PodOverridesAttribute]
 		allOverrides = append(allOverrides, patchData)
