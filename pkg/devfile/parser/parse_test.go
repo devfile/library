@@ -18,6 +18,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	"github.com/devfile/library/v2/pkg/util"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -4165,42 +4166,46 @@ func Test_getResourcesFromGit(t *testing.T) {
 	}
 	defer os.RemoveAll(destDir)
 
-	invalidGitUrl := map[string]string{
-		"username": "devfile",
-		"project":  "nonexistent",
-		"branch":   "nonexistent",
+	invalidGitHubUrl := util.GitUrl{
+		Protocol: "",
+		Host:     "",
+		Owner:    "devfile",
+		Repo:     "nonexistent",
+		Branch:   "nonexistent",
 	}
-	validGitUrl := map[string]string{
-		"host":     "raw.githubusercontent.com",
-		"username": "devfile",
-		"project":  "registry",
-		"branch":   "main",
-		"file":     "stacks/nodejs/devfile.yaml",
+	validGitHubUrl := util.GitUrl{
+		Protocol: "https",
+		Host:     "raw.githubusercontent.com",
+		Owner:    "devfile",
+		Repo:     "registry",
+		Branch:   "main",
+		Path:     "stacks/nodejs/devfile.yaml",
+		IsFile:   true,
 	}
 
 	tests := []struct {
-		name             string
-		gitUrlComponents map[string]string
-		destDir          string
-		wantErr          bool
+		name    string
+		gitUrl  util.GitUrl
+		destDir string
+		wantErr bool
 	}{
 		{
-			name:             "should fail with invalid git url",
-			gitUrlComponents: invalidGitUrl,
-			destDir:          path.Join(os.TempDir(), "nonexistent"),
-			wantErr:          true,
+			name:    "should fail with invalid git url",
+			gitUrl:  invalidGitHubUrl,
+			destDir: path.Join(os.TempDir(), "nonexistent"),
+			wantErr: true,
 		},
 		{
-			name:             "should be able to get resources from valid git url",
-			gitUrlComponents: validGitUrl,
-			destDir:          destDir,
-			wantErr:          false,
+			name:    "should be able to get resources from valid git url",
+			gitUrl:  validGitHubUrl,
+			destDir: destDir,
+			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := getResourcesFromGit(tt.gitUrlComponents, tt.destDir)
+			err := getResourcesFromGit(tt.gitUrl, tt.destDir)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}

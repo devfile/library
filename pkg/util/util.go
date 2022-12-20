@@ -41,11 +41,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-git/go-git/v5/plumbing"
-
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
-	gitpkg "github.com/go-git/go-git/v5"
 	"github.com/gobwas/glob"
 	"github.com/gregjones/httpcache"
 	"github.com/gregjones/httpcache/diskcache"
@@ -1183,57 +1180,6 @@ func ValidateFile(filePath string) error {
 		return errors.Errorf("%s exists but it's not a file", filePath)
 	}
 
-	return nil
-}
-
-// GetGitUrlComponentsFromRaw converts a raw GitHub file link to a map of the url components
-func GetGitUrlComponentsFromRaw(rawGitURL string) (map[string]string, error) {
-	var urlComponents map[string]string
-
-	err := ValidateURL(rawGitURL)
-	if err != nil {
-		return nil, err
-	}
-
-	u, _ := url.Parse(rawGitURL)
-	// the url scheme (e.g. https://) is removed before splitting into the 5 components
-	urlPath := strings.SplitN(u.Host+u.Path, "/", 5)
-
-	// raw GitHub url: https://raw.githubusercontent.com/devfile/registry/main/stacks/nodejs/devfile.yaml
-	// host: raw.githubusercontent.com
-	// username: devfile
-	// project: registry
-	// branch: main
-	// file: stacks/nodejs/devfile.yaml
-	if len(urlPath) == 5 {
-		urlComponents = map[string]string{
-			"host":     urlPath[0],
-			"username": urlPath[1],
-			"project":  urlPath[2],
-			"branch":   urlPath[3],
-			"file":     urlPath[4],
-		}
-	}
-
-	return urlComponents, nil
-}
-
-// CloneGitRepo clones a GitHub repo to a destination directory
-func CloneGitRepo(gitUrlComponents map[string]string, destDir string) error {
-	gitUrl := fmt.Sprintf("https://github.com/%s/%s.git", gitUrlComponents["username"], gitUrlComponents["project"])
-	branch := fmt.Sprintf("refs/heads/%s", gitUrlComponents["branch"])
-
-	cloneOptions := &gitpkg.CloneOptions{
-		URL:           gitUrl,
-		ReferenceName: plumbing.ReferenceName(branch),
-		SingleBranch:  true,
-		Depth:         1,
-	}
-
-	_, err := gitpkg.PlainClone(destDir, false, cloneOptions)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

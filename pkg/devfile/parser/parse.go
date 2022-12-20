@@ -425,15 +425,17 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		}
 
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
-		if strings.Contains(newUri, "raw.githubusercontent.com") {
-			urlComponents, err := util.GetGitUrlComponentsFromRaw(newUri)
+		if strings.Contains(newUri, util.RawGitHubHost) {
+			gitUrl, err := util.ParseGitUrl(newUri)
 			if err != nil {
 				return DevfileObj{}, err
 			}
-			destDir := path.Dir(curDevfileCtx.GetAbsPath())
-			err = getResourcesFromGit(urlComponents, destDir)
-			if err != nil {
-				return DevfileObj{}, err
+			if gitUrl.IsFile {
+				destDir := path.Dir(curDevfileCtx.GetAbsPath())
+				err = getResourcesFromGit(gitUrl, destDir)
+				if err != nil {
+					return DevfileObj{}, err
+				}
 			}
 		}
 	}
@@ -443,19 +445,19 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
-func getResourcesFromGit(gitUrlComponents map[string]string, destDir string) error {
+func getResourcesFromGit(g util.GitUrl, destDir string) error {
 	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
 	if err != nil {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 	}
 	defer os.RemoveAll(stackDir)
 
-	err = util.CloneGitRepo(gitUrlComponents, stackDir)
+	err = util.CloneGitRepo(g, stackDir)
 	if err != nil {
 		return err
 	}
 
-	dir := path.Dir(path.Join(stackDir, gitUrlComponents["file"]))
+	dir := path.Dir(path.Join(stackDir, g.Path))
 	err = util.CopyAllDirFiles(dir, destDir)
 	if err != nil {
 		return err
