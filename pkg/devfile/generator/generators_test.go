@@ -1078,8 +1078,9 @@ func TestGetDeployment(t *testing.T) {
 		name                string
 		containerComponents []v1.Component
 		deploymentParams    DeploymentParams
-		expected            appsv1.Deployment
+		expected            *appsv1.Deployment
 		attributes          attributes.Attributes
+		wantErr             bool
 	}{
 		{
 			// Currently dedicatedPod can only filter out annotations
@@ -1111,7 +1112,7 @@ func TestGetDeployment(t *testing.T) {
 				Containers: containers,
 				Replicas:   pointer.Int32Ptr(1),
 			},
-			expected: appsv1.Deployment{
+			expected: &appsv1.Deployment{
 				ObjectMeta: objectMetaDedicatedPod,
 				Spec: appsv1.DeploymentSpec{
 					Strategy: appsv1.DeploymentStrategy{
@@ -1157,7 +1158,7 @@ func TestGetDeployment(t *testing.T) {
 				},
 				Containers: containers,
 			},
-			expected: appsv1.Deployment{
+			expected: &appsv1.Deployment{
 				ObjectMeta: objectMeta,
 				Spec: appsv1.DeploymentSpec{
 					Strategy: appsv1.DeploymentStrategy{
@@ -1205,7 +1206,7 @@ func TestGetDeployment(t *testing.T) {
 				},
 				Containers: containers,
 			},
-			expected: appsv1.Deployment{
+			expected: &appsv1.Deployment{
 				ObjectMeta: objectMeta,
 				Spec: appsv1.DeploymentSpec{
 					Strategy: appsv1.DeploymentStrategy{
@@ -1223,6 +1224,29 @@ func TestGetDeployment(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "pod has an invalid pod-overrides attribute that throws error",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key2": "value2",
+					},
+				}, nil),
+			},
+			attributes: attributes.Attributes{
+				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": \"serviceAccountName\": \"new-service-account\"}}")},
+			},
+			deploymentParams: DeploymentParams{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"preserved-key": "preserved-value",
+					},
+				},
+				Containers: containers,
+			},
+			expected: nil,
+			wantErr:  trueBool,
 		},
 	}
 
@@ -1247,10 +1271,10 @@ func TestGetDeployment(t *testing.T) {
 			}
 			deploy, err := GetDeployment(devObj, tt.deploymentParams)
 			// Checks for unexpected error cases
-			if err != nil {
-				t.Errorf("TestGetDeployment(): unexpected error %v", err)
+			if !tt.wantErr == (err != nil) {
+				t.Errorf("TestGetDeployment(): unexpected error %v, wantErr %v", err, tt.wantErr)
 			}
-			assert.Equal(t, tt.expected, *deploy, "TestGetDeployment(): The two values should be the same.")
+			assert.Equal(t, tt.expected, deploy, "TestGetDeployment(): The two values should be the same.")
 
 		})
 	}

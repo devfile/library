@@ -1912,6 +1912,27 @@ func Test_applyPodOverrides(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Should override field as defined inside pod-overrides container level attribute",
+			args: args{
+				components: []v1.Component{
+					func() v1.Component {
+						container := devfileContainer
+						container.Attributes = attributes.Attributes{
+							PodOverridesAttribute: apiextensionsv1.JSON{Raw: []byte("{\"spec\": {\"schedulerName\": \"stork\"}}")},
+						}
+						return container
+					}(),
+				},
+				podTemplateSpec: &defaultPodSpec,
+			},
+			want: func() *corev1.PodTemplateSpec {
+				podSpec := defaultPodSpec
+				podSpec.Spec.SchedulerName = "stork"
+				return &podSpec
+			}(),
+			wantErr: false,
+		},
+		{
 			name: "Should override fields as defined inside pod-overrides attribute at devfile and container level",
 			args: args{
 				globalAttributes: attributes.Attributes{
