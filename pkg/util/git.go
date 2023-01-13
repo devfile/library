@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,9 @@ package util
 
 import (
 	"fmt"
-	gitpkg "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -39,27 +36,18 @@ const (
 )
 
 type GitUrl struct {
-	Protocol string
-	Host     string
-	Owner    string
-	Repo     string
-	Branch   string
-	Path     string
-	token    string
-	IsFile   bool
+	Protocol string // URL scheme
+	Host     string // URL domain name
+	Owner    string // name of the repo owner
+	Repo     string // name of the repo
+	Branch   string // branch name
+	Path     string // path to a directory or file in the repo
+	token    string // used for authenticating a private repo
+	IsFile   bool   // defines if the URL points to a file in the repo
 }
 
 // ParseGitUrl extracts information from a GitHub, GitLab, or Bitbucket url
-// A client is used to check whether the url is private or public, and sets
-// the providers personal access token from the environment variable
 func ParseGitUrl(fullUrl string) (GitUrl, error) {
-	var c = http.Client{
-		Timeout: HTTPRequestResponseTimeout,
-	}
-	return parseGitUrlWithClient(fullUrl, c)
-}
-
-func parseGitUrlWithClient(fullUrl string, c http.Client) (GitUrl, error) {
 	var g GitUrl
 
 	err := ValidateURL(fullUrl)
@@ -77,11 +65,11 @@ func parseGitUrlWithClient(fullUrl string, c http.Client) (GitUrl, error) {
 	}
 
 	if parsedUrl.Host == RawGitHubHost || parsedUrl.Host == GitHubHost {
-		g, err = parseGitHubUrl(g, parsedUrl, c)
+		err = g.parseGitHubUrl(parsedUrl)
 	} else if parsedUrl.Host == GitLabHost {
-		g, err = parseGitLabUrl(g, parsedUrl, c)
+		err = g.parseGitLabUrl(parsedUrl)
 	} else if parsedUrl.Host == BitbucketHost {
-		g, err = parseBitbucketUrl(g, parsedUrl, c)
+		err = g.parseBitbucketUrl(parsedUrl)
 	} else {
 		err = fmt.Errorf("url host should be a valid GitHub, GitLab, or Bitbucket host; received: %s", parsedUrl.Host)
 	}
@@ -89,12 +77,13 @@ func parseGitUrlWithClient(fullUrl string, c http.Client) (GitUrl, error) {
 	return g, err
 }
 
-func parseGitHubUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
+func (g *GitUrl) parseGitHubUrl(url *url.URL) error {
 	var splitUrl []string
 	var err error
 
 	g.Protocol = url.Scheme
 	g.Host = url.Host
+	g.token = os.Getenv(GitHubToken)
 
 	if g.Host == RawGitHubHost {
 		g.IsFile = true
@@ -131,20 +120,17 @@ func parseGitHubUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
 		}
 	}
 
-	if !isGitUrlPublic(g, c) {
-		g.token = os.Getenv(GitHubToken)
-	}
-
-	return g, err
+	return err
 }
 
-func parseGitLabUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
+func (g *GitUrl) parseGitLabUrl(url *url.URL) error {
 	var splitFile, splitOrg []string
 	var err error
 
 	g.Protocol = url.Scheme
 	g.Host = url.Host
 	g.IsFile = false
+	g.token = os.Getenv(GitLabToken)
 
 	// GitLab urls contain a '-' separating the root of the repo
 	// and the path to a file or directory
@@ -175,20 +161,17 @@ func parseGitLabUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
 		}
 	}
 
-	if !isGitUrlPublic(g, c) {
-		g.token = os.Getenv(GitLabToken)
-	}
-
-	return g, err
+	return err
 }
 
-func parseBitbucketUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
+func (g *GitUrl) parseBitbucketUrl(url *url.URL) error {
 	var splitUrl []string
 	var err error
 
 	g.Protocol = url.Scheme
 	g.Host = url.Host
 	g.IsFile = false
+	g.token = os.Getenv(BitbucketToken)
 
 	splitUrl = strings.SplitN(url.Path[1:], "/", 5)
 	if len(splitUrl) < 2 {
@@ -215,61 +198,51 @@ func parseBitbucketUrl(g GitUrl, url *url.URL, c http.Client) (GitUrl, error) {
 		}
 	}
 
-	if !isGitUrlPublic(g, c) {
-		g.token = os.Getenv(BitbucketToken)
-	}
-
-	return g, err
+	return err
 }
 
-func isGitUrlPublic(g GitUrl, c http.Client) bool {
-	host := g.Host
-	if host == RawGitHubHost {
-		host = GitHubHost
-	}
-
-	repo := fmt.Sprintf("%s://%s/%s/%s", g.Protocol, host, g.Owner, g.Repo)
-
-	if res, err := c.Get(repo); err != nil {
-		return false
-	} else if res.StatusCode == http.StatusOK {
-		return true
-	}
-	return false
-}
-
-// CloneGitRepo clones a GitHub Repo to a destination directory
+// CloneGitRepo clones a git repo to a destination directory
 func CloneGitRepo(g GitUrl, destDir string) error {
-	var cloneOptions *gitpkg.CloneOptions
-
 	host := g.Host
 	if host == RawGitHubHost {
 		host = GitHubHost
 	}
 
+	isPublic := true
 	repoUrl := fmt.Sprintf("%s://%s/%s/%s.git", g.Protocol, host, g.Owner, g.Repo)
-	branch := fmt.Sprintf("refs/heads/%s", g.Branch)
 
-	cloneOptions = &gitpkg.CloneOptions{
-		URL:           repoUrl,
-		ReferenceName: plumbing.ReferenceName(branch),
-		SingleBranch:  true,
-		Depth:         1,
+	params := HTTPRequestParams{
+		URL: repoUrl,
 	}
 
-	if g.token != "" {
-		cloneOptions.Auth = &githttp.BasicAuth{
-			// go-git auth allows username to be anything except
-			// an empty string for GitHub and GitLab, however requires
-			// for Bitbucket to be "x-token-auth"
-			Username: "x-token-auth",
-			Password: g.token,
+	// check if the git repo is public
+	_, err := HTTPGetRequest(params, 0)
+	if err != nil {
+		// private git repo requires authentication
+		isPublic = false
+		repoUrl = fmt.Sprintf("%s://token:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
+		if g.Host == BitbucketHost {
+			repoUrl = fmt.Sprintf("%s://x-token-auth:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
 		}
 	}
 
-	_, err := gitpkg.PlainClone(destDir, false, cloneOptions)
+	/* #nosec G204 -- user input is processed into an expected format for the git clone command */
+	c := exec.Command("git", "clone", repoUrl, destDir)
+	c.Dir = destDir
+
+	// set env to skip authentication prompt and directly error out
+	c.Env = os.Environ()
+	c.Env = append(c.Env, "GIT_TERMINAL_PROMPT=0", "GIT_ASKPASS=/bin/echo")
+
+	_, err = c.CombinedOutput()
 	if err != nil {
-		return err
+		if !isPublic {
+			if g.token == "" {
+				return fmt.Errorf("failed to clone repo without a token, ensure that a token is set if the repo is private. error: %v", err)
+			}
+			return fmt.Errorf("failed to clone repo with token, ensure that the url and token is correct. error: %v", err)
+		}
+		return fmt.Errorf("failed to clone repo, ensure that the url is correct. error: %v", err)
 	}
 
 	return nil

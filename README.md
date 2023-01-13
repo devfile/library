@@ -167,6 +167,21 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    resources, err := ParseKubernetesYaml(values)
    ```
 
+8. To get resources from Git repositories
+   ```go
+   // Parse the repo url
+   gitUrl, err := util.ParseGitUrl(url)
+
+   // Clone the repo to a destination dir
+   err = util.CloneGitRepo(gitUrl, destDir)
+   ```
+   If repository is private, set the correct environment variables
+   ```shell
+   # credentials for private repositories
+   export GITHUB_TOKEN=<account_token>
+   export GITLAB_TOKEN=<account_token>
+   export BITBUCKET_TOKEN=<account_token>
+   ```
 
 ## Projects using devfile/library
 
