@@ -17,6 +17,7 @@ package generator
 
 import (
 	"fmt"
+
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 
@@ -188,7 +189,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		Volumes:        deployParams.Volumes,
 	}
 	var globalAttributes attributes.Attributes
-	// attributes is not supported in versions less than 2.0.0, so we skip it
+	// attributes is not supported in versions less than 2.1.0, so we skip it
 	if devfileObj.Data.GetSchemaVersion() > string(data.APISchemaVersion200) {
 		var err error
 		globalAttributes, err = devfileObj.Data.GetAttributes()
