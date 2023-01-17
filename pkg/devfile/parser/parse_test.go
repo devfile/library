@@ -4166,6 +4166,8 @@ func Test_getResourcesFromGit(t *testing.T) {
 	}
 	defer os.RemoveAll(destDir)
 
+	httpTimeout := 0
+
 	invalidGitHubUrl := util.GitUrl{
 		Protocol: "",
 		Host:     "",
@@ -4205,7 +4207,7 @@ func Test_getResourcesFromGit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := getResourcesFromGit(tt.gitUrl, tt.destDir)
+			err := getResourcesFromGit(tt.gitUrl, tt.destDir, &httpTimeout)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}

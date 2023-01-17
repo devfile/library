@@ -201,28 +201,68 @@ func (g *GitUrl) parseBitbucketUrl(url *url.URL) error {
 	return err
 }
 
+// ValidateToken makes a http get request to the repo with the GitUrl token
+// Returns an error if the get request fails
+// If token is empty or invalid and validate succeeds, the repository is public
+func (g *GitUrl) ValidateToken(params HTTPRequestParams) error {
+	var apiUrl string
+
+	switch g.Host {
+	case GitHubHost, RawGitHubHost:
+		apiUrl = fmt.Sprintf("https://api.github.com/repos/%s/%s", g.Owner, g.Repo)
+	case GitLabHost:
+		apiUrl = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s", g.Owner, g.Repo)
+	case BitbucketHost:
+		apiUrl = fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s", g.Owner, g.Repo)
+	default:
+		apiUrl = fmt.Sprintf("%s://%s/%s/%s.git", g.Protocol, g.Host, g.Owner, g.Repo)
+	}
+
+	params.URL = apiUrl
+	res, err := HTTPGetRequest(params, 0)
+	if len(res) == 0 || err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CloneGitRepo clones a git repo to a destination directory
-func CloneGitRepo(g GitUrl, destDir string) error {
+// Only supports git repositories hosted on GitHub, GitLab, and Bitbucket
+func CloneGitRepo(g GitUrl, destDir string, httpTimeout *int) error {
+	exist := CheckPathExists(destDir)
+	if !exist {
+		return fmt.Errorf("failed to clone repo, destination directory: '%s' does not exists", destDir)
+	}
+
 	host := g.Host
 	if host == RawGitHubHost {
 		host = GitHubHost
 	}
 
-	isPublic := true
 	repoUrl := fmt.Sprintf("%s://%s/%s/%s.git", g.Protocol, host, g.Owner, g.Repo)
 
 	params := HTTPRequestParams{
-		URL: repoUrl,
+		Timeout: httpTimeout,
 	}
 
-	// check if the git repo is public
-	_, err := HTTPGetRequest(params, 0)
+	// public repos will succeed even if token is invalid or empty
+	err := g.ValidateToken(params)
+
 	if err != nil {
-		// private git repo requires authentication
-		isPublic = false
-		repoUrl = fmt.Sprintf("%s://token:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
-		if g.Host == BitbucketHost {
-			repoUrl = fmt.Sprintf("%s://x-token-auth:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
+		if g.token != "" {
+			params.Token = g.token
+			err := g.ValidateToken(params)
+			if err != nil {
+				return fmt.Errorf("failed to validate git url with token, ensure that the url and token is correct. error: %v", err)
+			} else {
+				repoUrl = fmt.Sprintf("%s://token:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
+				if g.Host == BitbucketHost {
+					repoUrl = fmt.Sprintf("%s://x-token-auth:%s@%s/%s/%s.git", g.Protocol, g.token, host, g.Owner, g.Repo)
+				}
+			}
+		} else {
+			return fmt.Errorf("failed to validate git url without a token, ensure that a token is set if the repo is private. error: %v", err)
 		}
 	}
 
@@ -236,13 +276,7 @@ func CloneGitRepo(g GitUrl, destDir string) error {
 
 	_, err = c.CombinedOutput()
 	if err != nil {
-		if !isPublic {
-			if g.token == "" {
-				return fmt.Errorf("failed to clone repo without a token, ensure that a token is set if the repo is private. error: %v", err)
-			}
-			return fmt.Errorf("failed to clone repo with token, ensure that the url and token is correct. error: %v", err)
-		}
-		return fmt.Errorf("failed to clone repo, ensure that the url is correct. error: %v", err)
+		return fmt.Errorf("failed to clone repo, ensure that the git url is correct. error: %v", err)
 	}
 
 	return nil

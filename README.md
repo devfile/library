@@ -13,6 +13,25 @@ The Devfile Parser library is a Golang module that:
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
 
+## Private Repository Support
+
+Tokens are required to be set in the following cases:
+1. tooling client calling the library API
+2. parsing a devfile from a private repository
+3. parsing a devfile containing a parent devfile from a private repository
+
+Set the environment variables for the necessary git providers:
+   ```shell
+   export GITHUB_TOKEN=<account_token>
+   export GITLAB_TOKEN=<account_token>
+   export BITBUCKET_TOKEN=<account_token>
+   ```
+
+For more information about personal access tokens:
+1. [GitHub docs](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+2. [GitLab docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
+3. [Bitbucket docs](https://support.atlassian.com/bitbucket-cloud/docs/repository-access-tokens/)
+
 ## Usage
 
 The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/github.com/devfile/library). 
@@ -169,18 +188,16 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
 8. To get resources from Git repositories
    ```go
+   // Supported url formats
+   url = "https://github.com/<owner>/<repo name>"
+   url = "https://bitbucket.org/<owner>/<repo name>"
+   url = "https://gitlab.com/<owner>/<repo name>"
+
    // Parse the repo url
    gitUrl, err := util.ParseGitUrl(url)
 
    // Clone the repo to a destination dir
    err = util.CloneGitRepo(gitUrl, destDir)
-   ```
-   If repository is private, set the correct environment variables
-   ```shell
-   # credentials for private repositories
-   export GITHUB_TOKEN=<account_token>
-   export GITLAB_TOKEN=<account_token>
-   export BITBUCKET_TOKEN=<account_token>
    ```
 
 ## Projects using devfile/library

@@ -355,9 +355,12 @@ func Test_ParseGitUrl(t *testing.T) {
 }
 
 func TestCloneGitRepo(t *testing.T) {
+	tempInvalidDir := t.TempDir()
 	tempDirGitHub := t.TempDir()
 	tempDirGitLab := t.TempDir()
 	tempDirBitbucket := t.TempDir()
+
+	httpTimeout := 0
 
 	invalidGitUrl := GitUrl{
 		Protocol: "",
@@ -367,7 +370,7 @@ func TestCloneGitRepo(t *testing.T) {
 		Branch:   "nonexistent",
 	}
 
-	validGitHubUrl := GitUrl{
+	validPublicGitHubUrl := GitUrl{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "devfile",
@@ -375,7 +378,7 @@ func TestCloneGitRepo(t *testing.T) {
 		Branch:   "main",
 	}
 
-	validGitLabUrl := GitUrl{
+	validPublicGitLabUrl := GitUrl{
 		Protocol: "https",
 		Host:     "gitlab.com",
 		Owner:    "mike-hoang",
@@ -383,7 +386,7 @@ func TestCloneGitRepo(t *testing.T) {
 		Branch:   "main",
 	}
 
-	validBitbucketUrl := GitUrl{
+	validPublicBitbucketUrl := GitUrl{
 		Protocol: "https",
 		Host:     "bitbucket.org",
 		Owner:    "mike-hoang",
@@ -391,7 +394,7 @@ func TestCloneGitRepo(t *testing.T) {
 		Branch:   "master",
 	}
 
-	privateGitHubRepo := GitUrl{
+	invalidPrivateGitHubRepo := GitUrl{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "fake-owner",
@@ -400,8 +403,9 @@ func TestCloneGitRepo(t *testing.T) {
 		token:    "fake-github-token",
 	}
 
-	privateRepoMissingTokenErr := "failed to clone repo without a token*"
-	privateRepoBadTokenErr := "failed to clone repo with token*"
+	privateRepoBadTokenErr := "failed to validate git url with token*"
+	publicRepoInvalidUrlErr := "failed to validate git url without a token"
+	missingDestDirErr := "failed to clone repo, destination directory*"
 
 	tests := []struct {
 		name    string
@@ -410,37 +414,43 @@ func TestCloneGitRepo(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "should fail with invalid git url",
+			name:    "should fail with invalid destination directory",
 			gitUrl:  invalidGitUrl,
 			destDir: filepath.Join(os.TempDir(), "nonexistent"),
-			wantErr: privateRepoMissingTokenErr,
+			wantErr: missingDestDirErr,
 		},
 		{
-			name:    "should fail to clone valid private git url with a bad token",
-			gitUrl:  privateGitHubRepo,
-			destDir: filepath.Join(os.TempDir(), "nonexistent"),
+			name:    "should fail with invalid git url",
+			gitUrl:  invalidGitUrl,
+			destDir: tempInvalidDir,
+			wantErr: publicRepoInvalidUrlErr,
+		},
+		{
+			name:    "should fail to clone invalid private git url with a bad token",
+			gitUrl:  invalidPrivateGitHubRepo,
+			destDir: tempInvalidDir,
 			wantErr: privateRepoBadTokenErr,
 		},
 		{
 			name:    "should be able to clone valid public github url",
-			gitUrl:  validGitHubUrl,
+			gitUrl:  validPublicGitHubUrl,
 			destDir: tempDirGitHub,
 		},
 		{
 			name:    "should be able to clone valid public gitlab url",
-			gitUrl:  validGitLabUrl,
+			gitUrl:  validPublicGitLabUrl,
 			destDir: tempDirGitLab,
 		},
 		{
 			name:    "should be able to clone valid public bitbucket url",
-			gitUrl:  validBitbucketUrl,
+			gitUrl:  validPublicBitbucketUrl,
 			destDir: tempDirBitbucket,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CloneGitRepo(tt.gitUrl, tt.destDir)
+			err := CloneGitRepo(tt.gitUrl, tt.destDir, &httpTimeout)
 			if (err != nil) != (tt.wantErr != "") {
 				t.Errorf("Unxpected error: %t, want: %v", err, tt.wantErr)
 			} else if err != nil {
