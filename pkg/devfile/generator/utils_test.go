@@ -17,6 +17,7 @@ package generator
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/pointer"
@@ -37,6 +38,7 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 
 	corev1 "k8s.io/api/core/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -640,14 +642,26 @@ func TestGetPodTemplateSpec(t *testing.T) {
 		namespace      string
 		serviceAccount string
 		labels         map[string]string
+		attributes     attributes.Attributes
 	}{
 		{
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "default",
+			podName:   "podSpecTest",
+			namespace: "default",
 			labels: map[string]string{
 				"app":       "app",
 				"component": "frontend",
+			},
+		},
+		{
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "new-service-account",
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
+			attributes: attributes.Attributes{
+				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
 			},
 		},
 	}
@@ -663,7 +677,7 @@ func TestGetPodTemplateSpec(t *testing.T) {
 				InitContainers: container,
 			}
 
-			podTemplateSpec, err := getPodTemplateSpec(nil, nil, podTemplateSpecParams)
+			podTemplateSpec, err := getPodTemplateSpec(tt.attributes, nil, podTemplateSpecParams)
 			if err != nil {
 				t.Errorf("TestGetPodTemplateSpec() error: %s", err.Error())
 			}
@@ -673,6 +687,9 @@ func TestGetPodTemplateSpec(t *testing.T) {
 			}
 			if podTemplateSpec.Namespace != tt.namespace {
 				t.Errorf("TestGetPodTemplateSpec() error: expected namespace %s, actual %s", tt.namespace, podTemplateSpec.Namespace)
+			}
+			if tt.serviceAccount != "" && podTemplateSpec.Spec.ServiceAccountName != tt.serviceAccount {
+				t.Errorf("TestGetPodTemplateSpec() error: expected serviceAccountName %s, actual %s", tt.serviceAccount, podTemplateSpec.Spec.ServiceAccountName)
 			}
 			if !hasVolumeWithName("vol1", podTemplateSpec.Spec.Volumes) {
 				t.Errorf("TestGetPodTemplateSpec() error: volume with name: %s not found", "vol1")

@@ -18,6 +18,9 @@ package generator
 import (
 	"fmt"
 
+	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data"
+
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
@@ -185,10 +188,12 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		Containers:     deployParams.Containers,
 		Volumes:        deployParams.Volumes,
 	}
-
-	globalAttributes, err := devfileObj.Data.GetAttributes()
-	if err != nil {
-		return nil, err
+	var globalAttributes attributes.Attributes
+	// attributes is not supported in versions less than 2.1.0, so we skip it
+	if devfileObj.Data.GetSchemaVersion() > string(data.APISchemaVersion200) {
+		// the only time GetAttributes will return an error is if DevfileSchemaVersion is 2.0.0, a case we've already covered;
+		// so we'll skip checking for error here
+		globalAttributes, _ = devfileObj.Data.GetAttributes()
 	}
 	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
 	if err != nil {
