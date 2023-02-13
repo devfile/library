@@ -638,13 +638,17 @@ func TestGetPodTemplateSpec(t *testing.T) {
 	}
 
 	tests := []struct {
+		title          string
 		podName        string
 		namespace      string
 		serviceAccount string
+		schedulerName  string
 		labels         map[string]string
 		attributes     attributes.Attributes
+		components     []v1.Component
 	}{
 		{
+			title:     "normal pod spec",
 			podName:   "podSpecTest",
 			namespace: "default",
 			labels: map[string]string{
@@ -653,6 +657,7 @@ func TestGetPodTemplateSpec(t *testing.T) {
 			},
 		},
 		{
+			title:          "podSpec with pod-overrides attribute at devfile level",
 			podName:        "podSpecTest",
 			namespace:      "default",
 			serviceAccount: "new-service-account",
@@ -664,10 +669,50 @@ func TestGetPodTemplateSpec(t *testing.T) {
 				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
 			},
 		},
+		{
+			title:          "podSpec with pod-overrides attribute at container level",
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "new-service-account",
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
+			components: []v1.Component{
+				{
+					Name: "tools",
+					Attributes: attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+					},
+				},
+			},
+		},
+		{
+			title:          "podSpec with pod-overrides attribute at devfile and container level",
+			podName:        "podSpecTest",
+			namespace:      "default",
+			serviceAccount: "new-service-account",
+			schedulerName:  "new-scheduler",
+			labels: map[string]string{
+				"app":       "app",
+				"component": "frontend",
+			},
+			components: []v1.Component{
+				{
+					Name: "tools",
+					Attributes: attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+					},
+				},
+			},
+			attributes: attributes.Attributes{
+				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"schedulerName\": \"new-scheduler\"}}")},
+			},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.podName, func(t *testing.T) {
+		t.Run(tt.title, func(t *testing.T) {
 
 			objectMeta := GetObjectMeta(tt.podName, tt.namespace, tt.labels, nil)
 			podTemplateSpecParams := podTemplateSpecParams{
@@ -677,7 +722,7 @@ func TestGetPodTemplateSpec(t *testing.T) {
 				InitContainers: container,
 			}
 
-			podTemplateSpec, err := getPodTemplateSpec(tt.attributes, nil, podTemplateSpecParams)
+			podTemplateSpec, err := getPodTemplateSpec(tt.attributes, tt.components, podTemplateSpecParams)
 			if err != nil {
 				t.Errorf("TestGetPodTemplateSpec() error: %s", err.Error())
 			}
@@ -690,6 +735,9 @@ func TestGetPodTemplateSpec(t *testing.T) {
 			}
 			if tt.serviceAccount != "" && podTemplateSpec.Spec.ServiceAccountName != tt.serviceAccount {
 				t.Errorf("TestGetPodTemplateSpec() error: expected serviceAccountName %s, actual %s", tt.serviceAccount, podTemplateSpec.Spec.ServiceAccountName)
+			}
+			if tt.schedulerName != "" && podTemplateSpec.Spec.SchedulerName != tt.schedulerName {
+				t.Errorf("TestGetPodTemplateSpec() error: expected schedulerName %s, actual %s", tt.schedulerName, podTemplateSpec.Spec.SchedulerName)
 			}
 			if !hasVolumeWithName("vol1", podTemplateSpec.Spec.Volumes) {
 				t.Errorf("TestGetPodTemplateSpec() error: volume with name: %s not found", "vol1")
