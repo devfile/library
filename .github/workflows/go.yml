@@ -60,7 +60,7 @@ jobs:
 
     - name: Run Gosec Security Scanner
       run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@2.14
         make gosec
         if [[ $? != 0 ]]
         then
