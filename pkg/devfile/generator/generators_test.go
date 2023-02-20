@@ -21,8 +21,6 @@ import (
 	"strings"
 	"testing"
 
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1051,12 +1049,16 @@ func TestGetService(t *testing.T) {
 
 func TestGetDeployment(t *testing.T) {
 	trueBool := true
-	containers := []corev1.Container{
-		{
-			Name: "container1",
-		},
-		{
-			Name: "container2",
+	podTemplateSpec := corev1.PodTemplateSpec{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name: "container1",
+				},
+				{
+					Name: "container2",
+				},
+			},
 		},
 	}
 
@@ -1080,7 +1082,6 @@ func TestGetDeployment(t *testing.T) {
 		containerComponents []v1.Component
 		deploymentParams    DeploymentParams
 		expected            *appsv1.Deployment
-		attributes          attributes.Attributes
 		wantErr             bool
 		devObj              func(ctrl *gomock.Controller, containerComponents []v1.Component) parser.DevfileObj
 	}{
@@ -1111,8 +1112,8 @@ func TestGetDeployment(t *testing.T) {
 						"preserved-key": "preserved-value",
 					},
 				},
-				Containers: containers,
-				Replicas:   pointer.Int32Ptr(1),
+				PodTemplateSpec: &podTemplateSpec,
+				Replicas:        pointer.Int32Ptr(1),
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: objectMetaDedicatedPod,
@@ -1123,12 +1124,7 @@ func TestGetDeployment(t *testing.T) {
 					Selector: &metav1.LabelSelector{
 						MatchLabels: nil,
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: objectMetaDedicatedPod,
-						Spec: corev1.PodSpec{
-							Containers: containers,
-						},
-					},
+					Template: podTemplateSpec,
 					Replicas: pointer.Int32Ptr(1),
 				},
 			},
@@ -1158,7 +1154,7 @@ func TestGetDeployment(t *testing.T) {
 						"preserved-key": "preserved-value",
 					},
 				},
-				Containers: containers,
+				PodTemplateSpec: &podTemplateSpec,
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: objectMeta,
@@ -1169,12 +1165,7 @@ func TestGetDeployment(t *testing.T) {
 					Selector: &metav1.LabelSelector{
 						MatchLabels: nil,
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: objectMeta,
-						Spec: corev1.PodSpec{
-							Containers: containers,
-						},
-					},
+					Template: podTemplateSpec,
 				},
 			},
 		},
@@ -1197,16 +1188,13 @@ func TestGetDeployment(t *testing.T) {
 					},
 				}, nil),
 			},
-			attributes: attributes.Attributes{
-				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
-			},
 			deploymentParams: DeploymentParams{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"preserved-key": "preserved-value",
 					},
 				},
-				Containers: containers,
+				PodTemplateSpec: &podTemplateSpec,
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: objectMeta,
@@ -1217,38 +1205,9 @@ func TestGetDeployment(t *testing.T) {
 					Selector: &metav1.LabelSelector{
 						MatchLabels: nil,
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: objectMeta,
-						Spec: corev1.PodSpec{
-							Containers:         containers,
-							ServiceAccountName: "new-service-account",
-						},
-					},
+					Template: podTemplateSpec,
 				},
 			},
-		},
-		{
-			name: "pod has an invalid pod-overrides attribute that throws error",
-			containerComponents: []v1.Component{
-				testingutil.GenerateDummyContainerComponent("container2", nil, nil, nil, v1.Annotation{
-					Deployment: map[string]string{
-						"key2": "value2",
-					},
-				}, nil),
-			},
-			attributes: attributes.Attributes{
-				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": \"serviceAccountName\": \"new-service-account\"}}")},
-			},
-			deploymentParams: DeploymentParams{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						"preserved-key": "preserved-value",
-					},
-				},
-				Containers: containers,
-			},
-			expected: nil,
-			wantErr:  trueBool,
 		},
 		{
 			name: "skip getting global attributes for SchemaVersion less than 2.1.0",
@@ -1275,7 +1234,7 @@ func TestGetDeployment(t *testing.T) {
 						"preserved-key": "preserved-value",
 					},
 				},
-				Containers: containers,
+				PodTemplateSpec: &podTemplateSpec,
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: objectMeta,
@@ -1286,16 +1245,10 @@ func TestGetDeployment(t *testing.T) {
 					Selector: &metav1.LabelSelector{
 						MatchLabels: nil,
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: objectMeta,
-						Spec: corev1.PodSpec{
-							Containers: containers,
-						},
-					},
+					Template: podTemplateSpec,
 				},
 			},
-			attributes: nil,
-			wantErr:    false,
+			wantErr: false,
 			devObj: func(ctrl *gomock.Controller, containerComponents []v1.Component) parser.DevfileObj {
 				mockDevfileData := data.NewMockDevfileData(ctrl)
 
@@ -1305,7 +1258,6 @@ func TestGetDeployment(t *testing.T) {
 					},
 				}
 				// set up the mock data
-				mockDevfileData.EXPECT().GetSchemaVersion().Return("2.0.0")
 				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(containerComponents, nil).AnyTimes()
 				mockDevfileData.EXPECT().GetComponents(options).Return(containerComponents, nil).AnyTimes()
 
@@ -1333,8 +1285,6 @@ func TestGetDeployment(t *testing.T) {
 					},
 				}
 				// set up the mock data
-				mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0")
-				mockDevfileData.EXPECT().GetAttributes().Return(tt.attributes, nil).AnyTimes()
 				mockDevfileData.EXPECT().GetDevfileContainerComponents(common.DevfileOptions{}).Return(tt.containerComponents, nil).AnyTimes()
 				mockDevfileData.EXPECT().GetComponents(options).Return(tt.containerComponents, nil).AnyTimes()
 
