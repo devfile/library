@@ -175,6 +175,7 @@ type DeploymentParams struct {
 	InitContainers    []corev1.Container
 	Containers        []corev1.Container
 	Volumes           []corev1.Volume
+	PodTemplateSpec   *corev1.PodTemplateSpec
 	PodSelectorLabels map[string]string
 	Replicas          *int32
 }
@@ -182,31 +183,30 @@ type DeploymentParams struct {
 // GetDeployment gets a deployment object
 func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) (*appsv1.Deployment, error) {
 
-	podTemplateSpecParams := podTemplateSpecParams{
-		ObjectMeta:     deployParams.ObjectMeta,
-		InitContainers: deployParams.InitContainers,
-		Containers:     deployParams.Containers,
-		Volumes:        deployParams.Volumes,
-	}
-	var globalAttributes attributes.Attributes
-	// attributes is not supported in versions less than 2.1.0, so we skip it
-	if devfileObj.Data.GetSchemaVersion() > string(data.APISchemaVersion200) {
-		// the only time GetAttributes will return an error is if DevfileSchemaVersion is 2.0.0, a case we've already covered;
-		// so we'll skip checking for error here
-		globalAttributes, _ = devfileObj.Data.GetAttributes()
-	}
-	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
-	if err != nil {
-		return nil, err
-	}
-	podTemplateSpec, err := getPodTemplateSpec(globalAttributes, components, podTemplateSpecParams)
-	if err != nil {
-		return nil, err
-	}
-	deploySpecParams := deploymentSpecParams{
-		PodTemplateSpec:   *podTemplateSpec,
-		PodSelectorLabels: deployParams.PodSelectorLabels,
-		Replicas:          deployParams.Replicas,
+	var deploySpecParams deploymentSpecParams
+	if deployParams.PodTemplateSpec == nil {
+		// Deprecated
+		podTemplateSpecParams := podTemplateSpecParams{
+			ObjectMeta:     deployParams.ObjectMeta,
+			InitContainers: deployParams.InitContainers,
+			Containers:     deployParams.Containers,
+			Volumes:        deployParams.Volumes,
+		}
+		podTemplateSpec, err := getPodTemplateSpec(podTemplateSpecParams)
+		if err != nil {
+			return nil, err
+		}
+		deploySpecParams = deploymentSpecParams{
+			PodTemplateSpec:   *podTemplateSpec,
+			PodSelectorLabels: deployParams.PodSelectorLabels,
+			Replicas:          deployParams.Replicas,
+		}
+	} else {
+		deploySpecParams = deploymentSpecParams{
+			PodTemplateSpec:   *deployParams.PodTemplateSpec,
+			PodSelectorLabels: deployParams.PodSelectorLabels,
+			Replicas:          deployParams.Replicas,
+		}
 	}
 
 	containerAnnotations, err := getContainerAnnotations(devfileObj, common.DevfileOptions{})
@@ -222,6 +222,39 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 	}
 
 	return deployment, nil
+}
+
+// PodTemplateParams is a struct that contains the required data to create a podtemplatespec object
+type PodTemplateParams struct {
+	ObjectMeta metav1.ObjectMeta
+}
+
+func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTemplateParams) (*corev1.PodTemplateSpec, error) {
+	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
+	if err != nil {
+		return nil, err
+	}
+	initContainers, err := GetInitContainers(devfileObj)
+	if err != nil {
+		return nil, err
+	}
+	podTemplateSpecParams := podTemplateSpecParams{
+		ObjectMeta:     podTemplateParams.ObjectMeta,
+		InitContainers: initContainers,
+		Containers:     containers,
+	}
+	var globalAttributes attributes.Attributes
+	// attributes is not supported in versions less than 2.1.0, so we skip it
+	if devfileObj.Data.GetSchemaVersion() > string(data.APISchemaVersion200) {
+		// the only time GetAttributes will return an error is if DevfileSchemaVersion is 2.0.0, a case we've already covered;
+		// so we'll skip checking for error here
+		globalAttributes, _ = devfileObj.Data.GetAttributes()
+	}
+	components, err := devfileObj.Data.GetDevfileContainerComponents(common.DevfileOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return getPodTemplateSpec(globalAttributes, components, podTemplateSpecParams)
 }
 
 // PVCParams is a struct to create PVC
