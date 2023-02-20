@@ -45,7 +45,7 @@ jobs:
 
     - name: Check license
       run: |
-        go get github.com/google/addlicense@latest
+        go install github.com/google/addlicense@latest
         git reset HEAD --hard
         make check_license          
         if [[ $? != 0 ]]
