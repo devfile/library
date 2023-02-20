@@ -268,7 +268,7 @@ func Test_v220_Devfile(t *testing.T) {
 
 }
 
-//Create kube client and context and set as ParserArgs for Parent Kubernetes reference test.  Corresponding main devfile is ../devfile/samples/TestParent_KubeCRD.yaml
+// Create kube client and context and set as ParserArgs for Parent Kubernetes reference test.  Corresponding main devfile is ../devfile/samples/TestParent_KubeCRD.yaml
 func setClientAndContextParserArgs() *parser.ParserArgs {
 	isTrue := true
 	name := "testkubeparent1"

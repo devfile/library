@@ -50,7 +50,7 @@ type DevfileValidator struct{}
 
 var parserArgs = parser.ParserArgs{}
 
-//directory where test devfiles are generated and/or copied
+// directory where test devfiles are generated and/or copied
 const destDir = "tmp/library_test/"
 
 // WriteAndValidate implements DevfileValidator interface.
@@ -305,8 +305,8 @@ func CopyDevfileSamples(t *testing.T, testDevfiles []string) {
 	}
 }
 
-//duplicateDevfileSample: Makes a copy of the parent devfile test artifact that is expected to exist in the tmp/library_test directory.
-//This is used in the multi-threaded parent test scenarios
+// duplicateDevfileSample: Makes a copy of the parent devfile test artifact that is expected to exist in the tmp/library_test directory.
+// This is used in the multi-threaded parent test scenarios
 func duplicateDevfileSample(t *testing.T, src string, dst string) {
 	srcPath := destDir + src
 	destPath := destDir + dst
@@ -376,7 +376,7 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 	}
 }
 
-//RunStaticTest : Runs fixed tests based on pre-existing artifacts
+// RunStaticTest : Runs fixed tests based on pre-existing artifacts
 func RunStaticTest(testContent commonUtils.TestContent, t *testing.T) {
 	commonUtils.LogMessage(fmt.Sprintf("Start test for %s", testContent.FileName))
 	follower := DevfileFollower{}
