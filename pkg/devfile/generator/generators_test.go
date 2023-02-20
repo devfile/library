@@ -49,11 +49,6 @@ func TestGetContainers(t *testing.T) {
 
 	containerNames := []string{"testcontainer1", "testcontainer2", "testcontainer3"}
 	containerImages := []string{"image1", "image2", "image3"}
-	defaultPullPolicy := corev1.PullAlways
-	defaultEnv := []corev1.EnvVar{
-		{Name: "PROJECTS_ROOT", Value: "/projects"},
-		{Name: "PROJECT_SOURCE", Value: "/projects/test-project"},
-	}
 
 	trueMountSources := true
 	falseMountSources := false
@@ -304,36 +299,6 @@ func TestGetContainers(t *testing.T) {
 		{
 			name:    "Simulating error case, check if error matches",
 			wantErr: &errMatches,
-		},
-		{
-			name: "container with container-overrides",
-			containerComponents: []v1.Component{
-				{
-					Name: containerNames[0],
-					ComponentUnion: v1.ComponentUnion{
-						Container: &v1.ContainerComponent{
-							Container: v1.Container{
-								Image: containerImages[0],
-							},
-						},
-					},
-					Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
-						"container-overrides": map[string]interface{}{"securityContext": map[string]int64{"runAsGroup": 3000}},
-					}, nil),
-				},
-			},
-			wantContainerName:  containerNames[0],
-			wantContainerImage: containerImages[0],
-			wantContainerEnv:   defaultEnv,
-			wantContainerOverrideData: &corev1.Container{
-				Name:            containerNames[0],
-				Image:           containerImages[0],
-				Env:             defaultEnv,
-				ImagePullPolicy: defaultPullPolicy,
-				SecurityContext: &corev1.SecurityContext{
-					RunAsGroup: pointer.Int64(3000),
-				},
-			},
 		},
 	}
 	for _, tt := range tests {

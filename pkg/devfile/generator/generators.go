@@ -238,6 +238,7 @@ func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTempl
 	if err != nil {
 		return nil, err
 	}
+
 	podTemplateSpecParams := podTemplateSpecParams{
 		ObjectMeta:     podTemplateParams.ObjectMeta,
 		InitContainers: initContainers,
@@ -254,7 +255,71 @@ func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTempl
 	if err != nil {
 		return nil, err
 	}
-	return getPodTemplateSpec(globalAttributes, components, podTemplateSpecParams)
+
+	podTemplateSpec, err := getPodTemplateSpec(podTemplateSpecParams)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: apply here patches for Pod Security Admission
+
+	if needsPodOverrides(globalAttributes, components) {
+		patchedPodTemplateSpec, err := applyPodOverrides(globalAttributes, components, podTemplateSpec)
+		if err != nil {
+			return nil, err
+		}
+		patchedPodTemplateSpec.ObjectMeta = podTemplateSpecParams.ObjectMeta
+		podTemplateSpec = patchedPodTemplateSpec
+	}
+
+	podTemplateSpec.Spec.Containers, err = applyContainerOverrides(devfileObj, podTemplateSpec.Spec.Containers)
+	if err != nil {
+		return nil, err
+	}
+	podTemplateSpec.Spec.InitContainers, err = applyContainerOverrides(devfileObj, podTemplateSpec.Spec.InitContainers)
+	if err != nil {
+		return nil, err
+	}
+
+	return podTemplateSpec, nil
+}
+
+func applyContainerOverrides(devfileObj parser.DevfileObj, containers []corev1.Container) ([]corev1.Container, error) {
+	containerComponents, err := devfileObj.Data.GetComponents(common.DevfileOptions{
+		ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.ContainerComponentType,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	getContainerByName := func(name string) (*corev1.Container, bool) {
+		for _, container := range containers {
+			if container.Name == name {
+				return &container, true
+			}
+		}
+		return nil, false
+	}
+
+	result := make([]corev1.Container, 0, len(containers))
+	for _, comp := range containerComponents {
+		container, found := getContainerByName(comp.Name)
+		if !found {
+			continue
+		}
+		if comp.Attributes.Exists(ContainerOverridesAttribute) {
+			patched, err := containerOverridesHandler(comp, container)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, *patched)
+		} else {
+			result = append(result, *container)
+		}
+	}
+	return result, nil
 }
 
 // PVCParams is a struct to create PVC
