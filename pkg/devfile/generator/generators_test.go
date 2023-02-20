@@ -21,12 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
-
+	"github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
@@ -35,8 +30,14 @@ import (
 	"github.com/devfile/library/v2/pkg/testingutil"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/golang/mock/gomock"
-
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 )
 
 var fakeResources corev1.ResourceRequirements
@@ -1264,6 +1265,364 @@ func TestGetDeployment(t *testing.T) {
 			}
 			assert.Equal(t, tt.expected, deploy, "TestGetDeployment(): The two values should be the same.")
 
+		})
+	}
+}
+
+func TestGetPodTemplateSpec(t *testing.T) {
+	type args struct {
+		devfileObj        func(ctrl *gomock.Controller) parser.DevfileObj
+		podTemplateParams PodTemplateParams
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *corev1.PodTemplateSpec
+		wantErr bool
+	}{
+		{
+			name: "Devfile with wrong container-override",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{
+								ContainerOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": \"serviceAccountName\": \"new-service-account\"}")},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Devfile with local container-override on the first container only",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+								"container-overrides": map[string]interface{}{"securityContext": map[string]int64{"runAsGroup": 3000}},
+							}, nil),
+						},
+						{
+							Name: "tools",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "a-tool-image",
+									},
+								},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")}}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "new-service-account",
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							SecurityContext: &corev1.SecurityContext{
+								RunAsGroup: pointer.Int64(3000),
+							},
+						},
+						{
+							Name:  "tools",
+							Image: "a-tool-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Devfile with local container-override and global pod-override",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+								"container-overrides": map[string]interface{}{"securityContext": map[string]int64{"runAsGroup": 3000}},
+							}, nil),
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")}}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "new-service-account",
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							SecurityContext: &corev1.SecurityContext{
+								RunAsGroup: pointer.Int64(3000),
+							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Devfile with local container-override and local pod-override",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{
+								ContainerOverridesAttribute: apiext.JSON{Raw: []byte("{\"securityContext\": {\"runAsGroup\": 3000}}")},
+								PodOverridesAttribute:       apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "new-service-account",
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							SecurityContext: &corev1.SecurityContext{
+								RunAsGroup: pointer.Int64(3000),
+							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Devfile with pod-override at local ang global level",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{
+								PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"schedulerName\": \"new-scheduler\"}}")},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+					}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "new-service-account",
+					SchedulerName:      "new-scheduler",
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Devfile with global container-override and pod-override",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{}.FromMap(map[string]interface{}{
+								"container-overrides": map[string]interface{}{"securityContext": map[string]int64{"runAsGroup": 3000}},
+							}, nil),
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
+						PodOverridesAttribute:       apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
+						ContainerOverridesAttribute: apiext.JSON{Raw: []byte("{\"securityContext\": {\"runAsGroup\": 3000}}")},
+					}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "new-service-account",
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							SecurityContext: &corev1.SecurityContext{
+								RunAsGroup: pointer.Int64(3000),
+							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			devObj := tt.args.devfileObj(ctrl)
+
+			got, err := GetPodTemplateSpec(devObj, tt.args.podTemplateParams)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetPodTemplateSpec() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("GetPodTemplateSpec()  mismatch (-want +got): %s\n", diff)
+			}
 		})
 	}
 }
