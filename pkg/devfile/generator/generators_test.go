@@ -37,6 +37,7 @@ import (
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/pod-security-admission/api"
 	"k8s.io/utils/pointer"
 )
 
@@ -1600,6 +1601,202 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							SecurityContext: &corev1.SecurityContext{
 								RunAsGroup: pointer.Int64(3000),
 							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Restricted policy",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
+						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"securityContext\": {\"seccompProfile\": {\"type\": \"Localhost\"}}}}")},
+					}, nil)
+
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+				podTemplateParams: PodTemplateParams{
+					PodSecurityAdmissionPolicy: api.Policy{
+						Enforce: api.LevelVersion{
+							Level:   api.LevelRestricted,
+							Version: api.MajorMinorVersion(1, 25),
+						},
+					},
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: pointer.Bool(true),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: "Localhost",
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
+							SecurityContext: &corev1.SecurityContext{
+								AllowPrivilegeEscalation: pointer.Bool(false),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{
+										"ALL",
+									},
+								},
+							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Restricted policy and pod override",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+				podTemplateParams: PodTemplateParams{
+					PodSecurityAdmissionPolicy: api.Policy{
+						Enforce: api.LevelVersion{
+							Level:   api.LevelRestricted,
+							Version: api.MajorMinorVersion(1, 25),
+						},
+					},
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: pointer.Bool(true),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: "RuntimeDefault",
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
+							SecurityContext: &corev1.SecurityContext{
+								AllowPrivilegeEscalation: pointer.Bool(false),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{
+										"ALL",
+									},
+								},
+							},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Baseline policy",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+				podTemplateParams: PodTemplateParams{
+					PodSecurityAdmissionPolicy: api.Policy{
+						Enforce: api.LevelVersion{
+							Level:   api.LevelBaseline,
+							Version: api.MajorMinorVersion(1, 25),
+						},
+					},
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "main",
+							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
 						},
 					},
 					InitContainers: []corev1.Container{},

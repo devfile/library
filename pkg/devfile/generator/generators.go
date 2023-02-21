@@ -265,7 +265,10 @@ func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTempl
 		return nil, err
 	}
 
-	// TODO: apply here patches for Pod Security Admission
+	podTemplateSpec, err = patchForPolicy(podTemplateSpec, podTemplateParams.PodSecurityAdmissionPolicy)
+	if err != nil {
+		return nil, err
+	}
 
 	if needsPodOverrides(globalAttributes, components) {
 		patchedPodTemplateSpec, err := applyPodOverrides(globalAttributes, components, podTemplateSpec)
