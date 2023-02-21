@@ -34,6 +34,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	psaapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -227,6 +228,9 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 // PodTemplateParams is a struct that contains the required data to create a podtemplatespec object
 type PodTemplateParams struct {
 	ObjectMeta metav1.ObjectMeta
+	// PodSecurityAdmissionPolicy is the policy to be respected by the created pod
+	// The pod will be patched, if necessary, to respect the policies
+	PodSecurityAdmissionPolicy psaapi.Policy
 }
 
 func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTemplateParams) (*corev1.PodTemplateSpec, error) {
