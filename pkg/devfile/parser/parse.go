@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -836,6 +836,8 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting kubernetes resources definition information")
 		}
+	} else {
+		return nil, fmt.Errorf("error getting kubernetes resources definition information, unable to resolve the file uri: %v", uri)
 	}
 	return data, nil
 }
