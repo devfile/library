@@ -75,6 +75,8 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 }
 
 // GetContainers iterates through all container components, filters out init containers and returns corresponding containers
+//
+// Deprecated in favor of GetPodTemplateSpec
 func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) ([]corev1.Container, error) {
 	allContainers, err := getAllContainers(devfileObj, options)
 	if err != nil {
@@ -121,6 +123,8 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 }
 
 // GetInitContainers gets the init container for every preStart devfile event
+//
+// Deprecated in favor of GetPodTemplateSpec
 func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 	containers, err := getAllContainers(devfileObj, common.DevfileOptions{})
 	if err != nil {
@@ -171,10 +175,14 @@ func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error)
 
 // DeploymentParams is a struct that contains the required data to create a deployment object
 type DeploymentParams struct {
-	TypeMeta          metav1.TypeMeta
-	ObjectMeta        metav1.ObjectMeta
-	InitContainers    []corev1.Container
-	Containers        []corev1.Container
+	TypeMeta   metav1.TypeMeta
+	ObjectMeta metav1.ObjectMeta
+	// Deprecated. InitContainers, Containers and Volumes are deprecated and are replaced by PodTemplateSpec.
+	// A PodTemplateSpec value can be obtained calling GetPodTemplateSpec function, instead of calling GetContainers and GetInitContainers
+	InitContainers []corev1.Container
+	// Deprecated, see InitContainers
+	Containers []corev1.Container
+	// Deprecated, see InitContainers
 	Volumes           []corev1.Volume
 	PodTemplateSpec   *corev1.PodTemplateSpec
 	PodSelectorLabels map[string]string
@@ -233,6 +241,12 @@ type PodTemplateParams struct {
 	PodSecurityAdmissionPolicy psaapi.Policy
 }
 
+// GetPodTemplateSpec returns a pod template
+// The function:
+// - iterates through all container components, filters out init containers and gets corresponding containers
+// - gets the init container for every preStart devfile event
+// - patches the pod template and containers to satisfy PodSecurityAdmissionPolicy
+// - patches the pod template and containers to apply pod and container overrides
 func GetPodTemplateSpec(devfileObj parser.DevfileObj, podTemplateParams PodTemplateParams) (*corev1.PodTemplateSpec, error) {
 	containers, err := GetContainers(devfileObj, common.DevfileOptions{})
 	if err != nil {
