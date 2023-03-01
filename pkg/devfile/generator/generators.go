@@ -16,6 +16,7 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/devfile/api/v2/pkg/attributes"
@@ -76,7 +77,7 @@ func GetObjectMeta(name, namespace string, labels, annotations map[string]string
 
 // GetContainers iterates through all container components, filters out init containers and returns corresponding containers
 //
-// Deprecated in favor of GetPodTemplateSpec
+// Deprecated: in favor of GetPodTemplateSpec
 func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) ([]corev1.Container, error) {
 	allContainers, err := getAllContainers(devfileObj, options)
 	if err != nil {
@@ -124,7 +125,7 @@ func GetContainers(devfileObj parser.DevfileObj, options common.DevfileOptions) 
 
 // GetInitContainers gets the init container for every preStart devfile event
 //
-// Deprecated in favor of GetPodTemplateSpec
+// Deprecated: in favor of GetPodTemplateSpec
 func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error) {
 	containers, err := getAllContainers(devfileObj, common.DevfileOptions{})
 	if err != nil {
@@ -177,12 +178,12 @@ func GetInitContainers(devfileObj parser.DevfileObj) ([]corev1.Container, error)
 type DeploymentParams struct {
 	TypeMeta   metav1.TypeMeta
 	ObjectMeta metav1.ObjectMeta
-	// Deprecated. InitContainers, Containers and Volumes are deprecated and are replaced by PodTemplateSpec.
+	// Deprecated: InitContainers, Containers and Volumes are deprecated and are replaced by PodTemplateSpec.
 	// A PodTemplateSpec value can be obtained calling GetPodTemplateSpec function, instead of calling GetContainers and GetInitContainers
 	InitContainers []corev1.Container
-	// Deprecated, see InitContainers
+	// Deprecated: see InitContainers
 	Containers []corev1.Container
-	// Deprecated, see InitContainers
+	// Deprecated: see InitContainers
 	Volumes           []corev1.Volume
 	PodTemplateSpec   *corev1.PodTemplateSpec
 	PodSelectorLabels map[string]string
@@ -211,6 +212,12 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 			Replicas:          deployParams.Replicas,
 		}
 	} else {
+		if len(deployParams.InitContainers) > 0 ||
+			len(deployParams.Containers) > 0 ||
+			len(deployParams.Volumes) > 0 {
+			return nil, errors.New("InitContainers, Containers and Volumes cannot be set when PodTemplateSpec is set in parameters")
+		}
+
 		deploySpecParams = deploymentSpecParams{
 			PodTemplateSpec:   *deployParams.PodTemplateSpec,
 			PodSelectorLabels: deployParams.PodSelectorLabels,

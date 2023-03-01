@@ -1234,6 +1234,36 @@ func TestGetDeployment(t *testing.T) {
 				return devObj
 			},
 		},
+		{
+			name: "both container and podtemplatespec are passed",
+			containerComponents: []v1.Component{
+				testingutil.GenerateDummyContainerComponent("container1", nil, []v1.Endpoint{
+					{
+						Name:       "http-8080",
+						TargetPort: 8080,
+					},
+				}, nil, v1.Annotation{
+					Deployment: map[string]string{
+						"key1": "value1",
+					},
+				}, nil),
+			},
+			deploymentParams: DeploymentParams{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"preserved-key": "preserved-value",
+					},
+				},
+				PodTemplateSpec: &podTemplateSpec,
+				Containers: []corev1.Container{
+					{
+						Name: "container1",
+					},
+				},
+				Replicas: pointer.Int32Ptr(1),
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
