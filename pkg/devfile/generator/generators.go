@@ -193,7 +193,10 @@ type DeploymentParams struct {
 // GetDeployment gets a deployment object
 func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) (*appsv1.Deployment, error) {
 
-	var deploySpecParams deploymentSpecParams
+	deploySpecParams := deploymentSpecParams{
+		PodSelectorLabels: deployParams.PodSelectorLabels,
+		Replicas:          deployParams.Replicas,
+	}
 	if deployParams.PodTemplateSpec == nil {
 		// Deprecated
 		podTemplateSpecParams := podTemplateSpecParams{
@@ -206,11 +209,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 		if err != nil {
 			return nil, err
 		}
-		deploySpecParams = deploymentSpecParams{
-			PodTemplateSpec:   *podTemplateSpec,
-			PodSelectorLabels: deployParams.PodSelectorLabels,
-			Replicas:          deployParams.Replicas,
-		}
+		deploySpecParams.PodTemplateSpec = *podTemplateSpec
 	} else {
 		if len(deployParams.InitContainers) > 0 ||
 			len(deployParams.Containers) > 0 ||
@@ -218,11 +217,7 @@ func GetDeployment(devfileObj parser.DevfileObj, deployParams DeploymentParams) 
 			return nil, errors.New("InitContainers, Containers and Volumes cannot be set when PodTemplateSpec is set in parameters")
 		}
 
-		deploySpecParams = deploymentSpecParams{
-			PodTemplateSpec:   *deployParams.PodTemplateSpec,
-			PodSelectorLabels: deployParams.PodSelectorLabels,
-			Replicas:          deployParams.Replicas,
-		}
+		deploySpecParams.PodTemplateSpec = *deployParams.PodTemplateSpec
 	}
 
 	containerAnnotations, err := getContainerAnnotations(devfileObj, common.DevfileOptions{})
