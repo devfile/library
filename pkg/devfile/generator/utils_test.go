@@ -38,7 +38,6 @@ import (
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 
 	corev1 "k8s.io/api/core/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -617,7 +616,7 @@ func TestGetContainer(t *testing.T) {
 	}
 }
 
-func TestGetPodTemplateSpec(t *testing.T) {
+func Test_getPodTemplateSpec(t *testing.T) {
 
 	container := []corev1.Container{
 		{
@@ -638,14 +637,10 @@ func TestGetPodTemplateSpec(t *testing.T) {
 	}
 
 	tests := []struct {
-		title          string
-		podName        string
-		namespace      string
-		serviceAccount string
-		schedulerName  string
-		labels         map[string]string
-		attributes     attributes.Attributes
-		components     []v1.Component
+		title     string
+		podName   string
+		namespace string
+		labels    map[string]string
 	}{
 		{
 			title:     "normal pod spec",
@@ -654,59 +649,6 @@ func TestGetPodTemplateSpec(t *testing.T) {
 			labels: map[string]string{
 				"app":       "app",
 				"component": "frontend",
-			},
-		},
-		{
-			title:          "podSpec with pod-overrides attribute at devfile level",
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "new-service-account",
-			labels: map[string]string{
-				"app":       "app",
-				"component": "frontend",
-			},
-			attributes: attributes.Attributes{
-				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
-			},
-		},
-		{
-			title:          "podSpec with pod-overrides attribute at container level",
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "new-service-account",
-			labels: map[string]string{
-				"app":       "app",
-				"component": "frontend",
-			},
-			components: []v1.Component{
-				{
-					Name: "tools",
-					Attributes: attributes.Attributes{
-						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
-					},
-				},
-			},
-		},
-		{
-			title:          "podSpec with pod-overrides attribute at devfile and container level",
-			podName:        "podSpecTest",
-			namespace:      "default",
-			serviceAccount: "new-service-account",
-			schedulerName:  "new-scheduler",
-			labels: map[string]string{
-				"app":       "app",
-				"component": "frontend",
-			},
-			components: []v1.Component{
-				{
-					Name: "tools",
-					Attributes: attributes.Attributes{
-						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"serviceAccountName\": \"new-service-account\"}}")},
-					},
-				},
-			},
-			attributes: attributes.Attributes{
-				PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"schedulerName\": \"new-scheduler\"}}")},
 			},
 		},
 	}
@@ -722,7 +664,7 @@ func TestGetPodTemplateSpec(t *testing.T) {
 				InitContainers: container,
 			}
 
-			podTemplateSpec, err := getPodTemplateSpec(tt.attributes, tt.components, podTemplateSpecParams)
+			podTemplateSpec, err := getPodTemplateSpec(podTemplateSpecParams)
 			if err != nil {
 				t.Errorf("TestGetPodTemplateSpec() error: %s", err.Error())
 			}
@@ -732,12 +674,6 @@ func TestGetPodTemplateSpec(t *testing.T) {
 			}
 			if podTemplateSpec.Namespace != tt.namespace {
 				t.Errorf("TestGetPodTemplateSpec() error: expected namespace %s, actual %s", tt.namespace, podTemplateSpec.Namespace)
-			}
-			if tt.serviceAccount != "" && podTemplateSpec.Spec.ServiceAccountName != tt.serviceAccount {
-				t.Errorf("TestGetPodTemplateSpec() error: expected serviceAccountName %s, actual %s", tt.serviceAccount, podTemplateSpec.Spec.ServiceAccountName)
-			}
-			if tt.schedulerName != "" && podTemplateSpec.Spec.SchedulerName != tt.schedulerName {
-				t.Errorf("TestGetPodTemplateSpec() error: expected schedulerName %s, actual %s", tt.schedulerName, podTemplateSpec.Spec.SchedulerName)
 			}
 			if !hasVolumeWithName("vol1", podTemplateSpec.Spec.Volumes) {
 				t.Errorf("TestGetPodTemplateSpec() error: volume with name: %s not found", "vol1")
