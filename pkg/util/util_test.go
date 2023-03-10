@@ -936,6 +936,11 @@ func TestDownloadFile(t *testing.T) {
 	}
 }
 
+//todo:
+func TestDownloadInMemory(t *testing.T) {
+	
+}
+
 func TestValidateK8sResourceName(t *testing.T) {
 	tests := []struct {
 		name  string

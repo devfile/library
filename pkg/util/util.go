@@ -1091,6 +1091,21 @@ func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
 		return nil, err
 	}
 
+	if IsGitProviderRepo(url) {
+		g, err := ParseGitUrl(url)
+		if err != nil {
+			return nil, errors.Errorf("failed to parse git repo. error: %v", err)
+		}
+		if !g.IsPublic(params.Timeout) {
+			err = g.SetToken(params.Token, params.Timeout)
+			if err != nil {
+				return nil, err
+			}
+			bearer := "Bearer " + params.Token
+			req.Header.Add("Authorization", bearer)
+		}
+	}
+
 	//add the telemetry client name in the header
 	req.Header.Add("Client", params.TelemetryClientName)
 	resp, err := httpClient.Do(req)

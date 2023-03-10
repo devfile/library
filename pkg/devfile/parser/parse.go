@@ -97,6 +97,8 @@ type ParserArgs struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	RegistryURLs []string
+	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo uri
+	Token string
 	// DefaultNamespace is the default namespace to use
 	// If namespace is defined under devfile's parent kubernetes object, this namespace will be ignored.
 	DefaultNamespace string
@@ -132,6 +134,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
 		httpTimeout:      args.HTTPTimeout,
+		token:            args.Token,
 	}
 
 	flattenedDevfile := true
@@ -175,6 +178,8 @@ type resolverTools struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	registryURLs []string
+	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo uri
+	token string
 	// Context is the context used for making Kubernetes or HTTP requests
 	context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
@@ -425,15 +430,14 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		}
 
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
-		if strings.Contains(newUri, util.RawGitHubHost) || strings.Contains(newUri, util.GitHubHost) ||
-			strings.Contains(newUri, util.GitLabHost) || strings.Contains(newUri, util.BitbucketToken) {
+		if util.IsGitProviderRepo(newUri) {
 			gitUrl, err := util.ParseGitUrl(newUri)
 			if err != nil {
 				return DevfileObj{}, err
 			}
 			if gitUrl.IsFile {
 				destDir := path.Dir(curDevfileCtx.GetAbsPath())
-				err = getResourcesFromGit(gitUrl, destDir, tool.httpTimeout)
+				err = getResourcesFromGit(gitUrl, destDir, tool.httpTimeout, tool.token)
 				if err != nil {
 					return DevfileObj{}, err
 				}
@@ -446,14 +450,21 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
-func getResourcesFromGit(g util.GitUrl, destDir string, httpTimeout *int) error {
+func getResourcesFromGit(g util.GitUrl, destDir string, httpTimeout *int, repoToken string) error {
 	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
 	if err != nil {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 	}
 	defer os.RemoveAll(stackDir)
 
-	err = util.CloneGitRepo(g, stackDir, httpTimeout)
+	if !g.IsPublic(httpTimeout) {
+		err = g.SetToken(repoToken, httpTimeout)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = util.CloneGitRepo(g, stackDir)
 	if err != nil {
 		return err
 	}

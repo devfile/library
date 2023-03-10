@@ -31,34 +31,6 @@ var (
 )
 
 func Test_ParseGitUrl(t *testing.T) {
-	defer func() {
-		err := os.Unsetenv(githubToken)
-		if err != nil {
-			t.Errorf("Failed to unset GitHub token")
-		}
-		err = os.Unsetenv(gitlabToken)
-		if err != nil {
-			t.Errorf("Failed to unset GitLab token")
-		}
-		err = os.Unsetenv(bitbucketToken)
-		if err != nil {
-			t.Errorf("Failed to unset Bitbucket token")
-		}
-	}()
-
-	err := os.Setenv("GITHUB_TOKEN", githubToken)
-	if err != nil {
-		t.Errorf("Failed to set GitHub token")
-	}
-	err = os.Setenv("GITLAB_TOKEN", gitlabToken)
-	if err != nil {
-		t.Errorf("Failed to set GitLab token")
-	}
-	err = os.Setenv("BITBUCKET_TOKEN", bitbucketToken)
-	if err != nil {
-		t.Errorf("Failed to set Bitbucket token")
-	}
-
 	tests := []struct {
 		name    string
 		url     string
@@ -86,7 +58,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-github-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -105,7 +77,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "main",
 				Path:     "devfile.yaml",
-				token:    "fake-github-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -119,7 +91,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "main",
 				Path:     "devfile.yaml",
-				token:    "fake-github-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -143,7 +115,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-github-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -157,7 +129,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "fake-github-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -172,7 +144,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "gitlab-foss",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-gitlab-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -191,7 +163,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "gitlab-foss",
 				Branch:   "master",
 				Path:     "README.md",
-				token:    "fake-gitlab-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -215,7 +187,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-gitlab-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -229,7 +201,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "fake-gitlab-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -244,7 +216,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -263,7 +235,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -277,7 +249,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "directory/test.txt",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -291,7 +263,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -320,7 +292,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "",
 				Path:     "",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -334,7 +306,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Repo:     "fake-private-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "fake-bitbucket-token",
+				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -354,13 +326,78 @@ func Test_ParseGitUrl(t *testing.T) {
 	}
 }
 
-func TestCloneGitRepo(t *testing.T) {
+// todo: try mocking
+func Test_SetToken(t *testing.T) {
+	g := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "devfile",
+		Repo:     "library",
+		Branch:   "main",
+		token:    "",
+	}
+
+	httpTimeout := 0
+	token := "fake-git-token"
+
+	err := g.SetToken(token, &httpTimeout)
+	assert.NoError(t, err)
+	assert.Equal(t, token, g.token)
+}
+
+func Test_IsPublic(t *testing.T) {
+	publicGitUrl := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "devfile",
+		Repo:     "library",
+		Branch:   "main",
+		token:    "fake-token",
+	}
+
+	privateGitUrl := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "not",
+		Repo:     "a-valid",
+		Branch:   "none",
+		token:    "fake-token",
+	}
+
+	httpTimeout := 0
+
+	tests := []struct {
+		name string
+		g    GitUrl
+		want bool
+	}{
+		{
+			name: "should be public",
+			g:    publicGitUrl,
+			want: true,
+		},
+		{
+			name: "should be private",
+			g:    privateGitUrl,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.g.IsPublic(&httpTimeout)
+			if !reflect.DeepEqual(result, tt.want) {
+				t.Errorf("Got: %t, want: %t", result, tt.want)
+			}
+		})
+	}
+}
+
+func Test_CloneGitRepo(t *testing.T) {
 	tempInvalidDir := t.TempDir()
 	tempDirGitHub := t.TempDir()
 	tempDirGitLab := t.TempDir()
 	tempDirBitbucket := t.TempDir()
-
-	httpTimeout := 0
 
 	invalidGitUrl := GitUrl{
 		Protocol: "",
@@ -403,8 +440,8 @@ func TestCloneGitRepo(t *testing.T) {
 		token:    "fake-github-token",
 	}
 
-	privateRepoBadTokenErr := "failed to validate git url with token*"
-	publicRepoInvalidUrlErr := "failed to validate git url without a token"
+	privateRepoBadTokenErr := "failed to clone repo with token*"
+	publicRepoInvalidUrlErr := "failed to clone repo without a token"
 	missingDestDirErr := "failed to clone repo, destination directory*"
 
 	tests := []struct {
@@ -450,7 +487,7 @@ func TestCloneGitRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CloneGitRepo(tt.gitUrl, tt.destDir, &httpTimeout)
+			err := CloneGitRepo(tt.gitUrl, tt.destDir)
 			if (err != nil) != (tt.wantErr != "") {
 				t.Errorf("Unxpected error: %t, want: %v", err, tt.wantErr)
 			} else if err != nil {

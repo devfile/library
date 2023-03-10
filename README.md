@@ -18,19 +18,23 @@ The Devfile Parser library is a Golang module that:
 Tokens are required to be set in the following cases:
 1. tooling client calling the library API
 2. parsing a devfile from a private repository
-3. parsing a devfile containing a parent devfile from a private repository
+3. parsing a devfile containing a parent devfile from a private repository [1]
 
-Set the environment variables for the necessary git providers:
-   ```shell
-   export GITHUB_TOKEN=<account_token>
-   export GITLAB_TOKEN=<account_token>
-   export BITBUCKET_TOKEN=<account_token>
-   ```
+Set the token for the repository:
+```go
+parser.ParserArgs{
+	...
+	Token: <repo-personal-access-token>
+	...
+}
+```
 
 For more information about personal access tokens:
 1. [GitHub docs](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 2. [GitLab docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
 3. [Bitbucket docs](https://support.atlassian.com/bitbucket-cloud/docs/repository-access-tokens/)
+
+[1] currently, this works under the assumption that the token can authenticate the devfile and the parent devfile; both devfiles are in the same repository.
 
 ## Usage
 
