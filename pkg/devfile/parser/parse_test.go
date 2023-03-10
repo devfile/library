@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -4270,6 +4270,207 @@ func Test_setDefaults(t *testing.T) {
 				t.Errorf("Test_setDefaults() error: wanted: %v, got: %v, difference at %v/ ", tt.wantDevFile, d.Data, pretty.Compare(tt.wantDevFile, tt.dataObj))
 			}
 
+		})
+	}
+}
+
+func Test_getKubernetesDefinitionFromUri(t *testing.T) {
+	const (
+		uri1                = "127.0.0.1:8080"
+		httpPrefix          = "http://"
+		localRelativeURI    = "testTmp/dir/devfile.yaml"
+		localDeployFilePath = "testTmp/dir/deploy.yaml"
+	)
+
+	deployYamlUri := httpPrefix + uri1 + "/deploy.yaml"
+
+	deployContent := `
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          images: image:latest
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          resources:
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
+`
+
+	// prepare for local file
+	err := os.MkdirAll(path.Dir(localDeployFilePath), 0755)
+	if err != nil {
+		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: failed to create folder: %v, error: %v", path.Dir(localDeployFilePath), err)
+	}
+
+	err = ioutil.WriteFile(localDeployFilePath, []byte(deployContent), 0644)
+	if err != nil {
+		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: fail to write to file: %v", err)
+	}
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer os.RemoveAll("testTmp/")
+
+	localDevfileCtx := devfileCtx.NewDevfileCtx(localRelativeURI)
+	err = localDevfileCtx.SetAbsPath()
+	if err != nil {
+		t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error: %v", err)
+		return
+	}
+
+	URLDevfileCtx := devfileCtx.NewURLDevfileCtx(httpPrefix + uri1)
+
+	rawContent := `
+schemaVersion: 2.2.0
+metadata:
+  name: go
+  language: Go
+  projectType: Go
+  tags:
+    - Go
+components:
+  - name: kubernetes-deploy
+    kubernetes:
+      uri: deploy.yaml
+commands:
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+`
+	rawDevfileContext, err := devfileCtx.NewByteContentDevfileCtx([]byte(rawContent))
+	if err != nil {
+		t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error: %v", err)
+		return
+	}
+
+	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "notexist") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		var data []byte
+		var err error
+		if strings.Contains(r.URL.Path, "deploy.yaml") {
+			data = []byte(deployContent)
+		}
+		if err != nil {
+			t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected while doing yaml marshal: %v", err)
+			return
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error while writing data: %v", err)
+		}
+	}))
+	// create a listener with the desired port.
+	l, err := net.Listen("tcp", uri1)
+	if err != nil {
+		t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error while creating listener: %v", err)
+		return
+	}
+
+	// NewUnstartedServer creates a listener. Close that listener and replace
+	// with the one we created.
+	testServer.Listener.Close()
+	testServer.Listener = l
+
+	testServer.Start()
+	defer testServer.Close()
+
+	notAbleToResolveURIErr := "error getting kubernetes resources definition information, unable to resolve the file uri.*"
+	invalidPathErr := "failed to read kubernetes resources definition from path.*"
+	invalidURLErr := "error getting kubernetes resources definition information"
+
+	tests := []struct {
+		name        string
+		uri         string
+		devfileCtx  devfileCtx.DevfileCtx
+		wantContent string
+		wantErr     *string
+	}{
+		{
+			name:        "should be able to parse from relative uri on local disk",
+			devfileCtx:  localDevfileCtx,
+			uri:         "deploy.yaml",
+			wantContent: deployContent,
+		},
+		{
+			name:        "should be able to parse from remote deploy file from local devfile",
+			devfileCtx:  localDevfileCtx,
+			uri:         deployYamlUri,
+			wantContent: deployContent,
+		},
+		{
+			name:       "should fail with invalid uri from local devfile",
+			devfileCtx: localDevfileCtx,
+			uri:        "invalidpath/deploy.yaml",
+			wantErr:    &invalidPathErr,
+		},
+		{
+			name:        "should be able to parse from remote deploy file from remote devfile",
+			devfileCtx:  URLDevfileCtx,
+			uri:         deployYamlUri,
+			wantContent: deployContent,
+		},
+		{
+			name:        "should be able to parse from remote deploy file from relative path devfile",
+			devfileCtx:  URLDevfileCtx,
+			uri:         "deploy.yaml",
+			wantContent: deployContent,
+		},
+		{
+			name:       "should fail with invalid relative uri from remote devfile",
+			devfileCtx: URLDevfileCtx,
+			uri:        "notexist/deploy.yaml",
+			wantErr:    &invalidURLErr,
+		},
+		{
+			name:       "should fail to parse from relative uri from raw content",
+			devfileCtx: rawDevfileContext,
+			uri:        "deploy.yaml",
+			wantErr:    &notAbleToResolveURIErr,
+		},
+		{
+			name:        "should be able to parse from remote deploy file from raw content",
+			devfileCtx:  rawDevfileContext,
+			uri:         deployYamlUri,
+			wantContent: deployContent,
+		},
+		{
+			name:       "should fail with invalid absolute URL from raw content",
+			devfileCtx: rawDevfileContext,
+			uri:        httpPrefix + uri1 + "/notexist/deploy.yaml",
+			wantErr:    &invalidURLErr,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getKubernetesDefinitionFromUri(tt.uri, tt.devfileCtx)
+			if (err != nil) != (tt.wantErr != nil) {
+				t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error: %v, wantErr %v", err, *tt.wantErr)
+			} else if err == nil {
+				assert.Equal(t, tt.wantContent, string(got), "Test_getKubernetesDefinitionFromUri() error: the deploy content should matched")
+			} else if err != nil {
+				assert.Regexp(t, *tt.wantErr, err.Error(), "Test_getKubernetesDefinitionFromUri(): Error message should match")
+			}
 		})
 	}
 }

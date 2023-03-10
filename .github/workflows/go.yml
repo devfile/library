@@ -16,7 +16,7 @@ jobs:
     - name: Setup Go environment
       uses: actions/setup-go@v2.1.3
       with:
-        go-version: 1.16
+        go-version: 1.19
       id: go
 
     - name: Check out code into the Go module directory
@@ -45,7 +45,7 @@ jobs:
 
     - name: Check license
       run: |
-        go get github.com/google/addlicense@latest
+        go install github.com/google/addlicense@latest
         git reset HEAD --hard
         make check_license          
         if [[ $? != 0 ]]
@@ -60,7 +60,7 @@ jobs:
 
     - name: Run Gosec Security Scanner
       run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@v2.14.0
         make gosec
         if [[ $? != 0 ]]
         then
