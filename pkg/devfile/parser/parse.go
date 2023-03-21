@@ -431,7 +431,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 		if util.IsGitProviderRepo(newUri) {
-			gitUrl, err := util.ParseGitUrl(newUri)
+			gitUrl, err := util.NewGitUrl(newUri)
 			if err != nil {
 				return DevfileObj{}, err
 			}
@@ -450,7 +450,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
 }
 
-func getResourcesFromGit(g util.GitUrl, destDir string, httpTimeout *int, repoToken string) error {
+func getResourcesFromGit(g *util.GitUrl, destDir string, httpTimeout *int, repoToken string) error {
 	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
 	if err != nil {
 		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
@@ -464,7 +464,7 @@ func getResourcesFromGit(g util.GitUrl, destDir string, httpTimeout *int, repoTo
 		}
 	}
 
-	err = util.CloneGitRepo(g, stackDir)
+	err = util.CloneGitRepo(*g, stackDir)
 	if err != nil {
 		return err
 	}

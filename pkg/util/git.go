@@ -31,6 +31,13 @@ const (
 	BitbucketHost string = "bitbucket.org"
 )
 
+type IGitUrl interface {
+	ParseGitUrl(fullUrl string) error
+	GitRawFileAPI() string
+	SetToken(token string, httpTimeout *int) error
+	IsPublic(httpTimeout *int) bool
+}
+
 type GitUrl struct {
 	Protocol string // URL scheme
 	Host     string // URL domain name
@@ -42,23 +49,30 @@ type GitUrl struct {
 	IsFile   bool   // defines if the URL points to a file in the repo
 }
 
+// NewGitUrl creates a GitUrl from a string url
+func NewGitUrl(url string) (*GitUrl, error) {
+	g := &GitUrl{}
+	if err := g.ParseGitUrl(url); err != nil {
+		return g, err
+	}
+	return g, nil
+}
+
 // ParseGitUrl extracts information from a support git url
 // Only supports git repositories hosted on GitHub, GitLab, and Bitbucket
-func ParseGitUrl(fullUrl string) (GitUrl, error) {
-	var g GitUrl
-
+func (g *GitUrl) ParseGitUrl(fullUrl string) error {
 	err := ValidateURL(fullUrl)
 	if err != nil {
-		return g, err
+		return err
 	}
 
 	parsedUrl, err := url.Parse(fullUrl)
 	if err != nil {
-		return g, err
+		return err
 	}
 
 	if len(parsedUrl.Path) == 0 {
-		return g, fmt.Errorf("url path should not be empty")
+		return fmt.Errorf("url path should not be empty")
 	}
 
 	if parsedUrl.Host == RawGitHubHost || parsedUrl.Host == GitHubHost {
@@ -71,7 +85,7 @@ func ParseGitUrl(fullUrl string) (GitUrl, error) {
 		err = fmt.Errorf("url host should be a valid GitHub, GitLab, or Bitbucket host; received: %s", parsedUrl.Host)
 	}
 
-	return g, err
+	return err
 }
 
 func (g *GitUrl) parseGitHubUrl(url *url.URL) error {
@@ -240,6 +254,22 @@ func (g *GitUrl) validateToken(params HTTPRequestParams) error {
 	}
 
 	return nil
+}
+
+// GitRawFileAPI returns the endpoint for the git providers raw file
+func (g *GitUrl) GitRawFileAPI() string {
+	var apiRawFile string
+
+	switch g.Host {
+	case GitHubHost, RawGitHubHost:
+		apiRawFile = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", g.Owner, g.Repo, g.Branch, g.Path)
+	case GitLabHost:
+		apiRawFile = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s/repository/files/%s/raw", g.Owner, g.Repo, g.Path)
+	case BitbucketHost:
+		apiRawFile = fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/src/%s/%s", g.Owner, g.Repo, g.Branch, g.Path)
+	}
+
+	return apiRawFile
 }
 
 // IsGitProviderRepo checks if the url matches a repo from a supported git provider

@@ -16,8 +16,11 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"net"
@@ -936,9 +939,132 @@ func TestDownloadFile(t *testing.T) {
 	}
 }
 
-//todo:
+func TestDownloadInMemory_GitRepo(t *testing.T) {
+	respBody := []byte("test response body")
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       ioutil.NopCloser(bytes.NewReader(respBody)),
+	}
+
+	var Client = &MockClient{}
+	GetDoFunc = func(req *http.Request) (*http.Response, error) {
+		if req.Header.Get("Authorization") == "" {
+			return nil, fmt.Errorf("missing authorization header")
+		}
+		return resp, nil
+	}
+
+	var GitUrlMock = &MockGitUrl{}
+	GetGitRawFileAPIFunc = func() string {
+		return ""
+	}
+	GetSetTokenFunc = func(token string, httpTimeout *int) error {
+		return nil
+	}
+
+	tests := []struct {
+		name            string
+		params          HTTPRequestParams
+		GetIsPublicFunc func(httpTimeout *int) bool
+		want            []byte
+		wantErr         string
+	}{
+		{
+			name: "Case 1: Private Github repo with token",
+			params: HTTPRequestParams{
+				URL:   "https://github.com/myorg/myrepo/file.txt",
+				Token: "fake-token",
+			},
+			GetIsPublicFunc: func(httpTimeout *int) bool { return false },
+			want:            []byte("test response body"),
+			wantErr:         "",
+		},
+		{
+			name: "Case 2: Public Github repo without token",
+			params: HTTPRequestParams{
+				URL: "https://github.com/myorg/myrepo/file.txt",
+			},
+			GetIsPublicFunc: func(httpTimeout *int) bool { return true },
+			want:            []byte("test response body"),
+			wantErr:         "missing authorization header",
+		},
+		{
+			name: "Case 3: Non git provider repo",
+			params: HTTPRequestParams{
+				URL:   "https://repo.com/myorg/myrepo/file.txt",
+				Token: "",
+			},
+			want:    []byte("test response body"),
+			wantErr: "missing authorization header",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			GetIsPublicFunc = tt.GetIsPublicFunc
+			result, err := downloadInMemoryWithClient(tt.params, Client, GitUrlMock)
+			if (err != nil) != (tt.wantErr != "") {
+				t.Errorf("Unxpected error: %t, want: %v", err, tt.want)
+			} else if err == nil && !reflect.DeepEqual(result, tt.want) {
+				t.Errorf("Expected: %v, received: %v, difference at %v", tt.want, result, pretty.Compare(tt.want, result))
+			} else if err != nil {
+				assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
+			}
+		})
+	}
+}
+
 func TestDownloadInMemory(t *testing.T) {
-	
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Send response to be tested
+		_, err := rw.Write([]byte("OK"))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+
+	// Close the server when test finishes
+	defer server.Close()
+
+	tests := []struct {
+		name    string
+		url     string
+		token   string
+		want    []byte
+		wantErr string
+	}{
+		{
+			name: "Case 1: Input url is valid",
+			url:  server.URL,
+			want: []byte{79, 75},
+		},
+		{
+			name:    "Case 2: Input url is invalid",
+			url:     "invalid",
+			wantErr: "unsupported protocol scheme",
+		},
+		{
+			name:    "Case 3: Git provider with invalid url",
+			url:     "github.com/mike-hoang/invalid-repo",
+			token:   "",
+			want:    []byte(nil),
+			wantErr: "failed to parse git repo. error:*",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := DownloadInMemory(HTTPRequestParams{URL: tt.url, Token: tt.token})
+			if (err != nil) != (tt.wantErr != "") {
+				t.Errorf("Failed to download file with error: %s", err)
+			} else if err == nil && !reflect.DeepEqual(data, tt.want) {
+				t.Errorf("Expected: %v, received: %v, difference at %v", tt.want, string(data[:]), pretty.Compare(tt.want, data))
+			} else if err != nil {
+				assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
+			}
+		})
+	}
 }
 
 func TestValidateK8sResourceName(t *testing.T) {

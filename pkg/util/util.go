@@ -54,6 +54,10 @@ import (
 	"k8s.io/klog"
 )
 
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 const (
 	HTTPRequestResponseTimeout   = 30 * time.Second           // HTTPRequestTimeout configures timeout of all HTTP requests
 	ModeReadWriteFile            = 0600                       // default Permission for a file
@@ -1080,29 +1084,43 @@ func DownloadFileInMemory(url string) ([]byte, error) {
 
 // DownloadInMemory uses HTTPRequestParams to download the file and return bytes
 func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
-
 	var httpClient = &http.Client{Transport: &http.Transport{
 		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
 	}, Timeout: HTTPRequestResponseTimeout}
 
-	url := params.URL
+	var err error
+	var gitUrl = &GitUrl{}
+
+	if IsGitProviderRepo(params.URL) {
+		gitUrl, err = NewGitUrl(params.URL)
+		if err != nil {
+			return nil, errors.Errorf("failed to parse git repo. error: %v", err)
+		}
+	}
+
+	return downloadInMemoryWithClient(params, httpClient, gitUrl)
+}
+
+func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g IGitUrl) ([]byte, error) {
+	var url string
+	url = params.URL
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	if IsGitProviderRepo(url) {
-		g, err := ParseGitUrl(url)
+		url = g.GitRawFileAPI()
+		req, err = http.NewRequest("GET", url, nil)
 		if err != nil {
-			return nil, errors.Errorf("failed to parse git repo. error: %v", err)
+			return nil, err
 		}
 		if !g.IsPublic(params.Timeout) {
 			err = g.SetToken(params.Token, params.Timeout)
 			if err != nil {
 				return nil, err
 			}
-			bearer := "Bearer " + params.Token
-			req.Header.Add("Authorization", bearer)
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", params.Token))
 		}
 	}
 

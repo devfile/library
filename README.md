@@ -198,10 +198,10 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    url = "https://gitlab.com/<owner>/<repo name>"
 
    // Parse the repo url
-   gitUrl, err := util.ParseGitUrl(url)
+   gitUrl, err := util.NewGitUrl(url)
 
    // Clone the repo to a destination dir
-   err = util.CloneGitRepo(gitUrl, destDir)
+   err = util.CloneGitRepo(*gitUrl, destDir)
    ```
 
 ## Projects using devfile/library
