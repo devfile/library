@@ -16,6 +16,7 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -1339,6 +1340,53 @@ func TestGetPodTemplateSpec(t *testing.T) {
 					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(containers, nil).AnyTimes()
 					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
 					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
+					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "GetContainers returns err",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(nil, errors.New("an error")).AnyTimes()
+					return parser.DevfileObj{
+						Data: mockDevfileData,
+					}
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "GetDevfileContainerComponents returns err",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+							Attributes: attributes.Attributes{
+								ContainerOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": \"serviceAccountName\": \"new-service-account\"}")},
+							},
+						},
+					}
+					events := v1alpha2.Events{}
+					mockDevfileData := data.NewMockDevfileData(ctrl)
+					mockDevfileData.EXPECT().GetComponents(gomock.Any()).Return(containers, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetProjects(gomock.Any()).Return(nil, nil).AnyTimes()
+					mockDevfileData.EXPECT().GetEvents().Return(events).AnyTimes()
+					mockDevfileData.EXPECT().GetDevfileContainerComponents(gomock.Any()).Return(nil, errors.New("an error")).AnyTimes()
 					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{}, nil)
 					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
 					return parser.DevfileObj{
