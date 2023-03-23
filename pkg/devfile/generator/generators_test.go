@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,10 +24,13 @@ import (
 	"github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/devfile/library/v2/pkg/devfile"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
+	context "github.com/devfile/library/v2/pkg/devfile/parser/context"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/v2/pkg/testingutil"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
@@ -1821,6 +1824,68 @@ func TestGetPodTemplateSpec(t *testing.T) {
 						{
 							Name:  "main",
 							Image: "an-image",
+							Env: []corev1.EnvVar{
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
+								{Name: "PROJECT_SOURCE", Value: "/projects"},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Ports:           []corev1.ContainerPort{},
+						},
+					},
+					InitContainers: []corev1.Container{},
+				},
+			},
+		},
+		{
+			name: "Filter components by name",
+			args: args{
+				devfileObj: func(ctrl *gomock.Controller) parser.DevfileObj {
+					containers := []v1alpha2.Component{
+						{
+							Name: "main",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "an-image",
+									},
+								},
+							},
+						},
+						{
+							Name: "tools",
+							ComponentUnion: v1.ComponentUnion{
+								Container: &v1.ContainerComponent{
+									Container: v1.Container{
+										Image: "a-tool-image",
+									},
+								},
+							},
+						},
+					}
+					parserArgs := parser.ParserArgs{
+						Data: []byte(`schemaVersion: 2.2.0`),
+					}
+					var err error
+					devfile, _, err := devfile.ParseDevfileAndValidate(parserArgs)
+					if err != nil {
+						t.Errorf("error creating devfile: %v", err)
+					}
+					devfile.Ctx = context.FakeContext(filesystem.NewFakeFs(), "/devfile.yaml")
+					devfile.Data.AddComponents(containers)
+					return devfile
+				},
+				podTemplateParams: PodTemplateParams{
+					Options: common.DevfileOptions{
+						FilterByName: "tools",
+					},
+				},
+			},
+			want: &corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "tools",
+							Image: "a-tool-image",
 							Env: []corev1.EnvVar{
 								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
