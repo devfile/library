@@ -3547,7 +3547,7 @@ func testSetBooleanDefaultsFalse(t *testing.T, cmd interface{}, propName string,
 	}
 }
 
-//getField returns the boolean property field
+// getField returns the boolean property field
 func getField(obj reflect.Value, propName string) reflect.Value {
 	var field reflect.Value
 	if obj.Kind() == reflect.Slice { //handle the Endpoints property which is a slice.
