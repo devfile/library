@@ -18,6 +18,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -28,7 +29,6 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
