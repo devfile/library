@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package devfile
 
 import (
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -24,12 +23,16 @@ import (
 	"strings"
 	"testing"
 
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+
 	"github.com/devfile/api/v2/pkg/validation/variables"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 )
 
 func TestParseDevfileAndValidate(t *testing.T) {
+	falseValue := false
+	trueValue := true
 	convertUriToInline := false
 	K8sLikeComponentOriginalURIKey := "api.devfile.io/k8sLikeComponent-originalURI"
 	outerloopDeployContent := `
@@ -246,6 +249,50 @@ schemaVersion: 2.2.0
 				StarterProjects: map[string][]string{},
 			},
 		},
+		{
+			name: "with flattening set to false and setBooleanDefaults to true",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					FlattenedDevfile: &falseValue,
+					Data:             []byte(devfileContent),
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "with setBooleanDefaults to false",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					SetBooleanDefaults: &falseValue,
+					Data:               []byte(devfileContent),
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -329,6 +376,33 @@ schemaVersion: 2.2.0
 				}
 				if kubenetesComponent.Attributes != nil {
 					t.Errorf("unexpected Openshift component attribute, got %v, want empty", openshiftComponent.Attributes)
+				}
+			}
+
+			getContainerCompOptions := common.DevfileOptions{
+				ComponentOptions: common.ComponentOptions{
+					ComponentType: v1.ContainerComponentType,
+				},
+			}
+
+			containerComponents, err := gotD.Data.GetComponents(getContainerCompOptions)
+			if err != nil {
+				t.Errorf("unexpected error getting container component")
+			}
+			containerComponent := containerComponents[0]
+			dedicatedPod := containerComponent.Container.DedicatedPod
+			//check that unset booleans are set to defaults if flattenedDevfile is false
+			if tt.args.args.SetBooleanDefaults == nil {
+				if tt.args.args.FlattenedDevfile != nil && *tt.args.args.FlattenedDevfile == false {
+					if dedicatedPod == nil || dedicatedPod == &trueValue {
+						t.Errorf("unset property dedicatedPod is expected to have a default value of false")
+					}
+				}
+			} else {
+				if *tt.args.args.SetBooleanDefaults == false {
+					if dedicatedPod != nil {
+						t.Errorf("unset property dedicatedPod should be set to nil")
+					}
 				}
 			}
 
