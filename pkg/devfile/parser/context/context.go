@@ -48,6 +48,9 @@ type DevfileCtx struct {
 	//url path of the devfile
 	url string
 
+	// token is a personal access token used with a private git repo URL
+	token string
+
 	// filesystem for devfile
 	fs filesystem.Filesystem
 
@@ -67,6 +70,14 @@ func NewDevfileCtx(path string) DevfileCtx {
 func NewURLDevfileCtx(url string) DevfileCtx {
 	return DevfileCtx{
 		url: url,
+	}
+}
+
+// NewPrivateURLDevfileCtx returns a new DevfileCtx type object
+func NewPrivateURLDevfileCtx(url string, token string) DevfileCtx {
+	return DevfileCtx{
+		url:   url,
+		token: token,
 	}
 }
 
@@ -148,6 +159,11 @@ func (d *DevfileCtx) GetAbsPath() string {
 // GetURL func returns current devfile absolute URL address
 func (d *DevfileCtx) GetURL() string {
 	return d.url
+}
+
+// GetToken func returns current devfile token
+func (d *DevfileCtx) GetToken() string {
+	return d.token
 }
 
 // SetAbsPath sets absolute file path for devfile

@@ -24,12 +24,6 @@ import (
 	"testing"
 )
 
-var (
-	githubToken    = "fake-github-token"
-	gitlabToken    = "fake-gitlab-token"
-	bitbucketToken = "fake-bitbucket-token"
-)
-
 func Test_NewGitUrl(t *testing.T) {
 	tests := []struct {
 		name    string

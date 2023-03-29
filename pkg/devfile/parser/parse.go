@@ -97,7 +97,7 @@ type ParserArgs struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	RegistryURLs []string
-	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo uri
+	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo URL
 	Token string
 	// DefaultNamespace is the default namespace to use
 	// If namespace is defined under devfile's parent kubernetes object, this namespace will be ignored.
@@ -123,7 +123,11 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	} else if args.Path != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(args.Path)
 	} else if args.URL != "" {
-		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
+		if args.Token != "" {
+			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(args.URL, args.Token)
+		} else {
+			d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
+		}
 	} else {
 		return d, errors.Wrap(err, "the devfile source is not provided")
 	}
@@ -178,7 +182,7 @@ type resolverTools struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	registryURLs []string
-	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo uri
+	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo URL
 	token string
 	// Context is the context used for making Kubernetes or HTTP requests
 	context context.Context
@@ -429,7 +433,12 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			return DevfileObj{}, fmt.Errorf("failed to resolve parent uri, devfile context is missing absolute url and path to devfile. %s", resolveImportReference(importReference))
 		}
 
-		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
+		if tool.token != "" {
+			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(newUri, tool.token)
+		} else {
+			d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
+		}
+
 		if util.IsGitProviderRepo(newUri) {
 			gitUrl, err := util.NewGitUrl(newUri)
 			if err != nil {

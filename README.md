@@ -16,21 +16,22 @@ The Devfile Parser library is a Golang module that:
 ## Private Repository Support
 
 Tokens are required to be set in the following cases:
-1. tooling client calling the library API
-2. parsing a devfile from a private repository
-3. parsing a devfile containing a parent devfile from a private repository [1]
+1. parsing a devfile from a private repository
+2. parsing a devfile containing a parent devfile from a private repository [1]
 
 Set the token for the repository:
 ```go
 parser.ParserArgs{
 	...
+	URL: <url-to-devfile-on-supported-git-provider>
 	Token: <repo-personal-access-token>
 	...
 }
 ```
+Note: The url must also be set with a supported git provider repo url.
 
 For more information about personal access tokens:
-1. [GitHub docs](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+1. [GitHub docs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 2. [GitLab docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
 3. [Bitbucket docs](https://support.atlassian.com/bitbucket-cloud/docs/repository-access-tokens/)
 
@@ -188,20 +189,6 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
    // Get the Kubernetes resources
    resources, err := ParseKubernetesYaml(values)
-   ```
-
-8. To get resources from Git repositories
-   ```go
-   // Supported url formats
-   url = "https://github.com/<owner>/<repo name>"
-   url = "https://bitbucket.org/<owner>/<repo name>"
-   url = "https://gitlab.com/<owner>/<repo name>"
-
-   // Parse the repo url
-   gitUrl, err := util.NewGitUrl(url)
-
-   // Clone the repo to a destination dir
-   err = util.CloneGitRepo(*gitUrl, destDir)
    ```
 
 ## Projects using devfile/library
