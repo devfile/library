@@ -166,7 +166,13 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    // Get the Kubernetes resources
    resources, err := ParseKubernetesYaml(values)
    ```
-
+8. By default, the parser will set all unset boolean properties to their spec defined default values.  Clients can override this behaviour by specifiying the parser argument `SetBooleanDefaults` to false
+   ```go
+   setDefaults := false
+   parserArgs := parser.ParserArgs{
+		SetBooleanDefaults:               &setDefaults,
+   }
+   ```
 
 ## Projects using devfile/library
 

@@ -18,6 +18,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -28,7 +29,6 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
@@ -3228,6 +3228,337 @@ func Test_parseParentFromRegistry(t *testing.T) {
 
 		})
 	}
+}
+
+type compBooleanProp struct {
+	prop     string //name of the boolean property
+	name     string // component name
+	value    *bool
+	compType v1.ComponentType
+}
+
+type cmdBooleanProp struct {
+	prop    string //name of the boolean property
+	id      string //command id
+	value   *bool
+	cmdType v1.CommandType
+}
+
+type setFields struct {
+	compProp compBooleanProp
+	cmdProp  cmdBooleanProp
+}
+
+func Test_ParseDevfileParentFromData(t *testing.T) {
+
+	//mainDevfile is based on the nodejs basic sample which has a parent reference to the nodejs stack: https://registry.devfile.io/devfiles/nodejs
+	mainDevfile := `schemaVersion: 2.2.0
+metadata:
+  name: nodejs
+  version: 2.1.1
+  displayName: Node.js Runtime
+  description: Stack with Node.js 16
+  tags: ["Node.js", "Express", "ubi8"]
+  projectType: "Node.js"
+  language: "JavaScript"
+  attributes:
+    alpha.dockerimage-port: 3001
+  provider: Red Hat
+  supportUrl: https://github.com/devfile-samples/devfile-support#support-information
+parent:
+  id: nodejs
+  registryUrl: "https://registry.devfile.io"
+  commands:
+  - id: install
+    exec:
+      component: runtime
+      commandLine: npm install
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build 
+        isDefault: false #override
+  - id: run
+    exec:
+      component: runtime
+      commandLine: npm start
+      hotReloadCapable: true #override
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run 
+        isDefault: true #override
+components:
+  - name: image-build
+    image:
+      imageName: nodejs-image:latest
+      dockerfile:
+        uri: Dockerfile
+        buildContext: .
+        rootRequired: true
+  - name: kubernetes-deploy
+    attributes:
+      deployment/replicas: 1
+      deployment/cpuLimit: "100m"
+      deployment/cpuRequest: 10m
+      deployment/memoryLimit: 100Mi
+      deployment/memoryRequest: 50Mi
+      deployment/container-port: 3001
+    kubernetes:
+      uri: deploy.yaml
+      endpoints:
+      - name: http-3001
+        targetPort: 3001
+        path: /
+commands:
+  - id: build-image
+    apply:
+      component: image-build
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+      group:
+        kind: deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true`
+
+	tests := []struct {
+		name             string
+		parserArgs       ParserArgs
+		wantBoolPropsSet []setFields
+	}{
+		{
+			name: "SetBooleanDefaults true, un-flattened devfile should assign defaults to unset boolean property in main devfile",
+			parserArgs: ParserArgs{
+				FlattenedDevfile:              &isFalse,
+				Data:                          []byte(mainDevfile),
+				ConvertKubernetesContentInUri: &isFalse, //this is a workaround for a known parsing issue that requires support for downloading the deploy.yaml https://github.com/devfile/api/issues/1073
+			},
+			wantBoolPropsSet: []setFields{
+				{compProp: compBooleanProp{prop: "DeployByDefault", name: "kubernetes-deploy", value: &isFalse, compType: v1.KubernetesComponentType}}, //unset property should be assigned
+				{compProp: compBooleanProp{prop: "RootRequired", name: "image-build", value: &isTrue, compType: v1.ImageComponentType}},                //set property should remain the same
+			},
+		},
+		{
+			name: "SetBooleanDefaults true, flattened devfile should assign defaults to unset boolean property in parent devfile",
+			parserArgs: ParserArgs{
+				FlattenedDevfile:              &isTrue,
+				Data:                          []byte(mainDevfile),
+				ConvertKubernetesContentInUri: &isFalse, //this is a workaround for a known parsing issue that requires support for downloading the deploy.yaml https://github.com/devfile/api/issues/1073
+			},
+			wantBoolPropsSet: []setFields{
+				{cmdProp: cmdBooleanProp{prop: "HotReloadCapable", id: "install", value: &isFalse, cmdType: v1.ExecCommandType}},              //unset parent property should be set to default
+				{cmdProp: cmdBooleanProp{prop: "IsDefault", id: "run", value: &isTrue, cmdType: v1.ExecCommandType}},                          //set parent property should remain the same
+				{compProp: compBooleanProp{prop: "Secure", name: "kubernetes-deploy", value: &isFalse, compType: v1.KubernetesComponentType}}, //unset main property should be set to default
+			},
+		},
+		{
+			name: "SetBooleanDefaults is false should not assign defaults to unset boolean properties",
+			parserArgs: ParserArgs{
+				SetBooleanDefaults:            &isFalse,
+				Data:                          []byte(mainDevfile),
+				ConvertKubernetesContentInUri: &isFalse, //this is a workaround for a known parsing issue that requires support for downloading the deploy.yaml https://github.com/devfile/api/issues/1073
+			},
+			wantBoolPropsSet: []setFields{
+				{compProp: compBooleanProp{prop: "DeployByDefault", name: "kubernetes-deploy", value: nil, compType: v1.KubernetesComponentType}}, // unset property in main should be nil
+				{cmdProp: cmdBooleanProp{prop: "HotReloadCapable", id: "install", value: nil, cmdType: v1.ExecCommandType}},                       //unset property in parent should be nil
+				{cmdProp: cmdBooleanProp{prop: "HotReloadCapable", id: "run", value: &isTrue, cmdType: v1.ExecCommandType}},                       //set property in parent should remain the same
+				{cmdProp: cmdBooleanProp{prop: "IsDefault", id: "deployk8s", value: nil, cmdType: v1.ApplyCommandType}},                           //nested unset property should be nil as long as containing group is not nil
+				{compProp: compBooleanProp{prop: "Secure", name: "kubernetes-deploy", value: nil, compType: v1.KubernetesComponentType}},          //unset property should be nil
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := ParseDevfile(tt.parserArgs)
+			if err != nil {
+				t.Errorf("Problems parsing devfile")
+			}
+			for i, _ := range tt.wantBoolPropsSet {
+				wantProps := tt.wantBoolPropsSet[i]
+				testComponentProperties(d, t, tt.parserArgs.SetBooleanDefaults, wantProps)
+				testCommmandProperties(d, t, tt.parserArgs.SetBooleanDefaults, wantProps)
+			}
+
+		})
+	}
+}
+
+func testComponentProperties(d DevfileObj, t *testing.T, isSetBooleanDefaults *bool, wantProps setFields) {
+	if wantProps.compProp.compType != "" {
+		compOptions := common.DevfileOptions{
+			ComponentOptions: common.ComponentOptions{
+				ComponentType: wantProps.compProp.compType,
+			},
+		}
+
+		components, err := d.Data.GetComponents(compOptions)
+		if err != nil {
+			t.Errorf("unexpected error getting components")
+		}
+
+		if len(components) == 0 {
+			t.Errorf("could not find a list of components of type %v in the devfile", wantProps.compProp.compType)
+		}
+
+		compType := wantProps.compProp.compType
+		prop := wantProps.compProp.prop
+		for i, _ := range components {
+			var comp interface{}
+
+			switch {
+			case compType == v1.KubernetesComponentType:
+				comp = components[i].Kubernetes
+				if prop == "Secure" {
+					comp = components[i].Kubernetes.Endpoints
+				}
+			case compType == v1.ImageComponentType:
+				comp = components[i].Image
+				if prop == "RootRequired" {
+					comp = components[i].Image.Dockerfile
+				}
+			case compType == v1.ContainerComponentType:
+				comp = components[i].Container
+				if prop == "Secure" {
+					comp = components[i].Container.Endpoints
+				}
+			case compType == v1.OpenshiftComponentType:
+				comp = components[i].Openshift
+				if prop == "Secure" {
+					comp = components[i].Openshift.Endpoints
+				}
+			case compType == v1.VolumeComponentType:
+				comp = components[i].Volume
+			default:
+				t.Errorf(" No matching component type")
+			}
+
+			if components[i].Name == wantProps.compProp.name {
+				if isSetBooleanDefaults == nil || *isSetBooleanDefaults == true {
+					testSetBooleanDefaultsTrue(t, comp, prop, wantProps.compProp.value)
+				} else {
+					testSetBooleanDefaultsFalse(t, comp, prop, wantProps.compProp.value)
+				}
+			}
+		}
+	}
+
+}
+
+func testCommmandProperties(d DevfileObj, t *testing.T, isSetBooleanDefaults *bool, wantProps setFields) {
+	if wantProps.cmdProp.cmdType != "" {
+		cmdOptions := common.DevfileOptions{
+			CommandOptions: common.CommandOptions{
+				CommandType: wantProps.cmdProp.cmdType,
+			},
+		}
+
+		commands, err := d.Data.GetCommands(cmdOptions)
+		if err != nil {
+			t.Errorf("unexpected error getting commands")
+		}
+
+		if len(commands) == 0 {
+			t.Errorf("could not find a list of commands of type %v in the devfile", wantProps.cmdProp.cmdType)
+		}
+
+		cmdType := wantProps.cmdProp.cmdType
+		prop := wantProps.cmdProp.prop
+		for i, _ := range commands {
+			var cmd interface{}
+			if prop == "IsDefault" {
+				switch {
+				case cmdType == v1.ApplyCommandType:
+					cmd = commands[i].Apply.Group
+				case cmdType == v1.ExecCommandType:
+					cmd = commands[i].Exec.Group
+				case cmdType == v1.CompositeCommandType:
+					cmd = commands[i].Composite.Group
+				default:
+					t.Errorf(" No matching command type for \"IsDefault\" property")
+				}
+			} else {
+				if cmdType == v1.ExecCommandType {
+					cmd = commands[i].Exec
+				} else {
+					t.Errorf(" No matching command type")
+				}
+			}
+
+			if commands[i].Id == wantProps.cmdProp.id {
+				if isSetBooleanDefaults == nil || *isSetBooleanDefaults == true {
+					testSetBooleanDefaultsTrue(t, cmd, prop, wantProps.cmdProp.value)
+				} else {
+					testSetBooleanDefaultsFalse(t, cmd, prop, wantProps.cmdProp.value)
+				}
+			}
+		}
+	}
+}
+
+// testSetBooleanDefaultsTrue validates that the boolean properties are set to their defaults or expected values
+func testSetBooleanDefaultsTrue(t *testing.T, comp interface{}, propName string, expectedBoolValue *bool) {
+	compStruct := reflect.ValueOf(comp)
+	if compStruct.IsValid() && !compStruct.IsNil() {
+		field := getField(compStruct, propName)
+		if field.IsValid() && !field.IsNil() {
+			value := field.Elem().Interface()
+			if expectedBoolValue != nil {
+				if value != *expectedBoolValue {
+					t.Errorf("property %s should be set to the value of %t", propName, *expectedBoolValue)
+				}
+			} else {
+				t.Errorf("want value should not be nil")
+			}
+		} else {
+			t.Errorf("property %s is invalid or nil", propName)
+		}
+	} else {
+		t.Errorf("component is nil")
+	}
+}
+
+// testSetBooleanDefaultsTrue validates that unset boolean properties are set to nil while set properties remain untouched
+func testSetBooleanDefaultsFalse(t *testing.T, cmd interface{}, propName string, expectedBoolValue *bool) {
+	cmdStruct := reflect.ValueOf(cmd)
+	if cmdStruct.IsValid() && !cmdStruct.IsNil() {
+		field := getField(cmdStruct, propName)
+
+		if expectedBoolValue != nil {
+			if field.IsNil() {
+				t.Errorf("expected %t for %s but got nil", *expectedBoolValue, propName)
+			}
+		} else {
+			if !field.IsNil() {
+				t.Errorf("expected nil for %s but got value %t", propName, field.Elem().Interface())
+			}
+		}
+
+		//compare the values
+		if !field.IsNil() && expectedBoolValue != nil && field.Elem().Interface() != *expectedBoolValue {
+			t.Errorf("boolean value mismatch for %s.  Expected %t but got %t", propName, field.Elem().Interface(), *expectedBoolValue)
+		}
+	} else {
+		t.Errorf("command is nil")
+	}
+}
+
+// getField returns the boolean property field
+func getField(obj reflect.Value, propName string) reflect.Value {
+	var field reflect.Value
+	if obj.Kind() == reflect.Slice { //handle the Endpoints property which is a slice.
+		if obj.Len() > 0 {
+			field = obj.Index(0).FieldByName(propName) // To keep it simple, test will assume the first endpoint instance is the one we want
+		}
+	} else {
+		field = obj.Elem().FieldByName(propName)
+	}
+
+	return field
 }
 
 func Test_parseParentFromKubeCRD(t *testing.T) {
