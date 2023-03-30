@@ -2,7 +2,7 @@
 
 This document is a new contributor guide, which outlines the requirements for contributing to this repository.
 
-To get an overview of the project, read the [README](README.md). For more information on devfiles, check the official [devfile docs](https://devfile.io/docs/devfile/2.1.0/user-guide/).
+To get an overview of the project, read the [README](README.md). For more information on devfiles, check the official [devfile docs](https://devfile.io/docs/2.2.0/what-is-a-devfile).
 
 ## Certificate of Origin
 
@@ -71,4 +71,4 @@ Running the script with no arguments will default to update the latest devfile v
 
 Currently devfile library does not have schedule for new releases. A new version is being generated and released on demand. 
 A new branch is expected to be created for a new release.
-To generate a changelog for a new release, execute `./scripts/changelog-script.sh v1.x.y` for all the changes since the release v1.x.y
+To generate a changelog for a new release, execute `./scripts/changelog-script.sh v2.x.y` for all the changes since the release v2.x.y

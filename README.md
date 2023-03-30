@@ -59,7 +59,6 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    devfile, variableWarning, err := devfilePkg.ParseDevfileAndValidate(parserArgs)
    ```
 
-
 2. To override the HTTP request and response timeouts for a devfile with a parent reference from a registry URL, specify the HTTPTimeout value in the parser arguments
    ```go
       // specify the timeout in seconds  
@@ -69,7 +68,6 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 	  }
    ```
 
-   
 3. To get specific content from devfile
    ```go
    // To get all the components from the devfile
@@ -101,7 +99,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 		},
    })
    ```
-   
+
 4. To get the Kubernetes objects from the devfile, visit [generators.go source file](pkg/devfile/generator/generators.go)
    ```go
     // To get a slice of Kubernetes containers of type corev1.Container from the devfile component containers
@@ -118,7 +116,7 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 	}
 	deployment := generator.GetDeployment(deployParams)
    ```
-   
+
 5. To update devfile content
    ```go
    // To update an existing component in devfile object
@@ -155,20 +153,19 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    ```go
    // If the devfile object has been created with devfile path already set, can simply call WriteYamlDevfile to writes the devfile
    err := devfile.WriteYamlDevfile()
-   
-   
+
    // To write to a devfile from scratch
    // create a new DevfileData with a specific devfile version
    devfileData, err := data.NewDevfileData(devfileVersion)
 
    // set schema version
    devfileData.SetSchemaVersion(devfileVersion)
-   
+
    // add devfile content use library APIs
    devfileData.AddComponents([]v1.Component{...})
    devfileData.AddCommands([]v1.Commands{...})
    ......
-   
+
    // create a new DevfileCtx
    ctx := devfileCtx.NewDevfileCtx(devfilePath)
    err = ctx.SetAbsPath()
@@ -178,10 +175,11 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 		Ctx:  ctx,
 		Data: devfileData,
    }
-    
+
    // write to the devfile on disk
    err = devfile.WriteYamlDevfile()
    ```
+
 7. To parse the outerloop Kubernetes/OpenShift component's uri or inline content, call the read and parse functions
    ```go
    // Read the YAML content
@@ -189,6 +187,14 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
    // Get the Kubernetes resources
    resources, err := ParseKubernetesYaml(values)
+   ```
+
+8. By default, the parser will set all unset boolean properties to their spec defined default values.  Clients can override this behaviour by specifiying the parser argument `SetBooleanDefaults` to false
+   ```go
+   setDefaults := false
+   parserArgs := parser.ParserArgs{
+		SetBooleanDefaults:               &setDefaults,
+   }
    ```
 
 ## Projects using devfile/library
