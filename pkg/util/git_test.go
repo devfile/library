@@ -43,7 +43,7 @@ func Test_NewGitUrl(t *testing.T) {
 		},
 		// GitHub
 		{
-			name: "should parse public GitHub repo with root path",
+			name: "should parse GitHub repo with root path",
 			url:  "https://github.com/devfile/library",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -52,7 +52,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "",
 				Path:     "",
-				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -62,7 +61,7 @@ func Test_NewGitUrl(t *testing.T) {
 			wantErr: "url path should contain <user>/<repo>*",
 		},
 		{
-			name: "should parse public GitHub repo with file path",
+			name: "should parse GitHub repo with file path",
 			url:  "https://github.com/devfile/library/blob/main/devfile.yaml",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -71,12 +70,11 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "main",
 				Path:     "devfile.yaml",
-				token:    "",
 				IsFile:   true,
 			},
 		},
 		{
-			name: "should parse public GitHub repo with raw file path",
+			name: "should parse GitHub repo with raw file path",
 			url:  "https://raw.githubusercontent.com/devfile/library/main/devfile.yaml",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -85,7 +83,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "library",
 				Branch:   "main",
 				Path:     "devfile.yaml",
-				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -99,37 +96,9 @@ func Test_NewGitUrl(t *testing.T) {
 			url:     "https://raw.githubusercontent.com/devfile/library/devfile.yaml",
 			wantErr: "raw url path should contain <owner>/<repo>/<branch>/<path/to/file>*",
 		},
-		{
-			name: "should parse private GitHub repo with token",
-			url:  "https://github.com/fake-owner/fake-private-repo",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "github.com",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "",
-				Path:     "",
-				token:    "",
-				IsFile:   false,
-			},
-		},
-		{
-			name: "should parse private raw GitHub file path with token",
-			url:  "https://raw.githubusercontent.com/fake-owner/fake-private-repo/main/README.md",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "raw.githubusercontent.com",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "main",
-				Path:     "README.md",
-				token:    "",
-				IsFile:   true,
-			},
-		},
 		// Gitlab
 		{
-			name: "should parse public GitLab repo with root path",
+			name: "should parse GitLab repo with root path",
 			url:  "https://gitlab.com/gitlab-org/gitlab-foss",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -138,7 +107,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "gitlab-foss",
 				Branch:   "",
 				Path:     "",
-				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -148,7 +116,7 @@ func Test_NewGitUrl(t *testing.T) {
 			wantErr: "url path should contain <user>/<repo>*",
 		},
 		{
-			name: "should parse public GitLab repo with file path",
+			name: "should parse GitLab repo with file path",
 			url:  "https://gitlab.com/gitlab-org/gitlab-foss/-/blob/master/README.md",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -157,7 +125,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "gitlab-foss",
 				Branch:   "master",
 				Path:     "README.md",
-				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -171,37 +138,9 @@ func Test_NewGitUrl(t *testing.T) {
 			url:     "https://gitlab.com/gitlab-org/gitlab-foss/-/master/directory/README.md",
 			wantErr: "url path should contain 'blob' or 'tree' or 'raw'*",
 		},
-		{
-			name: "should parse private GitLab repo with token",
-			url:  "https://gitlab.com/fake-owner/fake-private-repo",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "gitlab.com",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "",
-				Path:     "",
-				token:    "",
-				IsFile:   false,
-			},
-		},
-		{
-			name: "should parse private raw GitLab file path with token",
-			url:  "https://gitlab.com/fake-owner/fake-private-repo/-/raw/main/README.md",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "gitlab.com",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "main",
-				Path:     "README.md",
-				token:    "",
-				IsFile:   true,
-			},
-		},
 		// Bitbucket
 		{
-			name: "should parse public Bitbucket repo with root path",
+			name: "should parse Bitbucket repo with root path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -210,7 +149,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "",
 				Path:     "",
-				token:    "",
 				IsFile:   false,
 			},
 		},
@@ -220,7 +158,7 @@ func Test_NewGitUrl(t *testing.T) {
 			wantErr: "url path should contain <user>/<repo>*",
 		},
 		{
-			name: "should parse public Bitbucket repo with file path",
+			name: "should parse Bitbucket repo with file path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/src/main/README.md",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -229,12 +167,11 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "",
 				IsFile:   true,
 			},
 		},
 		{
-			name: "should parse public Bitbucket file path with nested path",
+			name: "should parse Bitbucket file path with nested path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/src/main/directory/test.txt",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -243,12 +180,11 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "directory/test.txt",
-				token:    "",
 				IsFile:   true,
 			},
 		},
 		{
-			name: "should parse public Bitbucket repo with raw file path",
+			name: "should parse Bitbucket repo with raw file path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/raw/main/README.md",
 			wantUrl: &GitUrl{
 				Protocol: "https",
@@ -257,7 +193,6 @@ func Test_NewGitUrl(t *testing.T) {
 				Repo:     "fake-public-repo",
 				Branch:   "main",
 				Path:     "README.md",
-				token:    "",
 				IsFile:   true,
 			},
 		},
@@ -275,34 +210,6 @@ func Test_NewGitUrl(t *testing.T) {
 			name:    "should fail with missing Bitbucket keywords",
 			url:     "https://bitbucket.org/fake-owner/fake-public-repo/main/test/README.md",
 			wantErr: "url path should contain 'raw' or 'src'*",
-		},
-		{
-			name: "should parse private Bitbucket repo with token",
-			url:  "https://bitbucket.org/fake-owner/fake-private-repo",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "bitbucket.org",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "",
-				Path:     "",
-				token:    "",
-				IsFile:   false,
-			},
-		},
-		{
-			name: "should parse private raw Bitbucket file path with token",
-			url:  "https://bitbucket.org/fake-owner/fake-private-repo/raw/main/README.md",
-			wantUrl: &GitUrl{
-				Protocol: "https",
-				Host:     "bitbucket.org",
-				Owner:    "fake-owner",
-				Repo:     "fake-private-repo",
-				Branch:   "main",
-				Path:     "README.md",
-				token:    "",
-				IsFile:   true,
-			},
 		},
 	}
 
