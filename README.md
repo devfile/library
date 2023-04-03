@@ -18,6 +18,7 @@ The Devfile Parser library is a Golang module that:
 Tokens are required to be set in the following cases:
 1. parsing a devfile from a private repository
 2. parsing a devfile containing a parent devfile from a private repository [1]
+3. parsing a devfile from a private repository containing a parent devfile from a public repository [2]
 
 Set the token for the repository:
 ```go
@@ -35,7 +36,8 @@ For more information about personal access tokens:
 2. [GitLab docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
 3. [Bitbucket docs](https://support.atlassian.com/bitbucket-cloud/docs/repository-access-tokens/)
 
-[1] currently, this works under the assumption that the token can authenticate the devfile and the parent devfile; both devfiles are in the same repository.
+[1] Currently, this works under the assumption that the token can authenticate the devfile and the parent devfile; both devfiles are in the same repository.
+[2] In this scenario, the token will be used to authenticate the main devfile.
 
 ## Usage
 

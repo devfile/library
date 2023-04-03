@@ -16,6 +16,7 @@
 package devfile
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -412,6 +413,91 @@ schemaVersion: 2.2.0
 			variables := gotD.Data.GetDevfileWorkspaceSpec().Variables
 			if !reflect.DeepEqual(variables, tt.wantVariables) {
 				t.Errorf("variables are %+v, expected %+v", variables, tt.wantVariables)
+			}
+		})
+	}
+}
+
+// TestParseDevfileAndValidate_PrivateTokens checks that tokens are passed along from the parser args
+// to nested parent devfiles
+func TestParseDevfileAndValidate_PrivateTokens(t *testing.T) {
+	nestedParent := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := rw.Write([]byte("schemaVersion: 2.2.0"))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+
+	parentDevfileContent := fmt.Sprintf("schemaVersion: 2.2.0\nmetadata:\n  name: nested-devfile\nparent:\n  uri: \"%s\"", nestedParent.URL)
+	parent := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := rw.Write([]byte(parentDevfileContent))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+
+	devfileContent := fmt.Sprintf("schemaVersion: 2.2.0\nmetadata:\n  name: parent-devfile\nparent:\n  uri: \"%s\"", parent.URL)
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := rw.Write([]byte(devfileContent))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+
+	// Close the server when test finishes
+	defer server.Close()
+	defer parent.Close()
+	defer nestedParent.Close()
+
+	token := "fake-token"
+
+	type args struct {
+		args parser.ParserArgs
+	}
+	tests := []struct {
+		name      string
+		args      args
+		wantToken string
+	}{
+		{
+			name: "Nested parent: token should be set",
+			args: args{
+				args: parser.ParserArgs{
+					URL:   server.URL,
+					Token: "fake-token",
+				},
+			},
+			wantToken: token,
+		},
+		{
+			name: "Parent: token should be set",
+			args: args{
+				args: parser.ParserArgs{
+					URL:   parent.URL,
+					Token: "fake-token",
+				},
+			},
+			wantToken: token,
+		},
+		{
+			name: "Main devfile: token should be set",
+			args: args{
+				args: parser.ParserArgs{
+					URL:   nestedParent.URL,
+					Token: "fake-token",
+				},
+			},
+			wantToken: token,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotD, _, err := ParseDevfileAndValidate(tt.args.args)
+			fmt.Println("gotD: ", string(gotD.Ctx.GetDevfileContent()))
+			if !reflect.DeepEqual(tt.wantToken, gotD.Ctx.GetToken()) {
+				t.Errorf("Expected %s, got %s", tt.wantToken, gotD.Ctx.GetToken())
+			} else if err != nil {
+				t.Errorf("Unxpected error: %t", err)
 			}
 		})
 	}

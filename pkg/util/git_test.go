@@ -92,6 +92,26 @@ func Test_NewGitUrl(t *testing.T) {
 			wantErr: "url path should contain <user>/<repo>*",
 		},
 		{
+			name:    "should fail with missing GitHub blob",
+			url:     "https://github.com/devfile/library/main/devfile.yaml",
+			wantErr: "url path to directory or file should contain*",
+		},
+		{
+			name:    "should fail with missing GitHub tree",
+			url:     "https://github.com/devfile/library/main/tests/yamls",
+			wantErr: "url path to directory or file should contain*",
+		},
+		{
+			name:    "should fail with just GitHub tree",
+			url:     "https://github.com/devfile/library/tree",
+			wantErr: "url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>*",
+		},
+		{
+			name:    "should fail with just GitHub blob",
+			url:     "https://github.com/devfile/library/blob",
+			wantErr: "url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>*",
+		},
+		{
 			name:    "should fail with invalid GitHub raw file path",
 			url:     "https://raw.githubusercontent.com/devfile/library/devfile.yaml",
 			wantErr: "raw url path should contain <owner>/<repo>/<branch>/<path/to/file>*",
@@ -137,6 +157,11 @@ func Test_NewGitUrl(t *testing.T) {
 			name:    "should fail with missing GitLab keywords",
 			url:     "https://gitlab.com/gitlab-org/gitlab-foss/-/master/directory/README.md",
 			wantErr: "url path should contain 'blob' or 'tree' or 'raw'*",
+		},
+		{
+			name:    "should fail with missing GitLab file or directory path",
+			url:     "https://gitlab.com/gitlab-org/gitlab-foss/-/tree/master",
+			wantErr: "url path to directory or file should contain <blob or tree or raw>/<branch>/<path/to/file/or/directory>*",
 		},
 		// Bitbucket
 		{

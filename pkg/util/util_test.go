@@ -980,12 +980,11 @@ func TestDownloadInMemory_GitRepo(t *testing.T) {
 			wantErr:         "",
 		},
 		{
-			name: "Case 2: Public Github repo without token",
+			name: "Case 2: Private Github repo without token",
 			params: HTTPRequestParams{
 				URL: "https://github.com/myorg/myrepo/file.txt",
 			},
 			GetIsPublicFunc: func(httpTimeout *int) bool { return true },
-			want:            []byte("test response body"),
 			wantErr:         "missing authorization header",
 		},
 		{
@@ -994,7 +993,6 @@ func TestDownloadInMemory_GitRepo(t *testing.T) {
 				URL:   "https://repo.com/myorg/myrepo/file.txt",
 				Token: "",
 			},
-			want:    []byte("test response body"),
 			wantErr: "missing authorization header",
 		},
 	}
@@ -1050,6 +1048,11 @@ func TestDownloadInMemory(t *testing.T) {
 			token:   "",
 			want:    []byte(nil),
 			wantErr: "failed to parse git repo. error:*",
+		},
+		{
+			name:    "Case 4: Public Github repo with missing blob",
+			url:     "https://github.com/devfile/library/main/README.md",
+			wantErr: "failed to parse git repo. error: url path to directory or file should contain 'tree' or 'blob'*",
 		},
 	}
 

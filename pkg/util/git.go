@@ -105,8 +105,10 @@ func (g *GitUrl) parseGitHubUrl(url *url.URL) error {
 			g.Branch = splitUrl[2]
 			g.Path = splitUrl[3]
 		} else {
+			// raw GitHub urls have to be a file
 			err = fmt.Errorf("raw url path should contain <owner>/<repo>/<branch>/<path/to/file>, received: %s", url.Path[1:])
 		}
+		return err
 	}
 
 	if g.Host == GitHubHost {
@@ -117,15 +119,26 @@ func (g *GitUrl) parseGitHubUrl(url *url.URL) error {
 			g.Owner = splitUrl[0]
 			g.Repo = splitUrl[1]
 
+			// url doesn't contain a path to a directory or file
+			if len(splitUrl) == 2 {
+				return nil
+			}
+
+			switch splitUrl[2] {
+			case "tree":
+				g.IsFile = false
+			case "blob":
+				g.IsFile = true
+			default:
+				return fmt.Errorf("url path to directory or file should contain 'tree' or 'blob'")
+			}
+
+			// url has a path to a file or directory
 			if len(splitUrl) == 5 {
-				switch splitUrl[2] {
-				case "tree":
-					g.IsFile = false
-				case "blob":
-					g.IsFile = true
-				}
 				g.Branch = splitUrl[3]
 				g.Path = splitUrl[4]
+			} else {
+				err = fmt.Errorf("url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>, received: %s", url.Path[1:])
 			}
 		}
 	}
@@ -146,15 +159,21 @@ func (g *GitUrl) parseGitLabUrl(url *url.URL) error {
 	split := strings.Split(url.Path[1:], "/-/")
 
 	splitOrg = strings.SplitN(split[0], "/", 2)
-	if len(split) == 2 {
-		splitFile = strings.SplitN(split[1], "/", 3)
-	}
-
 	if len(splitOrg) < 2 {
-		err = fmt.Errorf("url path should contain <user>/<repo>, received: %s", url.Path[1:])
+		return fmt.Errorf("url path should contain <user>/<repo>, received: %s", url.Path[1:])
 	} else {
 		g.Owner = splitOrg[0]
 		g.Repo = splitOrg[1]
+	}
+
+	// url doesn't contain a path to a directory or file
+	if len(split) == 1 {
+		return nil
+	}
+
+	// url may contain a path to a directory or file
+	if len(split) == 2 {
+		splitFile = strings.SplitN(split[1], "/", 3)
 	}
 
 	if len(splitFile) == 3 {
@@ -168,6 +187,8 @@ func (g *GitUrl) parseGitLabUrl(url *url.URL) error {
 		} else {
 			err = fmt.Errorf("url path should contain 'blob' or 'tree' or 'raw', received: %s", url.Path[1:])
 		}
+	} else {
+		return fmt.Errorf("url path to directory or file should contain <blob or tree or raw>/<branch>/<path/to/file/or/directory>, received: %s", url.Path[1:])
 	}
 
 	return err

@@ -141,7 +141,6 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
 		httpTimeout:      args.HTTPTimeout,
-		token:            args.Token,
 	}
 
 	flattenedDevfile := true
@@ -189,8 +188,6 @@ type resolverTools struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	registryURLs []string
-	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo URL
-	token string
 	// Context is the context used for making Kubernetes or HTTP requests
 	context context.Context
 	// K8sClient is the Kubernetes client instance used for interacting with a cluster
@@ -440,8 +437,9 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			return DevfileObj{}, fmt.Errorf("failed to resolve parent uri, devfile context is missing absolute url and path to devfile. %s", resolveImportReference(importReference))
 		}
 
-		if tool.token != "" {
-			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(newUri, tool.token)
+		token := curDevfileCtx.GetToken()
+		if token != "" {
+			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(newUri, token)
 		} else {
 			d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 		}
@@ -453,7 +451,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			}
 			if gitUrl.IsFile {
 				destDir := path.Dir(curDevfileCtx.GetAbsPath())
-				err = getResourcesFromGit(gitUrl, destDir, tool.httpTimeout, tool.token)
+				err = getResourcesFromGit(gitUrl, destDir, tool.httpTimeout, token)
 				if err != nil {
 					return DevfileObj{}, err
 				}
