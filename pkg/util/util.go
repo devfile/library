@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
+	"github.com/devfile/library/v2/pkg/git"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -882,6 +883,15 @@ func ConvertGitSSHRemoteToHTTPS(remote string) string {
 	return remote
 }
 
+// IsGitProviderRepo checks if the url matches a repo from a supported git provider
+func IsGitProviderRepo(url string) bool {
+	if strings.Contains(url, git.RawGitHubHost) || strings.Contains(url, git.GitHubHost) ||
+		strings.Contains(url, git.GitLabHost) || strings.Contains(url, git.BitbucketHost) {
+		return true
+	}
+	return false
+}
+
 // GetAndExtractZip downloads a zip file from a URL with a http prefix or
 // takes an absolute path prefixed with file:// and extracts it to a destination.
 // pathToUnzip specifies the path within the zip folder to extract
@@ -1088,20 +1098,20 @@ func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
 		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
 	}, Timeout: HTTPRequestResponseTimeout}
 
+	var g git.IGitUrl
 	var err error
-	var gitUrl = &GitUrl{}
 
 	if IsGitProviderRepo(params.URL) {
-		gitUrl, err = NewGitUrl(params.URL)
+		g, err = git.NewGitUrlWithURL(params.URL)
 		if err != nil {
 			return nil, errors.Errorf("failed to parse git repo. error: %v", err)
 		}
 	}
 
-	return downloadInMemoryWithClient(params, httpClient, gitUrl)
+	return downloadInMemoryWithClient(params, httpClient, g)
 }
 
-func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g IGitUrl) ([]byte, error) {
+func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g git.IGitUrl) ([]byte, error) {
 	var url string
 	url = params.URL
 	req, err := http.NewRequest("GET", url, nil)

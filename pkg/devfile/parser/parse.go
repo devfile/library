@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/devfile/library/v2/pkg/git"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -141,6 +142,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
 		httpTimeout:      args.HTTPTimeout,
+		git:              d.Ctx.GetGit(),
 	}
 
 	flattenedDevfile := true
@@ -194,6 +196,8 @@ type resolverTools struct {
 	k8sClient client.Client
 	// httpTimeout is the timeout value in seconds passed in from the client.
 	httpTimeout *int
+	// git is the interface used for git urls
+	git git.IGitUrl
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -444,52 +448,16 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 		}
 
-		if util.IsGitProviderRepo(newUri) {
-			gitUrl, err := util.NewGitUrl(newUri)
-			if err != nil {
-				return DevfileObj{}, err
-			}
-			if gitUrl.IsFile {
-				destDir := path.Dir(curDevfileCtx.GetAbsPath())
-				err = getResourcesFromGit(gitUrl, destDir, tool.httpTimeout, token)
-				if err != nil {
-					return DevfileObj{}, err
-				}
-			}
+		destDir := path.Dir(curDevfileCtx.GetAbsPath())
+		err = tool.git.DownloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
+		if err != nil {
+			return DevfileObj{}, err
 		}
 	}
 	importReference.Uri = newUri
 	newResolveCtx := resolveCtx.appendNode(importReference)
 
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
-}
-
-func getResourcesFromGit(g *util.GitUrl, destDir string, httpTimeout *int, repoToken string) error {
-	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
-	if err != nil {
-		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
-	}
-	defer os.RemoveAll(stackDir)
-
-	if !g.IsPublic(httpTimeout) {
-		err = g.SetToken(repoToken, httpTimeout)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = util.CloneGitRepo(*g, stackDir)
-	if err != nil {
-		return err
-	}
-
-	dir := path.Dir(path.Join(stackDir, g.Path))
-	err = util.CopyAllDirFiles(dir, destDir)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
@@ -860,6 +828,9 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 			newUri = uri
 		}
 		params := util.HTTPRequestParams{URL: newUri}
+		if d.GetToken() != "" {
+			params.Token = d.GetToken()
+		}
 		data, err = util.DownloadInMemory(params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting kubernetes resources definition information")

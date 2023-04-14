@@ -16,7 +16,6 @@
 package util
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/kylelemons/godebug/pretty"
@@ -934,79 +933,6 @@ func TestDownloadFile(t *testing.T) {
 				if err != nil {
 					t.Errorf("Failed to delete file with error %s", err)
 				}
-			}
-		})
-	}
-}
-
-func TestDownloadInMemory_GitRepo(t *testing.T) {
-	respBody := []byte("test response body")
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       ioutil.NopCloser(bytes.NewReader(respBody)),
-	}
-
-	var Client = &MockClient{}
-	GetDoFunc = func(req *http.Request) (*http.Response, error) {
-		if req.Header.Get("Authorization") == "" {
-			return nil, fmt.Errorf("missing authorization header")
-		}
-		return resp, nil
-	}
-
-	var GitUrlMock = &MockGitUrl{}
-	GetGitRawFileAPIFunc = func() string {
-		return ""
-	}
-	GetSetTokenFunc = func(token string, httpTimeout *int) error {
-		return nil
-	}
-
-	tests := []struct {
-		name            string
-		params          HTTPRequestParams
-		GetIsPublicFunc func(httpTimeout *int) bool
-		want            []byte
-		wantErr         string
-	}{
-		{
-			name: "Case 1: Private Github repo with token",
-			params: HTTPRequestParams{
-				URL:   "https://github.com/myorg/myrepo/file.txt",
-				Token: "fake-token",
-			},
-			GetIsPublicFunc: func(httpTimeout *int) bool { return false },
-			want:            []byte("test response body"),
-			wantErr:         "",
-		},
-		{
-			name: "Case 2: Private Github repo without token",
-			params: HTTPRequestParams{
-				URL: "https://github.com/myorg/myrepo/file.txt",
-			},
-			GetIsPublicFunc: func(httpTimeout *int) bool { return true },
-			wantErr:         "missing authorization header",
-		},
-		{
-			name: "Case 3: Non git provider repo",
-			params: HTTPRequestParams{
-				URL:   "https://repo.com/myorg/myrepo/file.txt",
-				Token: "",
-			},
-			wantErr: "missing authorization header",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			GetIsPublicFunc = tt.GetIsPublicFunc
-			result, err := downloadInMemoryWithClient(tt.params, Client, GitUrlMock)
-			if (err != nil) != (tt.wantErr != "") {
-				t.Errorf("Unxpected error: %t, want: %v", err, tt.want)
-			} else if err == nil && !reflect.DeepEqual(result, tt.want) {
-				t.Errorf("Expected: %v, received: %v, difference at %v", tt.want, result, pretty.Compare(tt.want, result))
-			} else if err != nil {
-				assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
 			}
 		})
 	}

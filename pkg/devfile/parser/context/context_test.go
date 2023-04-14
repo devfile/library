@@ -16,6 +16,7 @@
 package parser
 
 import (
+	"github.com/devfile/library/v2/pkg/git"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -93,11 +94,13 @@ func TestNewURLDevfileCtx(t *testing.T) {
 		d := NewPrivateURLDevfileCtx(url, token)
 		assert.Equal(t, "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml", d.GetURL())
 		assert.Equal(t, "fake-token", d.GetToken())
+		assert.Equal(t, &git.Url{}, d.GetGit())
 	}
 	{
 		d := NewURLDevfileCtx(url)
 		assert.Equal(t, "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml", d.GetURL())
 		assert.Equal(t, "", d.GetToken())
+		assert.Equal(t, &git.Url{}, d.GetGit())
 	}
 }
 
