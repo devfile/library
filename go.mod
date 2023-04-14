@@ -3,7 +3,7 @@ module github.com/devfile/library/v2
 go 1.18
 
 require (
-	github.com/devfile/api/v2 v2.2.0
+	github.com/devfile/api/v2 v2.2.1-alpha.0.20230413012049-a6c32fca0dbd
 	github.com/devfile/registry-support/registry-library v0.0.0-20221018213054-47b3ffaeadba
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.6.0
