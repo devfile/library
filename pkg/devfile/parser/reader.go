@@ -121,7 +121,6 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 			return KubernetesResources{}, err
 		}
 
-		// kubernetesMap := value.(map[string]interface{})
 		var kubernetesMap map[string]interface{}
 		err = k8yaml.Unmarshal(byteData, &kubernetesMap)
 		if err != nil {

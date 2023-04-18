@@ -162,8 +162,9 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			src: YamlSrc{
 				Data: []byte("invalidyaml"),
 			},
-			fs:            nil,
-			wantParserErr: true,
+			fs:                nil,
+			testParseYamlOnly: true,
+			wantParserErr:     true,
 		},
 	}
 
