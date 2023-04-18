@@ -175,7 +175,7 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 				t.Errorf("unexpected error: %v, wantErr: %v", err, tt.wantErr)
 				return
 			}
-			if tt.testParseYamlOnly {
+			if !tt.testParseYamlOnly {
 				for _, value := range values {
 					kubernetesMap := value.(map[string]interface{})
 
