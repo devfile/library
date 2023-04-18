@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,9 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 		name                string
 		src                 YamlSrc
 		fs                  *afero.Afero
+		testParseYamlOnly   bool
 		wantErr             bool
+		wantParserErr       bool
 		wantDeploymentNames []string
 		wantServiceNames    []string
 		wantRouteNames      []string
@@ -112,6 +114,14 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Bad Path",
+			src: YamlSrc{
+				Path: "$%^&",
+			},
+			fs:      &fs,
+			wantErr: true,
+		},
+		{
 			name: "Read the YAML from the Data",
 			src: YamlSrc{
 				Data: data,
@@ -147,45 +157,54 @@ func TestReadAndParseKubernetesYaml(t *testing.T) {
 			fs:      nil,
 			wantErr: true,
 		},
+		{
+			name: "Invalid kube yaml Data",
+			src: YamlSrc{
+				Data: []byte("invalidyaml"),
+			},
+			fs:            nil,
+			wantParserErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values, err := ReadKubernetesYaml(tt.src, tt.fs)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("unexpected error: %v, wantErr: %v", err, tt.wantErr)
 				return
 			}
+			if tt.testParseYamlOnly {
+				for _, value := range values {
+					kubernetesMap := value.(map[string]interface{})
 
-			for _, value := range values {
-				kubernetesMap := value.(map[string]interface{})
+					kind := kubernetesMap["kind"]
+					metadataMap := kubernetesMap["metadata"].(map[string]interface{})
+					name := metadataMap["name"]
 
-				kind := kubernetesMap["kind"]
-				metadataMap := kubernetesMap["metadata"].(map[string]interface{})
-				name := metadataMap["name"]
-
-				switch kind {
-				case "Deployment":
-					assert.Contains(t, tt.wantDeploymentNames, name)
-				case "Service":
-					assert.Contains(t, tt.wantServiceNames, name)
-				case "Route":
-					assert.Contains(t, tt.wantRouteNames, name)
-				case "Ingress":
-					assert.Contains(t, tt.wantIngressNames, name)
-				default:
-					assert.Contains(t, tt.wantOtherNames, name)
+					switch kind {
+					case "Deployment":
+						assert.Contains(t, tt.wantDeploymentNames, name)
+					case "Service":
+						assert.Contains(t, tt.wantServiceNames, name)
+					case "Route":
+						assert.Contains(t, tt.wantRouteNames, name)
+					case "Ingress":
+						assert.Contains(t, tt.wantIngressNames, name)
+					default:
+						assert.Contains(t, tt.wantOtherNames, name)
+					}
 				}
 			}
 
 			if len(values) > 0 {
 				resources, err := ParseKubernetesYaml(values)
-				if err != nil {
-					t.Error(err)
+				if (err != nil) != tt.wantParserErr {
+					t.Errorf("unexpected error: %v, wantErr: %v", err, tt.wantParserErr)
 					return
 				}
 
-				if reflect.DeepEqual(resources, KubernetesResources{}) {
+				if reflect.DeepEqual(resources, KubernetesResources{}) && !tt.wantParserErr {
 					t.Error("Kubernetes resources is empty, expected to contain some resources")
 				} else {
 					deployments := resources.Deployments
