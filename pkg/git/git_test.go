@@ -50,7 +50,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "github.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "",
+				Revision: "",
 				Path:     "",
 				IsFile:   false,
 			},
@@ -63,7 +63,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "github.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "v2.2.0",
+				Revision: "v2.2.0",
 				Path:     "",
 				IsFile:   false,
 			},
@@ -76,7 +76,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "github.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "0ce592a416fb185564516353891a45016ac7f671",
+				Revision: "0ce592a416fb185564516353891a45016ac7f671",
 				Path:     "",
 				IsFile:   false,
 			},
@@ -94,7 +94,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "github.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "devfile.yaml",
 				IsFile:   true,
 			},
@@ -107,7 +107,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "raw.githubusercontent.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "devfile.yaml",
 				IsFile:   true,
 			},
@@ -151,7 +151,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
 				Repo:     "gitlab-foss",
-				Branch:   "",
+				Revision: "",
 				Path:     "",
 				IsFile:   false,
 			},
@@ -169,7 +169,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
 				Repo:     "gitlab-foss",
-				Branch:   "master",
+				Revision: "master",
 				Path:     "README.md",
 				IsFile:   true,
 			},
@@ -198,7 +198,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
 				Repo:     "fake-public-repo",
-				Branch:   "",
+				Revision: "",
 				Path:     "",
 				IsFile:   false,
 			},
@@ -216,7 +216,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
 				Repo:     "fake-public-repo",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "README.md",
 				IsFile:   true,
 			},
@@ -229,7 +229,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
 				Repo:     "fake-public-repo",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "directory/test.txt",
 				IsFile:   true,
 			},
@@ -242,7 +242,7 @@ func Test_ParseGitUrl(t *testing.T) {
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
 				Repo:     "fake-public-repo",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "README.md",
 				IsFile:   true,
 			},
@@ -291,7 +291,7 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 				Host:     "github.com",
 				Owner:    "devfile",
 				Repo:     "library",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "tests/README.md",
 			},
 			want: "https://raw.githubusercontent.com/devfile/library/main/tests/README.md",
@@ -303,7 +303,7 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
 				Repo:     "gitlab",
-				Branch:   "master",
+				Revision: "master",
 				Path:     "README.md",
 			},
 			want: "https://gitlab.com/api/v4/projects/gitlab-org%2Fgitlab/repository/files/README.md/raw",
@@ -315,7 +315,7 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 				Host:     "bitbucket.org",
 				Owner:    "owner",
 				Repo:     "repo-name",
-				Branch:   "main",
+				Revision: "main",
 				Path:     "path/to/file.md",
 			},
 			want: "https://api.bitbucket.org/2.0/repositories/owner/repo-name/src/main/path/to/file.md",
@@ -343,7 +343,7 @@ func Test_IsPublic(t *testing.T) {
 		Host:     "github.com",
 		Owner:    "devfile",
 		Repo:     "library",
-		Branch:   "main",
+		Revision: "main",
 		token:    "fake-token",
 	}
 
@@ -352,7 +352,7 @@ func Test_IsPublic(t *testing.T) {
 		Host:     "github.com",
 		Owner:    "not",
 		Repo:     "a-valid",
-		Branch:   "none",
+		Revision: "none",
 		token:    "fake-token",
 	}
 
@@ -396,7 +396,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Host:     "",
 		Owner:    "nonexistent",
 		Repo:     "nonexistent",
-		Branch:   "nonexistent",
+		Revision: "nonexistent",
 	}
 
 	validPublicGitHubUrl := Url{
@@ -404,7 +404,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Host:     "github.com",
 		Owner:    "devfile",
 		Repo:     "library",
-		Branch:   "main",
+		Revision: "main",
 	}
 
 	validPublicGitLabUrl := Url{
@@ -412,7 +412,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Host:     "gitlab.com",
 		Owner:    "mike-hoang",
 		Repo:     "public-testing-repo",
-		Branch:   "main",
+		Revision: "main",
 	}
 
 	validPublicBitbucketUrl := Url{
@@ -420,7 +420,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Host:     "bitbucket.org",
 		Owner:    "mike-hoang",
 		Repo:     "public-testing-repo",
-		Branch:   "master",
+		Revision: "master",
 	}
 
 	invalidPrivateGitHubRepo := Url{
@@ -428,7 +428,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Host:     "github.com",
 		Owner:    "fake-owner",
 		Repo:     "fake-private-repo",
-		Branch:   "master",
+		Revision: "master",
 		token:    "fake-github-token",
 	}
 

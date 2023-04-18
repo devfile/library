@@ -3077,7 +3077,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 			Host:     "raw.githubusercontent.com",
 			Owner:    "devfile",
 			Repo:     "library",
-			Branch:   "main",
+			Revision: "main",
 			Path:     "devfile.yaml",
 			IsFile:   true,
 		}
@@ -4175,8 +4175,9 @@ func Test_parseFromURI(t *testing.T) {
 
 func Test_parseFromURI_GitResources(t *testing.T) {
 	const (
-		invalidToken = "invalid-token"
-		validToken   = "valid-token"
+		invalidToken    = "invalid-token"
+		validToken      = "valid-token"
+		invalidRevision = "invalid-revision"
 	)
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -4214,17 +4215,28 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		Host:     "raw.githubusercontent.com",
 		Owner:    "devfile",
 		Repo:     "library",
-		Branch:   "main",
+		Revision: "main",
 		Path:     "devfile.yaml",
 		IsFile:   true,
 	}
+
+	privateGitUrlInvalidRevision := &git.MockGitUrl{
+		Protocol: "https",
+		Host:     "raw.githubusercontent.com",
+		Owner:    "devfile",
+		Repo:     "library",
+		Revision: invalidRevision,
+		Path:     "devfile.yaml",
+		IsFile:   true,
+	}
+	privateGitUrlInvalidRevision.SetToken(validToken, &httpTimeoutPrivate)
 
 	privateBitbucketGitUrl := &git.MockGitUrl{
 		Protocol: "https",
 		Host:     "bitbucket.org",
 		Owner:    "devfile",
 		Repo:     "registry",
-		Branch:   "main",
+		Revision: "main",
 		Path:     "stacks/go/1.0.2/devfile.yaml",
 		IsFile:   true,
 	}
@@ -4235,7 +4247,7 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		Host:     "github.com",
 		Owner:    "mock-owner",
 		Repo:     "mock-repo",
-		Branch:   "mock-branch",
+		Revision: "mock-branch",
 		Path:     "mock/stacks/go/1.0.2/devfile.yaml",
 		IsFile:   true,
 	}
@@ -4245,13 +4257,16 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 	curDevfileContextWithInvalidToken := devfileCtx.NewPrivateURLDevfileCtx(OutputDevfileYamlPath, invalidToken)
 	curDevfileContextWithoutToken := devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath)
 
+	invalidTokenError := "failed to clone repo with token, ensure that the url and token is correct"
+	invalidGitSwitchError := "failed to switch repo to revision*"
+
 	tests := []struct {
 		name            string
 		curDevfileCtx   *devfileCtx.DevfileCtx
 		gitUrl          *git.MockGitUrl
 		timeout         *int
 		importReference v1.ImportReference
-		wantError       error
+		wantError       *string
 	}{
 		{
 			name:          "private main devfile URL",
@@ -4311,7 +4326,7 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError: fmt.Errorf("failed to clone repo with token, ensure that the url and token is correct"),
+			wantError: &invalidTokenError,
 		},
 		{
 			name:          "public main devfile without a token",
@@ -4325,13 +4340,27 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 			},
 			wantError: nil,
 		},
+		{
+			name:          "private parent devfile with invalid revision",
+			curDevfileCtx: &curDevfileContextWithoutToken,
+			gitUrl:        privateGitUrlInvalidRevision,
+			timeout:       &httpTimeoutPrivate,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: parent.URL,
+				},
+			},
+			wantError: &invalidGitSwitchError,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := parseFromURI(tt.importReference, *tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{httpTimeout: tt.timeout, git: tt.gitUrl})
-			if !reflect.DeepEqual(tt.wantError, err) {
-				t.Errorf("Expected error: %s, got error: %s", tt.wantError, err)
+			if (err != nil) != (tt.wantError != nil) {
+				t.Errorf("Unexpected error: %v, wantErr %v", err, tt.wantError)
+			} else if tt.wantError != nil {
+				assert.Regexp(t, *tt.wantError, err.Error(), "Error message should match")
 			}
 		})
 	}

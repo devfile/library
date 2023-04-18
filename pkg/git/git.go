@@ -45,7 +45,7 @@ type Url struct {
 	Host     string // URL domain name
 	Owner    string // name of the repo owner
 	Repo     string // name of the repo
-	Branch   string // branch name, tag name, revision name, or commit id
+	Revision string // branch name, tag name, or commit id
 	Path     string // path to a directory or file in the repo
 	token    string // used for authenticating a private repo
 	IsFile   bool   // defines if the URL points to a file in the repo
@@ -137,13 +137,20 @@ func (g *Url) CloneGitRepo(destDir string) error {
 		}
 	}
 
-	_, err := execute(destDir, "git", "clone", repoUrl, ".")
+	_, err := execute(destDir, "git", "clone", repoUrl, destDir)
 
 	if err != nil {
 		if g.GetToken() == "" {
 			return fmt.Errorf("failed to clone repo without a token, ensure that a token is set if the repo is private. error: %v", err)
 		} else {
 			return fmt.Errorf("failed to clone repo with token, ensure that the url and token is correct. error: %v", err)
+		}
+	}
+
+	if g.Revision != "" {
+		_, err := execute(destDir, "git", "switch", "--detach", "origin/"+g.Revision)
+		if err != nil {
+			return fmt.Errorf("failed to switch repo to revision. repo dir: %v, revision: %v", destDir, g.Revision)
 		}
 	}
 
@@ -199,7 +206,7 @@ func (g *Url) parseGitHubUrl(url *url.URL) error {
 		if len(splitUrl) == 4 {
 			g.Owner = splitUrl[0]
 			g.Repo = splitUrl[1]
-			g.Branch = splitUrl[2]
+			g.Revision = splitUrl[2]
 			g.Path = splitUrl[3]
 		} else {
 			// raw GitHub urls have to be a file
@@ -233,10 +240,10 @@ func (g *Url) parseGitHubUrl(url *url.URL) error {
 
 			// url has a path to a file or directory
 			if len(splitUrl) == 5 {
-				g.Branch = splitUrl[3]
+				g.Revision = splitUrl[3]
 				g.Path = splitUrl[4]
 			} else if !g.IsFile && len(splitUrl) == 4 {
-				g.Branch = splitUrl[3]
+				g.Revision = splitUrl[3]
 			} else {
 				err = fmt.Errorf("url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>, received: %s", url.Path[1:])
 			}
@@ -278,7 +285,7 @@ func (g *Url) parseGitLabUrl(url *url.URL) error {
 
 	if len(splitFile) == 3 {
 		if splitFile[0] == "blob" || splitFile[0] == "tree" || splitFile[0] == "raw" {
-			g.Branch = splitFile[1]
+			g.Revision = splitFile[1]
 			g.Path = splitFile[2]
 			ext := filepath.Ext(g.Path)
 			if ext != "" {
@@ -313,7 +320,7 @@ func (g *Url) parseBitbucketUrl(url *url.URL) error {
 		g.Repo = splitUrl[1]
 		if len(splitUrl) == 5 {
 			if splitUrl[2] == "raw" || splitUrl[2] == "src" {
-				g.Branch = splitUrl[3]
+				g.Revision = splitUrl[3]
 				g.Path = splitUrl[4]
 				ext := filepath.Ext(g.Path)
 				if ext != "" {
@@ -383,11 +390,11 @@ func (g *Url) GitRawFileAPI() string {
 
 	switch g.Host {
 	case GitHubHost, RawGitHubHost:
-		apiRawFile = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", g.Owner, g.Repo, g.Branch, g.Path)
+		apiRawFile = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", g.Owner, g.Repo, g.Revision, g.Path)
 	case GitLabHost:
 		apiRawFile = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s/repository/files/%s/raw", g.Owner, g.Repo, g.Path)
 	case BitbucketHost:
-		apiRawFile = fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/src/%s/%s", g.Owner, g.Repo, g.Branch, g.Path)
+		apiRawFile = fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/src/%s/%s", g.Owner, g.Repo, g.Revision, g.Path)
 	}
 
 	return apiRawFile

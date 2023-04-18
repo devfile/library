@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 )
 
 type MockGitUrl struct {
@@ -27,7 +28,7 @@ type MockGitUrl struct {
 	Host     string // URL domain name
 	Owner    string // name of the repo owner
 	Repo     string // name of the repo
-	Branch   string // branch name
+	Revision string // branch name, tag name, or commit id
 	Path     string // path to a directory or file in the repo
 	token    string // used for authenticating a private repo
 	IsFile   bool   // defines if the URL points to a file in the repo
@@ -39,19 +40,28 @@ func (m *MockGitUrl) GetToken() string {
 
 var mockExecute = func(baseDir string, cmd CommandType, args ...string) ([]byte, error) {
 	if cmd == GitCommand {
-		u, _ := url.Parse(args[1])
-		password, hasPassword := u.User.Password()
+		if len(args) > 0 && args[0] == "clone" {
+			u, _ := url.Parse(args[1])
+			password, hasPassword := u.User.Password()
 
-		if hasPassword {
-			switch password {
-			case "valid-token":
-				return []byte("test"), nil
-			default:
-				return []byte(""), fmt.Errorf("not a valid token")
+			if hasPassword {
+				switch password {
+				case "valid-token":
+					return []byte("test"), nil
+				default:
+					return []byte(""), fmt.Errorf("not a valid token")
+				}
 			}
+			return []byte("test"), nil
 		}
 
-		return []byte("test"), nil
+		if len(args) > 0 && args[0] == "switch" {
+			revision := strings.TrimPrefix(args[2], "origin/")
+			if revision != "invalid-revision" {
+				return []byte("git switched to revision"), nil
+			}
+			return []byte(""), fmt.Errorf("failed to switch revision")
+		}
 	}
 
 	return []byte(""), fmt.Errorf(unsupportedCmdMsg, string(cmd))
@@ -85,6 +95,13 @@ func (m *MockGitUrl) CloneGitRepo(destDir string) error {
 			return fmt.Errorf("failed to clone repo without a token, ensure that a token is set if the repo is private")
 		} else {
 			return fmt.Errorf("failed to clone repo with token, ensure that the url and token is correct")
+		}
+	}
+
+	if m.Revision != "" {
+		_, err := mockExecute(destDir, "git", "switch", "--detach", "origin/"+m.Revision)
+		if err != nil {
+			return fmt.Errorf("failed to switch repo to revision. repo dir: %v, revision: %v", destDir, m.Revision)
 		}
 	}
 
