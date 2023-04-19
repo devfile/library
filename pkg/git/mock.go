@@ -17,9 +17,9 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -44,13 +44,23 @@ var mockExecute = func(baseDir string, cmd CommandType, args ...string) ([]byte,
 			u, _ := url.Parse(args[1])
 			password, hasPassword := u.User.Password()
 
+			// private repository
 			if hasPassword {
 				switch password {
 				case "valid-token":
+					_, err := os.Create(filepath.Clean(baseDir) + "/private-repo-resource.txt")
+					if err != nil {
+						return nil, fmt.Errorf("failed to create test resource: %v", err)
+					}
 					return []byte("test"), nil
 				default:
 					return []byte(""), fmt.Errorf("not a valid token")
 				}
+			}
+			// public repository
+			_, err := os.Create(filepath.Clean(baseDir) + "/public-repo-resource.txt")
+			if err != nil {
+				return nil, fmt.Errorf("failed to create test resource: %v", err)
 			}
 			return []byte("test"), nil
 		}
@@ -88,7 +98,7 @@ func (m *MockGitUrl) CloneGitRepo(destDir string) error {
 		}
 	}
 
-	_, err := mockExecute(destDir, "git", "clone", repoUrl, ".")
+	_, err := mockExecute(destDir, "git", "clone", repoUrl, destDir)
 
 	if err != nil {
 		if m.GetToken() == "" {
@@ -108,46 +118,16 @@ func (m *MockGitUrl) CloneGitRepo(destDir string) error {
 	return nil
 }
 
-func (m *MockGitUrl) DownloadGitRepoResources(url string, destDir string, httpTimeout *int, token string) error {
-	gitUrl := m
-	if gitUrl.IsGitProviderRepo() && gitUrl.IsFile {
-		stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
-		if err != nil {
-			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
-		}
-		defer os.RemoveAll(stackDir)
-
-		if !gitUrl.IsPublic(httpTimeout) {
-			err = m.SetToken(token, httpTimeout)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = gitUrl.CloneGitRepo(stackDir)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *MockGitUrl) SetToken(token string, httpTimeout *int) error {
+func (m *MockGitUrl) SetToken(token string) error {
 	m.token = token
 	return nil
 }
 
-func (m *MockGitUrl) IsPublic(httpTimeout *int) bool {
-	if *httpTimeout != 0 {
+func (m *MockGitUrl) IsGitProviderRepo() bool {
+	switch m.Host {
+	case GitHubHost, RawGitHubHost, GitLabHost, BitbucketHost:
+		return true
+	default:
 		return false
 	}
-	return true
-}
-
-func (m *MockGitUrl) GitRawFileAPI() string {
-	return ""
-}
-
-func (m *MockGitUrl) IsGitProviderRepo() bool {
-	return true
 }

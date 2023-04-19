@@ -47,6 +47,42 @@ import (
 	"github.com/pkg/errors"
 )
 
+// downloadGitRepoResources is exposed as a global variable for the purpose of running mock tests
+var downloadGitRepoResources = func(url string, destDir string, httpTimeout *int, token string) error {
+	gitUrl, err := git.NewGitUrlWithURL(url)
+	if err != nil {
+		return err
+	}
+
+	if gitUrl.IsGitProviderRepo() && gitUrl.IsFile {
+		stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
+		if err != nil {
+			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
+		}
+		defer os.RemoveAll(stackDir)
+
+		if !gitUrl.IsPublic(httpTimeout) {
+			err = gitUrl.SetToken(token, httpTimeout)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = gitUrl.CloneGitRepo(stackDir)
+		if err != nil {
+			return err
+		}
+
+		dir := path.Dir(path.Join(stackDir, gitUrl.Path))
+		err = git.CopyAllDirFiles(dir, destDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
 func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -142,7 +178,6 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		context:          args.Context,
 		k8sClient:        args.K8sClient,
 		httpTimeout:      args.HTTPTimeout,
-		git:              d.Ctx.GetGit(),
 	}
 
 	flattenedDevfile := true
@@ -196,8 +231,6 @@ type resolverTools struct {
 	k8sClient client.Client
 	// httpTimeout is the timeout value in seconds passed in from the client.
 	httpTimeout *int
-	// git is the interface used for git urls
-	git git.IGitUrl
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -449,7 +482,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		}
 
 		destDir := path.Dir(curDevfileCtx.GetAbsPath())
-		err = tool.git.DownloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
+		err = downloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
 		if err != nil {
 			return DevfileObj{}, err
 		}

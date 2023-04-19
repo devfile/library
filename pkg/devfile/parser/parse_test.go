@@ -2859,7 +2859,8 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				tt.args.devFileObj.Data.AddComponents(plugincomp)
 
 			}
-			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{git: &git.MockGitUrl{}})
+			downloadGitRepoResources = mockDownloadGitRepoResources(&git.Url{})
+			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{})
 
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
@@ -3072,23 +3073,10 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 
 		httpTimeout := 0
 
-		mockGitUrl := &git.MockGitUrl{
-			Protocol: "https",
-			Host:     "raw.githubusercontent.com",
-			Owner:    "devfile",
-			Repo:     "library",
-			Revision: "main",
-			Path:     "devfile.yaml",
-			IsFile:   true,
-		}
-		devFileObj.Ctx.SetGit(mockGitUrl)
-		devFileObj.Ctx.GetGit().SetToken("valid-token", &httpTimeout)
-
 		tool := resolverTools{
 			k8sClient:   testK8sClient,
 			context:     context.Background(),
 			httpTimeout: &httpTimeout,
-			git:         devFileObj.Ctx.GetGit(),
 		}
 
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
@@ -4161,7 +4149,8 @@ func Test_parseFromURI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{git: &git.MockGitUrl{}})
+			downloadGitRepoResources = mockDownloadGitRepoResources(&git.Url{})
+			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromURI() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
@@ -4173,15 +4162,16 @@ func Test_parseFromURI(t *testing.T) {
 	}
 }
 
-func Test_parseFromURI_GitResources(t *testing.T) {
+func Test_parseFromURI_GitProviders(t *testing.T) {
 	const (
 		invalidToken    = "invalid-token"
 		validToken      = "valid-token"
 		invalidRevision = "invalid-revision"
 	)
 
+	minimalDevfileContent := fmt.Sprintf("schemaVersion: 2.2.0")
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		_, err := rw.Write([]byte("schemaVersion: 2.2.0"))
+		_, err := rw.Write([]byte(minimalDevfileContent))
 		if err != nil {
 			t.Error(err)
 		}
@@ -4208,9 +4198,48 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 	defer parent.Close()
 	defer nestedParent.Close()
 
-	httpTimeoutPrivate := 1
+	httpTimeout := 0
 
-	publicGitUrl := &git.MockGitUrl{
+	minimalDevfile := DevfileObj{
+		Ctx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+				},
+			},
+		},
+	}
+
+	parentDevfile := DevfileObj{
+		Ctx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+					Metadata: devfilepkg.DevfileMetadata{
+						Name: "parent-devfile",
+					},
+				},
+			},
+		},
+	}
+
+	nestParentDevfile := DevfileObj{
+		Ctx: devfileCtx.NewURLDevfileCtx(OutputDevfileYamlPath),
+		Data: &v2.DevfileV2{
+			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					SchemaVersion: schemaVersion,
+					Metadata: devfilepkg.DevfileMetadata{
+						Name: "nested-devfile",
+					},
+				},
+			},
+		},
+	}
+
+	publicGitUrl := &git.Url{
 		Protocol: "https",
 		Host:     "raw.githubusercontent.com",
 		Owner:    "devfile",
@@ -4220,7 +4249,7 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		IsFile:   true,
 	}
 
-	privateGitUrlInvalidRevision := &git.MockGitUrl{
+	privateGitUrlInvalidRevision := &git.Url{
 		Protocol: "https",
 		Host:     "raw.githubusercontent.com",
 		Owner:    "devfile",
@@ -4229,9 +4258,9 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		Path:     "devfile.yaml",
 		IsFile:   true,
 	}
-	privateGitUrlInvalidRevision.SetToken(validToken, &httpTimeoutPrivate)
+	privateGitUrlInvalidRevision.SetToken(validToken, &httpTimeout)
 
-	privateBitbucketGitUrl := &git.MockGitUrl{
+	privateBitbucketGitUrl := &git.Url{
 		Protocol: "https",
 		Host:     "bitbucket.org",
 		Owner:    "devfile",
@@ -4240,9 +4269,9 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		Path:     "stacks/go/1.0.2/devfile.yaml",
 		IsFile:   true,
 	}
-	privateBitbucketGitUrl.SetToken(validToken, &httpTimeoutPrivate)
+	privateBitbucketGitUrl.SetToken(validToken, &httpTimeout)
 
-	privateGitUrl := &git.MockGitUrl{
+	privateGitUrl := &git.Url{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "mock-owner",
@@ -4251,7 +4280,7 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 		Path:     "mock/stacks/go/1.0.2/devfile.yaml",
 		IsFile:   true,
 	}
-	privateGitUrl.SetToken(validToken, &httpTimeoutPrivate)
+	privateGitUrl.SetToken(validToken, &httpTimeout)
 
 	curDevfileContextWithValidToken := devfileCtx.NewPrivateURLDevfileCtx(OutputDevfileYamlPath, validToken)
 	curDevfileContextWithInvalidToken := devfileCtx.NewPrivateURLDevfileCtx(OutputDevfileYamlPath, invalidToken)
@@ -4263,64 +4292,59 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 	tests := []struct {
 		name            string
 		curDevfileCtx   *devfileCtx.DevfileCtx
-		gitUrl          *git.MockGitUrl
-		timeout         *int
+		gitUrl          *git.Url
 		importReference v1.ImportReference
+		wantDevFile     DevfileObj
 		wantError       *string
 	}{
 		{
 			name:          "private main devfile URL",
 			curDevfileCtx: &curDevfileContextWithValidToken,
 			gitUrl:        privateGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
 				},
 			},
-			wantError: nil,
+			wantDevFile: minimalDevfile,
 		},
 		{
 			name:          "private main devfile Bitbucket URL",
 			curDevfileCtx: &curDevfileContextWithValidToken,
 			gitUrl:        privateBitbucketGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
 				},
 			},
-			wantError: nil,
+			wantDevFile: minimalDevfile,
 		},
 		{
 			name:          "private main devfile with a private parent reference",
 			curDevfileCtx: &curDevfileContextWithValidToken,
 			gitUrl:        privateGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: parent.URL,
 				},
 			},
-			wantError: nil,
+			wantDevFile: parentDevfile,
 		},
 		{
 			name:          "private main devfile with a private parent with a nested private parent reference",
 			curDevfileCtx: &curDevfileContextWithValidToken,
 			gitUrl:        privateGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: nestedParent.URL,
 				},
 			},
-			wantError: nil,
+			wantDevFile: nestParentDevfile,
 		},
 		{
 			name:          "private main devfile without a valid token",
 			curDevfileCtx: &curDevfileContextWithInvalidToken,
 			gitUrl:        privateGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
@@ -4332,19 +4356,17 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 			name:          "public main devfile without a token",
 			curDevfileCtx: &curDevfileContextWithoutToken,
 			gitUrl:        publicGitUrl,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
 				},
 			},
-			wantError: nil,
+			wantDevFile: minimalDevfile,
 		},
 		{
 			name:          "private parent devfile with invalid revision",
 			curDevfileCtx: &curDevfileContextWithoutToken,
 			gitUrl:        privateGitUrlInvalidRevision,
-			timeout:       &httpTimeoutPrivate,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: parent.URL,
@@ -4356,13 +4378,61 @@ func Test_parseFromURI_GitResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseFromURI(tt.importReference, *tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{httpTimeout: tt.timeout, git: tt.gitUrl})
+			downloadGitRepoResources = mockDownloadGitRepoResources(tt.gitUrl)
+			got, err := parseFromURI(tt.importReference, *tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
 			if (err != nil) != (tt.wantError != nil) {
 				t.Errorf("Unexpected error: %v, wantErr %v", err, tt.wantError)
-			} else if tt.wantError != nil {
+			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
+				t.Errorf("Wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
+			} else if err != nil {
 				assert.Regexp(t, *tt.wantError, err.Error(), "Error message should match")
 			}
 		})
+	}
+}
+
+func mockDownloadGitRepoResources(gURL *git.Url) func(url string, destDir string, httpTimeout *int, token string) error {
+	return func(url string, destDir string, httpTimeout *int, token string) error {
+		// this converts the real git URL to a mock URL
+		mockGitUrl := git.MockGitUrl{
+			Protocol: gURL.Protocol,
+			Host:     gURL.Host,
+			Owner:    gURL.Owner,
+			Repo:     gURL.Repo,
+			Revision: gURL.Revision,
+			Path:     gURL.Path,
+			IsFile:   gURL.IsFile,
+		}
+
+		if mockGitUrl.IsGitProviderRepo() && mockGitUrl.IsFile {
+			stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
+			if err != nil {
+				return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
+			}
+			defer os.RemoveAll(stackDir)
+
+			err = mockGitUrl.SetToken(token)
+			if err != nil {
+				return err
+			}
+
+			err = mockGitUrl.CloneGitRepo(stackDir)
+			if err != nil {
+				return err
+			}
+
+			if mockGitUrl.GetToken() != "" {
+				_, err = os.Stat(stackDir + "/private-repo-resource.txt")
+			} else {
+				_, err = os.Stat(stackDir + "/public-repo-resource.txt")
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 }
 
@@ -4701,47 +4771,66 @@ func Test_parseFromKubeCRD(t *testing.T) {
 }
 
 func Test_DownloadGitRepoResources(t *testing.T) {
-	destDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Errorf("Failed to create dest dir: %s, error: %v", destDir, err)
-	}
-	defer os.RemoveAll(destDir)
-
 	httpTimeout := 0
-	var g git.Url
+
+	validGitUrl := git.Url{
+		Protocol: "https",
+		Host:     "raw.githubusercontent.com",
+		Owner:    "devfile",
+		Repo:     "registry",
+		Revision: "main",
+		Path:     "stacks/python/3.0.0/devfile.yaml",
+		IsFile:   true,
+	}
+	validGitUrl.SetToken("valid-token", &httpTimeout)
+
+	invalidTokenErr := "failed to clone repo with token, ensure that the url and token is correct"
 
 	tests := []struct {
 		name    string
 		url     string
+		gitUrl  git.Url
 		destDir string
 		token   string
 		wantErr bool
 	}{
 		{
-			name:    "should fail with invalid git url",
-			url:     "non-existent-url",
-			destDir: path.Join(os.TempDir(), "nonexistent"),
-			token:   "",
-			wantErr: true,
+			name:    "should be able to get resources with valid token",
+			url:     "https://raw.githubusercontent.com/devfile/registry/main/stacks/python/3.0.0/devfile.yaml",
+			gitUrl:  validGitUrl,
+			token:   "valid-token",
+			wantErr: false,
 		},
 		{
-			name:    "should be able to get resources from valid git url",
+			name:    "should be able to get resources from public repo (empty token)",
 			url:     "https://raw.githubusercontent.com/devfile/registry/main/stacks/python/3.0.0/devfile.yaml",
-			destDir: destDir,
+			gitUrl:  validGitUrl,
 			token:   "",
 			wantErr: false,
+		},
+		{
+			name:    "should fail to get resources with invalid token",
+			url:     "https://raw.githubusercontent.com/devfile/registry/main/stacks/python/3.0.0/devfile.yaml",
+			gitUrl:  validGitUrl,
+			token:   "invalid-token",
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := false
-			err := g.DownloadGitRepoResources(tt.url, tt.destDir, &httpTimeout, tt.token)
+			destDir, err := ioutil.TempDir("", "")
 			if err != nil {
-				gotErr = true
+				t.Errorf("Failed to create dest dir: %s, error: %v", destDir, err)
 			}
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
+			defer os.RemoveAll(destDir)
+
+			downloadGitRepoResources = mockDownloadGitRepoResources(&tt.gitUrl)
+			err = downloadGitRepoResources(tt.url, destDir, &httpTimeout, tt.token)
+			if (err != nil) && (tt.wantErr != true) {
+				t.Errorf("Unexpected error = %v", err)
+			} else if tt.wantErr == true {
+				assert.Containsf(t, err.Error(), invalidTokenErr, "expected error containing %q, got %s", invalidTokenErr, err)
 			}
 		})
 	}

@@ -17,7 +17,6 @@ package parser
 
 import (
 	"fmt"
-	"github.com/devfile/library/v2/pkg/git"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -52,9 +51,6 @@ type DevfileCtx struct {
 	// token is a personal access token used with a private git repo URL
 	token string
 
-	// Git is an interface used for git urls
-	git git.IGitUrl
-
 	// filesystem for devfile
 	fs filesystem.Filesystem
 
@@ -74,7 +70,6 @@ func NewDevfileCtx(path string) DevfileCtx {
 func NewURLDevfileCtx(url string) DevfileCtx {
 	return DevfileCtx{
 		url: url,
-		git: &git.Url{},
 	}
 }
 
@@ -83,7 +78,6 @@ func NewPrivateURLDevfileCtx(url string, token string) DevfileCtx {
 	return DevfileCtx{
 		url:   url,
 		token: token,
-		git:   &git.Url{},
 	}
 }
 
@@ -172,11 +166,6 @@ func (d *DevfileCtx) GetToken() string {
 	return d.token
 }
 
-// GetGit func returns current git interface
-func (d *DevfileCtx) GetGit() git.IGitUrl {
-	return d.git
-}
-
 // SetAbsPath sets absolute file path for devfile
 func (d *DevfileCtx) SetAbsPath() (err error) {
 	// Set devfile absolute path
@@ -197,9 +186,4 @@ func (d *DevfileCtx) GetConvertUriToInlined() bool {
 // SetConvertUriToInlined sets if the devfile kubernetes comp has been converted from uri to inlined
 func (d *DevfileCtx) SetConvertUriToInlined(value bool) {
 	d.convertUriToInlined = value
-}
-
-// SetGit sets the git interface
-func (d *DevfileCtx) SetGit(git git.IGitUrl) {
-	d.git = git
 }

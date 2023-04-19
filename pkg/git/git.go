@@ -17,11 +17,8 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
-	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -32,13 +29,6 @@ const (
 	GitLabHost    string = "gitlab.com"
 	BitbucketHost string = "bitbucket.org"
 )
-
-type IGitUrl interface {
-	GitRawFileAPI() string
-	SetToken(token string, httpTimeout *int) error
-	IsPublic(httpTimeout *int) bool
-	DownloadGitRepoResources(url string, destDir string, httpTimeout *int, token string) error
-}
 
 type Url struct {
 	Protocol string // URL scheme
@@ -52,12 +42,12 @@ type Url struct {
 }
 
 // NewGitUrlWithURL NewGitUrl creates a GitUrl from a string url
-func NewGitUrlWithURL(url string) (*Url, error) {
+func NewGitUrlWithURL(url string) (Url, error) {
 	gitUrl, err := ParseGitUrl(url)
 	if err != nil {
-		return &gitUrl, err
+		return gitUrl, err
 	}
-	return &gitUrl, nil
+	return gitUrl, nil
 }
 
 // ParseGitUrl extracts information from a support git url
@@ -154,40 +144,6 @@ func (g *Url) CloneGitRepo(destDir string) error {
 		}
 	}
 
-	return nil
-}
-
-func (g *Url) DownloadGitRepoResources(url string, destDir string, httpTimeout *int, token string) error {
-	gitUrl, err := NewGitUrlWithURL(url)
-	if err != nil {
-		return err
-	}
-
-	if gitUrl.IsGitProviderRepo() && gitUrl.IsFile {
-		stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
-		if err != nil {
-			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
-		}
-		defer os.RemoveAll(stackDir)
-
-		if !gitUrl.IsPublic(httpTimeout) {
-			err = gitUrl.SetToken(token, httpTimeout)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = gitUrl.CloneGitRepo(stackDir)
-		if err != nil {
-			return err
-		}
-
-		dir := path.Dir(path.Join(stackDir, gitUrl.Path))
-		err = CopyAllDirFiles(dir, destDir)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
