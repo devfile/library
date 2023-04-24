@@ -25,17 +25,15 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 
 	"github.com/devfile/api/v2/pkg/attributes"
-	registryLibrary "github.com/devfile/registry-support/registry-library/library"
-
-	"reflect"
-
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/v2/pkg/util"
+	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
@@ -166,6 +164,29 @@ type ParserArgs struct {
 	// SetBooleanDefaults sets the boolean properties to their default values after a devfile been parsed.
 	// The value is true by default.  Clients can set this to false if they want to set the boolean properties themselves
 	SetBooleanDefaults *bool
+	// ImageNamesAsSelector sets the information that will be used to handle image names as selectors when parsing the Devfile.
+	// Not setting this field or setting it to nil disables the logic of handling image names as selectors.
+	ImageNamesAsSelector *ImageSelectorArgs
+}
+
+// ImageSelectorArgs defines the structure to leverage for using image names as selectors after parsing the Devfile.
+// The fields defined here will be used together to compute the final image names that will be built and pushed,
+// and replaced in all matching Image, Container or Kubernetes/OpenShift components.
+//
+// For Kubernetes/OpenShift components, replacement is done only in core Kubernetes resources
+// (CronJob, DaemonSet, Deployment, Job, Pod, ReplicaSet, ReplicationController, StatefulSet) that are *inlined* in those components.
+// Resources referenced via URIs will not be resolved. So you may want to also set ConvertKubernetesContentInUri to true in the parser args.
+//
+// For example, if Registry is set to "<local-registry>/<user-org>" and Tag is set to "some-dynamic-unique-tag",
+// all container and Kubernetes/OpenShift components matching a relative image name (say "my-image-name") of an Image component
+// will be replaced in the resulting Devfile by: "<local-registry>/<user-org>/<devfile-name>-my-image-name:some-dynamic-unique-tag".
+type ImageSelectorArgs struct {
+	// Registry is the registry base path under which images matching selectors will be built and pushed to.
+	// Example: <local-registry>/<user-org>
+	Registry string
+	// Tag represents a tag identifier under which images matching selectors will be built and pushed to.
+	// This should ideally be set to a unique identifier for each run of the caller tool.
+	Tag string
 }
 
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
