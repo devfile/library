@@ -73,14 +73,6 @@ func NewURLDevfileCtx(url string) DevfileCtx {
 	}
 }
 
-// NewPrivateURLDevfileCtx returns a new DevfileCtx type object
-func NewPrivateURLDevfileCtx(url string, token string) DevfileCtx {
-	return DevfileCtx{
-		url:   url,
-		token: token,
-	}
-}
-
 // NewByteContentDevfileCtx set devfile content from byte data and returns a new DevfileCtx type object and error
 func NewByteContentDevfileCtx(data []byte) (d DevfileCtx, err error) {
 	err = d.SetDevfileContentFromBytes(data)
@@ -164,6 +156,11 @@ func (d *DevfileCtx) GetURL() string {
 // GetToken func returns current devfile token
 func (d *DevfileCtx) GetToken() string {
 	return d.token
+}
+
+// SetToken sets the token for the devfile
+func (d *DevfileCtx) SetToken(token string) {
+	d.token = token
 }
 
 // SetAbsPath sets absolute file path for devfile

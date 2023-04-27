@@ -12,8 +12,9 @@ The Devfile Parser library is a Golang module that:
 2. writes to the devfile.yaml with the updated data.
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
+5. downloads resources from a parent devfile if specified in the devfile.yaml
 
-## Private Repository Support
+## Private repository support
 
 Tokens are required to be set in the following cases:
 1. parsing a devfile from a private repository
@@ -24,12 +25,20 @@ Set the token for the repository:
 ```go
 parser.ParserArgs{
 	...
-	URL: <url-to-devfile-on-supported-git-provider>
+	// URL must point to a devfile.yaml
+	URL: <url-to-devfile-on-supported-git-provider-repo>/devfile.yaml
 	Token: <repo-personal-access-token>
 	...
 }
 ```
 Note: The url must also be set with a supported git provider repo url.
+
+Minimum token scope required:
+1. GitHub: Read access to code
+2. GitLab: Read repository
+3. Bitbucket: Read repository
+
+Note: To select token scopes for GitHub, a fine-grained token is required.
 
 For more information about personal access tokens:
 1. [GitHub docs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
@@ -37,6 +46,7 @@ For more information about personal access tokens:
 3. [Bitbucket docs](https://support.atlassian.com/bitbucket-cloud/docs/repository-access-tokens/)
 
 [1] Currently, this works under the assumption that the token can authenticate the devfile and the parent devfile; both devfiles are in the same repository.
+
 [2] In this scenario, the token will be used to authenticate the main devfile.
 
 ## Usage
@@ -197,6 +207,15 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    parserArgs := parser.ParserArgs{
 		SetBooleanDefaults:               &setDefaults,
    }
+   ```
+
+9. When parsing a devfile that contains a parent reference, if the parent uri is a supported git provider repo url with the correct personal access token, all resources from the parent git repo excluding the parent devfile.yaml will be downloaded to the location of the devfile being parsed. **Note: The URL must point to a devfile.yaml**
+   ```yaml
+   schemaVersion: 2.2.0
+   ...
+   parent:
+      uri: <uri-to-parent-devfile>/devfile.yaml
+   ...
    ```
 
 ## Projects using devfile/library

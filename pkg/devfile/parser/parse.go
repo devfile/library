@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/devfile/library/v2/pkg/git"
+	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -49,34 +50,49 @@ import (
 
 // downloadGitRepoResources is exposed as a global variable for the purpose of running mock tests
 var downloadGitRepoResources = func(url string, destDir string, httpTimeout *int, token string) error {
+	var returnedErr error
+
 	gitUrl, err := git.NewGitUrlWithURL(url)
 	if err != nil {
 		return err
 	}
 
-	if gitUrl.IsGitProviderRepo() && gitUrl.IsFile {
-		stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
+	if gitUrl.IsGitProviderRepo() {
+		if !gitUrl.IsFile || gitUrl.Revision == "" || !strings.Contains(gitUrl.Path, OutputDevfileYamlPath) {
+			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url)
+		}
+
+		stackDir, err := os.MkdirTemp("", fmt.Sprintf("git-resources"))
 		if err != nil {
 			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 		}
-		defer os.RemoveAll(stackDir)
+
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				returnedErr = multierror.Append(returnedErr, err)
+			}
+		}(stackDir)
 
 		if !gitUrl.IsPublic(httpTimeout) {
 			err = gitUrl.SetToken(token, httpTimeout)
 			if err != nil {
-				return err
+				returnedErr = multierror.Append(returnedErr, err)
+				return returnedErr
 			}
 		}
 
 		err = gitUrl.CloneGitRepo(stackDir)
 		if err != nil {
-			return err
+			returnedErr = multierror.Append(returnedErr, err)
+			return returnedErr
 		}
 
 		dir := path.Dir(path.Join(stackDir, gitUrl.Path))
 		err = git.CopyAllDirFiles(dir, destDir)
 		if err != nil {
-			return err
+			returnedErr = multierror.Append(returnedErr, err)
+			return returnedErr
 		}
 	}
 
@@ -163,13 +179,13 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	} else if args.Path != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(args.Path)
 	} else if args.URL != "" {
-		if args.Token != "" {
-			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(args.URL, args.Token)
-		} else {
-			d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
-		}
+		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
 	} else {
 		return d, errors.Wrap(err, "the devfile source is not provided")
+	}
+
+	if args.Token != "" {
+		d.Ctx.SetToken(args.Token)
 	}
 
 	tool := resolverTools{
@@ -475,10 +491,9 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		}
 
 		token := curDevfileCtx.GetToken()
+		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
 		if token != "" {
-			d.Ctx = devfileCtx.NewPrivateURLDevfileCtx(newUri, token)
-		} else {
-			d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
+			d.Ctx.SetToken(token)
 		}
 
 		destDir := path.Dir(curDevfileCtx.GetAbsPath())

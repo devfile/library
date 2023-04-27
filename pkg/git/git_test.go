@@ -25,27 +25,41 @@ import (
 )
 
 func Test_ParseGitUrl(t *testing.T) {
+	invalidUrlError := "URL is invalid"
+	invalidUrlPathError := "url path to directory or file should contain*"
+	missingUserAndRepoError := "url path should contain <user>/<repo>*"
+
+	invalidGitHostError := "url host should be a valid GitHub, GitLab, or Bitbucket host*"
+	invalidGitHubPathError := "url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>*"
+	invalidGitHubRawPathError := "raw url path should contain <owner>/<repo>/<branch>/<path/to/file>*"
+
+	invalidGitLabPathError := "url path to directory or file should contain <blob or tree or raw>/<branch>/<path/to/file/or/directory>*"
+	missingGitLabKeywordError := "url path should contain 'blob' or 'tree' or 'raw'*"
+
+	invalidBitbucketPathError := "url path should contain path to directory or file*"
+	missingBitbucketKeywordError := "url path should contain 'raw' or 'src'*"
+
 	tests := []struct {
 		name    string
 		url     string
-		wantUrl Url
+		wantUrl GitUrl
 		wantErr string
 	}{
 		{
 			name:    "should fail with empty url",
 			url:     "",
-			wantErr: "URL is invalid",
+			wantErr: invalidUrlError,
 		},
 		{
 			name:    "should fail with invalid git host",
 			url:     "https://google.ca/",
-			wantErr: "url host should be a valid GitHub, GitLab, or Bitbucket host*",
+			wantErr: invalidGitHostError,
 		},
 		// GitHub
 		{
 			name: "should parse GitHub repo with root path",
 			url:  "https://github.com/devfile/library",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
 				Owner:    "devfile",
@@ -58,7 +72,7 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name: "should parse GitHub repo with root path and tag",
 			url:  "https://github.com/devfile/library/tree/v2.2.0",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
 				Owner:    "devfile",
@@ -71,7 +85,7 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name: "should parse GitHub repo with root path and revision",
 			url:  "https://github.com/devfile/library/tree/0ce592a416fb185564516353891a45016ac7f671",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
 				Owner:    "devfile",
@@ -84,12 +98,12 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with only GitHub host",
 			url:     "https://github.com/",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name: "should parse GitHub repo with file path",
 			url:  "https://github.com/devfile/library/blob/main/devfile.yaml",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
 				Owner:    "devfile",
@@ -102,7 +116,7 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name: "should parse GitHub repo with raw file path",
 			url:  "https://raw.githubusercontent.com/devfile/library/main/devfile.yaml",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "raw.githubusercontent.com",
 				Owner:    "devfile",
@@ -115,38 +129,38 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with missing GitHub repo",
 			url:     "https://github.com/devfile",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name:    "should fail with missing GitHub blob",
 			url:     "https://github.com/devfile/library/main/devfile.yaml",
-			wantErr: "url path to directory or file should contain*",
+			wantErr: invalidUrlPathError,
 		},
 		{
 			name:    "should fail with missing GitHub tree",
 			url:     "https://github.com/devfile/library/main/tests/yamls",
-			wantErr: "url path to directory or file should contain*",
+			wantErr: invalidUrlPathError,
 		},
 		{
 			name:    "should fail with just GitHub tree",
 			url:     "https://github.com/devfile/library/tree",
-			wantErr: "url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>*",
+			wantErr: invalidGitHubPathError,
 		},
 		{
 			name:    "should fail with just GitHub blob",
 			url:     "https://github.com/devfile/library/blob",
-			wantErr: "url path should contain <owner>/<repo>/<tree or blob>/<branch>/<path/to/file/or/directory>*",
+			wantErr: invalidGitHubPathError,
 		},
 		{
 			name:    "should fail with invalid GitHub raw file path",
 			url:     "https://raw.githubusercontent.com/devfile/library/devfile.yaml",
-			wantErr: "raw url path should contain <owner>/<repo>/<branch>/<path/to/file>*",
+			wantErr: invalidGitHubRawPathError,
 		},
 		// Gitlab
 		{
 			name: "should parse GitLab repo with root path",
 			url:  "https://gitlab.com/gitlab-org/gitlab-foss",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
@@ -159,12 +173,12 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with only GitLab host",
 			url:     "https://gitlab.com/",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name: "should parse GitLab repo with file path",
 			url:  "https://gitlab.com/gitlab-org/gitlab-foss/-/blob/master/README.md",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
@@ -177,23 +191,23 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with missing GitLab repo",
 			url:     "https://gitlab.com/gitlab-org",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name:    "should fail with missing GitLab keywords",
 			url:     "https://gitlab.com/gitlab-org/gitlab-foss/-/master/directory/README.md",
-			wantErr: "url path should contain 'blob' or 'tree' or 'raw'*",
+			wantErr: missingGitLabKeywordError,
 		},
 		{
 			name:    "should fail with missing GitLab file or directory path",
 			url:     "https://gitlab.com/gitlab-org/gitlab-foss/-/tree/master",
-			wantErr: "url path to directory or file should contain <blob or tree or raw>/<branch>/<path/to/file/or/directory>*",
+			wantErr: invalidGitLabPathError,
 		},
 		// Bitbucket
 		{
 			name: "should parse Bitbucket repo with root path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
@@ -206,12 +220,12 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with only Bitbucket host",
 			url:     "https://bitbucket.org/",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name: "should parse Bitbucket repo with file path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/src/main/README.md",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
@@ -224,7 +238,7 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name: "should parse Bitbucket file path with nested path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/src/main/directory/test.txt",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
@@ -237,7 +251,7 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name: "should parse Bitbucket repo with raw file path",
 			url:  "https://bitbucket.org/fake-owner/fake-public-repo/raw/main/README.md",
-			wantUrl: Url{
+			wantUrl: GitUrl{
 				Protocol: "https",
 				Host:     "bitbucket.org",
 				Owner:    "fake-owner",
@@ -250,17 +264,17 @@ func Test_ParseGitUrl(t *testing.T) {
 		{
 			name:    "should fail with missing Bitbucket repo",
 			url:     "https://bitbucket.org/fake-owner",
-			wantErr: "url path should contain <user>/<repo>*",
+			wantErr: missingUserAndRepoError,
 		},
 		{
 			name:    "should fail with invalid Bitbucket directory or file path",
 			url:     "https://bitbucket.org/fake-owner/fake-public-repo/main/README.md",
-			wantErr: "url path should contain path to directory or file*",
+			wantErr: invalidBitbucketPathError,
 		},
 		{
 			name:    "should fail with missing Bitbucket keywords",
 			url:     "https://bitbucket.org/fake-owner/fake-public-repo/main/test/README.md",
-			wantErr: "url path should contain 'raw' or 'src'*",
+			wantErr: missingBitbucketKeywordError,
 		},
 	}
 
@@ -281,12 +295,12 @@ func Test_ParseGitUrl(t *testing.T) {
 func Test_GetGitRawFileAPI(t *testing.T) {
 	tests := []struct {
 		name string
-		g    Url
+		g    GitUrl
 		want string
 	}{
 		{
 			name: "Github url",
-			g: Url{
+			g: GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
 				Owner:    "devfile",
@@ -298,19 +312,19 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 		},
 		{
 			name: "GitLab url",
-			g: Url{
+			g: GitUrl{
 				Protocol: "https",
 				Host:     "gitlab.com",
 				Owner:    "gitlab-org",
 				Repo:     "gitlab",
-				Revision: "master",
+				Revision: "v15.11.0-ee",
 				Path:     "README.md",
 			},
-			want: "https://gitlab.com/api/v4/projects/gitlab-org%2Fgitlab/repository/files/README.md/raw",
+			want: "https://gitlab.com/api/v4/projects/gitlab-org%2Fgitlab/repository/files/README.md/raw?ref=v15.11.0-ee",
 		},
 		{
 			name: "Bitbucket url",
-			g: Url{
+			g: GitUrl{
 				Protocol: "https",
 				Host:     "bitbucket.org",
 				Owner:    "owner",
@@ -322,7 +336,7 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 		},
 		{
 			name: "Empty GitUrl",
-			g:    Url{},
+			g:    GitUrl{},
 			want: "",
 		},
 	}
@@ -338,7 +352,7 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 }
 
 func Test_IsPublic(t *testing.T) {
-	publicGitUrl := Url{
+	publicGitUrl := GitUrl{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "devfile",
@@ -347,7 +361,7 @@ func Test_IsPublic(t *testing.T) {
 		token:    "fake-token",
 	}
 
-	privateGitUrl := Url{
+	privateGitUrl := GitUrl{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "not",
@@ -360,7 +374,7 @@ func Test_IsPublic(t *testing.T) {
 
 	tests := []struct {
 		name string
-		g    Url
+		g    GitUrl
 		want bool
 	}{
 		{
@@ -387,11 +401,8 @@ func Test_IsPublic(t *testing.T) {
 
 func Test_CloneGitRepo(t *testing.T) {
 	tempInvalidDir := t.TempDir()
-	tempDirGitHub := t.TempDir()
-	tempDirGitLab := t.TempDir()
-	tempDirBitbucket := t.TempDir()
 
-	invalidGitUrl := Url{
+	invalidGitUrl := GitUrl{
 		Protocol: "",
 		Host:     "",
 		Owner:    "nonexistent",
@@ -399,31 +410,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Revision: "nonexistent",
 	}
 
-	validPublicGitHubUrl := Url{
-		Protocol: "https",
-		Host:     "github.com",
-		Owner:    "devfile",
-		Repo:     "library",
-		Revision: "main",
-	}
-
-	validPublicGitLabUrl := Url{
-		Protocol: "https",
-		Host:     "gitlab.com",
-		Owner:    "mike-hoang",
-		Repo:     "public-testing-repo",
-		Revision: "main",
-	}
-
-	validPublicBitbucketUrl := Url{
-		Protocol: "https",
-		Host:     "bitbucket.org",
-		Owner:    "mike-hoang",
-		Repo:     "public-testing-repo",
-		Revision: "master",
-	}
-
-	invalidPrivateGitHubRepo := Url{
+	invalidPrivateGitHubRepo := GitUrl{
 		Protocol: "https",
 		Host:     "github.com",
 		Owner:    "fake-owner",
@@ -438,7 +425,7 @@ func Test_CloneGitRepo(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		gitUrl  Url
+		gitUrl  GitUrl
 		destDir string
 		wantErr string
 	}{
@@ -459,21 +446,6 @@ func Test_CloneGitRepo(t *testing.T) {
 			gitUrl:  invalidPrivateGitHubRepo,
 			destDir: tempInvalidDir,
 			wantErr: privateRepoBadTokenErr,
-		},
-		{
-			name:    "should be able to clone valid public github url",
-			gitUrl:  validPublicGitHubUrl,
-			destDir: tempDirGitHub,
-		},
-		{
-			name:    "should be able to clone valid public gitlab url",
-			gitUrl:  validPublicGitLabUrl,
-			destDir: tempDirGitLab,
-		},
-		{
-			name:    "should be able to clone valid public bitbucket url",
-			gitUrl:  validPublicBitbucketUrl,
-			destDir: tempDirBitbucket,
 		},
 	}
 

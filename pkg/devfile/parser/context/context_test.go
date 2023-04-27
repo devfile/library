@@ -88,16 +88,12 @@ func TestNewURLDevfileCtx(t *testing.T) {
 		token = "fake-token"
 		url   = "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml"
 	)
-
-	{
-		d := NewPrivateURLDevfileCtx(url, token)
-		assert.Equal(t, "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml", d.GetURL())
-		assert.Equal(t, "fake-token", d.GetToken())
-	}
 	{
 		d := NewURLDevfileCtx(url)
 		assert.Equal(t, "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml", d.GetURL())
 		assert.Equal(t, "", d.GetToken())
+		d.SetToken(token)
+		assert.Equal(t, "fake-token", d.GetToken())
 	}
 }
 

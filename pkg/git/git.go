@@ -18,6 +18,7 @@ package git
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -30,19 +31,19 @@ const (
 	BitbucketHost string = "bitbucket.org"
 )
 
-type Url struct {
+type GitUrl struct {
 	Protocol string // URL scheme
 	Host     string // URL domain name
 	Owner    string // name of the repo owner
 	Repo     string // name of the repo
 	Revision string // branch name, tag name, or commit id
 	Path     string // path to a directory or file in the repo
-	token    string // used for authenticating a private repo
+	token    string // authenticates private repo actions for parent devfiles
 	IsFile   bool   // defines if the URL points to a file in the repo
 }
 
 // NewGitUrlWithURL NewGitUrl creates a GitUrl from a string url
-func NewGitUrlWithURL(url string) (Url, error) {
+func NewGitUrlWithURL(url string) (GitUrl, error) {
 	gitUrl, err := ParseGitUrl(url)
 	if err != nil {
 		return gitUrl, err
@@ -52,8 +53,8 @@ func NewGitUrlWithURL(url string) (Url, error) {
 
 // ParseGitUrl extracts information from a support git url
 // Only supports git repositories hosted on GitHub, GitLab, and Bitbucket
-func ParseGitUrl(fullUrl string) (Url, error) {
-	var g Url
+func ParseGitUrl(fullUrl string) (GitUrl, error) {
+	var g GitUrl
 	err := ValidateURL(fullUrl)
 	if err != nil {
 		return g, err
@@ -81,7 +82,7 @@ func ParseGitUrl(fullUrl string) (Url, error) {
 	return g, err
 }
 
-func (g *Url) GetToken() string {
+func (g *GitUrl) GetToken() string {
 	return g.token
 }
 
@@ -106,7 +107,7 @@ var execute = func(baseDir string, cmd CommandType, args ...string) ([]byte, err
 	return []byte(""), fmt.Errorf(unsupportedCmdMsg, string(cmd))
 }
 
-func (g *Url) CloneGitRepo(destDir string) error {
+func (g *GitUrl) CloneGitRepo(destDir string) error {
 	exist := CheckPathExists(destDir)
 	if !exist {
 		return fmt.Errorf("failed to clone repo, destination directory: '%s' does not exists", destDir)
@@ -140,6 +141,10 @@ func (g *Url) CloneGitRepo(destDir string) error {
 	if g.Revision != "" {
 		_, err := execute(destDir, "git", "switch", "--detach", "origin/"+g.Revision)
 		if err != nil {
+			err = os.RemoveAll(destDir)
+			if err != nil {
+				return err
+			}
 			return fmt.Errorf("failed to switch repo to revision. repo dir: %v, revision: %v", destDir, g.Revision)
 		}
 	}
@@ -147,7 +152,7 @@ func (g *Url) CloneGitRepo(destDir string) error {
 	return nil
 }
 
-func (g *Url) parseGitHubUrl(url *url.URL) error {
+func (g *GitUrl) parseGitHubUrl(url *url.URL) error {
 	var splitUrl []string
 	var err error
 
@@ -209,7 +214,7 @@ func (g *Url) parseGitHubUrl(url *url.URL) error {
 	return err
 }
 
-func (g *Url) parseGitLabUrl(url *url.URL) error {
+func (g *GitUrl) parseGitLabUrl(url *url.URL) error {
 	var splitFile, splitOrg []string
 	var err error
 
@@ -257,7 +262,7 @@ func (g *Url) parseGitLabUrl(url *url.URL) error {
 	return err
 }
 
-func (g *Url) parseBitbucketUrl(url *url.URL) error {
+func (g *GitUrl) parseBitbucketUrl(url *url.URL) error {
 	var splitUrl []string
 	var err error
 
@@ -295,7 +300,7 @@ func (g *Url) parseBitbucketUrl(url *url.URL) error {
 
 // SetToken validates the token with a get request to the repo before setting the token
 // Defaults token to empty on failure.
-func (g *Url) SetToken(token string, httpTimeout *int) error {
+func (g *GitUrl) SetToken(token string, httpTimeout *int) error {
 	err := g.validateToken(HTTPRequestParams{Token: token, Timeout: httpTimeout})
 	if err != nil {
 		g.token = ""
@@ -307,7 +312,7 @@ func (g *Url) SetToken(token string, httpTimeout *int) error {
 
 // IsPublic checks if the GitUrl is public with a get request to the repo using an empty token
 // Returns true if the request succeeds
-func (g *Url) IsPublic(httpTimeout *int) bool {
+func (g *GitUrl) IsPublic(httpTimeout *int) bool {
 	err := g.validateToken(HTTPRequestParams{Token: "", Timeout: httpTimeout})
 	if err != nil {
 		return false
@@ -317,7 +322,7 @@ func (g *Url) IsPublic(httpTimeout *int) bool {
 
 // validateToken makes a http get request to the repo with the GitUrl token
 // Returns an error if the get request fails
-func (g *Url) validateToken(params HTTPRequestParams) error {
+func (g *GitUrl) validateToken(params HTTPRequestParams) error {
 	var apiUrl string
 
 	switch g.Host {
@@ -341,14 +346,14 @@ func (g *Url) validateToken(params HTTPRequestParams) error {
 }
 
 // GitRawFileAPI returns the endpoint for the git providers raw file
-func (g *Url) GitRawFileAPI() string {
+func (g *GitUrl) GitRawFileAPI() string {
 	var apiRawFile string
 
 	switch g.Host {
 	case GitHubHost, RawGitHubHost:
 		apiRawFile = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", g.Owner, g.Repo, g.Revision, g.Path)
 	case GitLabHost:
-		apiRawFile = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s/repository/files/%s/raw", g.Owner, g.Repo, g.Path)
+		apiRawFile = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s%%2F%s/repository/files/%s/raw?ref=%s", g.Owner, g.Repo, g.Path, g.Revision)
 	case BitbucketHost:
 		apiRawFile = fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/src/%s/%s", g.Owner, g.Repo, g.Revision, g.Path)
 	}
@@ -357,7 +362,7 @@ func (g *Url) GitRawFileAPI() string {
 }
 
 // IsGitProviderRepo checks if the url matches a repo from a supported git provider
-func (g *Url) IsGitProviderRepo() bool {
+func (g *GitUrl) IsGitProviderRepo() bool {
 	switch g.Host {
 	case GitHubHost, RawGitHubHost, GitLabHost, BitbucketHost:
 		return true

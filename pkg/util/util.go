@@ -1100,7 +1100,7 @@ func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
 		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
 	}, Timeout: HTTPRequestResponseTimeout}
 
-	var g git.Url
+	var g git.GitUrl
 	var err error
 
 	if IsGitProviderRepo(params.URL) {
@@ -1113,7 +1113,7 @@ func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
 	return downloadInMemoryWithClient(params, httpClient, g)
 }
 
-func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g git.Url) ([]byte, error) {
+func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g git.GitUrl) ([]byte, error) {
 	var url string
 	url = params.URL
 	req, err := http.NewRequest("GET", url, nil)
@@ -1128,6 +1128,7 @@ func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient,
 			return nil, err
 		}
 		if !g.IsPublic(params.Timeout) {
+			// check that the token is valid before adding to the header
 			err = g.SetToken(params.Token, params.Timeout)
 			if err != nil {
 				return nil, err

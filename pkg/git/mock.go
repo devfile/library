@@ -44,30 +44,43 @@ var mockExecute = func(baseDir string, cmd CommandType, args ...string) ([]byte,
 			u, _ := url.Parse(args[1])
 			password, hasPassword := u.User.Password()
 
+			resourceFile, err := os.Create(filepath.Clean(baseDir) + "/resource.file")
+			if err != nil {
+				return nil, fmt.Errorf("failed to create test resource: %v", err)
+			}
+
 			// private repository
 			if hasPassword {
 				switch password {
 				case "valid-token":
-					_, err := os.Create(filepath.Clean(baseDir) + "/private-repo-resource.txt")
+					_, err := resourceFile.WriteString("private repo\n")
 					if err != nil {
-						return nil, fmt.Errorf("failed to create test resource: %v", err)
+						return nil, fmt.Errorf("failed to write to test resource: %v", err)
 					}
-					return []byte("test"), nil
+					return []byte(""), nil
 				default:
 					return []byte(""), fmt.Errorf("not a valid token")
 				}
 			}
-			// public repository
-			_, err := os.Create(filepath.Clean(baseDir) + "/public-repo-resource.txt")
+
+			_, err = resourceFile.WriteString("public repo\n")
 			if err != nil {
-				return nil, fmt.Errorf("failed to create test resource: %v", err)
+				return nil, fmt.Errorf("failed to write to test resource: %v", err)
 			}
-			return []byte("test"), nil
+			return []byte(""), nil
 		}
 
 		if len(args) > 0 && args[0] == "switch" {
 			revision := strings.TrimPrefix(args[2], "origin/")
 			if revision != "invalid-revision" {
+				resourceFile, err := os.OpenFile(filepath.Clean(baseDir)+"/resource.file", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+				if err != nil {
+					return nil, fmt.Errorf("failed to open test resource: %v", err)
+				}
+				_, err = resourceFile.WriteString("git switched")
+				if err != nil {
+					return nil, fmt.Errorf("failed to write to test resource: %v", err)
+				}
 				return []byte("git switched to revision"), nil
 			}
 			return []byte(""), fmt.Errorf("failed to switch revision")
