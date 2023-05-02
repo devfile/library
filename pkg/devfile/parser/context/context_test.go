@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,6 +81,20 @@ func TestPopulateFromInvalidURL(t *testing.T) {
 			assert.Regexp(t, expectError, err.Error(), "TestPopulateFromInvalidURL(): Error message should match")
 		}
 	})
+}
+
+func TestNewURLDevfileCtx(t *testing.T) {
+	var (
+		token = "fake-token"
+		url   = "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml"
+	)
+	{
+		d := NewURLDevfileCtx(url)
+		assert.Equal(t, "https://github.com/devfile/registry/blob/main/stacks/go/2.0.0/devfile.yaml", d.GetURL())
+		assert.Equal(t, "", d.GetToken())
+		d.SetToken(token)
+		assert.Equal(t, "fake-token", d.GetToken())
+	}
 }
 
 func invalidJsonRawContent200() []byte {

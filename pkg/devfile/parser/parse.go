@@ -19,6 +19,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/devfile/library/v2/pkg/git"
+	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -45,6 +47,57 @@ import (
 	versionpkg "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
+
+// downloadGitRepoResources is exposed as a global variable for the purpose of running mock tests
+var downloadGitRepoResources = func(url string, destDir string, httpTimeout *int, token string) error {
+	var returnedErr error
+
+	gitUrl, err := git.NewGitUrlWithURL(url)
+	if err != nil {
+		return err
+	}
+
+	if gitUrl.IsGitProviderRepo() {
+		if !gitUrl.IsFile || gitUrl.Revision == "" || !strings.Contains(gitUrl.Path, OutputDevfileYamlPath) {
+			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url)
+		}
+
+		stackDir, err := os.MkdirTemp("", fmt.Sprintf("git-resources"))
+		if err != nil {
+			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
+		}
+
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				returnedErr = multierror.Append(returnedErr, err)
+			}
+		}(stackDir)
+
+		if !gitUrl.IsPublic(httpTimeout) {
+			err = gitUrl.SetToken(token, httpTimeout)
+			if err != nil {
+				returnedErr = multierror.Append(returnedErr, err)
+				return returnedErr
+			}
+		}
+
+		err = gitUrl.CloneGitRepo(stackDir)
+		if err != nil {
+			returnedErr = multierror.Append(returnedErr, err)
+			return returnedErr
+		}
+
+		dir := path.Dir(path.Join(stackDir, gitUrl.Path))
+		err = git.CopyAllDirFiles(dir, destDir)
+		if err != nil {
+			returnedErr = multierror.Append(returnedErr, err)
+			return returnedErr
+		}
+	}
+
+	return nil
+}
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
@@ -97,6 +150,8 @@ type ParserArgs struct {
 	// RegistryURLs is a list of registry hosts which parser should pull parent devfile from.
 	// If registryUrl is defined in devfile, this list will be ignored.
 	RegistryURLs []string
+	// Token is a GitHub, GitLab, or Bitbucket personal access token used with a private git repo URL
+	Token string
 	// DefaultNamespace is the default namespace to use
 	// If namespace is defined under devfile's parent kubernetes object, this namespace will be ignored.
 	DefaultNamespace string
@@ -127,6 +182,10 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
 	} else {
 		return d, errors.Wrap(err, "the devfile source is not provided")
+	}
+
+	if args.Token != "" {
+		d.Ctx.SetToken(args.Token)
 	}
 
 	tool := resolverTools{
@@ -431,44 +490,22 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			return DevfileObj{}, fmt.Errorf("failed to resolve parent uri, devfile context is missing absolute url and path to devfile. %s", resolveImportReference(importReference))
 		}
 
+		token := curDevfileCtx.GetToken()
 		d.Ctx = devfileCtx.NewURLDevfileCtx(newUri)
-		if strings.Contains(newUri, "raw.githubusercontent.com") {
-			urlComponents, err := util.GetGitUrlComponentsFromRaw(newUri)
-			if err != nil {
-				return DevfileObj{}, err
-			}
-			destDir := path.Dir(curDevfileCtx.GetAbsPath())
-			err = getResourcesFromGit(urlComponents, destDir)
-			if err != nil {
-				return DevfileObj{}, err
-			}
+		if token != "" {
+			d.Ctx.SetToken(token)
+		}
+
+		destDir := path.Dir(curDevfileCtx.GetAbsPath())
+		err = downloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
+		if err != nil {
+			return DevfileObj{}, err
 		}
 	}
 	importReference.Uri = newUri
 	newResolveCtx := resolveCtx.appendNode(importReference)
 
 	return populateAndParseDevfile(d, newResolveCtx, tool, true)
-}
-
-func getResourcesFromGit(gitUrlComponents map[string]string, destDir string) error {
-	stackDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("git-resources"))
-	if err != nil {
-		return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
-	}
-	defer os.RemoveAll(stackDir)
-
-	err = util.CloneGitRepo(gitUrlComponents, stackDir)
-	if err != nil {
-		return err
-	}
-
-	dir := path.Dir(path.Join(stackDir, gitUrlComponents["file"]))
-	err = util.CopyAllDirFiles(dir, destDir)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
@@ -839,6 +876,9 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 			newUri = uri
 		}
 		params := util.HTTPRequestParams{URL: newUri}
+		if d.GetToken() != "" {
+			params.Token = d.GetToken()
+		}
 		data, err = util.DownloadInMemory(params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting kubernetes resources definition information")

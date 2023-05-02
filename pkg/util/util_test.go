@@ -1,5 +1,5 @@
 //
-// Copyright 2021-2022 Red Hat, Inc.
+// Copyright 2021-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package util
 import (
 	"fmt"
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"net"
@@ -936,6 +938,64 @@ func TestDownloadFile(t *testing.T) {
 	}
 }
 
+func TestDownloadInMemory(t *testing.T) {
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Send response to be tested
+		_, err := rw.Write([]byte("OK"))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+
+	// Close the server when test finishes
+	defer server.Close()
+
+	tests := []struct {
+		name    string
+		url     string
+		token   string
+		want    []byte
+		wantErr string
+	}{
+		{
+			name: "Case 1: Input url is valid",
+			url:  server.URL,
+			want: []byte{79, 75},
+		},
+		{
+			name:    "Case 2: Input url is invalid",
+			url:     "invalid",
+			wantErr: "unsupported protocol scheme",
+		},
+		{
+			name:    "Case 3: Git provider with invalid url",
+			url:     "github.com/mike-hoang/invalid-repo",
+			token:   "",
+			want:    []byte(nil),
+			wantErr: "failed to parse git repo. error:*",
+		},
+		{
+			name:    "Case 4: Public Github repo with missing blob",
+			url:     "https://github.com/devfile/library/main/README.md",
+			wantErr: "failed to parse git repo. error: url path to directory or file should contain 'tree' or 'blob'*",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := DownloadInMemory(HTTPRequestParams{URL: tt.url, Token: tt.token})
+			if (err != nil) != (tt.wantErr != "") {
+				t.Errorf("Failed to download file with error: %s", err)
+			} else if err == nil && !reflect.DeepEqual(data, tt.want) {
+				t.Errorf("Expected: %v, received: %v, difference at %v", tt.want, string(data[:]), pretty.Compare(tt.want, data))
+			} else if err != nil {
+				assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
+			}
+		})
+	}
+}
+
 func TestValidateK8sResourceName(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -1012,85 +1072,6 @@ func TestValidateFile(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("Got error: %t, want error: %t", gotErr, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestGetGitUrlComponentsFromRaw(t *testing.T) {
-	validRawGitUrl := "https://raw.githubusercontent.com/username/project/branch/file/path"
-	invalidUrl := "github.com/not/valid/url"
-
-	tests := []struct {
-		name    string
-		url     string
-		wantErr bool
-	}{
-		{
-			name:    "should be able to get git url components",
-			url:     validRawGitUrl,
-			wantErr: false,
-		},
-		{
-			name:    "should fail with invalid raw git url",
-			url:     invalidUrl,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetGitUrlComponentsFromRaw(tt.url)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
-			}
-		})
-	}
-}
-
-func TestCloneGitRepo(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	invalidGitUrl := map[string]string{
-		"username": "devfile",
-		"project":  "nonexistent",
-		"branch":   "nonexistent",
-	}
-	validGitUrl := map[string]string{
-		"username": "devfile",
-		"project":  "library",
-		"branch":   "main",
-	}
-
-	tests := []struct {
-		name             string
-		gitUrlComponents map[string]string
-		destDir          string
-		wantErr          bool
-	}{
-		{
-			name:             "should fail with invalid git url",
-			gitUrlComponents: invalidGitUrl,
-			destDir:          filepath.Join(os.TempDir(), "nonexistent"),
-			wantErr:          true,
-		},
-		{
-			name:             "should be able to clone valid git url",
-			gitUrlComponents: validGitUrl,
-			destDir:          tempDir,
-			wantErr:          false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := CloneGitRepo(tt.gitUrlComponents, tt.destDir)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Expected error: %t, got error: %t", tt.wantErr, err)
 			}
 		})
 	}
