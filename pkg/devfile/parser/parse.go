@@ -181,7 +181,8 @@ type ParserArgs struct {
 // all container and Kubernetes/OpenShift components matching a relative image name (say "my-image-name") of an Image component
 // will be replaced in the resulting Devfile by: "<local-registry>/<user-org>/<devfile-name>-my-image-name:some-dynamic-unique-tag".
 type ImageSelectorArgs struct {
-	// Registry is the registry base path under which images matching selectors will be built and pushed to.
+	// Registry is the registry base path under which images matching selectors will be built and pushed to. Required.
+	//
 	// Example: <local-registry>/<user-org>
 	Registry string
 	// Tag represents a tag identifier under which images matching selectors will be built and pushed to.
@@ -192,6 +193,10 @@ type ImageSelectorArgs struct {
 // ParseDevfile func populates the devfile data, parses and validates the devfile integrity.
 // Creates devfile context and runtime objects
 func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
+	if args.ImageNamesAsSelector != nil && strings.TrimSpace(args.ImageNamesAsSelector.Registry) == "" {
+		return DevfileObj{}, errors.New("registry is mandatory when setting ImageNamesAsSelector in the parser args")
+	}
+
 	if args.Data != nil {
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(args.Data)
 		if err != nil {
