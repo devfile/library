@@ -19,8 +19,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
-	"github.com/devfile/library/v2/pkg/git"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -31,6 +29,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/library/v2/pkg/git"
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfilepkg "github.com/devfile/api/v2/pkg/devfile"
@@ -3338,6 +3339,7 @@ commands:
 	tests := []struct {
 		name             string
 		parserArgs       ParserArgs
+		wantErr          bool
 		wantBoolPropsSet []setFields
 	}{
 		{
@@ -3380,12 +3382,32 @@ commands:
 				{compProp: compBooleanProp{prop: "Secure", name: "kubernetes-deploy", value: nil, compType: v1.KubernetesComponentType}},          //unset property should be nil
 			},
 		},
+		{
+			name: "error if ImageNamesAsSelector is non-nil but ImageNamesAsSelector.Registry is empty",
+			parserArgs: ParserArgs{
+				Data:                          []byte(mainDevfile),
+				ConvertKubernetesContentInUri: &isFalse, //this is a workaround for a known parsing issue that requires support for downloading the deploy.yaml https://github.com/devfile/api/issues/1073
+				ImageNamesAsSelector:          &ImageSelectorArgs{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error if ImageNamesAsSelector is non-nil but ImageNamesAsSelector.Registry is blank",
+			parserArgs: ParserArgs{
+				Data:                          []byte(mainDevfile),
+				ConvertKubernetesContentInUri: &isFalse, //this is a workaround for a known parsing issue that requires support for downloading the deploy.yaml https://github.com/devfile/api/issues/1073
+				ImageNamesAsSelector: &ImageSelectorArgs{
+					Registry: "  \t \n",
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d, err := ParseDevfile(tt.parserArgs)
-			if err != nil {
-				t.Errorf("Problems parsing devfile")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("unexpected err when parsing devfile: error=%v, wantErr =%v", err, tt.wantErr)
 			}
 			for i, _ := range tt.wantBoolPropsSet {
 				wantProps := tt.wantBoolPropsSet[i]

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/devfile/api/v2 v2.2.1-alpha.0.20230413012049-a6c32fca0dbd
 	github.com/devfile/registry-support/registry-library v0.0.0-20221018213054-47b3ffaeadba
+	github.com/distribution/distribution/v3 v3.0.0-20211118083504-a29a3c99a684
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-git/go-git/v5 v5.4.2
