@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/devfile/library/v2/pkg/util"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -2862,7 +2863,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				tt.args.devFileObj.Data.AddComponents(plugincomp)
 
 			}
-			downloadGitRepoResources = mockDownloadGitRepoResources(&git.GitUrl{}, "")
+			downloadGitRepoResources = mockDownloadGitRepoResources("", &git.GitUrl{}, "")
 			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{})
 
 			// Unexpected error
@@ -3082,7 +3083,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 			httpTimeout: &httpTimeout,
 		}
 
-		downloadGitRepoResources = mockDownloadGitRepoResources(&git.GitUrl{}, "")
+		downloadGitRepoResources = mockDownloadGitRepoResources("", &git.GitUrl{}, "")
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
 		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> name: testcrd, namespace: defaultnamespace -> uri: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
 		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
@@ -4174,7 +4175,7 @@ func Test_parseFromURI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			downloadGitRepoResources = mockDownloadGitRepoResources(&git.GitUrl{}, "")
+			downloadGitRepoResources = mockDownloadGitRepoResources("", &git.GitUrl{}, "")
 			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{})
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromURI() unexpected error: %v, wantErr %v", err, tt.wantErr)
@@ -4227,12 +4228,15 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		IsFile:   true,
 	}
 
+	validUrl := "https://raw.githubusercontent.com/devfile/library/main/devfile.yaml"
+
 	invalidTokenError := "failed to clone repo with token, ensure that the url and token is correct"
 	invalidGitSwitchError := "failed to switch repo to revision*"
 	invalidDevfilePathError := "error getting devfile from url: failed to retrieve*"
 
 	tests := []struct {
 		name                string
+		url                 string
 		gitUrl              *git.GitUrl
 		token               string
 		destDir             string
@@ -4244,6 +4248,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 	}{
 		{
 			name:   "private parent devfile",
+			url:    validUrl,
 			gitUrl: validGitUrl,
 			token:  validToken,
 			importReference: v1.ImportReference{
@@ -4257,6 +4262,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		},
 		{
 			name:   "public parent devfile",
+			url:    validUrl,
 			gitUrl: validGitUrl,
 			token:  "",
 			importReference: v1.ImportReference{
@@ -4271,6 +4277,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		{
 			// a valid parent url must contain a revision
 			name: "private parent devfile without a revision",
+			url:  "https://raw.githubusercontent.com/devfile/library/devfile.yaml",
 			gitUrl: &git.GitUrl{
 				Protocol: "https",
 				Host:     "raw.githubusercontent.com",
@@ -4290,7 +4297,21 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			wantResources: []string{},
 		},
 		{
+			name:   "public parent devfile that is not from a git provider",
+			url:    "http://localhost:5000/devfile.yaml",
+			gitUrl: &git.GitUrl{},
+			token:  "",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: server.URL,
+				},
+			},
+			wantDevFile:   minimalDevfile,
+			wantResources: []string{},
+		},
+		{
 			name: "public parent devfile with no devfile path",
+			url:  "https://github.com/devfile/library",
 			gitUrl: &git.GitUrl{
 				Protocol: "https",
 				Host:     "github.com",
@@ -4309,6 +4330,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		},
 		{
 			name: "public parent devfile with invalid devfile path",
+			url:  "https://raw.githubusercontent.com/devfile/library/main/text.txt",
 			gitUrl: &git.GitUrl{
 				Protocol: "https",
 				Host:     "raw.githubusercontent.com",
@@ -4329,6 +4351,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		},
 		{
 			name:   "private parent devfile with invalid token",
+			url:    validUrl,
 			gitUrl: validGitUrl,
 			token:  invalidToken,
 			importReference: v1.ImportReference{
@@ -4341,6 +4364,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		},
 		{
 			name: "private parent devfile with invalid revision",
+			url:  "https://raw.githubusercontent.com/devfile/library/invalid-revision/devfile.yaml",
 			gitUrl: &git.GitUrl{
 				Protocol: "https",
 				Host:     "raw.githubusercontent.com",
@@ -4371,7 +4395,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			}
 
 			// tt.gitUrl is the parent devfile URL
-			downloadGitRepoResources = mockDownloadGitRepoResources(tt.gitUrl, tt.token)
+			downloadGitRepoResources = mockDownloadGitRepoResources(tt.url, tt.gitUrl, tt.token)
 			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{})
 
 			// validate even if we want an error; check that no files are copied to destDir
@@ -4422,20 +4446,21 @@ func validateGitResourceFunctions(t *testing.T, wantFiles []string, wantResource
 	}
 }
 
-func mockDownloadGitRepoResources(gURL *git.GitUrl, mockToken string) func(url string, destDir string, httpTimeout *int, token string) error {
+func mockDownloadGitRepoResources(uri string, gURL *git.GitUrl, mockToken string) func(url string, destDir string, httpTimeout *int, token string) error {
 	return func(url string, destDir string, httpTimeout *int, token string) error {
-		// this converts the real git URL to a mock URL
-		mockGitUrl := git.MockGitUrl{
-			Protocol: gURL.Protocol,
-			Host:     gURL.Host,
-			Owner:    gURL.Owner,
-			Repo:     gURL.Repo,
-			Revision: gURL.Revision,
-			Path:     gURL.Path,
-			IsFile:   gURL.IsFile,
-		}
 
-		if mockGitUrl.IsGitProviderRepo() {
+		if util.IsGitProviderRepo(uri) {
+			// this converts the real git URL to a mock URL
+			mockGitUrl := git.MockGitUrl{
+				Protocol: gURL.Protocol,
+				Host:     gURL.Host,
+				Owner:    gURL.Owner,
+				Repo:     gURL.Repo,
+				Revision: gURL.Revision,
+				Path:     gURL.Path,
+				IsFile:   gURL.IsFile,
+			}
+
 			if !mockGitUrl.IsFile || mockGitUrl.Revision == "" || !strings.Contains(mockGitUrl.Path, OutputDevfileYamlPath) {
 				return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url+"/"+mockGitUrl.Path)
 			}
@@ -4466,6 +4491,7 @@ func mockDownloadGitRepoResources(gURL *git.GitUrl, mockToken string) func(url s
 			if err != nil {
 				return err
 			}
+
 		}
 
 		return nil
@@ -4862,7 +4888,7 @@ func Test_DownloadGitRepoResources(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			destDir := t.TempDir()
-			downloadGitRepoResources = mockDownloadGitRepoResources(&tt.gitUrl, tt.token)
+			downloadGitRepoResources = mockDownloadGitRepoResources(tt.url, &tt.gitUrl, tt.token)
 			err := downloadGitRepoResources(tt.url, destDir, &httpTimeout, tt.token)
 			if (err != nil) && (tt.wantErr != true) {
 				t.Errorf("Unexpected error = %v", err)
