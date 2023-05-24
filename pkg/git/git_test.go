@@ -400,8 +400,6 @@ func Test_IsPublic(t *testing.T) {
 }
 
 func Test_CloneGitRepo(t *testing.T) {
-	tempInvalidDir := t.TempDir()
-
 	invalidGitUrl := GitUrl{
 		Protocol: "",
 		Host:     "",
@@ -419,9 +417,42 @@ func Test_CloneGitRepo(t *testing.T) {
 		token:    "fake-github-token",
 	}
 
+	validGitHubRepoBranch := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "devfile-resources",
+		Repo:     "python-src-docker",
+		Revision: "testbranch",
+	}
+
+	validGitHubRepoCommit := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "devfile-resources",
+		Repo:     "python-src-docker",
+		Revision: "bb00eeffc638f2657a0c752ef934a9b6dc87e2c1",
+	}
+
+	validGitHubRepoInvalidCommit := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "devfile-resources",
+		Repo:     "python-src-docker",
+		Revision: "lkjatbasdlkfja0c752ef93faskj4bowdf1",
+	}
+
+	validGitHubRepoTag := GitUrl{
+		Protocol: "https",
+		Host:     "github.com",
+		Owner:    "OpenLiberty",
+		Repo:     "devfile-stack",
+		Revision: "maven-0.7.0",
+	}
+
 	privateRepoBadTokenErr := "failed to clone repo with token*"
 	publicRepoInvalidUrlErr := "failed to clone repo without a token"
 	missingDestDirErr := "failed to clone repo, destination directory*"
+	switchRevisionErr := "failed to switch repo to revision*"
 
 	tests := []struct {
 		name    string
@@ -438,19 +469,43 @@ func Test_CloneGitRepo(t *testing.T) {
 		{
 			name:    "should fail with invalid git url",
 			gitUrl:  invalidGitUrl,
-			destDir: tempInvalidDir,
+			destDir: "",
 			wantErr: publicRepoInvalidUrlErr,
 		},
 		{
 			name:    "should fail to clone invalid private git url with a bad token",
 			gitUrl:  invalidPrivateGitHubRepo,
-			destDir: tempInvalidDir,
+			destDir: "",
 			wantErr: privateRepoBadTokenErr,
+		},
+		{
+			name:    "should clone valid git url with branch revision",
+			gitUrl:  validGitHubRepoBranch,
+			destDir: "",
+		},
+		{
+			name:    "should clone valid git url with commit revision",
+			gitUrl:  validGitHubRepoCommit,
+			destDir: "",
+		},
+		{
+			name:    "should clone valid git url with tag revision",
+			gitUrl:  validGitHubRepoTag,
+			destDir: "",
+		},
+		{
+			name:    "should fail to clone valid git url with invalid commit",
+			gitUrl:  validGitHubRepoInvalidCommit,
+			destDir: "",
+			wantErr: switchRevisionErr,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.destDir == "" {
+				tt.destDir = t.TempDir()
+			}
 			err := tt.gitUrl.CloneGitRepo(tt.destDir)
 			if (err != nil) != (tt.wantErr != "") {
 				t.Errorf("Unxpected error: %t, want: %v", err, tt.wantErr)
