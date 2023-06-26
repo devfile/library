@@ -257,6 +257,11 @@ const JsonSchema220 = `{
           },
           {
             "required": [
+              "compose"
+            ]
+          },
+          {
+            "required": [
               "openshift"
             ]
           },
@@ -276,6 +281,22 @@ const JsonSchema220 = `{
             "description": "Map of implementation-dependant free-form YAML attributes.",
             "type": "object",
             "additionalProperties": true
+          },
+          "compose": {
+            "description": "Allows importing docker-compose files defined in a given manifest. This allows the reuse of docker-compose files used to define configuration for managing multiple containers at the same time.",
+            "type": "object",
+            "properties": {
+              "inlined": {
+                "type": "string"
+              },
+              "locationType": {
+                "type": "string"
+              },
+              "uri": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           },
           "container": {
             "description": "Allows adding and configuring devworkspace-related containers",
@@ -1149,6 +1170,11 @@ const JsonSchema220 = `{
               },
               {
                 "required": [
+                  "compose"
+                ]
+              },
+              {
+                "required": [
                   "openshift"
                 ]
               },
@@ -1168,6 +1194,22 @@ const JsonSchema220 = `{
                 "description": "Map of implementation-dependant free-form YAML attributes.",
                 "type": "object",
                 "additionalProperties": true
+              },
+              "compose": {
+                "description": "Allows importing docker-compose files defined in a given manifest. This allows the reuse of docker-compose files used to define configuration for managing multiple containers at the same time.",
+                "type": "object",
+                "properties": {
+                  "inlined": {
+                    "type": "string"
+                  },
+                  "locationType": {
+                    "type": "string"
+                  },
+                  "uri": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               },
               "container": {
                 "description": "Allows adding and configuring devworkspace-related containers",
@@ -2063,5 +2105,4 @@ const JsonSchema220 = `{
     }
   },
   "additionalProperties": false
-}
-`
+}`
