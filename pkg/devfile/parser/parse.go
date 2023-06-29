@@ -19,14 +19,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devfile/library/v2/pkg/git"
-	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"reflect"
 	"strings"
+
+	"github.com/devfile/library/v2/pkg/git"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
@@ -167,6 +168,8 @@ type ParserArgs struct {
 	// ImageNamesAsSelector sets the information that will be used to handle image names as selectors when parsing the Devfile.
 	// Not setting this field or setting it to nil disables the logic of handling image names as selectors.
 	ImageNamesAsSelector *ImageSelectorArgs
+	// DownloadGitResources downloads the resources from Git repository if true
+	DownloadGitResources *bool
 }
 
 // ImageSelectorArgs defines the structure to leverage for using image names as selectors after parsing the Devfile.
@@ -214,12 +217,18 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		d.Ctx.SetToken(args.Token)
 	}
 
+	downloadGitResources := true
+	if args.DownloadGitResources != nil {
+		downloadGitResources = *args.DownloadGitResources
+	}
+
 	tool := resolverTools{
-		defaultNamespace: args.DefaultNamespace,
-		registryURLs:     args.RegistryURLs,
-		context:          args.Context,
-		k8sClient:        args.K8sClient,
-		httpTimeout:      args.HTTPTimeout,
+		defaultNamespace:     args.DefaultNamespace,
+		registryURLs:         args.RegistryURLs,
+		context:              args.Context,
+		k8sClient:            args.K8sClient,
+		httpTimeout:          args.HTTPTimeout,
+		downloadGitResources: downloadGitResources,
 	}
 
 	flattenedDevfile := true
@@ -273,6 +282,8 @@ type resolverTools struct {
 	k8sClient client.Client
 	// httpTimeout is the timeout value in seconds passed in from the client.
 	httpTimeout *int
+	// downloadGitResources downloads the resources from Git repository if true
+	downloadGitResources bool
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -522,10 +533,12 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 			d.Ctx.SetToken(token)
 		}
 
-		destDir := path.Dir(curDevfileCtx.GetAbsPath())
-		err = downloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
-		if err != nil {
-			return DevfileObj{}, err
+		if tool.downloadGitResources {
+			destDir := path.Dir(curDevfileCtx.GetAbsPath())
+			err = downloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
+			if err != nil {
+				return DevfileObj{}, err
+			}
 		}
 	}
 	importReference.Uri = newUri
