@@ -218,6 +218,14 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    ...
    ```
 
+10. By default, the library downloads the Git repository resources associated with the Git URL that is mentioned in a devfile uri field. To turn off the download, pass in the `DownloadGitResources` property in the parser argument
+   ```go
+   downloadGitResources := false
+   parserArgs := parser.ParserArgs{
+		DownloadGitResources:               &downloadGitResources,
+   }
+   ```
+
 ## Projects using devfile/library
 
 The following projects are consuming this library as a Golang dependency

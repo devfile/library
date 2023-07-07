@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/devfile/library/v2/pkg/util"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -30,6 +29,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/devfile/library/v2/pkg/util"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/v2/pkg/git"
@@ -4235,16 +4236,17 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 	invalidDevfilePathError := "error getting devfile from url: failed to retrieve*"
 
 	tests := []struct {
-		name                string
-		url                 string
-		gitUrl              *git.GitUrl
-		token               string
-		destDir             string
-		importReference     v1.ImportReference
-		wantDevFile         DevfileObj
-		wantError           *string
-		wantResources       []string
-		wantResourceContent []byte
+		name                 string
+		url                  string
+		gitUrl               *git.GitUrl
+		token                string
+		destDir              string
+		importReference      v1.ImportReference
+		wantDevFile          DevfileObj
+		wantError            *string
+		wantResources        []string
+		wantResourceContent  []byte
+		downloadGitResources bool
 	}{
 		{
 			name:   "private parent devfile",
@@ -4256,9 +4258,10 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantDevFile:         minimalDevfile,
-			wantResources:       []string{"resource.file"},
-			wantResourceContent: []byte("private repo\ngit switched"),
+			wantDevFile:          minimalDevfile,
+			wantResources:        []string{"resource.file"},
+			wantResourceContent:  []byte("private repo\ngit switched"),
+			downloadGitResources: true,
 		},
 		{
 			name:   "public parent devfile",
@@ -4270,9 +4273,22 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantDevFile:         minimalDevfile,
-			wantResources:       []string{"resource.file"},
-			wantResourceContent: []byte("public repo\ngit switched"),
+			wantDevFile:          minimalDevfile,
+			wantResources:        []string{"resource.file"},
+			wantResourceContent:  []byte("public repo\ngit switched"),
+			downloadGitResources: true,
+		},
+		{
+			name:   "public parent devfile with download turned off",
+			url:    validUrl,
+			gitUrl: validGitUrl,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: server.URL,
+				},
+			},
+			wantDevFile:          minimalDevfile,
+			downloadGitResources: false,
 		},
 		{
 			// a valid parent url must contain a revision
@@ -4293,8 +4309,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:     &invalidDevfilePathError,
-			wantResources: []string{},
+			wantError:            &invalidDevfilePathError,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 		{
 			name:   "public parent devfile that is not from a git provider",
@@ -4306,8 +4323,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantDevFile:   minimalDevfile,
-			wantResources: []string{},
+			wantDevFile:          minimalDevfile,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 		{
 			name: "public parent devfile with no devfile path",
@@ -4325,8 +4343,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:     &invalidDevfilePathError,
-			wantResources: []string{},
+			wantError:            &invalidDevfilePathError,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 		{
 			name: "public parent devfile with invalid devfile path",
@@ -4346,8 +4365,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:     &invalidDevfilePathError,
-			wantResources: []string{},
+			wantError:            &invalidDevfilePathError,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 		{
 			name:   "private parent devfile with invalid token",
@@ -4359,8 +4379,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:     &invalidTokenError,
-			wantResources: []string{},
+			wantError:            &invalidTokenError,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 		{
 			name: "private parent devfile with invalid revision",
@@ -4380,8 +4401,9 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:     &invalidGitSwitchError,
-			wantResources: []string{},
+			wantError:            &invalidGitSwitchError,
+			wantResources:        []string{},
+			downloadGitResources: true,
 		},
 	}
 
@@ -4396,13 +4418,13 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 
 			// tt.gitUrl is the parent devfile URL
 			downloadGitRepoResources = mockDownloadGitRepoResources(tt.url, tt.gitUrl, tt.token)
-			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{})
+			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources})
 
 			// validate even if we want an error; check that no files are copied to destDir
 			validateGitResourceFunctions(t, tt.wantResources, tt.wantResourceContent, destDir)
 
 			if (err != nil) != (tt.wantError != nil) {
-				t.Errorf("Unexpected error: %v, wantErr %v", err, tt.wantError)
+				t.Errorf("Unexpected error: %v, wantErr %v", err, *tt.wantError)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
 				t.Errorf("Wanted: %v, got: %v, difference at %v", tt.wantDevFile, got, pretty.Compare(tt.wantDevFile, got))
 			} else if err != nil {
