@@ -19,14 +19,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devfile/library/v2/pkg/git"
-	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/devfile/library/v2/pkg/git"
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
@@ -50,12 +53,12 @@ import (
 var downloadGitRepoResources = func(url string, destDir string, httpTimeout *int, token string) error {
 	var returnedErr error
 
-	gitUrl, err := git.NewGitUrlWithURL(url)
-	if err != nil {
-		return err
-	}
+	if util.IsGitProviderRepo(url) {
+		gitUrl, err := git.NewGitUrlWithURL(url)
+		if err != nil {
+			return err
+		}
 
-	if gitUrl.IsGitProviderRepo() {
 		if !gitUrl.IsFile || gitUrl.Revision == "" || !strings.Contains(gitUrl.Path, OutputDevfileYamlPath) {
 			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url)
 		}
@@ -167,6 +170,8 @@ type ParserArgs struct {
 	// ImageNamesAsSelector sets the information that will be used to handle image names as selectors when parsing the Devfile.
 	// Not setting this field or setting it to nil disables the logic of handling image names as selectors.
 	ImageNamesAsSelector *ImageSelectorArgs
+	//ConvertDockerComposeToKubernetes defines if there is a Docker Compose component identified to be converted to a kubernetes representation (true) or not (false).
+	ConvertDockerComposeToKubernetes *bool
 }
 
 // ImageSelectorArgs defines the structure to leverage for using image names as selectors after parsing the Devfile.
@@ -252,6 +257,18 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	if convertUriToInlined {
 		d.Ctx.SetConvertUriToInlined(true)
 		err = parseKubeResourceFromURI(d)
+		if err != nil {
+			return d, err
+		}
+	}
+	convertDockerComposeToKubernetes := true
+	if args.ConvertDockerComposeToKubernetes != nil {
+		convertDockerComposeToKubernetes = *args.ConvertDockerComposeToKubernetes
+	}
+
+	if convertDockerComposeToKubernetes {
+		//d.Ctx.ConvertDockerComposeToKubernetes(true)
+		err = parseDockerCompose(d)
 		if err != nil {
 			return d, err
 		}
@@ -914,3 +931,108 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 	}
 	return data, nil
 }
+
+// Write Docker-Compose content to Temporary directory
+func WriteContentToTempDir(fs filesystem.Filesystem, content string) (string, error) {
+	tempDir, err := fs.TempDir("", "temp")
+	if err != nil {
+		return "", err
+	}
+	filePath := filepath.Join(tempDir, "/docker-compose.yaml")
+	file, err := fs.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	_, err = file.WriteString(content)
+	if err != nil {
+		return "", err
+	}
+
+	return filePath, err
+
+}
+
+// Identify and iterate through each occurence of docker compose component and convert to k8s represenation by convertDockerComposeToK8s function
+func parseDockerCompose(devObj DevfileObj) error {
+	//parse Devfile
+	getDockercomposeOptions := common.DevfileOptions{
+		ComponentOptions: common.ComponentOptions{
+			ComponentType: v1.ComposeComponentType,
+		},
+	}
+	//parse for docker compose components
+	dockercomposeComponents, err := devObj.Data.GetComponents(getDockercomposeOptions)
+	if err != nil {
+		return err
+	}
+	//iterate through each docker compose component
+	for _, dockercomposeComp := range dockercomposeComponents {
+		if dockercomposeComp.Compose != nil {
+			var content string
+			var filePath string
+			//handling inlined content
+
+			if dockercomposeComp.Compose.Inlined != "" {
+				content = dockercomposeComp.Compose.Inlined
+			} else {
+				//handling if path is uri
+				var filepath = dockercomposeComp.Compose.Uri
+				//validating uri
+				err = validation.ValidateURI(filepath)
+				if err != nil {
+					return err
+				}
+				absoluteURL := strings.HasPrefix(filepath, "http://") || strings.HasPrefix(filepath, "https://")
+				var newFilepath string
+				var data []byte
+				//relative path on disk
+				if !absoluteURL && devObj.Ctx.GetAbsPath() != "" {
+					newFilepath = path.Join(path.Dir(devObj.Ctx.GetAbsPath()), filepath)
+					filePath = newFilepath
+				} else if absoluteURL || devObj.Ctx.GetURL() != "" {
+					if devObj.Ctx.GetURL() != "" {
+						// relative path to a URL
+						u, err := url.Parse(devObj.Ctx.GetURL())
+						if err != nil {
+							return err
+						}
+						u.Path = path.Join(path.Dir(u.Path), filepath)
+						newFilepath = u.String()
+					} else {
+						// absolute URL address
+						newFilepath = filepath
+					}
+					params := util.HTTPRequestParams{URL: newFilepath}
+					if devObj.Ctx.GetToken() != "" {
+						params.Token = devObj.Ctx.GetToken()
+					}
+					data, err = util.DownloadInMemory(params)
+					if err != nil {
+						return errors.Wrapf(err, "error getting kubernetes resources definition information")
+					}
+					content = string(data)
+				} else {
+					return fmt.Errorf("error getting kubernetes resources definition information, unable to resolve the file uri: %v", filepath)
+				}
+			}
+			if content != "" {
+				filePath, err = WriteContentToTempDir(devObj.Ctx.GetFs(), content)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = convertDockerComposeToK8s(filePath) //devfile context
+			if err != nil {
+				return errors.Wrapf(err, "failed to convert Docker Compose component to K8s '%s'", dockercomposeComp.Name)
+			}
+		}
+	}
+	return err
+}
+
+//TODO:
+//2) Clean up function - delete dir in file system pkg
+//3) Add kubernetes comps and commands
+//4) Adding set and get functions to devfile context
