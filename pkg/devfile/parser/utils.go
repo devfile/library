@@ -22,6 +22,7 @@ import (
 	devfilev1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/dockercompose"
 )
 
 // GetDeployComponents gets the default deploy command associated components
@@ -110,3 +111,71 @@ func GetImageBuildComponent(devfileData data.DevfileData, deployAssociatedCompon
 
 	return imageBuildComponent, nil
 }
+
+//ConvertDockerComposeToK8s convert Docker Compose to k8
+
+func convertDockerComposeToK8s(path string) error {
+	client, err := dockercompose.NewClient(dockercompose.WithErrorOnWarning())
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+	_, err = client.Convert(dockercompose.ConvertOptions{
+		OutFile:    "temp/",
+		InputFiles: []string{path},
+	})
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+	return nil
+
+}
+
+// func createK8sComponents(devobj DevfileOb, path string) error {
+// 	file, err := filepath.WalkDir("temp", func(path string, info os.FileInfo, err error) error {
+
+// 	}
+
+// 	return nil
+// }
+
+//Using some of this code for the conversion from the docker compose devile to the point of using kubernetes components
+// dir := "services/"
+
+// err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error{
+// 	file_name := path.Base(path)
+// 	name: file_name
+// 	kubernetes:
+// 	if err == nil && !info.IsDir() {
+// 		uri: path} else{
+// 			response, err := http.Get(url)
+// 			uri: response
+// 			if err != nil {
+// 				fmt.Printf("Failed to fetch URL: %s", err)
+
+// 			}
+// 		}
+// 	commands:
+//   	id: deploy-k8s-file_name
+// 	apply:
+// 	  component: file_name
+// 	composite:
+// 	  commands:
+// 		-  deployk8s-file_name
+// 	  group:
+// 		kind: deploy
+// 		isDefault: true
+// 	})
+
+// return nil
+
+// }
+
+// _, err := os.Stat(path)
+
+// // reason for double negative is os.IsExist() would be blind to EMPTY FILE.
+// if !os.IsNotExist(err) {
+// 	return os.Remove(path)
+// }
+// return nil
