@@ -1,4 +1,4 @@
-schemaVersion: 2.2.0-latest
+schemaVersion: 2.2.0
 metadata:
   name: nodejs
   version: 1.0.0
@@ -26,6 +26,24 @@ starterProjects:
       remotes:
         origin: https://github.com/odo-devfiles/nodejs-ex.git
 components:
+  # - name: docker-compose
+  #   compose:
+  #     uri: docker-compose.yaml
+  - kubernetes:
+      inlined: |
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: pi
+        spec:
+          template:
+            spec:
+              containers:
+              - name: job
+                image: myimage
+                command: ["some",  "command"]
+              restartPolicy: Never
+    name: compose
   - name: runtime2
     attributes:
       tool: console-import
@@ -104,3 +122,4 @@ commands:
         kind: test
       workingDir: /project
     id: test2
+

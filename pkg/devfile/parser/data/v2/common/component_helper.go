@@ -48,6 +48,8 @@ func GetComponentType(component v1.Component) (v1.ComponentType, error) {
 		return v1.ImageComponentType, nil
 	case component.Custom != nil:
 		return v1.CustomComponentType, nil
+	case component.Compose != nil:
+		return v1.ComposeComponentType, nil
 
 	default:
 		return "", fmt.Errorf("unknown component type")

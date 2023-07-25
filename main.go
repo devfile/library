@@ -50,8 +50,10 @@ func parserTest() {
 		fmt.Println("parsing devfile from " + os.Args[1])
 
 	} else {
+		trueFlag := true
 		args = parser.ParserArgs{
-			Path: "devfile.yaml",
+			Path:                             "devfile.yaml",
+			ConvertDockerComposeToKubernetes: &trueFlag, //setting flag to true for parser
 		}
 		fmt.Println("parsing devfile from ./devfile.yaml")
 	}
