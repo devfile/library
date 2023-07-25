@@ -21,9 +21,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"github.com/devfile/library/v2/pkg/git"
-	gitpkg "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -43,6 +40,10 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/devfile/library/v2/pkg/git"
+	gitpkg "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
