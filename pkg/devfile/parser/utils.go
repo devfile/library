@@ -17,9 +17,13 @@ package parser
 
 import (
 	"fmt"
+	"os"
+	"path"
 	"reflect"
+	"strings"
 
 	devfilev1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
 	"github.com/devfile/library/v2/pkg/dockercompose"
@@ -114,68 +118,64 @@ func GetImageBuildComponent(devfileData data.DevfileData, deployAssociatedCompon
 
 //ConvertDockerComposeToK8s convert Docker Compose to k8
 
-func convertDockerComposeToK8s(path string) error {
+func convertDockerComposeToK8s(filepath string) (error, string) {
+	currentDir := path.Dir(filepath)
 	client, err := dockercompose.NewClient(dockercompose.WithErrorOnWarning())
 	if err != nil {
-		fmt.Print(err)
-		return err
+		return err, ""
 	}
+
+	outputDir := path.Join(currentDir, "services/")
+	err = os.MkdirAll(outputDir, 0755)
+	if err != nil {
+		return err, ""
+	}
+
 	_, err = client.Convert(dockercompose.ConvertOptions{
-		OutFile:    "temp/",
-		InputFiles: []string{path},
+		OutFile:    outputDir,
+		InputFiles: []string{filepath},
 	})
 	if err != nil {
-		fmt.Print(err)
-		return err
+		return err, ""
 	}
-	return nil
+	return err, outputDir
 
 }
 
-// func createK8sComponents(devobj DevfileOb, path string) error {
-// 	file, err := filepath.WalkDir("temp", func(path string, info os.FileInfo, err error) error {
+//Convert k8s representation to k8s components
 
-// 	}
+func createk8sComponents(devObj *DevfileObj, tempDir string) error {
+	files, err := devObj.Ctx.GetFs().ReadDir(tempDir)
+	if err != nil {
+		return err
+	}
+	var components []devfilev1.Component
 
-// 	return nil
-// }
+	for _, file := range files {
+		filepath := path.Join(tempDir, file.Name())
+		content, err := devObj.Ctx.GetFs().ReadFile(filepath)
+		if err != nil {
+			return err
+		}
+		component := devfilev1.Component{
+			Name: strings.TrimSuffix(file.Name(), path.Ext(file.Name())),
+			ComponentUnion: devfilev1.ComponentUnion{
+				Kubernetes: &devfilev1.KubernetesComponent{
+					K8sLikeComponent: devfilev1.K8sLikeComponent{
+						K8sLikeComponentLocation: devfilev1.K8sLikeComponentLocation{
+							Inlined: string(content),
+						},
+					},
+				},
+			},
+		}
+		if component.Attributes == nil {
+			component.Attributes = attributes.Attributes{}
+		}
+		component.Attributes.PutString(ComposeGeneratedComponentKey, "true")
+		components = append(components, component)
 
-//Using some of this code for the conversion from the docker compose devile to the point of using kubernetes components
-// dir := "services/"
+	}
 
-// err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error{
-// 	file_name := path.Base(path)
-// 	name: file_name
-// 	kubernetes:
-// 	if err == nil && !info.IsDir() {
-// 		uri: path} else{
-// 			response, err := http.Get(url)
-// 			uri: response
-// 			if err != nil {
-// 				fmt.Printf("Failed to fetch URL: %s", err)
-
-// 			}
-// 		}
-// 	commands:
-//   	id: deploy-k8s-file_name
-// 	apply:
-// 	  component: file_name
-// 	composite:
-// 	  commands:
-// 		-  deployk8s-file_name
-// 	  group:
-// 		kind: deploy
-// 		isDefault: true
-// 	})
-
-// return nil
-
-// }
-
-// _, err := os.Stat(path)
-
-// // reason for double negative is os.IsExist() would be blind to EMPTY FILE.
-// if !os.IsNotExist(err) {
-// 	return os.Remove(path)
-// }
-// return nil
+	return devObj.Data.AddComponents(components)
+}
