@@ -70,6 +70,7 @@ func NewDevfileCtx(path string) DevfileCtx {
 func NewURLDevfileCtx(url string) DevfileCtx {
 	return DevfileCtx{
 		url: url,
+		fs:  filesystem.DefaultFs{},
 	}
 }
 

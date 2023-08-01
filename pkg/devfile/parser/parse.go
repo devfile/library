@@ -23,7 +23,7 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
+
 	"reflect"
 	"strings"
 
@@ -507,7 +507,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		newUri = path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri)
 		d.Ctx = devfileCtx.NewDevfileCtx(newUri)
 		if util.ValidateFile(newUri) != nil {
-			return DevfileObj{}, fmt.Errorf("the provided path is not a valid filepath %s", newUri)
+			return DevfileObj{}, fmt.Errorf("the provided path is not a valid fileURI %s", newUri)
 		}
 		srcDir := path.Dir(newUri)
 		destDir := path.Dir(curDevfileCtx.GetAbsPath())
@@ -934,23 +934,28 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 
 // Write Docker-Compose content to Temporary directory
 func WriteContentToTempDir(fs filesystem.Filesystem, content string) (string, error) {
-	tempDir, err := fs.TempDir("", "temp")
+	tempDir, err := fs.TempDir("./", "temp")
 	if err != nil {
 		return "", err
 	}
-	filePath := filepath.Join(tempDir, "/docker-compose.yaml")
+
+	filePath := path.Join(tempDir, "docker-compose.yaml")
+
 	file, err := fs.Create(filePath)
 	if err != nil {
 		return "", err
 	}
+
 	defer file.Close()
+
 	_, err = file.WriteString(content)
 	if err != nil {
 		return "", err
 	}
 
-	return filePath, err
+	//file.Close()
 
+	return filePath, err
 }
 
 // Identify and iterate through each occurence of docker compose component and convert to k8s represenation by convertDockerComposeToK8s function
@@ -977,19 +982,24 @@ func parseDockerCompose(devObj DevfileObj) error {
 				content = dockercomposeComp.Compose.Inlined
 			} else {
 				//handling if path is uri
-				var filepath = dockercomposeComp.Compose.Uri
+				var fileURI = dockercomposeComp.Compose.Uri
 				//validating uri
-				err = validation.ValidateURI(filepath)
+				err = validation.ValidateURI(fileURI)
 				if err != nil {
 					return err
 				}
-				absoluteURL := strings.HasPrefix(filepath, "http://") || strings.HasPrefix(filepath, "https://")
+				absoluteURL := strings.HasPrefix(fileURI, "http://") || strings.HasPrefix(fileURI, "https://")
 				var newFilepath string
 				var data []byte
-				//relative path on disk
 				if !absoluteURL && devObj.Ctx.GetAbsPath() != "" {
-					newFilepath = path.Join(path.Dir(devObj.Ctx.GetAbsPath()), filepath)
-					filePath = newFilepath
+					//relative path on disk
+					newFilepath = path.Join(path.Dir(devObj.Ctx.GetAbsPath()), fileURI)
+					fileContent, err := devObj.Ctx.GetFs().ReadFile(newFilepath)
+					if err != nil {
+						return err
+					}
+					content = string(fileContent)
+
 				} else if absoluteURL || devObj.Ctx.GetURL() != "" {
 					if devObj.Ctx.GetURL() != "" {
 						// relative path to a URL
@@ -997,11 +1007,11 @@ func parseDockerCompose(devObj DevfileObj) error {
 						if err != nil {
 							return err
 						}
-						u.Path = path.Join(path.Dir(u.Path), filepath)
+						u.Path = path.Join(path.Dir(u.Path), fileURI)
 						newFilepath = u.String()
 					} else {
 						// absolute URL address
-						newFilepath = filepath
+						newFilepath = fileURI
 					}
 					params := util.HTTPRequestParams{URL: newFilepath}
 					if devObj.Ctx.GetToken() != "" {
@@ -1013,7 +1023,7 @@ func parseDockerCompose(devObj DevfileObj) error {
 					}
 					content = string(data)
 				} else {
-					return fmt.Errorf("error getting kubernetes resources definition information, unable to resolve the file uri: %v", filepath)
+					return fmt.Errorf("error getting kubernetes resources definition information, unable to resolve the file uri: %v", fileURI)
 				}
 			}
 			if content != "" {
@@ -1023,10 +1033,16 @@ func parseDockerCompose(devObj DevfileObj) error {
 				}
 			}
 
-			err = convertDockerComposeToK8s(filePath) //devfile context
+			err, outputDir := convertDockerComposeToK8s(filePath) //devfile context
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert Docker Compose component to K8s '%s'", dockercomposeComp.Name)
 			}
+
+			err = createk8sComponents(&devObj, outputDir)
+			if err != nil {
+				return errors.Wrapf(err, "failed to convert K8s to components'%s'", dockercomposeComp.Name)
+			}
+
 		}
 	}
 	return err
