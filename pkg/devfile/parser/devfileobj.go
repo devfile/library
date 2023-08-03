@@ -24,6 +24,7 @@ import (
 const (
 	OutputDevfileYamlPath          = "devfile.yaml"
 	K8sLikeComponentOriginalURIKey = "api.devfile.io/k8sLikeComponent-originalURI"
+	ComposeGeneratedComponentKey   = "api.devfile.io/composeGeneratedComponent"
 )
 
 // DevfileObj is the runtime devfile object

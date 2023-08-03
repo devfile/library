@@ -29,21 +29,21 @@ components:
   # - name: docker-compose
   #   compose:
   #     uri: docker-compose.yaml
-  - kubernetes:
-      inlined: |
-        apiVersion: batch/v1
-        kind: Job
-        metadata:
-          name: pi
-        spec:
-          template:
-            spec:
-              containers:
-              - name: job
-                image: myimage
-                command: ["some",  "command"]
-              restartPolicy: Never
-    name: compose
+  # - name: compose
+  #   compose: 
+  #     inlined: |
+  #         version: "2"
+  #         services:
+  #           web:
+  #             image: tuna/docker-counter23
+  #             ports:
+  #               - "5000:5000"
+  #             links:
+  #               - redis
+  #           redis:
+  #             image: redis:3.0
+  #             ports:
+  #               - "6379"
   - name: runtime2
     attributes:
       tool: console-import

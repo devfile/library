@@ -32,5 +32,5 @@ tests/v2/lib-test-coverage.*
 # Release utility changelog files
 CHANGELOG.md
 
-#Running tests 
+#Running tests for docker-compose uri case
 docker-compose.yaml
