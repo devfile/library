@@ -44,7 +44,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
 func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -183,7 +182,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		k8sClient:            args.K8sClient,
 		httpTimeout:          args.HTTPTimeout,
 		downloadGitResources: downloadGitResources,
-		devfileUtilsClient:	  args.DevfileUtilsClient,
+		devfileUtilsClient:   args.DevfileUtilsClient,
 	}
 
 	flattenedDevfile := true
@@ -221,8 +220,6 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		}
 	}
 
-
-
 	return d, err
 }
 
@@ -242,8 +239,7 @@ type resolverTools struct {
 	// downloadGitResources downloads the resources from Git repository if true
 	downloadGitResources bool
 	// devfileUtilsClient exposes the Git Interface to be able to use mock implementation.
-	devfileUtilsClient 	DevfileUtils
-
+	devfileUtilsClient DevfileUtils
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {

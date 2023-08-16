@@ -984,8 +984,8 @@ func TestDownloadInMemory(t *testing.T) {
 		{
 			name:    "Case 5: Public Github repo, with invalid token ",
 			url:     "https://github.com/devfile/library/blob/main/devfile.yaml",
-			token:	 "fake-token",
-			wantErr: fmt.Sprintf(downloadErr,  "https://" + RawGitHubHost + "/devfile/library/main/devfile.yaml"),
+			token:   "fake-token",
+			wantErr: fmt.Sprintf(downloadErr, "https://"+RawGitHubHost+"/devfile/library/main/devfile.yaml"),
 		},
 	}
 

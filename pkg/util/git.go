@@ -43,7 +43,7 @@ type GitUrl struct {
 }
 
 // NewGitURL NewGitUrl creates a GitUrl from a string url and token.  Will eventually replace NewGitUrlWithURL
-func NewGitURL(url string, token string) (*GitUrl, error){
+func NewGitURL(url string, token string) (*GitUrl, error) {
 	gitUrl, err := ParseGitUrl(url)
 	if err != nil {
 		return &gitUrl, err
@@ -99,7 +99,7 @@ func (g *GitUrl) GetToken() string {
 type CommandType string
 
 const (
-	GitCommand        				CommandType = "git"
+	GitCommand        CommandType = "git"
 	unsupportedCmdMsg             = "Unsupported command \"%s\" "
 )
 

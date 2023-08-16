@@ -32,7 +32,7 @@ import (
 type DevfileUtilsClient struct {
 }
 
-func NewDevfileUtilsClient() DevfileUtilsClient{
+func NewDevfileUtilsClient() DevfileUtilsClient {
 	return DevfileUtilsClient{}
 }
 
@@ -40,7 +40,7 @@ type DevfileUtils interface {
 	DownloadGitRepoResources(url string, destDir string, token string) error
 }
 
-//DownloadGitRepoResources mock implementation of the real method.
+// DownloadGitRepoResources mock implementation of the real method.
 func (gc DevfileUtilsClient) DownloadGitRepoResources(url string, destDir string, token string) error {
 	var returnedErr error
 	if util.IsGitProviderRepo(url) {
@@ -79,14 +79,12 @@ func (gc DevfileUtilsClient) DownloadGitRepoResources(url string, destDir string
 			returnedErr = multierror.Append(returnedErr, err)
 			return returnedErr
 		}
-	}else{
+	} else {
 		return fmt.Errorf("Failed to download resources from parent devfile.  Unsupported Git Provider for %s ", url)
 	}
 
 	return nil
 }
-
-
 
 // GetDeployComponents gets the default deploy command associated components
 func GetDeployComponents(devfileData data.DevfileData) (map[string]string, error) {

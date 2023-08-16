@@ -3076,12 +3076,11 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		httpTimeout := 0
 
 		tool := resolverTools{
-			k8sClient:   			testK8sClient,
-			context:     			context.Background(),
-			httpTimeout: 			&httpTimeout,
-			devfileUtilsClient:		NewMockDevfileUtilsClient(),
+			k8sClient:          testK8sClient,
+			context:            context.Background(),
+			httpTimeout:        &httpTimeout,
+			devfileUtilsClient: NewMockDevfileUtilsClient(),
 		}
-
 
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
 		// devfile has a cycle in references: main devfile -> uri: http://127.0.0.1:8080 -> name: testcrd, namespace: defaultnamespace -> uri: http://127.0.0.1:8090 -> uri: http://127.0.0.1:8080
@@ -4235,7 +4234,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		url                  string  // alias for parent devfile URL
+		url                  string // alias for parent devfile URL
 		gitUrl               *util.GitUrl
 		token                string
 		destDir              string
@@ -4321,7 +4320,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 					Uri: server.URL,
 				},
 			},
-			wantError:          fmt.Sprintf(invalidGitProviderError, "http://localhost:5000/devfile.yaml"),
+			wantError:            fmt.Sprintf(invalidGitProviderError, "http://localhost:5000/devfile.yaml"),
 			wantResources:        []string{},
 			downloadGitResources: true,
 		},
@@ -4417,7 +4416,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			mockDC := NewMockDevfileUtilsClient()
 			mockDC.ParentURLAlias = tt.url
 			mockDC.GitTestToken = tt.token
-			mockDC.MockGitURL =  util.MockGitUrl(*tt.gitUrl)
+			mockDC.MockGitURL = util.MockGitUrl(*tt.gitUrl)
 
 			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: mockDC})
 
@@ -4468,9 +4467,6 @@ func validateGitResourceFunctions(t *testing.T, wantFiles []string, wantResource
 		}
 	}
 }
-
-
-
 
 func Test_parseFromRegistry(t *testing.T) {
 	const (

@@ -351,7 +351,6 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 	}
 }
 
-
 func Test_CloneGitRepo(t *testing.T) {
 	invalidGitUrl := GitUrl{
 		Protocol: "",

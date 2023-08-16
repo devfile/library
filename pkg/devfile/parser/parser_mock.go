@@ -23,16 +23,14 @@ import (
 )
 
 type MockDevfileUtilsClient struct {
-	ParentURLAlias 	string  // Specify a valid git URL as an alias if using a localhost HTTP server in order to pass validation.
-	MockGitURL		util.MockGitUrl
-	GitTestToken		string  // Mock Git token.  Specify the string "valid-token" for the mock CloneGitRepo to pass
+	ParentURLAlias string // Specify a valid git URL as an alias if using a localhost HTTP server in order to pass validation.
+	MockGitURL     util.MockGitUrl
+	GitTestToken   string // Mock Git token.  Specify the string "valid-token" for the mock CloneGitRepo to pass
 }
-
 
 func NewMockDevfileUtilsClient() MockDevfileUtilsClient {
 	return MockDevfileUtilsClient{}
 }
-
 
 func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir string, token string) error {
 
@@ -69,7 +67,7 @@ func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir st
 			return err
 		}
 
-	}else{
+	} else {
 		return fmt.Errorf("Failed to download resources from parent devfile.  Unsupported Git Provider for %s ", gc.ParentURLAlias)
 	}
 
