@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package git
+package util
 
 import (
 	"github.com/kylelemons/godebug/pretty"
@@ -351,53 +351,6 @@ func Test_GetGitRawFileAPI(t *testing.T) {
 	}
 }
 
-func Test_IsPublic(t *testing.T) {
-	publicGitUrl := GitUrl{
-		Protocol: "https",
-		Host:     "github.com",
-		Owner:    "devfile",
-		Repo:     "library",
-		Revision: "main",
-		token:    "fake-token",
-	}
-
-	privateGitUrl := GitUrl{
-		Protocol: "https",
-		Host:     "github.com",
-		Owner:    "not",
-		Repo:     "a-valid",
-		Revision: "none",
-		token:    "fake-token",
-	}
-
-	httpTimeout := 0
-
-	tests := []struct {
-		name string
-		g    GitUrl
-		want bool
-	}{
-		{
-			name: "should be public",
-			g:    publicGitUrl,
-			want: true,
-		},
-		{
-			name: "should be private",
-			g:    privateGitUrl,
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.g.IsPublic(&httpTimeout)
-			if !reflect.DeepEqual(result, tt.want) {
-				t.Errorf("Got: %t, want: %t", result, tt.want)
-			}
-		})
-	}
-}
 
 func Test_CloneGitRepo(t *testing.T) {
 	invalidGitUrl := GitUrl{
@@ -414,7 +367,7 @@ func Test_CloneGitRepo(t *testing.T) {
 		Owner:    "fake-owner",
 		Repo:     "fake-private-repo",
 		Revision: "master",
-		token:    "fake-github-token",
+		Token:    "fake-github-token",
 	}
 
 	validGitHubRepoBranch := GitUrl{

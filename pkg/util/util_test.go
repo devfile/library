@@ -939,6 +939,7 @@ func TestDownloadFile(t *testing.T) {
 }
 
 func TestDownloadInMemory(t *testing.T) {
+	const downloadErr = "failed to retrieve %s, 404: Not Found"
 	// Start a local HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// Send response to be tested
@@ -979,6 +980,12 @@ func TestDownloadInMemory(t *testing.T) {
 			name:    "Case 4: Public Github repo with missing blob",
 			url:     "https://github.com/devfile/library/main/README.md",
 			wantErr: "failed to parse git repo. error: url path to directory or file should contain 'tree' or 'blob'*",
+		},
+		{
+			name:    "Case 5: Public Github repo, with invalid token ",
+			url:     "https://github.com/devfile/library/blob/main/devfile.yaml",
+			token:	 "fake-token",
+			wantErr: fmt.Sprintf(downloadErr,  "https://" + RawGitHubHost + "/devfile/library/main/devfile.yaml"),
 		},
 	}
 
