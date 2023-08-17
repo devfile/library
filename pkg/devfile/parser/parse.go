@@ -165,9 +165,8 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		d.Ctx.SetToken(args.Token)
 	}
 
-	args.DevfileUtilsClient = NewDevfileUtilsClient()
-	if err != nil {
-		return d, fmt.Errorf("Error %v, URL cannot be parsed %s ", err, args.URL)
+	if args.DevfileUtilsClient == nil {
+		args.DevfileUtilsClient = NewDevfileUtilsClient()
 	}
 
 	downloadGitResources := true
