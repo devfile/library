@@ -26,9 +26,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/devfile/library/v2/pkg/git"
-	"github.com/hashicorp/go-multierror"
-
 	"github.com/devfile/api/v2/pkg/attributes"
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
@@ -46,57 +43,6 @@ import (
 	versionpkg "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
-
-// downloadGitRepoResources is exposed as a global variable for the purpose of running mock tests
-var downloadGitRepoResources = func(url string, destDir string, httpTimeout *int, token string) error {
-	var returnedErr error
-
-	if util.IsGitProviderRepo(url) {
-		gitUrl, err := git.NewGitUrlWithURL(url)
-		if err != nil {
-			return err
-		}
-
-		if !gitUrl.IsFile || gitUrl.Revision == "" || !strings.Contains(gitUrl.Path, OutputDevfileYamlPath) {
-			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url)
-		}
-
-		stackDir, err := os.MkdirTemp("", fmt.Sprintf("git-resources"))
-		if err != nil {
-			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
-		}
-
-		defer func(path string) {
-			err := os.RemoveAll(path)
-			if err != nil {
-				returnedErr = multierror.Append(returnedErr, err)
-			}
-		}(stackDir)
-
-		if !gitUrl.IsPublic(httpTimeout) {
-			err = gitUrl.SetToken(token, httpTimeout)
-			if err != nil {
-				returnedErr = multierror.Append(returnedErr, err)
-				return returnedErr
-			}
-		}
-
-		err = gitUrl.CloneGitRepo(stackDir)
-		if err != nil {
-			returnedErr = multierror.Append(returnedErr, err)
-			return returnedErr
-		}
-
-		dir := path.Dir(path.Join(stackDir, gitUrl.Path))
-		err = git.CopyAllDirFiles(dir, destDir)
-		if err != nil {
-			returnedErr = multierror.Append(returnedErr, err)
-			return returnedErr
-		}
-	}
-
-	return nil
-}
 
 // ParseDevfile func validates the devfile integrity.
 // Creates devfile context and runtime objects
@@ -134,7 +80,7 @@ func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolver
 // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
 // It accepts devfile path, devfile URL or devfile content in []byte format.
 type ParserArgs struct {
-	// Path is a relative or absolute devfile path.
+	// Path is a relative or absolute devfile path on disk
 	Path string
 	// URL is the URL address of the specific devfile.
 	URL string
@@ -170,6 +116,8 @@ type ParserArgs struct {
 	ImageNamesAsSelector *ImageSelectorArgs
 	// DownloadGitResources downloads the resources from Git repository if true
 	DownloadGitResources *bool
+	// DevfileUtilsClient exposes the interface for mock implementation.
+	DevfileUtilsClient DevfileUtils
 }
 
 // ImageSelectorArgs defines the structure to leverage for using image names as selectors after parsing the Devfile.
@@ -217,6 +165,10 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		d.Ctx.SetToken(args.Token)
 	}
 
+	if args.DevfileUtilsClient == nil {
+		args.DevfileUtilsClient = NewDevfileUtilsClient()
+	}
+
 	downloadGitResources := true
 	if args.DownloadGitResources != nil {
 		downloadGitResources = *args.DownloadGitResources
@@ -229,6 +181,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 		k8sClient:            args.K8sClient,
 		httpTimeout:          args.HTTPTimeout,
 		downloadGitResources: downloadGitResources,
+		devfileUtilsClient:   args.DevfileUtilsClient,
 	}
 
 	flattenedDevfile := true
@@ -284,6 +237,8 @@ type resolverTools struct {
 	httpTimeout *int
 	// downloadGitResources downloads the resources from Git repository if true
 	downloadGitResources bool
+	// devfileUtilsClient exposes the Git Interface to be able to use mock implementation.
+	devfileUtilsClient DevfileUtils
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -535,7 +490,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 
 		if tool.downloadGitResources {
 			destDir := path.Dir(curDevfileCtx.GetAbsPath())
-			err = downloadGitRepoResources(newUri, destDir, tool.httpTimeout, token)
+			err = tool.devfileUtilsClient.DownloadGitRepoResources(newUri, destDir, token)
 			if err != nil {
 				return DevfileObj{}, err
 			}
