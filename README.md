@@ -246,7 +246,21 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 ## Releases
 
-For devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
+The devfile/library releases are created on demand. For existing devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
+
+### Create a New Release
+
+The steps to create a new release are:
+
+* Create a separate branch for the particular release, for example, `v2.0.x`
+
+* Run this [script](https://github.com/devfile/library/blob/main/scripts/changelog-script.sh) to generate release changelog.
+```bash
+# generate a changelog for all the changes since release v2.0.0
+./changelog-script.sh v2.0.0
+```
+
+* Create a new release [here](https://github.com/devfile/library/releases/new) with a new tag (having the same name with the above branch - e.g. `v2.0.x`) and copy the generated changelog to the details
 
 ## Contributing
 
