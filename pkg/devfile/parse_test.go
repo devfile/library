@@ -415,7 +415,7 @@ spec:
 					ExternalVariables: map[string]string{
 						"PARAMS": "baz",
 					},
-					Path: "./tests/devfile1.yaml",
+					Path: "./testdata/devfile1.yaml",
 				},
 			},
 			wantCommandLine: "./main baz",
