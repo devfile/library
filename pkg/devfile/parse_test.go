@@ -16,18 +16,25 @@
 package devfile
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 
+	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/validation/variables"
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	"github.com/devfile/library/v2/pkg/testingutil"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestParseDevfileAndValidate(t *testing.T) {
@@ -35,6 +42,147 @@ func TestParseDevfileAndValidate(t *testing.T) {
 	trueValue := true
 	convertUriToInline := false
 	K8sLikeComponentOriginalURIKey := "api.devfile.io/k8sLikeComponent-originalURI"
+
+	devfileStruct := schema.DevWorkspaceTemplate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "2.1.0",
+		},
+		Spec: schema.DevWorkspaceTemplateSpec{
+			DevWorkspaceTemplateSpecContent: schema.DevWorkspaceTemplateSpecContent{
+				Commands: []schema.Command{
+					{
+						Id: "run",
+						CommandUnion: schema.CommandUnion{
+							Exec: &schema.ExecCommand{
+								CommandLine: "./main {{ PARAMS }}",
+								Component:   "runtime",
+								WorkingDir:  "${PROJECT_SOURCE}",
+								LabeledCommand: schema.LabeledCommand{
+									BaseCommand: schema.BaseCommand{
+										Group: &schema.CommandGroup{
+											Kind:      "run",
+											IsDefault: &trueValue,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Components: []schema.Component{
+					{
+						Name: "runtime",
+						ComponentUnion: schema.ComponentUnion{
+							Container: &schema.ContainerComponent{
+								Endpoints: []schema.Endpoint{
+									{
+										Name:       "http",
+										TargetPort: 8080,
+									},
+								},
+								Container: schema.Container{
+									Image:        "golang:latest",
+									MemoryLimit:  "1024Mi",
+									MountSources: &trueValue,
+								},
+							},
+						},
+					},
+					{
+						Name: "outerloop-deploy",
+						ComponentUnion: schema.ComponentUnion{
+							Kubernetes: &schema.KubernetesComponent{
+								K8sLikeComponent: schema.K8sLikeComponent{
+									K8sLikeComponentLocation: schema.K8sLikeComponentLocation{
+										Uri: "http://127.0.0.1:8080/outerloop-deploy.yaml",
+									},
+								},
+							},
+						},
+					},
+					{
+						Name: "outerloop-deploy2",
+						ComponentUnion: schema.ComponentUnion{
+							Openshift: &schema.OpenshiftComponent{
+								K8sLikeComponent: schema.K8sLikeComponent{
+									K8sLikeComponentLocation: schema.K8sLikeComponentLocation{
+										Uri: "http://127.0.0.1:8080/outerloop-service.yaml",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	devfileContent := `commands:
+- exec:
+    commandLine: ./main {{ PARAMS }}
+    component: runtime
+    group:
+      isDefault: true
+      kind: run
+    workingDir: ${PROJECT_SOURCE}
+  id: run
+components:
+- container:
+    endpoints:
+    - name: http
+      targetPort: 8080
+    image: golang:latest
+    memoryLimit: 1024Mi
+    mountSources: true
+  name: runtime
+- kubernetes:
+    uri: http://127.0.0.1:8080/outerloop-deploy.yaml
+  name: outerloop-deploy
+- openshift:
+    uri: http://127.0.0.1:8080/outerloop-service.yaml
+  name: outerloop-deploy2
+metadata:
+  description: Stack with the latest Go version
+  displayName: Go Runtime
+  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
+  language: go
+  name: my-go-app
+  projectType: go
+  tags:
+  - Go
+  version: 1.0.0
+schemaVersion: 2.2.0
+`
+
+	devfileContentWithVariable := devfileContent + `variables:
+  PARAMS: foo`
+	devfileContentWithParent := `schemaVersion: 2.2.0
+parent:
+  id: devfile1
+  registryUrl: http://127.0.0.1:8080/registry
+`
+	devfileContentWithParentNoRegistry := `schemaVersion: 2.2.0
+parent:
+  id: devfile1
+`
+	devfileContentWithCRDParent := `schemaVersion: 2.2.0
+parent:
+  kubernetes:
+    name: devfile1
+  registryUrl: http://127.0.0.1:8080/registry
+`
+
+	registryIndex := `[{
+		"name": "devfile1",
+		"version": "1.0.0",
+		"type": "stack",
+		"links": {
+		  "self": "devfile-catalog/devfile1:1.0.0"
+		},
+		"resources": [
+		  "devfile.yaml"
+		]
+}]`
 	outerloopDeployContent := `
 kind: Deployment
 apiVersion: apps/v1
@@ -88,6 +236,12 @@ spec:
 			_, err = w.Write([]byte(outerloopDeployContent))
 		} else if strings.Contains(r.URL.Path, "/outerloop-service.yaml") {
 			_, err = w.Write([]byte(outerloopServiceContent))
+		} else if strings.Contains(r.URL.Path, "/devfile1.yaml") {
+			_, err = w.Write([]byte(devfileContent))
+		} else if r.URL.Path == "/registry/devfiles/devfile1/" {
+			_, err = w.Write([]byte(devfileContent))
+		} else if r.URL.Path == "/index" {
+			_, err = w.Write([]byte(registryIndex))
 		}
 		if err != nil {
 			t.Errorf("unexpected error while writing yaml: %v", err)
@@ -108,45 +262,6 @@ spec:
 	testServer.Start()
 	defer testServer.Close()
 
-	devfileContent := `commands:
-- exec:
-    commandLine: ./main {{ PARAMS }}
-    component: runtime
-    group:
-      isDefault: true
-      kind: run
-    workingDir: ${PROJECT_SOURCE}
-  id: run
-components:
-- container:
-    endpoints:
-    - name: http
-      targetPort: 8080
-    image: golang:latest
-    memoryLimit: 1024Mi
-    mountSources: true
-  name: runtime
-- kubernetes:
-    uri: http://127.0.0.1:8080/outerloop-deploy.yaml
-  name: outerloop-deploy
-- openshift:
-    uri: http://127.0.0.1:8080/outerloop-service.yaml
-  name: outerloop-deploy2
-metadata:
-  description: Stack with the latest Go version
-  displayName: Go Runtime
-  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
-  language: go
-  name: my-go-app
-  projectType: go
-  tags:
-  - Go
-  version: 1.0.0
-schemaVersion: 2.2.0
-`
-
-	devfileContentWithVariable := devfileContent + `variables:
-  PARAMS: foo`
 	type args struct {
 		args parser.ParserArgs
 	}
@@ -280,6 +395,125 @@ schemaVersion: 2.2.0
 					},
 					SetBooleanDefaults: &falseValue,
 					Data:               []byte(devfileContent),
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "get content from path",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					Path: "./testdata/devfile1.yaml",
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "get content from url",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					URL: "http://" + filepath.Join(uri, "devfile1.yaml"),
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "with parent and registry url in devfile",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					Data: []byte(devfileContentWithParent),
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "with parent and no registry url in devfile",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					Data: []byte(devfileContentWithParentNoRegistry),
+					RegistryURLs: []string{
+						"http://127.0.0.1:8080/registry",
+					},
+				},
+			},
+			wantCommandLine: "./main baz",
+			wantVariables: map[string]string{
+				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "getting from cluster and setting default namespace",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "baz",
+					},
+					Data: []byte(devfileContentWithCRDParent),
+					K8sClient: func() client.Client {
+						testK8sClient := &testingutil.FakeK8sClient{
+							ExpectedNamespace: "my-namespace",
+							DevWorkspaceResources: map[string]schema.DevWorkspaceTemplate{
+								"devfile1": devfileStruct,
+							},
+						}
+						return testK8sClient
+					}(),
+					Context:          context.Background(),
+					DefaultNamespace: "my-namespace",
 				},
 			},
 			wantCommandLine: "./main baz",
