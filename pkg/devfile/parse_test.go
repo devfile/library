@@ -415,7 +415,7 @@ spec:
 					ExternalVariables: map[string]string{
 						"PARAMS": "baz",
 					},
-					Path: "./testdata/devfile1.yaml",
+					Path: "./testdata/devfile.yaml",
 				},
 			},
 			wantCommandLine: "./main baz",
@@ -519,6 +519,90 @@ spec:
 			wantCommandLine: "./main baz",
 			wantVariables: map[string]string{
 				"PARAMS": "baz",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "parsing devfile with .yml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yml",
+					},
+					Path: "./testdata/devfile.yml",
+				},
+			},
+			wantCommandLine: "./main from devfile.yml",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "parsing .devfile with .yml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yml",
+					},
+					Path: "./testdata/.devfile.yml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yml",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "parsing .devfile with .yaml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yaml",
+					},
+					Path: "./testdata/.devfile.yaml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yaml",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yaml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "parsing any valid devfile regardless of extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from any valid devfile file",
+					},
+					Path: "./testdata/valid-devfile.yaml.txt",
+				},
+			},
+			wantCommandLine: "./main from any valid devfile file",
+			wantVariables: map[string]string{
+				"PARAMS": "from any valid devfile file",
 			},
 			wantVarWarning: variables.VariableWarning{
 				Commands:        map[string][]string{},

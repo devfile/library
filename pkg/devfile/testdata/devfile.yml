@@ -1,0 +1,28 @@
+commands:
+- exec:
+    commandLine: ./main {{ PARAMS }}
+    component: runtime
+    group:
+      isDefault: true
+      kind: run
+    workingDir: ${PROJECT_SOURCE}
+  id: run
+components:
+- container:
+    image: busybox:latest
+    command: [tail]
+    args: [ -f, /dev/null ]
+    mountSources: true
+  name: runtime
+- kubernetes:
+    uri: http://127.0.0.1:8080/outerloop-deploy.yaml
+  name: outerloop-deploy
+- openshift:
+    uri: http://127.0.0.1:8080/outerloop-service.yaml
+  name: outerloop-deploy2
+metadata:
+  description: Test stack (Busybox)
+  displayName: Test stack
+  name: my-test-app
+  version: 0.1.0
+schemaVersion: 2.2.0
