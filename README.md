@@ -8,11 +8,11 @@
 ## About
 
 The Devfile Parser library is a Golang module that:
-1. parses the devfile.yaml as specified by the [api](https://devfile.github.io/devfile/api-reference.html) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
-2. writes to the devfile.yaml with the updated data.
+1. parses a devfile as specified by the [api](https://devfile.io/docs/2.2.1/devfile-schema) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
+2. writes to the specified devfile with the updated data.
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
-5. downloads resources from a parent devfile if specified in the devfile.yaml
+5. downloads resources from a parent devfile if specified in the devfile.
 
 ## Private repository support
 
