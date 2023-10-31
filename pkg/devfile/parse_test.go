@@ -530,6 +530,118 @@ spec:
 			},
 		},
 		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yaml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yaml based on priority",
+					},
+					Path: "./testdata",
+				},
+			},
+			wantCommandLine: "./main from devfile.yaml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yaml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yaml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yaml based on priority",
+					},
+					Path: "./testdata/priority-for-dot_devfile_yaml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yaml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yaml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (.devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (.devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yml based on priority",
+					},
+					Path: "./testdata/priority-for-devfile_yml",
+				},
+			},
+			wantCommandLine: "./main from devfile.yml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yml based on priority",
+					},
+					Path: "./testdata/priority-for-dot_devfile_yml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (.devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (.devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
 			name: "parsing devfile with .yml extension",
 			args: args{
 				args: parser.ParserArgs{
