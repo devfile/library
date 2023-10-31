@@ -17,6 +17,7 @@ package devfile
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -273,6 +274,7 @@ spec:
 		wantKubernetesInline string
 		wantOpenshiftInline  string
 		wantVariables        map[string]string
+		additionalChecks     func(parser.DevfileObj) error
 	}{
 		{
 			name: "with external overriding variables",
@@ -547,6 +549,13 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
 		},
 		{
 			name: "parsing .devfile with .yml extension",
@@ -567,6 +576,13 @@ spec:
 				Components:      map[string][]string{},
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (.devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (.devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
 			},
 		},
 		{
@@ -589,6 +605,13 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (.devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (.devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
 		},
 		{
 			name: "parsing any valid devfile regardless of extension",
@@ -609,6 +632,13 @@ spec:
 				Components:      map[string][]string{},
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (valid-devfile.yaml.txt)" {
+					return fmt.Errorf("expected 'Test stack (valid-devfile.yaml.txt)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
 			},
 		},
 	}
@@ -730,6 +760,13 @@ spec:
 			variables := gotD.Data.GetDevfileWorkspaceSpec().Variables
 			if !reflect.DeepEqual(variables, tt.wantVariables) {
 				t.Errorf("variables are %+v, expected %+v", variables, tt.wantVariables)
+			}
+
+			if tt.additionalChecks != nil {
+				err = tt.additionalChecks(gotD)
+				if err != nil {
+					t.Errorf("unexpected error while performing specific checks: %v", err)
+				}
 			}
 		})
 	}

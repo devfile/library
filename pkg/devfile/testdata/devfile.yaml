@@ -24,7 +24,7 @@ components:
   name: outerloop-deploy2
 metadata:
   description: Stack with the latest Go version
-  displayName: Go Runtime
+  displayName: Go Runtime (devfile.yaml)
   icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
   language: go
   name: my-go-app

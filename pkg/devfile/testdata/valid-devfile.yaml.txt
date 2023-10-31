@@ -22,7 +22,7 @@ components:
   name: outerloop-deploy2
 metadata:
   description: Test stack (Busybox)
-  displayName: Test stack
+  displayName: Test stack (valid-devfile.yaml.txt)
   name: my-test-app
   version: 0.1.0
 schemaVersion: 2.2.0
