@@ -16,7 +16,11 @@
 package parser
 
 import (
+	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/devfile/library/v2/pkg/util"
@@ -92,6 +96,17 @@ func (d *DevfileCtx) populateDevfile() (err error) {
 
 // Populate fills the DevfileCtx struct with relevant context info
 func (d *DevfileCtx) Populate() (err error) {
+	if !strings.HasSuffix(d.relPath, ".yaml") {
+		if _, err := os.Stat(filepath.Join(d.relPath, "devfile.yaml")); os.IsNotExist(err) {
+			if _, err := os.Stat(filepath.Join(d.relPath, ".devfile.yaml")); os.IsNotExist(err) {
+				return fmt.Errorf("the provided path is not a valid yaml filepath, and devfile.yaml or .devfile.yaml not found in the provided path : %s", d.relPath)
+			} else {
+				d.relPath = filepath.Join(d.relPath, ".devfile.yaml")
+			}
+		} else {
+			d.relPath = filepath.Join(d.relPath, "devfile.yaml")
+		}
+	}
 	if err := d.SetAbsPath(); err != nil {
 		return err
 	}
