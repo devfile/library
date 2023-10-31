@@ -32,7 +32,10 @@ type DevfileCtx struct {
 	// absolute path of devfile
 	absPath string
 
-	// relative path of devfile
+	// relative path of devfile.
+	// It can also be a relative or absolute path to a folder containing one or more devfiles,
+	// in which case the library will try to pick an existing one, based on the following priority order:
+	// devfile.yaml > .devfile.yaml > devfile.yml > .devfile.yml
 	relPath string
 
 	// raw content of the devfile

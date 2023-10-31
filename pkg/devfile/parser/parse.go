@@ -80,7 +80,10 @@ func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolver
 // ParserArgs is the struct to pass into parser functions which contains required info for parsing devfile.
 // It accepts devfile path, devfile URL or devfile content in []byte format.
 type ParserArgs struct {
-	// Path is a relative or absolute devfile path on disk
+	// Path is a relative or absolute devfile path on disk.
+	// It can also be a relative or absolute path to a folder containing one or more devfiles,
+	// in which case the library will try to pick an existing one, based on the following priority order:
+	// devfile.yaml > .devfile.yaml > devfile.yml > .devfile.yml
 	Path string
 	// URL is the URL address of the specific devfile.
 	URL string
