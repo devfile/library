@@ -17,6 +17,7 @@ package devfile
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -273,6 +274,7 @@ spec:
 		wantKubernetesInline string
 		wantOpenshiftInline  string
 		wantVariables        map[string]string
+		additionalChecks     func(parser.DevfileObj) error
 	}{
 		{
 			name: "with external overriding variables",
@@ -415,7 +417,7 @@ spec:
 					ExternalVariables: map[string]string{
 						"PARAMS": "baz",
 					},
-					Path: "./testdata/devfile1.yaml",
+					Path: "./testdata/devfile.yaml",
 				},
 			},
 			wantCommandLine: "./main baz",
@@ -525,6 +527,230 @@ spec:
 				Components:      map[string][]string{},
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yaml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yaml based on priority",
+					},
+					Path: "./testdata",
+				},
+			},
+			wantCommandLine: "./main from devfile.yaml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yaml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yaml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yaml based on priority",
+					},
+					Path: "./testdata/priority-for-dot_devfile_yaml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yaml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yaml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (.devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (.devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yml based on priority",
+					},
+					Path: "./testdata/priority-for-devfile_yml",
+				},
+			},
+			wantCommandLine: "./main from devfile.yml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yml",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yml based on priority",
+					},
+					Path: "./testdata/priority-for-dot_devfile_yml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yml based on priority",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yml based on priority",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (.devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (.devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing devfile with .yml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from devfile.yml",
+					},
+					Path: "./testdata/devfile.yml",
+				},
+			},
+			wantCommandLine: "./main from devfile.yml",
+			wantVariables: map[string]string{
+				"PARAMS": "from devfile.yml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing .devfile with .yml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yml",
+					},
+					Path: "./testdata/.devfile.yml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yml",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (.devfile.yml)" {
+					return fmt.Errorf("expected 'Test stack (.devfile.yml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing .devfile with .yaml extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from .devfile.yaml",
+					},
+					Path: "./testdata/.devfile.yaml",
+				},
+			},
+			wantCommandLine: "./main from .devfile.yaml",
+			wantVariables: map[string]string{
+				"PARAMS": "from .devfile.yaml",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Go Runtime (.devfile.yaml)" {
+					return fmt.Errorf("expected 'Go Runtime (.devfile.yaml)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
+			},
+		},
+		{
+			name: "parsing any valid devfile regardless of extension",
+			args: args{
+				args: parser.ParserArgs{
+					ExternalVariables: map[string]string{
+						"PARAMS": "from any valid devfile file",
+					},
+					Path: "./testdata/valid-devfile.yaml.txt",
+				},
+			},
+			wantCommandLine: "./main from any valid devfile file",
+			wantVariables: map[string]string{
+				"PARAMS": "from any valid devfile file",
+			},
+			wantVarWarning: variables.VariableWarning{
+				Commands:        map[string][]string{},
+				Components:      map[string][]string{},
+				Projects:        map[string][]string{},
+				StarterProjects: map[string][]string{},
+			},
+			additionalChecks: func(devfileObj parser.DevfileObj) error {
+				if devfileObj.Data.GetMetadata().DisplayName != "Test stack (valid-devfile.yaml.txt)" {
+					return fmt.Errorf("expected 'Test stack (valid-devfile.yaml.txt)' as metadata.displayName in devfile, but got %q",
+						devfileObj.Data.GetMetadata().DisplayName)
+				}
+				return nil
 			},
 		},
 	}
@@ -646,6 +872,13 @@ spec:
 			variables := gotD.Data.GetDevfileWorkspaceSpec().Variables
 			if !reflect.DeepEqual(variables, tt.wantVariables) {
 				t.Errorf("variables are %+v, expected %+v", variables, tt.wantVariables)
+			}
+
+			if tt.additionalChecks != nil {
+				err = tt.additionalChecks(gotD)
+				if err != nil {
+					t.Errorf("unexpected error while performing specific checks: %v", err)
+				}
 			}
 		})
 	}
