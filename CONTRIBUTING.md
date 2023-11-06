@@ -29,7 +29,7 @@ If you spot a problem with devfile library, [search if an issue already exists](
 
 ### Writing Code
 
-For writing the code just follow [Go guide](https://go.dev/doc/effective_go), and also test with [tesing](https://pkg.go.dev/testing). Remember to add new unit tests if new features have been introducted, or changes have been made to existing code. If there is something unclear of the style, just look at existing code which might help you to understand it better.
+For writing the code just follow [Go guide](https://go.dev/doc/effective_go), and also test with [testing](https://pkg.go.dev/testing). Remember to add new unit tests if new features have been introducted, or changes have been made to existing code. If there is something unclear of the style, just look at existing code which might help you to understand it better.
 
 ### Testing Changes
 To run unit tests and api tests. Visit [library tests](tests/README.md) to find out more information on tests
