@@ -37,6 +37,8 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
+
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	apiOverride "github.com/devfile/api/v2/pkg/utils/overriding"
 	"github.com/devfile/api/v2/pkg/validation"
@@ -120,7 +122,7 @@ type ParserArgs struct {
 	// DownloadGitResources downloads the resources from Git repository if true
 	DownloadGitResources *bool
 	// DevfileUtilsClient exposes the interface for mock implementation.
-	DevfileUtilsClient DevfileUtils
+	DevfileUtilsClient parserUtil.DevfileUtils
 }
 
 // ImageSelectorArgs defines the structure to leverage for using image names as selectors after parsing the Devfile.
@@ -169,7 +171,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	}
 
 	if args.DevfileUtilsClient == nil {
-		args.DevfileUtilsClient = NewDevfileUtilsClient()
+		args.DevfileUtilsClient = parserUtil.NewDevfileUtilsClient()
 	}
 
 	downloadGitResources := true
@@ -216,7 +218,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 
 	if convertUriToInlined {
 		d.Ctx.SetConvertUriToInlined(true)
-		err = parseKubeResourceFromURI(d)
+		err = parseKubeResourceFromURI(d, tool.devfileUtilsClient)
 		if err != nil {
 			return d, err
 		}
@@ -241,7 +243,7 @@ type resolverTools struct {
 	// downloadGitResources downloads the resources from Git repository if true
 	downloadGitResources bool
 	// devfileUtilsClient exposes the Git Interface to be able to use mock implementation.
-	devfileUtilsClient DevfileUtils
+	devfileUtilsClient parserUtil.DevfileUtils
 }
 
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
@@ -251,11 +253,11 @@ func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, to
 	}
 	// Fill the fields of DevfileCtx struct
 	if d.Ctx.GetURL() != "" {
-		err = d.Ctx.PopulateFromURL()
+		err = d.Ctx.PopulateFromURL(tool.devfileUtilsClient)
 	} else if d.Ctx.GetDevfileContent() != nil {
 		err = d.Ctx.PopulateFromRaw()
 	} else {
-		err = d.Ctx.Populate()
+		err = d.Ctx.Populate(tool.devfileUtilsClient)
 	}
 	if err != nil {
 		return d, err
@@ -343,6 +345,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 				if err != nil {
 					return fmt.Errorf("fail to parse version of parent devfile from: %v", resolveImportReference(parent.ImportReference))
 				}
+
 				if parentDevfileVerson.GreaterThan(mainDevfileVersion) {
 					return fmt.Errorf("the parent devfile version from %v is greater than the child devfile version from %v", resolveImportReference(parent.ImportReference), resolveImportReference(resolveCtx.importReference))
 				}
@@ -765,7 +768,7 @@ func setEndpoints(endpoints []v1.Endpoint) {
 }
 
 // parseKubeResourceFromURI iterate through all kubernetes & openshift components, and parse from uri and update the content to inlined field in devfileObj
-func parseKubeResourceFromURI(devObj DevfileObj) error {
+func parseKubeResourceFromURI(devObj DevfileObj, devfileUtilsClient parserUtil.DevfileUtils) error {
 	getKubeCompOptions := common.DevfileOptions{
 		ComponentOptions: common.ComponentOptions{
 			ComponentType: v1.KubernetesComponentType,
@@ -787,7 +790,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 	for _, kubeComp := range kubeComponents {
 		if kubeComp.Kubernetes != nil && kubeComp.Kubernetes.Uri != "" {
 			/* #nosec G601 -- not an issue, kubeComp is de-referenced in sequence*/
-			err := convertK8sLikeCompUriToInlined(&kubeComp, devObj.Ctx)
+			err := convertK8sLikeCompUriToInlined(&kubeComp, devObj.Ctx, devfileUtilsClient)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert kubernetes uri to inlined for component '%s'", kubeComp.Name)
 			}
@@ -800,7 +803,7 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 	for _, openshiftComp := range openshiftComponents {
 		if openshiftComp.Openshift != nil && openshiftComp.Openshift.Uri != "" {
 			/* #nosec G601 -- not an issue, openshiftComp is de-referenced in sequence*/
-			err := convertK8sLikeCompUriToInlined(&openshiftComp, devObj.Ctx)
+			err := convertK8sLikeCompUriToInlined(&openshiftComp, devObj.Ctx, devfileUtilsClient)
 			if err != nil {
 				return errors.Wrapf(err, "failed to convert openshift uri to inlined for component '%s'", openshiftComp.Name)
 			}
@@ -814,14 +817,14 @@ func parseKubeResourceFromURI(devObj DevfileObj) error {
 }
 
 // convertK8sLikeCompUriToInlined read in kubernetes resources definition from uri and converts to kubernetest inlined field
-func convertK8sLikeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx) error {
+func convertK8sLikeCompUriToInlined(component *v1.Component, d devfileCtx.DevfileCtx, devfileUtilsClient parserUtil.DevfileUtils) error {
 	var uri string
 	if component.Kubernetes != nil {
 		uri = component.Kubernetes.Uri
 	} else if component.Openshift != nil {
 		uri = component.Openshift.Uri
 	}
-	data, err := getKubernetesDefinitionFromUri(uri, d)
+	data, err := getKubernetesDefinitionFromUri(uri, d, devfileUtilsClient)
 	if err != nil {
 		return err
 	}
@@ -841,7 +844,7 @@ func convertK8sLikeCompUriToInlined(component *v1.Component, d devfileCtx.Devfil
 }
 
 // getKubernetesDefinitionFromUri read in kubernetes resources definition from uri and returns the raw content
-func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte, error) {
+func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx, devfileUtilsClient parserUtil.DevfileUtils) ([]byte, error) {
 	// validate URI
 	err := validation.ValidateURI(uri)
 	if err != nil {
@@ -876,7 +879,7 @@ func getKubernetesDefinitionFromUri(uri string, d devfileCtx.DevfileCtx) ([]byte
 		if d.GetToken() != "" {
 			params.Token = d.GetToken()
 		}
-		data, err = util.DownloadInMemory(params)
+		data, err = devfileUtilsClient.DownloadInMemory(params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting kubernetes resources definition information")
 		}

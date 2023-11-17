@@ -17,6 +17,9 @@ package parser
 
 import (
 	"github.com/stretchr/testify/assert"
+
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -54,7 +57,7 @@ func TestPopulateFromBytes(t *testing.T) {
 				}
 			)
 			defer testServer.Close()
-			err := d.PopulateFromURL()
+			err := d.PopulateFromURL(parserUtil.NewDevfileUtilsClient())
 			if (tt.expectError != nil) != (err != nil) {
 				t.Errorf("TestPopulateFromBytes(): unexpected error: %v, wantErr: %v", err, tt.expectError)
 			} else if tt.expectError != nil {
@@ -73,7 +76,7 @@ func TestPopulateFromInvalidURL(t *testing.T) {
 			}
 		)
 
-		err := d.PopulateFromURL()
+		err := d.PopulateFromURL(parserUtil.NewDevfileUtilsClient())
 
 		if err == nil {
 			t.Errorf("TestPopulateFromInvalidURL(): expected an error, didn't get one")

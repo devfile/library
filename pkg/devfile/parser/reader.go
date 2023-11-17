@@ -64,7 +64,7 @@ func ReadKubernetesYaml(src YamlSrc, fs *afero.Afero) ([]interface{}, error) {
 
 	if src.URL != "" {
 		params := util.HTTPRequestParams{URL: src.URL}
-		data, err = util.DownloadInMemory(params)
+		data, err = util.DownloadInMemory(params) // TODO: call with Token
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to download file %q", src.URL)
 		}
