@@ -226,6 +226,29 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    }
    ```
 
+11. To download/access files from a private repository like a private GitHub use the `Token` property
+   ```go
+   parserArgs := parser.ParserArgs{
+		Token: "my-PAT",
+   }
+   ```
+
+   ```go
+   src: YamlSrc{
+	   URL: "http://github.com/my-private-repo",
+      Token: "my-PAT",
+	}
+   values, err := ReadKubernetesYaml(src, fs, nil)
+   ```
+
+   If you would like to use the mock implementation for the `DevfileUtils` interface method defined in `pkg/devfile/parser/util/interface.go`, then use 
+   ```go
+   var devfileUtilsClient DevfileUtils
+   devfileUtilsClient = NewMockDevfileUtilsClient()
+   devfileUtilsClient.DownloadInMemory(params)
+   ```
+   
+
 ## Projects using devfile/library
 
 The following projects are consuming this library as a Golang dependency
