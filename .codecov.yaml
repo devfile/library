@@ -29,6 +29,8 @@ coverage:
     - "vendor/*"
     - "Makefile"
     - ".travis.yml"
+    - "pkg/devfile/parser/util/mock.go"
+    - "pkg/util/mock.go"
 
 # See http://docs.codecov.io/docs/pull-request-comments-1
 comment:
