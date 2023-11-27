@@ -235,13 +235,13 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
 
    ```go
    src: YamlSrc{
-	   URL: "http://github.com/my-private-repo",
-      Token: "my-PAT",
-	}
+		URL: "http://github.com/my-private-repo",
+		Token: "my-PAT",
+   }
    values, err := ReadKubernetesYaml(src, fs, nil)
    ```
 
-   If you would like to use the mock implementation for the `DevfileUtils` interface method defined in `pkg/devfile/parser/util/interface.go`, then use 
+   If you would like to use the mock implementation for the `DevfileUtils` interface method defined in [pkg/devfile/parser/util/interface.go](pkg/devfile/parser/util/interface.go), then use 
    ```go
    var devfileUtilsClient DevfileUtils
    devfileUtilsClient = NewMockDevfileUtilsClient()
