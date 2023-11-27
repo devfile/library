@@ -230,8 +230,7 @@ spec:
   type: LoadBalancer
 `
 	uri := "127.0.0.1:8080"
-	var testServer *httptest.Server
-	testServer = httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if strings.Contains(r.URL.Path, "/outerloop-deploy.yaml") {
 			_, err = w.Write([]byte(outerloopDeployContent))
@@ -252,7 +251,7 @@ spec:
 	// create a listener with the desired port.
 	l, err := net.Listen("tcp", uri)
 	if err != nil {
-		t.Errorf("Test_parseParentAndPluginFromURI() unexpected error while creating listener: %v", err)
+		t.Errorf("TestParseDevfileAndValidate() unexpected error while creating listener: %v", err)
 	}
 
 	// NewUnstartedServer creates a listener. Close that listener and replace

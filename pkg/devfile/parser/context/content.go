@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"unicode"
 
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
@@ -62,7 +63,7 @@ func hasPrefix(buf []byte, prefix []byte) bool {
 }
 
 // SetDevfileContent reads devfile and if devfile is in YAML format converts it to JSON
-func (d *DevfileCtx) SetDevfileContent() error {
+func (d *DevfileCtx) SetDevfileContent(devfileUtilsClient parserUtil.DevfileUtils) error {
 
 	var err error
 	var data []byte
@@ -72,7 +73,7 @@ func (d *DevfileCtx) SetDevfileContent() error {
 		if d.token != "" {
 			params.Token = d.token
 		}
-		data, err = util.DownloadInMemory(params)
+		data, err = devfileUtilsClient.DownloadInMemory(params)
 		if err != nil {
 			return errors.Wrap(err, "error getting devfile info from url")
 		}

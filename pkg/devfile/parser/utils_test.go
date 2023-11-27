@@ -192,11 +192,7 @@ func TestGetDeployComponents(t *testing.T) {
 				mockApplyCommands.Return(nil, fmt.Errorf(*tt.wantMockErr2))
 			}
 
-			devObj := DevfileObj{
-				Data: mockDevfileData,
-			}
-
-			componentMap, err := GetDeployComponents(devObj.Data)
+			componentMap, err := GetDeployComponents(mockDevfileData)
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetDeployComponents() error: %v, wantErr %v", err, tt.wantErr)
@@ -368,11 +364,7 @@ func TestGetImageBuildComponent(t *testing.T) {
 				mockGetComponents.Return(nil, fmt.Errorf(*tt.wantMockErr))
 			}
 
-			devObj := DevfileObj{
-				Data: mockDevfileData,
-			}
-
-			component, err := GetImageBuildComponent(devObj.Data, tt.deployAssociatedComponents)
+			component, err := GetImageBuildComponent(mockDevfileData, tt.deployAssociatedComponents)
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("TestGetImageBuildComponent() error: %v, wantErr %v", err, tt.wantErr)

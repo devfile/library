@@ -21,10 +21,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	gitpkg "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/gregjones/httpcache"
-	"github.com/gregjones/httpcache/diskcache"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -44,6 +40,11 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	gitpkg "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
 
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 	"github.com/fatih/color"
@@ -1093,26 +1094,28 @@ func DownloadFileInMemory(url string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// DownloadInMemory uses HTTPRequestParams to download the file and return bytes
+// DownloadInMemory uses HTTPRequestParams to download the file and return bytes.
+// Use the pkg/devfile/parser/utils.go DownloadInMemory() invocation if you want to
+// call with a client instead.
 func DownloadInMemory(params HTTPRequestParams) ([]byte, error) {
 	var httpClient = &http.Client{Transport: &http.Transport{
 		ResponseHeaderTimeout: HTTPRequestResponseTimeout,
 	}, Timeout: HTTPRequestResponseTimeout}
 
-	var g GitUrl
+	var g *GitUrl
 	var err error
 
 	if IsGitProviderRepo(params.URL) {
-		g, err = NewGitUrlWithURL(params.URL)
+		g, err = NewGitURL(params.URL, params.Token)
 		if err != nil {
 			return nil, errors.Errorf("failed to parse git repo. error: %v", err)
 		}
 	}
 
-	return downloadInMemoryWithClient(params, httpClient, g)
+	return g.downloadInMemoryWithClient(params, httpClient)
 }
 
-func downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, g GitUrl) ([]byte, error) {
+func (g *GitUrl) downloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient) ([]byte, error) {
 	var url string
 	url = params.URL
 	req, err := http.NewRequest("GET", url, nil)

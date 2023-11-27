@@ -19,6 +19,7 @@ import (
 	"os"
 	"testing"
 
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
 )
 
@@ -67,7 +68,7 @@ func TestSetDevfileContent(t *testing.T) {
 		)
 		defer os.Remove(tempDevfile.Name())
 
-		err := d.SetDevfileContent()
+		err := d.SetDevfileContent(parserUtil.NewDevfileUtilsClient())
 
 		if err != nil {
 			t.Errorf("unexpected error '%v'", err)
@@ -90,7 +91,7 @@ func TestSetDevfileContent(t *testing.T) {
 		)
 		defer os.Remove(tempDevfile.Name())
 
-		err := d.SetDevfileContent()
+		err := d.SetDevfileContent(parserUtil.NewDevfileUtilsClient())
 
 		if err == nil {
 			t.Errorf("expected error, didn't get one ")
@@ -111,7 +112,7 @@ func TestSetDevfileContent(t *testing.T) {
 			}
 		)
 
-		err := d.SetDevfileContent()
+		err := d.SetDevfileContent(parserUtil.NewDevfileUtilsClient())
 
 		if err == nil {
 			t.Errorf("expected an error, didn't get one")

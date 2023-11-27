@@ -13,23 +13,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package parser
+package util
 
 import (
 	"fmt"
-	"github.com/devfile/library/v2/pkg/util"
+	"net/http"
 	"os"
 	"strings"
+
+	"github.com/devfile/library/v2/pkg/util"
 )
 
 type MockDevfileUtilsClient struct {
-	ParentURLAlias string // Specify a valid git URL as an alias if using a localhost HTTP server in order to pass validation.
-	MockGitURL     util.MockGitUrl
-	GitTestToken   string // Mock Git token.  Specify the string "valid-token" for the mock CloneGitRepo to pass
+	// Specify a valid git URL as an alias if using a localhost HTTP server in order to pass validation.
+	ParentURLAlias string
+
+	// MockGitUrl struct for mocking git related ops
+	MockGitURL util.MockGitUrl
+
+	// Mock Git token.  Specify the string "valid-token" for the mock CloneGitRepo to pass
+	GitTestToken string
+
+	// Options to specify what file download needs to be mocked
+	DownloadOptions util.MockDownloadOptions
 }
 
 func NewMockDevfileUtilsClient() MockDevfileUtilsClient {
 	return MockDevfileUtilsClient{}
+}
+
+func (gc MockDevfileUtilsClient) DownloadInMemory(params util.HTTPRequestParams) ([]byte, error) {
+	var httpClient = &http.Client{Transport: &http.Transport{
+		ResponseHeaderTimeout: util.HTTPRequestResponseTimeout,
+	}, Timeout: util.HTTPRequestResponseTimeout}
+
+	var mockGitUrl util.MockGitUrl
+
+	if util.IsGitProviderRepo(gc.MockGitURL.Host) {
+		mockGitUrl = gc.MockGitURL
+		mockGitUrl.Token = gc.GitTestToken
+	}
+
+	return mockGitUrl.DownloadInMemoryWithClient(params, httpClient, gc.DownloadOptions)
 }
 
 func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir string, token string) error {
@@ -45,13 +70,13 @@ func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir st
 			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url+"/"+mockGitUrl.Path)
 		}
 
-		stackDir, err := os.MkdirTemp("", fmt.Sprintf("git-resources"))
+		stackDir, err := os.MkdirTemp("", "git-resources")
 		if err != nil {
 			return fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 		}
 
 		defer func(path string) {
-			err := os.RemoveAll(path)
+			err = os.RemoveAll(path)
 			if err != nil {
 				err = fmt.Errorf("failed to create dir: %s, error: %v", stackDir, err)
 			}
@@ -68,7 +93,7 @@ func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir st
 		}
 
 	} else {
-		return fmt.Errorf("Failed to download resources from parent devfile.  Unsupported Git Provider for %s ", gc.ParentURLAlias)
+		return fmt.Errorf("failed to download resources from parent devfile.  Unsupported Git Provider for %s ", gc.ParentURLAlias)
 	}
 
 	return nil

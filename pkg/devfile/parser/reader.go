@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
@@ -38,6 +39,8 @@ type YamlSrc struct {
 	Path string
 	// URL of the yaml file
 	URL string
+	// Token to access a private URL like a private repository
+	Token string
 	// Data is the yaml content in []byte format
 	Data []byte
 }
@@ -56,15 +59,20 @@ type KubernetesResources struct {
 // It returns all the parsed Kubernetes objects as an array of interface.
 // Consumers interested in the Kubernetes resources are expected to Unmarshal
 // it to the struct of the respective Kubernetes resource. If a Path is being passed,
-// provide a filesystem, otherwise nil can be passed in
-func ReadKubernetesYaml(src YamlSrc, fs *afero.Afero) ([]interface{}, error) {
+// provide a filesystem, otherwise nil can be passed in.
+// Pass in an optional client to use either the actual implementation or a mock implementation of the interface.
+func ReadKubernetesYaml(src YamlSrc, fs *afero.Afero, devfileUtilsClient parserUtil.DevfileUtils) ([]interface{}, error) {
 
 	var data []byte
 	var err error
 
 	if src.URL != "" {
-		params := util.HTTPRequestParams{URL: src.URL}
-		data, err = util.DownloadInMemory(params)
+		if devfileUtilsClient == nil {
+			devfileUtilsClient = parserUtil.NewDevfileUtilsClient()
+		}
+
+		params := util.HTTPRequestParams{URL: src.URL, Token: src.Token}
+		data, err = devfileUtilsClient.DownloadInMemory(params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to download file %q", src.URL)
 		}
