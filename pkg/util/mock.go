@@ -238,7 +238,7 @@ CMD [ "waitress-serve", "--port=8081", "app:app"]
 
 func (m MockGitUrl) DownloadInMemoryWithClient(params HTTPRequestParams, httpClient HTTPClient, options MockDownloadOptions) ([]byte, error) {
 
-	if m.GetToken() == "valid-token" || m.GetToken() == "" {
+	if m.GetToken() == "valid-token" {
 		switch {
 		case options.MockDevfile:
 			return []byte(mockDevfile), nil
@@ -249,6 +249,9 @@ func (m MockGitUrl) DownloadInMemoryWithClient(params HTTPRequestParams, httpCli
 		default:
 			return []byte(mockDevfile), nil
 		}
+	} else if m.GetToken() == "" {
+		// if no token is provided, assume normal operation
+		return DownloadInMemory(params)
 	}
 
 	return nil, fmt.Errorf("failed to retrieve %s", params.URL)

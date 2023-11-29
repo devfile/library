@@ -90,8 +90,8 @@ func TestDownloadInMemoryClient(t *testing.T) {
 		},
 		{
 			name:   "Case 6: Input url is valid with a mock client",
-			client: MockDevfileUtilsClient{MockGitURL: util.MockGitUrl{Host: "https://github.com/devfile/library/blob/main/devfile.yaml"}, DownloadOptions: util.MockDownloadOptions{MockFile: "OK"}},
-			url:    "https://github.com/devfile/library/blob/main/devfile.yaml",
+			client: MockDevfileUtilsClient{MockGitURL: util.MockGitUrl{Host: server.URL}, DownloadOptions: util.MockDownloadOptions{MockFile: "OK"}},
+			url:    server.URL,
 			want:   []byte{79, 75},
 		},
 		{
