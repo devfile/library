@@ -89,8 +89,8 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			wantErr: fmt.Sprintf(downloadErr, "https://"+RawGitHubHost+"/devfile/library/main/devfile.yaml"),
 		},
 		{
-			name:   "Case 6: Input url is valid with a mock client",
-			client: MockDevfileUtilsClient{MockGitURL: util.MockGitUrl{Host: server.URL}, DownloadOptions: util.MockDownloadOptions{MockFile: "OK"}},
+			name:   "Case 6: Input url is valid with a mock client, dont use mock data during invocation",
+			client: MockDevfileUtilsClient{},
 			url:    server.URL,
 			want:   []byte{79, 75},
 		},
