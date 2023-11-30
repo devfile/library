@@ -106,6 +106,12 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			url:     "https://github.com/devfile/library/blob/main/devfile.yaml",
 			wantErr: "failed to retrieve https://github.com/devfile/library/blob/main/devfile.yaml",
 		},
+		{
+			name:   "Case 9: Input github url is valid with a mock client, dont use mock data during invocation",
+			client: MockDevfileUtilsClient{},
+			url:    "https://raw.githubusercontent.com/maysunfaisal/OK/main/OK.txt",
+			want:   []byte{79, 75},
+		},
 	}
 
 	for _, tt := range tests {
