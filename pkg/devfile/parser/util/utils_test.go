@@ -89,9 +89,9 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			wantErr: fmt.Sprintf(downloadErr, "https://"+RawGitHubHost+"/devfile/library/main/devfile.yaml"),
 		},
 		{
-			name:   "Case 6: Input url is valid with a mock client",
-			client: MockDevfileUtilsClient{MockGitURL: util.MockGitUrl{Host: "https://github.com/devfile/library/blob/main/devfile.yaml"}, DownloadOptions: util.MockDownloadOptions{MockFile: "OK"}},
-			url:    "https://github.com/devfile/library/blob/main/devfile.yaml",
+			name:   "Case 6: Input url is valid with a mock client, dont use mock data during invocation",
+			client: MockDevfileUtilsClient{},
+			url:    server.URL,
 			want:   []byte{79, 75},
 		},
 		{
@@ -105,6 +105,12 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			client:  MockDevfileUtilsClient{MockGitURL: util.MockGitUrl{Host: "https://github.com/devfile/library/blob/main/devfile.yaml"}, GitTestToken: "invalid-token"},
 			url:     "https://github.com/devfile/library/blob/main/devfile.yaml",
 			wantErr: "failed to retrieve https://github.com/devfile/library/blob/main/devfile.yaml",
+		},
+		{
+			name:   "Case 9: Input github url is valid with a mock client, dont use mock data during invocation",
+			client: MockDevfileUtilsClient{},
+			url:    "https://raw.githubusercontent.com/maysunfaisal/OK/main/OK.txt",
+			want:   []byte{79, 75},
 		},
 	}
 

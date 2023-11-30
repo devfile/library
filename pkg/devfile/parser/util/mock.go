@@ -49,9 +49,20 @@ func (gc MockDevfileUtilsClient) DownloadInMemory(params util.HTTPRequestParams)
 
 	var mockGitUrl util.MockGitUrl
 
-	if util.IsGitProviderRepo(gc.MockGitURL.Host) {
-		mockGitUrl = gc.MockGitURL
-		mockGitUrl.Token = gc.GitTestToken
+	if gc.MockGitURL.Host != "" {
+		if util.IsGitProviderRepo(gc.MockGitURL.Host) {
+			mockGitUrl = gc.MockGitURL
+			mockGitUrl.Token = gc.GitTestToken
+		}
+	} else if params.URL != "" {
+		// Not all clients have the ability to pass in mock data
+		// So we should be adaptable and use the function params
+		// and mock the output
+		if util.IsGitProviderRepo(params.URL) {
+			gc.MockGitURL.Host = params.URL
+			mockGitUrl = gc.MockGitURL
+			mockGitUrl.Token = params.Token
+		}
 	}
 
 	return mockGitUrl.DownloadInMemoryWithClient(params, httpClient, gc.DownloadOptions)
