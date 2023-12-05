@@ -214,7 +214,7 @@ commands:
         isDefault: true
 `
 
-var mockDevfileWithParentRef = `
+var MockDevfileWithParentRef = `
 schemaVersion: 2.2.0
 metadata:
   displayName: Go Mock Runtime
@@ -286,7 +286,7 @@ commands:
         isDefault: true
 `
 
-var mockParentDevfile = `
+var MockParentDevfile = `
 schemaVersion: 2.2.0
 metadata:
   displayName: Go Mock Parent
@@ -359,12 +359,12 @@ func (m MockGitUrl) DownloadInMemoryWithClient(params HTTPRequestParams, httpCli
 	} else if m.GetToken() == "parent-devfile" {
 		if options.MockParent != nil && !options.MockParent.IsMainDevfileDownloaded {
 			options.MockParent.IsMainDevfileDownloaded = true
-			return []byte(mockDevfileWithParentRef), nil
+			return []byte(MockDevfileWithParentRef), nil
 		}
 
 		if options.MockParent != nil && !options.MockParent.IsParentDevfileDownloaded {
 			options.MockParent.IsParentDevfileDownloaded = true
-			return []byte(mockParentDevfile), nil
+			return []byte(MockParentDevfile), nil
 		}
 	} else if m.GetToken() == "" {
 		// if no token is provided, assume normal operation

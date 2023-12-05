@@ -48,12 +48,13 @@ func TestDownloadInMemoryClient(t *testing.T) {
 	devfileUtilsClient := NewDevfileUtilsClient()
 
 	tests := []struct {
-		name    string
-		url     string
-		token   string
-		client  DevfileUtils
-		want    []byte
-		wantErr string
+		name       string
+		url        string
+		token      string
+		client     DevfileUtils
+		want       []byte
+		wantParent []byte
+		wantErr    string
 	}{
 		{
 			name:   "Case 1: Input url is valid",
@@ -112,6 +113,14 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			url:    "https://raw.githubusercontent.com/maysunfaisal/OK/main/OK.txt",
 			want:   []byte{79, 75},
 		},
+		{
+			name:       "Case 10: Test devfile with private parent",
+			client:     &MockDevfileUtilsClient{},
+			url:        "https://github.com/devfile/library/blob/main/devfile.yaml",
+			token:      "parent-devfile",
+			want:       []byte(util.MockDevfileWithParentRef),
+			wantParent: []byte(util.MockParentDevfile),
+		},
 	}
 
 	for _, tt := range tests {
@@ -120,9 +129,20 @@ func TestDownloadInMemoryClient(t *testing.T) {
 			if (err != nil) != (tt.wantErr != "") {
 				t.Errorf("Failed to download file with error: %s", err)
 			} else if err == nil && !reflect.DeepEqual(data, tt.want) {
-				t.Errorf("Expected: %v, received: %v, difference at %v", tt.want, string(data[:]), pretty.Compare(tt.want, data))
+				t.Errorf("Expected: %v, received: %v, difference at %v", string(tt.want), string(data[:]), pretty.Compare(tt.want, data))
 			} else if err != nil {
 				assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
+			}
+
+			if len(tt.wantParent) > 0 {
+				data, err := tt.client.DownloadInMemory(util.HTTPRequestParams{URL: tt.url, Token: tt.token})
+				if (err != nil) != (tt.wantErr != "") {
+					t.Errorf("Failed to download file with error: %s", err)
+				} else if err == nil && !reflect.DeepEqual(data, tt.wantParent) {
+					t.Errorf("Expected: %v, received: %v, difference at %v", string(tt.wantParent), string(data[:]), pretty.Compare(tt.wantParent, data))
+				} else if err != nil {
+					assert.Regexp(t, tt.wantErr, err.Error(), "Error message should match")
+				}
 			}
 		})
 	}
