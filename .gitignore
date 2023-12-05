@@ -24,6 +24,7 @@ main
 # File created running tests
 tests/**/tmp/
 tests/v2/lib-test-coverage.*
+*resource.file*
 
 
 # Mac related files

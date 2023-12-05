@@ -4448,7 +4448,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			tt.devfileUtilsClient.GitTestToken = tt.token
 			tt.devfileUtilsClient.MockGitURL = util.MockGitUrl(*tt.gitUrl)
 
-			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: tt.devfileUtilsClient})
+			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: &tt.devfileUtilsClient})
 
 			// validate even if we want an error; check that no files are copied to destDir
 			validateGitResourceFunctions(t, tt.wantResources, tt.wantResourceContent, destDir)
