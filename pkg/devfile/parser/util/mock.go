@@ -42,17 +42,14 @@ func NewMockDevfileUtilsClient() MockDevfileUtilsClient {
 	return MockDevfileUtilsClient{}
 }
 
-func (gc MockDevfileUtilsClient) DownloadInMemory(params util.HTTPRequestParams) ([]byte, error) {
+func (gc *MockDevfileUtilsClient) DownloadInMemory(params util.HTTPRequestParams) ([]byte, error) {
 	var httpClient = &http.Client{Transport: &http.Transport{
 		ResponseHeaderTimeout: util.HTTPRequestResponseTimeout,
 	}, Timeout: util.HTTPRequestResponseTimeout}
 
-	var mockGitUrl util.MockGitUrl
-
 	if gc.MockGitURL.Host != "" {
 		if util.IsGitProviderRepo(gc.MockGitURL.Host) {
-			mockGitUrl = gc.MockGitURL
-			mockGitUrl.Token = gc.GitTestToken
+			gc.MockGitURL.Token = gc.GitTestToken
 		}
 	} else if params.URL != "" {
 		// Not all clients have the ability to pass in mock data
@@ -60,15 +57,50 @@ func (gc MockDevfileUtilsClient) DownloadInMemory(params util.HTTPRequestParams)
 		// and mock the output
 		if util.IsGitProviderRepo(params.URL) {
 			gc.MockGitURL.Host = params.URL
-			mockGitUrl = gc.MockGitURL
-			mockGitUrl.Token = params.Token
+			gc.MockGitURL.Token = params.Token
 		}
 	}
 
-	return mockGitUrl.DownloadInMemoryWithClient(params, httpClient, gc.DownloadOptions)
+	if gc.DownloadOptions.MockParent == nil {
+		gc.DownloadOptions.MockParent = &util.MockParent{}
+	}
+
+	file, err := gc.MockGitURL.DownloadInMemoryWithClient(params, httpClient, gc.DownloadOptions)
+
+	if gc.DownloadOptions.MockParent != nil && gc.DownloadOptions.MockParent.IsMainDevfileDownloaded && gc.DownloadOptions.MockParent.IsParentDevfileDownloaded {
+		// Since gc is a pointer, if both the main and parent devfiles are downloaded, reset the flag.
+		// So that other tests can use the Mock Parent Devfile download if required.
+		gc.DownloadOptions.MockParent.IsMainDevfileDownloaded = false
+		gc.DownloadOptions.MockParent.IsParentDevfileDownloaded = false
+	}
+
+	if gc.MockGitURL.Host != "" && params.URL != "" {
+		// Since gc is a pointer, reset the mock data if both the URL and Host are present
+		gc.MockGitURL.Host = ""
+		gc.MockGitURL.Token = ""
+	}
+
+	return file, err
 }
 
 func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir string, token string) error {
+
+	// if mock data is unavailable as certain clients cant provide mock data
+	// then adapt and create mock data from actual params
+	if gc.ParentURLAlias == "" {
+		gc.ParentURLAlias = url
+		gc.MockGitURL.IsFile = true
+		gc.MockGitURL.Revision = "main"
+		gc.MockGitURL.Path = OutputDevfileYamlPath
+		gc.MockGitURL.Host = "github.com"
+		gc.MockGitURL.Protocol = "https"
+		gc.MockGitURL.Owner = "devfile"
+		gc.MockGitURL.Repo = "library"
+	}
+
+	if gc.GitTestToken == "" {
+		gc.GitTestToken = token
+	}
 
 	//the url parameter that gets passed in will be the localhost IP of the test server, so it will fail all the validation checks.  We will use the global testURL variable instead
 	//skip the Git Provider check since it'll fail

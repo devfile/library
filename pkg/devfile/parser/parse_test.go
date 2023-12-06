@@ -4260,6 +4260,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		wantResources        []string
 		wantResourceContent  []byte
 		downloadGitResources bool
+		noMockData           bool
 	}{
 		{
 			name:   "private parent devfile",
@@ -4280,6 +4281,26 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			wantResources:        []string{"resource.file"},
 			wantResourceContent:  []byte("private repo\ngit switched"),
 			downloadGitResources: true,
+		},
+		{
+			name: "private parent devfile without mock data",
+			url:  validUrl,
+			devfileUtilsClient: parserUtil.MockDevfileUtilsClient{
+				DownloadOptions: util.MockDownloadOptions{
+					MockFile: minimalDevfileContent,
+				},
+			},
+			token: validToken,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: "https://github.com/private-url-devfile",
+				},
+			},
+			wantDevFile:          minimalDevfile,
+			wantResources:        []string{"resource.file"},
+			wantResourceContent:  []byte("private repo\ngit switched"),
+			downloadGitResources: true,
+			noMockData:           true,
 		},
 		{
 			name:   "public parent devfile",
@@ -4444,11 +4465,15 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 				t.Errorf("Unexpected err: %+v", err)
 			}
 
-			tt.devfileUtilsClient.ParentURLAlias = tt.url
-			tt.devfileUtilsClient.GitTestToken = tt.token
-			tt.devfileUtilsClient.MockGitURL = util.MockGitUrl(*tt.gitUrl)
+			if tt.noMockData {
+				curDevfileContext.SetToken(tt.token)
+			} else {
+				tt.devfileUtilsClient.ParentURLAlias = tt.url
+				tt.devfileUtilsClient.GitTestToken = tt.token
+				tt.devfileUtilsClient.MockGitURL = util.MockGitUrl(*tt.gitUrl)
+			}
 
-			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: tt.devfileUtilsClient})
+			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: &tt.devfileUtilsClient})
 
 			// validate even if we want an error; check that no files are copied to destDir
 			validateGitResourceFunctions(t, tt.wantResources, tt.wantResourceContent, destDir)
