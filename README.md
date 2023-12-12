@@ -269,7 +269,7 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 ## Releases
 
-The devfile/library releases are created on demand. For existing devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
+The devfile/library releases are created annually or on demand. For existing devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
 
 ### Create a New Release
 
