@@ -16,7 +16,7 @@ contribution. See the [DCO](./DCO) file for details.
 The following are required to work on devfile library:
 
 - Git
-- Go 1.15 or later
+- Go 1.18 or later
 
 ## Code of Conduct
 Before contributing to this repository, see [contributor code of conduct](https://github.com/devfile/api/blob/main/CODE_OF_CONDUCT.md#contributor-covenant-code-of-conduct)
@@ -69,6 +69,6 @@ Running the script with no arguments will default to update the latest devfile v
 
 ### Releases
 
-Currently devfile library does not have schedule for new releases. A new version is being generated and released on demand. 
+Currently devfile library publish new releases annually. A new version can also be generated and released on demand.
 A new branch is expected to be created for a new release.
 To generate a changelog for a new release, execute `./scripts/changelog-script.sh v2.x.y` for all the changes since the release v2.x.y
