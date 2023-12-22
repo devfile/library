@@ -3,6 +3,7 @@
 <div id="header">
 
 [![Apache2.0 License](https://img.shields.io/badge/license-Apache2.0-brightgreen.svg)](LICENSE)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8231/badge)](https://www.bestpractices.dev/projects/8231)
 </div>
 
 ## About
