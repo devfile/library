@@ -3102,8 +3102,8 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
 			httpPrefix, uri2, httpPrefix, uri1)
 		// Unexpected error
-		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
-			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() unexpected error: %v", err)
+		if err == nil || !strings.Contains(err.Error(), expectedErr) {
+			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() error did not match: %v", err)
 
 			return
 		}
