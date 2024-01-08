@@ -31,6 +31,7 @@ func TestSetDevfileAPIVersion(t *testing.T) {
 		concreteSchema         = `{"schemaVersion": "2.2.0-latest"}`
 		emptyJson              = "{}"
 		emptySchemaVersionJson = `{"schemaVersion": ""}`
+		badJson                = `{"name": "Joe", "age": null]`
 		devfilePath            = "/testpath/devfile.yaml"
 		devfileURL             = "http://server/devfile.yaml"
 	)
@@ -65,6 +66,12 @@ func TestSetDevfileAPIVersion(t *testing.T) {
 			devfileCtx: DevfileCtx{rawContent: []byte(emptySchemaVersionJson), url: devfileURL},
 			want:       "",
 			wantErr:    &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("schemaVersion in devfile: %s cannot be empty", devfileURL)},
+		},
+		{
+			name:       "unmarshal error",
+			devfileCtx: DevfileCtx{rawContent: []byte(badJson), url: devfileURL},
+			want:       "",
+			wantErr:    &errPkg.NonCompliantDevfile{Err: "invalid character ']' after object key:value pair"},
 		},
 	}
 

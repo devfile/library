@@ -3350,6 +3350,48 @@ commands:
         kind: deploy
         isDefault: true`
 
+	badDevfile := `schemaVersion: 10.0.0
+metadata:
+  name: nodejs
+  version: 2.1.1
+  displayName: Node.js Runtime
+  description: Stack with Node.js 16
+components:
+  - name: image-build
+    image:
+      imageName: nodejs-image:latest
+      dockerfile:
+        uri: Dockerfile
+        buildContext: .
+        rootRequired: true
+  - name: kubernetes-deploy
+    kubernetes:
+      uri: deploy.yaml
+      endpoints:
+      - name: http-3001
+        targetPort: 3001
+        path: /
+commands:
+  - id: build-image
+    apply:
+      component: image-build
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+      group:
+        kind: deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true`
+
+	badYAML := `
+~: a`
+
 	tests := []struct {
 		name             string
 		parserArgs       ParserArgs
@@ -3413,6 +3455,25 @@ commands:
 				ImageNamesAsSelector: &ImageSelectorArgs{
 					Registry: "  \t \n",
 				},
+			},
+			wantErr: true,
+		},
+		{
+			name:       "error out if parser args have no devfile src",
+			parserArgs: ParserArgs{},
+			wantErr:    true,
+		},
+		{
+			name: "error out if parser args have bad YAML",
+			parserArgs: ParserArgs{
+				Data: []byte(badYAML),
+			},
+			wantErr: true,
+		},
+		{
+			name: "error if parser args have a bad Devfile",
+			parserArgs: ParserArgs{
+				Data: []byte(badDevfile),
 			},
 			wantErr: true,
 		},
@@ -3623,6 +3684,10 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
+	emptyImportReference := v1.ImportReference{
+		Version: "1",
+	}
+
 	importFromKubeCRD := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(kubeCRDReference))
 	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
 		resolveImportReference(kubeCRDReference)).PutString(parentOverrideAttribute, "main devfile")
@@ -3664,6 +3729,8 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
+	noParentImportSrcErr := "parent does not define any resources"
+	noPluginImportSrcErr := "plugin plugin1 does not define any resources"
 	crdNotFoundErr := "not found"
 
 	//override all properties
@@ -3903,6 +3970,50 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 				name: crdNotFoundErr,
 			},
 			wantErr: &crdNotFoundErr,
+		},
+		{
+			name: "should err out if there is no parent import reference",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: emptyImportReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			wantErr: &noParentImportSrcErr,
+		},
+		{
+			name: "should err out if there is no plugin import reference",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "plugin1",
+										ComponentUnion: v1.ComponentUnion{
+											Plugin: &v1.PluginComponent{
+												ImportReference: v1.ImportReference{
+													Version: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: &noPluginImportSrcErr,
 		},
 	}
 
@@ -4533,6 +4644,9 @@ func Test_parseFromRegistry(t *testing.T) {
 		stagingRegistry = "https://registry.stage.devfile.io"
 	)
 
+	badYAML := `
+~: a`
+
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -4590,6 +4704,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	missingRegistryURLErr := "failed to fetch from registry, registry URL is not provided"
 	invalidRegistryURLErr := "Get .* dial tcp: lookup http: .*"
 	resourceDownloadErr := "failed to pull stack from registry .*"
+	badDevfileErr := "error parsing devfile because of non-compliant data"
 
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var data []byte
@@ -4597,6 +4712,8 @@ func Test_parseFromRegistry(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/devfiles/"+registryId) {
 			if strings.Contains(r.URL.Path, "latest") {
 				data, err = yaml.Marshal(latestParentDevfile.Data)
+			} else if strings.Contains(r.URL.Path, "bad") {
+				data = []byte(badYAML)
 			} else if strings.Contains(r.URL.Path, "1.1.0") {
 				data, err = yaml.Marshal(parentDevfile.Data)
 			} else if r.URL.Path == fmt.Sprintf("/devfiles/%s/", registryId) {
@@ -4742,6 +4859,17 @@ func Test_parseFromRegistry(t *testing.T) {
 			},
 			wantErr: &invalidRegistryURLErr,
 		},
+		{
+			name: "should fail if registry returns a bad devfile content",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				Version:     "bad",
+				RegistryUrl: httpPrefix + registry,
+			},
+			wantErr: &badDevfileErr,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -4786,6 +4914,7 @@ func Test_parseFromKubeCRD(t *testing.T) {
 	}
 
 	crdNotFoundErr := "not found"
+	noContextErr := "kubernetes client and context are required to parse from Kubernetes CRD"
 
 	tests := []struct {
 		name                  string
@@ -4834,6 +4963,20 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			},
 			wantErr: &crdNotFoundErr,
 		},
+		{
+			name:        "should err out on no context",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Kubernetes: &v1.KubernetesCustomResourceImportReference{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{},
+			wantErr:               &noContextErr,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -4844,6 +4987,12 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			tool := resolverTools{
 				k8sClient: testK8sClient,
 				context:   context.Background(),
+			}
+			if tt.name == "should err out on no context" {
+				tool = resolverTools{
+					k8sClient: testK8sClient,
+					context:   nil,
+				}
 			}
 			got, err := parseFromKubeCRD(tt.importReference, &resolutionContextTree{}, tool)
 			if (err != nil) != (tt.wantErr != nil) {
