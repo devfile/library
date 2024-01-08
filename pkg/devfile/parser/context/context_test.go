@@ -26,7 +26,7 @@ import (
 )
 
 func TestPopulateFromBytes(t *testing.T) {
-	failedToConvertYamlErr := "failed to convert devfile yaml to json: yaml: mapping values are not allowed in this context"
+	failedToConvertYamlErr := "mapping values are not allowed in this context"
 
 	tests := []struct {
 		name        string

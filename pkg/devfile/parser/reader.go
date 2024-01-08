@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 
+	errPkg "github.com/devfile/library/v2/pkg/devfile/parser/errors"
 	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
@@ -132,7 +133,7 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 		var kubernetesMap map[string]interface{}
 		err = k8yaml.Unmarshal(byteData, &kubernetesMap)
 		if err != nil {
-			return KubernetesResources{}, err
+			return KubernetesResources{}, &errPkg.NonCompliantDevfile{Err: err.Error()}
 		}
 		kind := kubernetesMap["kind"]
 
@@ -155,7 +156,7 @@ func ParseKubernetesYaml(values []interface{}) (KubernetesResources, error) {
 		}
 
 		if err != nil {
-			return KubernetesResources{}, err
+			return KubernetesResources{}, &errPkg.NonCompliantDevfile{Err: err.Error()}
 		}
 	}
 

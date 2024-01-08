@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"unicode"
 
+	errPkg "github.com/devfile/library/v2/pkg/devfile/parser/errors"
 	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/util"
 	"github.com/pkg/errors"
@@ -42,7 +43,7 @@ func YAMLToJSON(data []byte) ([]byte, error) {
 	// Is YAML, convert to JSON
 	data, err := yaml.YAMLToJSON(data)
 	if err != nil {
-		return data, errors.Wrapf(err, "failed to convert devfile yaml to json")
+		return data, &errPkg.NonCompliantDevfile{Err: err.Error()}
 	}
 
 	// Successful

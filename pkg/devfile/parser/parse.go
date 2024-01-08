@@ -30,6 +30,7 @@ import (
 	devfileCtx "github.com/devfile/library/v2/pkg/devfile/parser/context"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	errPkg "github.com/devfile/library/v2/pkg/devfile/parser/errors"
 	"github.com/devfile/library/v2/pkg/util"
 	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 	"k8s.io/apimachinery/pkg/types"
@@ -65,7 +66,7 @@ func parseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolver
 	// Unmarshal devfile content into devfile struct
 	err = json.Unmarshal(d.Ctx.GetDevfileContent(), &d.Data)
 	if err != nil {
-		return d, errors.Wrapf(err, "failed to decode devfile content")
+		return d, &errPkg.NonCompliantDevfile{Err: err.Error()}
 	}
 
 	if flattenedDevfile {
@@ -156,14 +157,14 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 	if args.Data != nil {
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(args.Data)
 		if err != nil {
-			return d, errors.Wrap(err, "failed to set devfile content from bytes")
+			return d, err
 		}
 	} else if args.Path != "" {
 		d.Ctx = devfileCtx.NewDevfileCtx(args.Path)
 	} else if args.URL != "" {
 		d.Ctx = devfileCtx.NewURLDevfileCtx(args.URL)
 	} else {
-		return d, errors.Wrap(err, "the devfile source is not provided")
+		return d, fmt.Errorf("the devfile source is not provided")
 	}
 
 	if args.Token != "" {
@@ -196,7 +197,7 @@ func ParseDevfile(args ParserArgs) (d DevfileObj, err error) {
 
 	d, err = populateAndParseDevfile(d, &resolutionContextTree{}, tool, flattenedDevfile)
 	if err != nil {
-		return d, errors.Wrap(err, "failed to populateAndParseDevfile")
+		return d, err
 	}
 
 	setBooleanDefaults := true
@@ -249,7 +250,7 @@ type resolverTools struct {
 func populateAndParseDevfile(d DevfileObj, resolveCtx *resolutionContextTree, tool resolverTools, flattenedDevfile bool) (DevfileObj, error) {
 	var err error
 	if err = resolveCtx.hasCycle(); err != nil {
-		return DevfileObj{}, err
+		return DevfileObj{}, &errPkg.NonCompliantDevfile{Err: err.Error()}
 	}
 	// Fill the fields of DevfileCtx struct
 	if d.Ctx.GetURL() != "" {
@@ -330,7 +331,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			case parent.Kubernetes != nil:
 				parentDevfileObj, err = parseFromKubeCRD(parent.ImportReference, resolveCtx, tool)
 			default:
-				return fmt.Errorf("devfile parent does not define any resources")
+				err = &errPkg.NonCompliantDevfile{Err: "devfile parent does not define any resources"}
 			}
 			if err != nil {
 				return err
@@ -347,7 +348,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 				}
 
 				if parentDevfileVerson.GreaterThan(mainDevfileVersion) {
-					return fmt.Errorf("the parent devfile version from %v is greater than the child devfile version from %v", resolveImportReference(parent.ImportReference), resolveImportReference(resolveCtx.importReference))
+					return &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("the parent devfile version from %v is greater than the child devfile version from %v", resolveImportReference(parent.ImportReference), resolveImportReference(resolveCtx.importReference))}
 				}
 			}
 			parentWorkspaceContent := parentDevfileObj.Data.GetDevfileWorkspaceSpecContent()
@@ -392,7 +393,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 			case plugin.Kubernetes != nil:
 				pluginDevfileObj, err = parseFromKubeCRD(plugin.ImportReference, resolveCtx, tool)
 			default:
-				return fmt.Errorf("plugin %s does not define any resources", component.Name)
+				err = &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("plugin %s does not define any resources", component.Name)}
 			}
 			if err != nil {
 				return err
@@ -408,7 +409,7 @@ func parseParentAndPlugin(d DevfileObj, resolveCtx *resolutionContextTree, tool 
 					return fmt.Errorf("fail to parse version of plugin devfile from: %v", resolveImportReference(component.Plugin.ImportReference))
 				}
 				if pluginDevfileVerson.GreaterThan(mainDevfileVersion) {
-					return fmt.Errorf("the plugin devfile version from %v is greater than the child devfile version from %v", resolveImportReference(component.Plugin.ImportReference), resolveImportReference(resolveCtx.importReference))
+					return &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("the plugin devfile version from %v is greater than the child devfile version from %v", resolveImportReference(component.Plugin.ImportReference), resolveImportReference(resolveCtx.importReference))}
 				}
 			}
 			pluginWorkspaceContent := pluginDevfileObj.Data.GetDevfileWorkspaceSpecContent()
@@ -462,7 +463,7 @@ func parseFromURI(importReference v1.ImportReference, curDevfileCtx devfileCtx.D
 		newUri = path.Join(path.Dir(curDevfileCtx.GetAbsPath()), uri)
 		d.Ctx = devfileCtx.NewDevfileCtx(newUri)
 		if util.ValidateFile(newUri) != nil {
-			return DevfileObj{}, fmt.Errorf("the provided path is not a valid filepath %s", newUri)
+			return DevfileObj{}, &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("the provided path is not a valid filepath %s", newUri)}
 		}
 		srcDir := path.Dir(newUri)
 		destDir := path.Dir(curDevfileCtx.GetAbsPath())
@@ -520,7 +521,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 		}
 		d.Ctx, err = devfileCtx.NewByteContentDevfileCtx(devfileContent)
 		if err != nil {
-			return d, errors.Wrap(err, "failed to set devfile content from bytes")
+			return d, err
 		}
 		newResolveCtx := resolveCtx.appendNode(importReference)
 
@@ -551,7 +552,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 			}
 		}
 	} else {
-		return DevfileObj{}, fmt.Errorf("failed to fetch from registry, registry URL is not provided")
+		return DevfileObj{}, &errPkg.NonCompliantDevfile{Err: "failed to fetch from registry, registry URL is not provided"}
 	}
 
 	return DevfileObj{}, fmt.Errorf("failed to get id: %s from registry URLs provided", id)
@@ -559,7 +560,7 @@ func parseFromRegistry(importReference v1.ImportReference, resolveCtx *resolutio
 
 func getDevfileFromRegistry(id, registryURL, version string, httpTimeout *int) ([]byte, error) {
 	if !strings.HasPrefix(registryURL, "http://") && !strings.HasPrefix(registryURL, "https://") {
-		return nil, fmt.Errorf("the provided registryURL: %s is not a valid URL", registryURL)
+		return nil, &errPkg.NonCompliantDevfile{Err: fmt.Sprintf("the provided registryURL: %s is not a valid URL", registryURL)}
 	}
 	param := util.HTTPRequestParams{
 		URL: fmt.Sprintf("%s/devfiles/%s/%s", registryURL, id, version),
@@ -594,7 +595,7 @@ func getResourcesFromRegistry(id, registryURL, destDir string) error {
 func parseFromKubeCRD(importReference v1.ImportReference, resolveCtx *resolutionContextTree, tool resolverTools) (d DevfileObj, err error) {
 
 	if tool.k8sClient == nil || tool.context == nil {
-		return DevfileObj{}, fmt.Errorf("Kubernetes client and context are required to parse from Kubernetes CRD")
+		return DevfileObj{}, fmt.Errorf("kubernetes client and context are required to parse from Kubernetes CRD")
 	}
 	namespace := importReference.Kubernetes.Namespace
 
