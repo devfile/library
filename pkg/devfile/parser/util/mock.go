@@ -19,9 +19,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/devfile/library/v2/pkg/util"
+)
+
+// Default filenames for create devfile to be used in mocks
+const (
+	OutputDevfileYamlPath = "devfile.yaml"
 )
 
 type MockDevfileUtilsClient struct {
@@ -109,7 +113,7 @@ func (gc MockDevfileUtilsClient) DownloadGitRepoResources(url string, destDir st
 		mockGitUrl := gc.MockGitURL
 		mockGitUrl.Token = gc.GitTestToken
 
-		if !mockGitUrl.IsFile || mockGitUrl.Revision == "" || !strings.Contains(mockGitUrl.Path, OutputDevfileYamlPath) {
+		if !mockGitUrl.IsFile || mockGitUrl.Revision == "" || !ValidateDevfileExistence((mockGitUrl.Path)) {
 			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url+"/"+mockGitUrl.Path)
 		}
 

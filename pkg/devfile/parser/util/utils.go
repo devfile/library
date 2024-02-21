@@ -25,10 +25,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// Default filenames for create devfile
-const (
-	OutputDevfileYamlPath = "devfile.yaml"
-)
+// Contains common naming conventions for devfiles to look for when downloading resources
+var DevfilePossibilities = [...]string{"devfile.yaml", "devfile.yml", ".devfile.yaml", ".devfile.yml"}
 
 type DevfileUtilsClient struct {
 }
@@ -52,7 +50,7 @@ func (c DevfileUtilsClient) DownloadGitRepoResources(url string, destDir string,
 			return err
 		}
 
-		if !gitUrl.IsFile || gitUrl.Revision == "" || !strings.Contains(gitUrl.Path, OutputDevfileYamlPath) {
+		if !gitUrl.IsFile || gitUrl.Revision == "" || !ValidateDevfileExistence((gitUrl.Path)) {
 			return fmt.Errorf("error getting devfile from url: failed to retrieve %s", url)
 		}
 
@@ -87,4 +85,14 @@ func (c DevfileUtilsClient) DownloadGitRepoResources(url string, destDir string,
 	}
 
 	return nil
+}
+
+// ValidateDevfileExistence verifies if any of the naming possibilities for devfile are present in the url path
+func ValidateDevfileExistence(path string) bool {
+	for _, devfile := range DevfilePossibilities {
+		if strings.Contains(path, devfile) {
+			return true
+		}
+	}
+	return false
 }

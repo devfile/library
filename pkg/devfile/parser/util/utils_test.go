@@ -147,3 +147,51 @@ func TestDownloadInMemoryClient(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDevfileExistence(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		url           string
+		wantErr       bool
+		expectedValue bool
+	}{
+		{
+			name:          "recognizes devfile.yaml",
+			url:           "https://dummyurlpath/devfile/registry/main/stacks/python/3.0.0/devfile.yaml",
+			wantErr:       false,
+			expectedValue: true,
+		},
+		{
+			name:          "recognizes devfile.yml",
+			url:           "https://dummyurlpath/devfile/registry/main/stacks/python/3.0.0/devfile.yml",
+			wantErr:       false,
+			expectedValue: true,
+		},
+		{
+			name:          "recognizes .devfile.yaml",
+			url:           "https://dummyurlpath/devfile/registry/main/stacks/python/3.0.0/.devfile.yaml",
+			wantErr:       false,
+			expectedValue: true,
+		},
+		{
+			name:          "recognizes .devfile.yml",
+			url:           "https://dummyurlpath/devfile/registry/main/stacks/python/3.0.0/.devfile.yml",
+			wantErr:       false,
+			expectedValue: true,
+		},
+		{
+			name:          "no valid devfile in path",
+			url:           "https://dummyurlpath/devfile/registry/main/stacks/python/3.0.0/deploy.yaml",
+			wantErr:       true,
+			expectedValue: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := ValidateDevfileExistence(tt.url)
+			assert.EqualValues(t, tt.expectedValue, res, "expected res = %t, got %t", tt.expectedValue, res)
+		})
+	}
+}
