@@ -26,7 +26,7 @@ import (
 )
 
 // Contains common naming conventions for devfiles to look for when downloading resources
-var DevfilePossibilities = [...]string{"devfile.yaml", "devfile.yml", ".devfile.yaml", ".devfile.yml"}
+var DevfilePossibilities = [...]string{"devfile.yaml", ".devfile.yaml", "devfile.yml", ".devfile.yml"}
 
 type DevfileUtilsClient struct {
 }
