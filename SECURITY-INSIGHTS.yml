@@ -20,6 +20,8 @@ security-testing:
   tool-name: Dependabot
   comment: |
     Dependabot is enabled for this repo.
+distribution-points:
+  - https://github.com/devfile/library
 contribution-policy:
   accepts-pull-requests: true
   accepts-automated-pull-requests: true
