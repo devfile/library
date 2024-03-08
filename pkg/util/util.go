@@ -855,19 +855,13 @@ func FilterIgnores(filesChanged, filesDeleted, absIgnoreRules []string) (filesCh
 // IsValidProjectDir checks that the folder to download the project from devfile is
 // either empty or only contains the devfile used.
 func IsValidProjectDir(path string, devfilePath string) error {
-	fileEntries, err := os.ReadDir(path)
+	return isValidProjectDirOnFS(path, devfilePath, filesystem.DefaultFs{})
+}
+
+func isValidProjectDirOnFS(path string, devfilePath string, fs filesystem.Filesystem) error {
+	files, err := fs.ReadDir(path)
 	if err != nil {
 		return err
-	}
-
-	files := make([]os.FileInfo, 0, len(fileEntries))
-	for _, fileEntry := range fileEntries {
-		info, err := fileEntry.Info()
-		if err != nil {
-			return err
-		}
-
-		files = append(files, info)
 	}
 
 	if len(files) > 1 {
