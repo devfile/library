@@ -18,7 +18,7 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	schema "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	commonUtils "github.com/devfile/api/v2/test/v200/utils/common"
@@ -87,7 +87,7 @@ func VerifyComponents(devfile *commonUtils.TestDevfile, parserComponents []schem
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", parserFilename)))
 					} else {
-						err = ioutil.WriteFile(parserFilename, c, 0644)
+						err = os.WriteFile(parserFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", parserFilename)))
 						}
@@ -97,7 +97,7 @@ func VerifyComponents(devfile *commonUtils.TestDevfile, parserComponents []schem
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", testFilename)))
 					} else {
-						err = ioutil.WriteFile(testFilename, c, 0644)
+						err = os.WriteFile(testFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", testFilename)))
 						}

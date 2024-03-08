@@ -17,11 +17,6 @@ package util
 
 import (
 	"fmt"
-	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
-	"github.com/kylelemons/godebug/pretty"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -33,6 +28,11 @@ import (
 	"runtime"
 	"strconv"
 	"testing"
+
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestNamespaceOpenShiftObject(t *testing.T) {
@@ -919,7 +919,7 @@ func TestDownloadFile(t *testing.T) {
 					t.Errorf("Failed to download file with error %s", err)
 				}
 
-				got, err := ioutil.ReadFile(tt.filepath)
+				got, err := os.ReadFile(tt.filepath)
 				if err != nil {
 					t.Errorf("Failed to read file with error %s", err)
 				}
@@ -1043,11 +1043,11 @@ func TestValidateK8sResourceName(t *testing.T) {
 
 func TestValidateFile(t *testing.T) {
 	// Create temp dir and temp file
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
 	}
-	tempFile, err := ioutil.TempFile(tempDir, "")
+	tempFile, err := os.CreateTemp(tempDir, "")
 	if err != nil {
 		t.Errorf("Failed to create temp file: %s, error: %v", tempFile.Name(), err)
 	}
@@ -1086,13 +1086,13 @@ func TestValidateFile(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	// Create temp dir
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
 	}
 
 	// Create temp file under temp dir as source file
-	tempFile, err := ioutil.TempFile(tempDir, "")
+	tempFile, err := os.CreateTemp(tempDir, "")
 	if err != nil {
 		t.Errorf("Failed to create temp file: %s, error: %v", tempFile.Name(), err)
 	}
