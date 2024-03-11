@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
@@ -81,7 +81,7 @@ func VerifyCommands(devfile *commonUtils.TestDevfile, parserCommands []schema.Co
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", parserFilename)))
 					} else {
-						err = ioutil.WriteFile(parserFilename, c, 0644)
+						err = os.WriteFile(parserFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", parserFilename)))
 						}
@@ -91,7 +91,7 @@ func VerifyCommands(devfile *commonUtils.TestDevfile, parserCommands []schema.Co
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", testFilename)))
 					} else {
-						err = ioutil.WriteFile(testFilename, c, 0644)
+						err = os.WriteFile(testFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", testFilename)))
 						}

@@ -1,5 +1,5 @@
 //
-// Copyright 2022-2023 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -4095,7 +4094,7 @@ func Test_parseFromURI(t *testing.T) {
 	if err != nil {
 		fmt.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
 	}
-	err = ioutil.WriteFile(localRelativeURI, yamlData, 0644)
+	err = os.WriteFile(localRelativeURI, yamlData, 0644)
 	if err != nil {
 		fmt.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
 	}
@@ -5180,7 +5179,7 @@ spec:
 		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: failed to create folder: %v, error: %v", path.Dir(localDeployFilePath), err)
 	}
 
-	err = ioutil.WriteFile(localDeployFilePath, []byte(deployContent), 0644)
+	err = os.WriteFile(localDeployFilePath, []byte(deployContent), 0644)
 	if err != nil {
 		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: fail to write to file: %v", err)
 	}

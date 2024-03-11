@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -38,7 +37,7 @@ func ReplaceSchemaFile() {
 	fmt.Printf("Writing to file: %s\n", filePath)
 	fileContent := fmt.Sprintf("package %s\n\n// %s\nconst %s = `%s\n`\n", packageVersion, schemaURL, jsonSchemaVersion, newSchema)
 
-	if err := ioutil.WriteFile(filePath, []byte(fileContent), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte(fileContent), 0600); err != nil {
 		printErr(err)
 		os.Exit(1)
 	}
