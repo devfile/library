@@ -152,7 +152,7 @@ metadata:
   tags:
   - Go
   version: 1.0.0
-schemaVersion: 2.2.0
+schemaVersion: 2.2.2
 `
 
 	devfileContentWithVariable := devfileContent + `variables:
@@ -267,6 +267,8 @@ spec:
 	testServer.Start()
 	defer testServer.Close()
 
+	unsupportedSchemaError := `error parsing devfile because of non-compliant data due to unable to find schema for version "2.2.5". The parser supports devfile schema for version 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2, v1alpha2`
+
 	type args struct {
 		args parser.ParserArgs
 	}
@@ -279,7 +281,7 @@ spec:
 		wantOpenshiftInline  string
 		wantVariables        map[string]string
 		additionalChecks     func(parser.DevfileObj) error
-		wantError            bool
+		wantErrorStr         *string
 	}{
 		{
 			name: "with external overriding variables",
@@ -303,7 +305,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with new external variables",
@@ -328,7 +330,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		}, {
 			name: "with new external variables",
 			args: args{
@@ -351,7 +353,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		}, {
 			name: "with external variables and covertUriToInline is false",
 			args: args{
@@ -373,7 +375,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with flattening set to false and setBooleanDefaults to true",
@@ -396,7 +398,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with setBooleanDefaults to false",
@@ -419,7 +421,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "get content from path",
@@ -441,7 +443,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "get content from url",
@@ -463,7 +465,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with parent and registry url in devfile",
@@ -485,7 +487,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with parent and no registry url in devfile",
@@ -510,7 +512,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "getting from cluster and setting default namespace",
@@ -543,7 +545,7 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yaml",
@@ -572,7 +574,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yaml",
@@ -601,7 +603,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing devfile with context path containing multiple devfiles => priority to devfile.yml",
@@ -630,7 +632,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing devfile with context path containing multiple devfiles => priority to .devfile.yml",
@@ -659,7 +661,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing devfile with .yml extension",
@@ -688,7 +690,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing .devfile with .yml extension",
@@ -717,7 +719,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing .devfile with .yaml extension",
@@ -746,7 +748,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "parsing any valid devfile regardless of extension",
@@ -775,7 +777,7 @@ spec:
 				}
 				return nil
 			},
-			wantError: false,
+			wantErrorStr: nil,
 		},
 		{
 			name: "with unsupported schema version",
@@ -797,17 +799,17 @@ spec:
 				Projects:        map[string][]string{},
 				StarterProjects: map[string][]string{},
 			},
-			wantError: true,
+			wantErrorStr: &unsupportedSchemaError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotD, gotVarWarning, err := ParseDevfileAndValidate(tt.args.args)
-			if err != nil && tt.wantError {
+			if err != nil && err.Error() == *tt.wantErrorStr {
 				t.Log("Correctly identified unsupported schema version")
 				return
 			} else if err != nil {
-				t.Errorf("ParseDevfileAndValidate() error = %v, wantErr nil", err)
+				t.Errorf("ParseDevfileAndValidate() error = %v, wantErrStr = %v", err, tt.wantErrorStr)
 				return
 			}
 			commands, err := gotD.Data.GetCommands(common.DevfileOptions{})
