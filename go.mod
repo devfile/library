@@ -3,7 +3,7 @@ module github.com/devfile/library/v2
 go 1.19
 
 require (
-	github.com/devfile/api/v2 v2.2.1
+	github.com/devfile/api/v2 v2.2.2
 	github.com/devfile/registry-support/registry-library v0.0.0-20240311160550-e51ee8934746
 	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
 	github.com/fatih/color v1.14.1
