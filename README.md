@@ -2,17 +2,20 @@
 
 <div id="header">
 
+![Go](https://img.shields.io/badge/Go-1.19-blue)
 [![Apache2.0 License](https://img.shields.io/badge/license-Apache2.0-brightgreen.svg)](LICENSE)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8231/badge)](https://www.bestpractices.dev/projects/8231)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/devfile/library/badge)](https://securityscorecards.dev/viewer/?uri=github.com/devfile/library)
 </div>
 
 ## About
 
 The Devfile Parser library is a Golang module that:
-1. parses the devfile.yaml as specified by the [api](https://devfile.github.io/devfile/api-reference.html) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
-2. writes to the devfile.yaml with the updated data.
+1. parses a devfile as specified by the [api](https://devfile.io/docs/2.2.2/devfile-schema) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
+2. writes to the specified devfile with the updated data.
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
-5. downloads resources from a parent devfile if specified in the devfile.yaml
+5. downloads resources from a parent devfile if specified in the devfile.
 
 ## Private repository support
 
@@ -226,6 +229,29 @@ The function documentation can be accessed via [pkg.go.dev](https://pkg.go.dev/g
    }
    ```
 
+11. To download/access files from a private repository like a private GitHub use the `Token` property
+   ```go
+   parserArgs := parser.ParserArgs{
+		Token: "my-PAT",
+   }
+   ```
+
+   ```go
+   src: YamlSrc{
+		URL: "http://github.com/my-private-repo",
+		Token: "my-PAT",
+   }
+   values, err := ReadKubernetesYaml(src, fs, nil)
+   ```
+
+   If you would like to use the mock implementation for the `DevfileUtils` interface method defined in [pkg/devfile/parser/util/interface.go](pkg/devfile/parser/util/interface.go), then use 
+   ```go
+   var devfileUtilsClient DevfileUtils
+   devfileUtilsClient = NewMockDevfileUtilsClient()
+   devfileUtilsClient.DownloadInMemory(params)
+   ```
+   
+
 ## Projects using devfile/library
 
 The following projects are consuming this library as a Golang dependency
@@ -246,7 +272,7 @@ Issues are tracked in the [devfile/api](https://github.com/devfile/api) repo wit
 
 ## Releases
 
-The devfile/library releases are created on demand. For existing devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
+The devfile/library releases are created annually or on demand. For existing devfile/library releases, please check the release [page](https://github.com/devfile/library/releases).
 
 ### Create a New Release
 

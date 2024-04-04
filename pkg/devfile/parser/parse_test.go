@@ -1,5 +1,5 @@
 //
-// Copyright 2022-2023 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -39,6 +38,7 @@ import (
 	"github.com/devfile/library/v2/pkg/devfile/parser/data"
 	v2 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
 	"github.com/devfile/library/v2/pkg/testingutil"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/stretchr/testify/assert"
@@ -2862,7 +2862,7 @@ func Test_parseParentAndPluginFromURI(t *testing.T) {
 				tt.args.devFileObj.Data.AddComponents(plugincomp)
 
 			}
-			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{devfileUtilsClient: NewDevfileUtilsClient()})
+			err := parseParentAndPlugin(tt.args.devFileObj, &resolutionContextTree{}, resolverTools{devfileUtilsClient: parserUtil.NewDevfileUtilsClient()})
 
 			// Unexpected error
 			if (err != nil) != (tt.wantErr != nil) {
@@ -2889,6 +2889,11 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
+				DevfileHeader: devfilepkg.DevfileHeader{
+					Metadata: devfilepkg.DevfileMetadata{
+						Name: "main-devfile",
+					},
+				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
 						ImportReference: v1.ImportReference{
@@ -2922,6 +2927,9 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
 					SchemaVersion: schemaVersion,
+					Metadata: devfilepkg.DevfileMetadata{
+						Name: "parent-devfile-1",
+					},
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -2959,6 +2967,9 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 			Devfile: v1.Devfile{
 				DevfileHeader: devfilepkg.DevfileHeader{
 					SchemaVersion: schemaVersion,
+					Metadata: devfilepkg.DevfileMetadata{
+						Name: "parent-devfile-2",
+					},
 				},
 				DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
 					Parent: &v1.Parent{
@@ -3064,6 +3075,9 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 				Kind:       "DevWorkspaceTemplate",
 				APIVersion: "testgroup/v1alpha2",
 			},
+			ObjectMeta: kubev1.ObjectMeta{
+				Name: "dwtemplate",
+			},
 			Spec: parentSpec,
 		},
 	}
@@ -3079,7 +3093,7 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 			k8sClient:          testK8sClient,
 			context:            context.Background(),
 			httpTimeout:        &httpTimeout,
-			devfileUtilsClient: NewMockDevfileUtilsClient(),
+			devfileUtilsClient: parserUtil.NewDevfileUtilsClient(),
 		}
 
 		err := parseParentAndPlugin(devFileObj, &resolutionContextTree{}, tool)
@@ -3087,8 +3101,8 @@ func Test_parseParentAndPlugin_RecursivelyReference(t *testing.T) {
 		expectedErr := fmt.Sprintf("devfile has an cycle in references: main devfile -> uri: %s%s -> name: %s, namespace: %s -> uri: %s%s -> uri: %s%s", httpPrefix, uri1, name, namespace,
 			httpPrefix, uri2, httpPrefix, uri1)
 		// Unexpected error
-		if err == nil || !reflect.DeepEqual(expectedErr, err.Error()) {
-			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() unexpected error: %v", err)
+		if err == nil || !strings.Contains(err.Error(), expectedErr) {
+			t.Errorf("Test_parseParentAndPlugin_RecursivelyReference() error did not match: %v", err)
 
 			return
 		}
@@ -3335,6 +3349,48 @@ commands:
         kind: deploy
         isDefault: true`
 
+	badDevfile := `schemaVersion: 10.0.0
+metadata:
+  name: nodejs
+  version: 2.1.1
+  displayName: Node.js Runtime
+  description: Stack with Node.js 16
+components:
+  - name: image-build
+    image:
+      imageName: nodejs-image:latest
+      dockerfile:
+        uri: Dockerfile
+        buildContext: .
+        rootRequired: true
+  - name: kubernetes-deploy
+    kubernetes:
+      uri: deploy.yaml
+      endpoints:
+      - name: http-3001
+        targetPort: 3001
+        path: /
+commands:
+  - id: build-image
+    apply:
+      component: image-build
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+      group:
+        kind: deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true`
+
+	badYAML := `
+~: a`
+
 	tests := []struct {
 		name             string
 		parserArgs       ParserArgs
@@ -3398,6 +3454,25 @@ commands:
 				ImageNamesAsSelector: &ImageSelectorArgs{
 					Registry: "  \t \n",
 				},
+			},
+			wantErr: true,
+		},
+		{
+			name:       "error out if parser args have no devfile src",
+			parserArgs: ParserArgs{},
+			wantErr:    true,
+		},
+		{
+			name: "error out if parser args have bad YAML",
+			parserArgs: ParserArgs{
+				Data: []byte(badYAML),
+			},
+			wantErr: true,
+		},
+		{
+			name: "error if parser args have a bad Devfile",
+			parserArgs: ParserArgs{
+				Data: []byte(badDevfile),
 			},
 			wantErr: true,
 		},
@@ -3608,6 +3683,10 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
+	emptyImportReference := v1.ImportReference{
+		Version: "1",
+	}
+
 	importFromKubeCRD := attributes.Attributes{}.PutString(importSourceAttribute, resolveImportReference(kubeCRDReference))
 	parentOverridesFromMainDevfile := attributes.Attributes{}.PutString(importSourceAttribute,
 		resolveImportReference(kubeCRDReference)).PutString(parentOverrideAttribute, "main devfile")
@@ -3649,6 +3728,8 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 		},
 	}
 
+	noParentImportSrcErr := "parent does not define any resources"
+	noPluginImportSrcErr := "plugin plugin1 does not define any resources"
 	crdNotFoundErr := "not found"
 
 	//override all properties
@@ -3889,6 +3970,50 @@ func Test_parseParentFromKubeCRD(t *testing.T) {
 			},
 			wantErr: &crdNotFoundErr,
 		},
+		{
+			name: "should err out if there is no parent import reference",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							Parent: &v1.Parent{
+								ImportReference: emptyImportReference,
+							},
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{},
+						},
+					},
+				},
+			},
+			wantErr: &noParentImportSrcErr,
+		},
+		{
+			name: "should err out if there is no plugin import reference",
+			mainDevfile: DevfileObj{
+				Ctx: devfileCtx.NewDevfileCtx(OutputDevfileYamlPath),
+				Data: &v2.DevfileV2{
+					Devfile: v1.Devfile{
+						DevWorkspaceTemplateSpec: v1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: v1.DevWorkspaceTemplateSpecContent{
+								Components: []v1.Component{
+									{
+										Name: "plugin1",
+										ComponentUnion: v1.ComponentUnion{
+											Plugin: &v1.PluginComponent{
+												ImportReference: v1.ImportReference{
+													Version: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: &noPluginImportSrcErr,
+		},
 	}
 
 	for _, tt := range tests {
@@ -3969,7 +4094,7 @@ func Test_parseFromURI(t *testing.T) {
 	if err != nil {
 		fmt.Errorf("Test_parseFromURI() error: failed to marshall devfile data: %v", err)
 	}
-	err = ioutil.WriteFile(localRelativeURI, yamlData, 0644)
+	err = os.WriteFile(localRelativeURI, yamlData, 0644)
 	if err != nil {
 		fmt.Errorf("Test_parseFromURI() error: fail to write to file: %v", err)
 	}
@@ -4173,7 +4298,7 @@ func Test_parseFromURI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{devfileUtilsClient: NewDevfileUtilsClient()})
+			got, err := parseFromURI(tt.importReference, tt.curDevfileCtx, &resolutionContextTree{}, resolverTools{devfileUtilsClient: parserUtil.NewDevfileUtilsClient()})
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_parseFromURI() unexpected error: %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil && !reflect.DeepEqual(got.Data, tt.wantDevFile.Data) {
@@ -4230,12 +4355,13 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 	invalidTokenError := "failed to clone repo with token, ensure that the url and token is correct"
 	invalidGitSwitchError := "failed to switch repo to revision*"
 	invalidDevfilePathError := "error getting devfile from url: failed to retrieve*"
-	invalidGitProviderError := "Failed to download resources from parent devfile.  Unsupported Git Provider for %s "
+	invalidGitProviderError := "failed to download resources from parent devfile.  Unsupported Git Provider for %s "
 
 	tests := []struct {
 		name                 string
 		url                  string // alias for parent devfile URL
 		gitUrl               *util.GitUrl
+		devfileUtilsClient   parserUtil.MockDevfileUtilsClient
 		token                string
 		destDir              string
 		importReference      v1.ImportReference
@@ -4244,12 +4370,18 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		wantResources        []string
 		wantResourceContent  []byte
 		downloadGitResources bool
+		noMockData           bool
 	}{
 		{
 			name:   "private parent devfile",
 			url:    validUrl,
 			gitUrl: validGitUrl,
-			token:  validToken,
+			devfileUtilsClient: parserUtil.MockDevfileUtilsClient{
+				DownloadOptions: util.MockDownloadOptions{
+					MockFile: minimalDevfileContent,
+				},
+			},
+			token: validToken,
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
@@ -4261,10 +4393,35 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			downloadGitResources: true,
 		},
 		{
+			name: "private parent devfile without mock data",
+			url:  validUrl,
+			devfileUtilsClient: parserUtil.MockDevfileUtilsClient{
+				DownloadOptions: util.MockDownloadOptions{
+					MockFile: minimalDevfileContent,
+				},
+			},
+			token: validToken,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Uri: "https://github.com/private-url-devfile",
+				},
+			},
+			wantDevFile:          minimalDevfile,
+			wantResources:        []string{"resource.file"},
+			wantResourceContent:  []byte("private repo\ngit switched"),
+			downloadGitResources: true,
+			noMockData:           true,
+		},
+		{
 			name:   "public parent devfile",
 			url:    validUrl,
 			gitUrl: validGitUrl,
-			token:  "",
+			devfileUtilsClient: parserUtil.MockDevfileUtilsClient{
+				DownloadOptions: util.MockDownloadOptions{
+					MockFile: minimalDevfileContent,
+				},
+			},
+			token: "",
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
@@ -4279,6 +4436,11 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 			name:   "public parent devfile with download turned off",
 			url:    validUrl,
 			gitUrl: validGitUrl,
+			devfileUtilsClient: parserUtil.MockDevfileUtilsClient{
+				DownloadOptions: util.MockDownloadOptions{
+					MockFile: minimalDevfileContent,
+				},
+			},
 			importReference: v1.ImportReference{
 				ImportReferenceUnion: v1.ImportReferenceUnion{
 					Uri: server.URL,
@@ -4413,12 +4575,15 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 				t.Errorf("Unexpected err: %+v", err)
 			}
 
-			mockDC := NewMockDevfileUtilsClient()
-			mockDC.ParentURLAlias = tt.url
-			mockDC.GitTestToken = tt.token
-			mockDC.MockGitURL = util.MockGitUrl(*tt.gitUrl)
+			if tt.noMockData {
+				curDevfileContext.SetToken(tt.token)
+			} else {
+				tt.devfileUtilsClient.ParentURLAlias = tt.url
+				tt.devfileUtilsClient.GitTestToken = tt.token
+				tt.devfileUtilsClient.MockGitURL = util.MockGitUrl(*tt.gitUrl)
+			}
 
-			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: mockDC})
+			got, err := parseFromURI(tt.importReference, curDevfileContext, &resolutionContextTree{}, resolverTools{downloadGitResources: tt.downloadGitResources, devfileUtilsClient: &tt.devfileUtilsClient})
 
 			// validate even if we want an error; check that no files are copied to destDir
 			validateGitResourceFunctions(t, tt.wantResources, tt.wantResourceContent, destDir)
@@ -4478,6 +4643,9 @@ func Test_parseFromRegistry(t *testing.T) {
 		stagingRegistry = "https://registry.stage.devfile.io"
 	)
 
+	badYAML := `
+~: a`
+
 	parentDevfile := DevfileObj{
 		Data: &v2.DevfileV2{
 			Devfile: v1.Devfile{
@@ -4535,6 +4703,7 @@ func Test_parseFromRegistry(t *testing.T) {
 	missingRegistryURLErr := "failed to fetch from registry, registry URL is not provided"
 	invalidRegistryURLErr := "Get .* dial tcp: lookup http: .*"
 	resourceDownloadErr := "failed to pull stack from registry .*"
+	badDevfileErr := "error parsing devfile because of non-compliant data"
 
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var data []byte
@@ -4542,6 +4711,8 @@ func Test_parseFromRegistry(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/devfiles/"+registryId) {
 			if strings.Contains(r.URL.Path, "latest") {
 				data, err = yaml.Marshal(latestParentDevfile.Data)
+			} else if strings.Contains(r.URL.Path, "bad") {
+				data = []byte(badYAML)
 			} else if strings.Contains(r.URL.Path, "1.1.0") {
 				data, err = yaml.Marshal(parentDevfile.Data)
 			} else if r.URL.Path == fmt.Sprintf("/devfiles/%s/", registryId) {
@@ -4687,6 +4858,17 @@ func Test_parseFromRegistry(t *testing.T) {
 			},
 			wantErr: &invalidRegistryURLErr,
 		},
+		{
+			name: "should fail if registry returns a bad devfile content",
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Id: registryId,
+				},
+				Version:     "bad",
+				RegistryUrl: httpPrefix + registry,
+			},
+			wantErr: &badDevfileErr,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -4731,6 +4913,7 @@ func Test_parseFromKubeCRD(t *testing.T) {
 	}
 
 	crdNotFoundErr := "not found"
+	noContextErr := "kubernetes client and context are required to parse from Kubernetes CRD"
 
 	tests := []struct {
 		name                  string
@@ -4779,6 +4962,20 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			},
 			wantErr: &crdNotFoundErr,
 		},
+		{
+			name:        "should err out on no context",
+			wantDevFile: parentDevfile,
+			importReference: v1.ImportReference{
+				ImportReferenceUnion: v1.ImportReferenceUnion{
+					Kubernetes: &v1.KubernetesCustomResourceImportReference{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+			},
+			devWorkspaceResources: map[string]v1.DevWorkspaceTemplate{},
+			wantErr:               &noContextErr,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -4789,6 +4986,12 @@ func Test_parseFromKubeCRD(t *testing.T) {
 			tool := resolverTools{
 				k8sClient: testK8sClient,
 				context:   context.Background(),
+			}
+			if tt.name == "should err out on no context" {
+				tool = resolverTools{
+					k8sClient: testK8sClient,
+					context:   nil,
+				}
 			}
 			got, err := parseFromKubeCRD(tt.importReference, &resolutionContextTree{}, tool)
 			if (err != nil) != (tt.wantErr != nil) {
@@ -4854,7 +5057,7 @@ func Test_DownloadGitRepoResources(t *testing.T) {
 		},
 	}
 
-	mockDC := NewMockDevfileUtilsClient()
+	mockDC := parserUtil.NewMockDevfileUtilsClient()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			destDir := t.TempDir()
@@ -4976,7 +5179,7 @@ spec:
 		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: failed to create folder: %v, error: %v", path.Dir(localDeployFilePath), err)
 	}
 
-	err = ioutil.WriteFile(localDeployFilePath, []byte(deployContent), 0644)
+	err = os.WriteFile(localDeployFilePath, []byte(deployContent), 0644)
 	if err != nil {
 		fmt.Errorf("Test_getKubernetesDefinitionFromUri() error: fail to write to file: %v", err)
 	}
@@ -5121,7 +5324,7 @@ commands:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getKubernetesDefinitionFromUri(tt.uri, tt.devfileCtx)
+			got, err := getKubernetesDefinitionFromUri(tt.uri, tt.devfileCtx, parserUtil.NewDevfileUtilsClient())
 			if (err != nil) != (tt.wantErr != nil) {
 				t.Errorf("Test_getKubernetesDefinitionFromUri() unexpected error: %v, wantErr %v", err, *tt.wantErr)
 			} else if err == nil {

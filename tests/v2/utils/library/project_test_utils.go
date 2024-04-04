@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/google/go-cmp/cmp"
 	"sigs.k8s.io/yaml"
@@ -93,7 +93,7 @@ func VerifyProjects(devfile *commonUtils.TestDevfile, parserProjects []schema.Pr
 	// Compare entire array of projects
 	if !cmp.Equal(parserProjects, devfile.SchemaDevFile.Projects) {
 		// Compare failed so compare each project to find which one(s) don't compare
-		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Project array compare failed.")))
+		errorString = append(errorString, commonUtils.LogErrorMessage("Project array compare failed."))
 		for _, project := range parserProjects {
 			if testProject, found := getSchemaProject(devfile.SchemaDevFile.Projects, project.Name); found {
 				if !cmp.Equal(project, *testProject) {
@@ -105,7 +105,7 @@ func VerifyProjects(devfile *commonUtils.TestDevfile, parserProjects []schema.Pr
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", parserFilename)))
 					} else {
-						err = ioutil.WriteFile(parserFilename, c, 0644)
+						err = os.WriteFile(parserFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", parserFilename)))
 						}
@@ -115,7 +115,7 @@ func VerifyProjects(devfile *commonUtils.TestDevfile, parserProjects []schema.Pr
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", testFilename)))
 					} else {
-						err = ioutil.WriteFile(testFilename, c, 0644)
+						err = os.WriteFile(testFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", testFilename)))
 						}
@@ -135,7 +135,7 @@ func VerifyProjects(devfile *commonUtils.TestDevfile, parserProjects []schema.Pr
 			}
 		}
 	} else {
-		commonUtils.LogInfoMessage(fmt.Sprintf("Project structures matched"))
+		commonUtils.LogInfoMessage("Project structures matched")
 	}
 
 	var err error
@@ -154,7 +154,7 @@ func VerifyStarterProjects(devfile *commonUtils.TestDevfile, parserStarterProjec
 	// Compare entire array of projects
 	if !cmp.Equal(parserStarterProjects, devfile.SchemaDevFile.StarterProjects) {
 		// Compare failed so compare each project to find which one(s) don't compare
-		errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf("Starter Project array compare failed.")))
+		errorString = append(errorString, commonUtils.LogErrorMessage("Starter Project array compare failed."))
 		for _, starterProject := range parserStarterProjects {
 			if testStarterProject, found := getSchemaStarterProject(devfile.SchemaDevFile.StarterProjects, starterProject.Name); found {
 				if !cmp.Equal(starterProject, *testStarterProject) {
@@ -166,7 +166,7 @@ func VerifyStarterProjects(devfile *commonUtils.TestDevfile, parserStarterProjec
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", parserFilename)))
 					} else {
-						err = ioutil.WriteFile(parserFilename, c, 0644)
+						err = os.WriteFile(parserFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", parserFilename)))
 						}
@@ -176,7 +176,7 @@ func VerifyStarterProjects(devfile *commonUtils.TestDevfile, parserStarterProjec
 					if err != nil {
 						errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......marshall devfile %s", testFilename)))
 					} else {
-						err = ioutil.WriteFile(testFilename, c, 0644)
+						err = os.WriteFile(testFilename, c, 0644)
 						if err != nil {
 							errorString = append(errorString, commonUtils.LogErrorMessage(fmt.Sprintf(".......write devfile %s", testFilename)))
 						}
@@ -196,7 +196,7 @@ func VerifyStarterProjects(devfile *commonUtils.TestDevfile, parserStarterProjec
 			}
 		}
 	} else {
-		commonUtils.LogInfoMessage(fmt.Sprintf("Starter Project structures matched"))
+		commonUtils.LogInfoMessage("Starter Project structures matched")
 	}
 
 	var err error

@@ -1,5 +1,5 @@
 //
-// Copyright 2022-2023 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@ package parser
 
 import (
 	"github.com/stretchr/testify/assert"
+
+	parserUtil "github.com/devfile/library/v2/pkg/devfile/parser/util"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestPopulateFromBytes(t *testing.T) {
-	failedToConvertYamlErr := "failed to convert devfile yaml to json: yaml: mapping values are not allowed in this context"
+	failedToConvertYamlErr := "mapping values are not allowed in this context"
 
 	tests := []struct {
 		name        string
@@ -54,7 +57,7 @@ func TestPopulateFromBytes(t *testing.T) {
 				}
 			)
 			defer testServer.Close()
-			err := d.PopulateFromURL()
+			err := d.PopulateFromURL(parserUtil.NewDevfileUtilsClient())
 			if (tt.expectError != nil) != (err != nil) {
 				t.Errorf("TestPopulateFromBytes(): unexpected error: %v, wantErr: %v", err, tt.expectError)
 			} else if tt.expectError != nil {
@@ -73,7 +76,7 @@ func TestPopulateFromInvalidURL(t *testing.T) {
 			}
 		)
 
-		err := d.PopulateFromURL()
+		err := d.PopulateFromURL(parserUtil.NewDevfileUtilsClient())
 
 		if err == nil {
 			t.Errorf("TestPopulateFromInvalidURL(): expected an error, didn't get one")

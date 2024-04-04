@@ -1,5 +1,5 @@
 //
-// Copyright 2021-2023 Red Hat, Inc.
+// Copyright Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,6 @@ package util
 
 import (
 	"fmt"
-	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
-	"github.com/kylelemons/godebug/pretty"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -33,6 +28,11 @@ import (
 	"runtime"
 	"strconv"
 	"testing"
+
+	"github.com/devfile/library/v2/pkg/testingutil/filesystem"
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestNamespaceOpenShiftObject(t *testing.T) {
@@ -853,6 +853,74 @@ func TestFilterIgnores(t *testing.T) {
 	}
 }
 
+func TestIsValidProjectDir(t *testing.T) {
+	const validProjectDirPath = "/projectDirs/validProjectDir"
+	const emptyProjectDirPath = "/projectDirs/emptyProjectDir"
+	const invalidProjectDirWithFiles = "/projectDirs/invalidProjectDirWithFiles"
+	const invalidProjectDirWithSubDirPath = "/projectDirs/invalidProjectDirWithSubDir"
+	fs := filesystem.NewFakeFs()
+	tests := []struct {
+		name             string
+		path             string
+		devfilePath      string
+		isDevfilePathDir bool
+		otherFiles       []string
+		wantErr          bool
+	}{
+		{
+			name:        "Case 1: Valid project directory",
+			path:        validProjectDirPath,
+			devfilePath: "devfile.yaml",
+		},
+		{
+			name: "Case 2: Valid empty project directory",
+			path: emptyProjectDirPath,
+		},
+		{
+			name:        "Case 3: Invalid project directory with files",
+			path:        invalidProjectDirWithFiles,
+			devfilePath: "devfile.yaml",
+			otherFiles:  []string{"package.json", "app.js"},
+			wantErr:     true,
+		},
+		{
+			name:             "Case 4: Invalid project directory with subdirectory",
+			path:             invalidProjectDirWithSubDirPath,
+			devfilePath:      "devfile",
+			isDevfilePathDir: true,
+			wantErr:          true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test projectDir
+			fs.MkdirAll(tt.path, os.ModePerm)
+
+			// create devfile (or subdir)
+			if tt.devfilePath != "" {
+				if tt.isDevfilePathDir {
+					fs.MkdirAll(filepath.Join(tt.path, tt.devfilePath), os.ModePerm)
+				} else {
+					fs.Create(filepath.Join(tt.path, tt.devfilePath))
+				}
+			}
+
+			// create other files
+			for _, otherFile := range tt.otherFiles {
+				fs.Create(filepath.Join(tt.path, otherFile))
+			}
+
+			err := isValidProjectDirOnFS(tt.path, tt.devfilePath, fs)
+			if !tt.wantErr && err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+			} else if tt.wantErr && err == nil {
+				t.Errorf("Expected an error but got nil")
+			}
+		})
+	}
+}
+
 func TestDownloadFile(t *testing.T) {
 	// Start a local HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -919,7 +987,7 @@ func TestDownloadFile(t *testing.T) {
 					t.Errorf("Failed to download file with error %s", err)
 				}
 
-				got, err := ioutil.ReadFile(tt.filepath)
+				got, err := os.ReadFile(tt.filepath)
 				if err != nil {
 					t.Errorf("Failed to read file with error %s", err)
 				}
@@ -1043,11 +1111,11 @@ func TestValidateK8sResourceName(t *testing.T) {
 
 func TestValidateFile(t *testing.T) {
 	// Create temp dir and temp file
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
 	}
-	tempFile, err := ioutil.TempFile(tempDir, "")
+	tempFile, err := os.CreateTemp(tempDir, "")
 	if err != nil {
 		t.Errorf("Failed to create temp file: %s, error: %v", tempFile.Name(), err)
 	}
@@ -1086,13 +1154,13 @@ func TestValidateFile(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	// Create temp dir
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("Failed to create temp dir: %s, error: %v", tempDir, err)
 	}
 
 	// Create temp file under temp dir as source file
-	tempFile, err := ioutil.TempFile(tempDir, "")
+	tempFile, err := os.CreateTemp(tempDir, "")
 	if err != nil {
 		t.Errorf("Failed to create temp file: %s, error: %v", tempFile.Name(), err)
 	}

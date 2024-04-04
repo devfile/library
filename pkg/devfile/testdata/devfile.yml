@@ -9,11 +9,9 @@ commands:
   id: run
 components:
 - container:
-    endpoints:
-    - name: http
-      targetPort: 8080
-    image: golang:latest
-    memoryLimit: 1024Mi
+    image: busybox:latest
+    command: [tail]
+    args: [ -f, /dev/null ]
     mountSources: true
   name: runtime
 - kubernetes:
@@ -23,13 +21,8 @@ components:
     uri: http://127.0.0.1:8080/outerloop-service.yaml
   name: outerloop-deploy2
 metadata:
-  description: Stack with the latest Go version
-  displayName: Go Runtime
-  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
-  language: go
-  name: my-go-app
-  projectType: go
-  tags:
-  - Go
-  version: 1.0.0
+  description: Test stack (Busybox)
+  displayName: Test stack (devfile.yml)
+  name: my-test-app
+  version: 0.1.0
 schemaVersion: 2.2.0

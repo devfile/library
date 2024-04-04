@@ -1,0 +1,35 @@
+commands:
+- exec:
+    commandLine: ./main {{ PARAMS }}
+    component: runtime
+    group:
+      isDefault: true
+      kind: run
+    workingDir: ${PROJECT_SOURCE}
+  id: run
+components:
+- container:
+    endpoints:
+    - name: http
+      targetPort: 8080
+    image: golang:latest
+    memoryLimit: 1024Mi
+    mountSources: true
+  name: runtime
+- kubernetes:
+    uri: http://127.0.0.1:8080/outerloop-deploy.yaml
+  name: outerloop-deploy
+- openshift:
+    uri: http://127.0.0.1:8080/outerloop-service.yaml
+  name: outerloop-deploy2
+metadata:
+  description: Stack with the latest Go version
+  displayName: Go Runtime (devfile.yaml)
+  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
+  language: go
+  name: my-go-app
+  projectType: go
+  tags:
+  - Go
+  version: 1.0.0
+schemaVersion: 2.2.0
