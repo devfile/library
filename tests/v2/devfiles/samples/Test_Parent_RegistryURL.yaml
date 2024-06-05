@@ -1,4 +1,4 @@
-schemaVersion: 2.1.0
+schemaVersion: 2.2.2
 parent:
   id: nodejs
   registryUrl: "https://registry.stage.devfile.io"
