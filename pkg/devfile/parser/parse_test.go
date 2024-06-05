@@ -46,7 +46,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const schemaVersion = string(data.APISchemaVersion220)
+const schemaVersion = string(data.APISchemaVersion222)
 
 var isTrue bool = true
 var isFalse bool = false
@@ -3275,7 +3275,7 @@ type setFields struct {
 func Test_ParseDevfileParentFromData(t *testing.T) {
 
 	//mainDevfile is based on the nodejs basic sample which has a parent reference to the nodejs stack: https://registry.devfile.io/devfiles/nodejs
-	mainDevfile := `schemaVersion: 2.2.0
+	mainDevfile := `schemaVersion: 2.2.2
 metadata:
   name: nodejs
   version: 2.1.1
@@ -4166,7 +4166,7 @@ func Test_parseFromURI(t *testing.T) {
 		},
 	}
 	rawContent := `
-	schemaVersion: 2.1.0
+	schemaVersion: 2.2.2
 	metadata:
 	 name: devfile
 	 version: 2.0.0
@@ -4317,7 +4317,7 @@ func Test_parseFromURI_GitProviders(t *testing.T) {
 		invalidRevision = "invalid-revision"
 	)
 
-	minimalDevfileContent := fmt.Sprintf("schemaVersion: 2.2.0\nmetadata:\n  name: devfile")
+	minimalDevfileContent := fmt.Sprintf("schemaVersion: 2.2.2\nmetadata:\n  name: devfile")
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		_, err := rw.Write([]byte(minimalDevfileContent))
 		if err != nil {
