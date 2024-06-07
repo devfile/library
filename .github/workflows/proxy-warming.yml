@@ -27,7 +27,7 @@ permissions: read-all
 jobs:
   build:
     name: Renew documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Pull new module version
         uses: andrewslotin/go-proxy-pull-action@master
