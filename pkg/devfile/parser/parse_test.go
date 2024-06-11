@@ -4638,7 +4638,7 @@ func Test_parseFromRegistry(t *testing.T) {
 		registry        = "127.0.0.1:8080"
 		httpPrefix      = "http://"
 		notExistId      = "notexist"
-		invalidRegistry = "http//invalid.com"
+		invalidRegistry = "invalid.com"
 		registryId      = "nodejs"
 		stagingRegistry = "https://registry.stage.devfile.io"
 	)
