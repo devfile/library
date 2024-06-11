@@ -23,9 +23,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -4704,6 +4706,34 @@ func Test_parseFromRegistry(t *testing.T) {
 	invalidRegistryURLErr := "Get .* dial tcp: lookup http: .*"
 	resourceDownloadErr := "failed to pull stack from registry .*"
 	badDevfileErr := "error parsing devfile because of non-compliant data"
+
+	// set invalidRegistryURLErr to expect server misbehaving
+	// if distribution is Ubuntu Server
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("lsb_release", "-a")
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			t.Errorf("Test_parseFromRegistry() unexpected error while fetching distribution: %v", stderr.String())
+			return
+		}
+
+		lsbrelease := stdout.String()
+		if strings.Contains(lsbrelease, "Ubuntu") {
+			cmd := exec.Command("dpkg", "-l", "ubuntu-desktop")
+			cmd.Stderr = &stderr
+
+			// This command will fail if Ubuntu Server
+			if err := cmd.Run(); err != nil && !strings.Contains(stderr.String(), "dpkg-query: no packages found matching ubuntu-desktop") {
+				t.Errorf("Test_parseFromRegistry() unexpected error while fetching distribution: %v", stderr.String())
+				return
+			} else if err != nil {
+				invalidRegistryURLErr += "|Get .* dial tcp: lookup http on .*: server misbehaving"
+			}
+		}
+	}
 
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var data []byte
