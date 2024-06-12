@@ -2,7 +2,7 @@
 
 <div id="header">
 
-![Go](https://img.shields.io/badge/Go-1.19-blue)
+![Go](https://img.shields.io/badge/Go-1.21-blue)
 [![Apache2.0 License](https://img.shields.io/badge/license-Apache2.0-brightgreen.svg)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8231/badge)](https://www.bestpractices.dev/projects/8231)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/devfile/library/badge)](https://securityscorecards.dev/viewer/?uri=github.com/devfile/library)

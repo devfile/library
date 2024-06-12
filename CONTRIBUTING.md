@@ -16,7 +16,7 @@ contribution. See the [DCO](./DCO) file for details.
 The following are required to work on devfile library:
 
 - Git
-- Go 1.19 or later
+- Go 1.21 or later
 
 ## Code of Conduct
 Before contributing to this repository, see [contributor code of conduct](https://github.com/devfile/api/blob/main/CODE_OF_CONDUCT.md#contributor-covenant-code-of-conduct)
