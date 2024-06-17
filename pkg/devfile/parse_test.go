@@ -46,7 +46,7 @@ func TestParseDevfileAndValidate(t *testing.T) {
 
 	devfileStruct := schema.DevWorkspaceTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "2.1.0",
+			APIVersion: "2.3.0",
 		},
 		Spec: schema.DevWorkspaceTemplateSpec{
 			DevWorkspaceTemplateSpecContent: schema.DevWorkspaceTemplateSpecContent{
@@ -152,26 +152,26 @@ metadata:
   tags:
   - Go
   version: 1.0.0
-schemaVersion: 2.2.2
+schemaVersion: 2.3.0
 `
 
 	devfileContentWithVariable := devfileContent + `variables:
   PARAMS: foo`
-	devfileContentWithParent := `schemaVersion: 2.2.2
+	devfileContentWithParent := `schemaVersion: 2.3.0
 parent:
   id: devfile1
   registryUrl: http://127.0.0.1:8080/registry
 `
-	devfileContentWithUnsupportedSchema := `schemaVersion: 2.2.5
+	devfileContentWithUnsupportedSchema := `schemaVersion: 2.3.5
 parent:
   id: devfile1
   registryUrl: http://127.0.0.1:8080/registry
 `
-	devfileContentWithParentNoRegistry := `schemaVersion: 2.2.2
+	devfileContentWithParentNoRegistry := `schemaVersion: 2.3.0
 parent:
   id: devfile1
 `
-	devfileContentWithCRDParent := `schemaVersion: 2.2.2
+	devfileContentWithCRDParent := `schemaVersion: 2.3.0
 parent:
   kubernetes:
     name: devfile1
@@ -267,7 +267,7 @@ spec:
 	testServer.Start()
 	defer testServer.Close()
 
-	unsupportedSchemaError := `error parsing devfile because of non-compliant data due to unable to find schema for version "2.2.5". The parser supports devfile schema for version 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2, v1alpha2`
+	unsupportedSchemaError := `error parsing devfile because of non-compliant data due to unable to find schema for version "2.3.5". The parser supports devfile schema for version 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2, 2.3.0, v1alpha2`
 
 	type args struct {
 		args parser.ParserArgs
