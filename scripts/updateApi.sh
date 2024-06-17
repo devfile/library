@@ -41,10 +41,27 @@ JSON_SCHEMA_210="JsonSchema210"
 FILE_PATH_210="$DIR/../pkg/devfile/parser/data/v2/2.1.0/devfileJsonSchema210.go"
 
 # 2.2.0 devfile
+SCHEMA_URL_220="https://raw.githubusercontent.com/devfile/api/2.2.x/schemas/latest/devfile.json"
 PACKAGE_VERSION_220="version220"
 JSON_SCHEMA_220="JsonSchema220"
 FILE_PATH_220="$DIR/../pkg/devfile/parser/data/v2/2.2.0/devfileJsonSchema220.go"
 
+# 2.2.1 devfile
+SCHEMA_URL_221="https://raw.githubusercontent.com/devfile/api/2.2.x/schemas/latest/devfile.json"
+PACKAGE_VERSION_221="version221"
+JSON_SCHEMA_221="JsonSchema221"
+FILE_PATH_221="$DIR/../pkg/devfile/parser/data/v2/2.2.1/devfileJsonSchema221.go"
+
+# 2.2.2 devfile
+SCHEMA_URL_222="https://raw.githubusercontent.com/devfile/api/2.2.x/schemas/latest/devfile.json"
+PACKAGE_VERSION_222="version222"
+JSON_SCHEMA_222="JsonSchema222"
+FILE_PATH_222="$DIR/../pkg/devfile/parser/data/v2/2.2.2/devfileJsonSchema222.go"
+
+# 2.3.0 devfile
+PACKAGE_VERSION_230="version230"
+JSON_SCHEMA_230="JsonSchema230"
+FILE_PATH_230="$DIR/../pkg/devfile/parser/data/v2/2.3.0/devfileJsonSchema230.go"
 
 onError() {
   cd "${CURRENT_DIR}"
@@ -70,12 +87,30 @@ case "${1}" in
      JSON_SCHEMA=${JSON_SCHEMA_210}
      FILE_PATH=${FILE_PATH_210}
    ;;
-   *)
-     # default
-     SCHEMA_URL=${SCHEMA_URL_MASTER}
+   "2.2.0")
+     SCHEMA_URL=${SCHEMA_URL_220}
      PACKAGE_VERSION=${PACKAGE_VERSION_220}
      JSON_SCHEMA=${JSON_SCHEMA_220}
      FILE_PATH=${FILE_PATH_220}
+   ;;
+   "2.2.1")
+     SCHEMA_URL=${SCHEMA_URL_221}
+     PACKAGE_VERSION=${PACKAGE_VERSION_221}
+     JSON_SCHEMA=${JSON_SCHEMA_221}
+     FILE_PATH=${FILE_PATH_221}
+   ;;
+   "2.2.2")
+     SCHEMA_URL=${SCHEMA_URL_222}
+     PACKAGE_VERSION=${PACKAGE_VERSION_222}
+     JSON_SCHEMA=${JSON_SCHEMA_222}
+     FILE_PATH=${FILE_PATH_222}
+   ;;
+   *)
+     # default
+     SCHEMA_URL=${SCHEMA_URL_MASTER}
+     PACKAGE_VERSION=${PACKAGE_VERSION_230}
+     JSON_SCHEMA=${JSON_SCHEMA_230}
+     FILE_PATH=${FILE_PATH_230}
    ;;
 esac
 
