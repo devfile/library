@@ -46,7 +46,7 @@ func TestParseDevfileAndValidate(t *testing.T) {
 
 	devfileStruct := schema.DevWorkspaceTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "2.3.0",
+			APIVersion: "2.1.0",
 		},
 		Spec: schema.DevWorkspaceTemplateSpec{
 			DevWorkspaceTemplateSpecContent: schema.DevWorkspaceTemplateSpecContent{
@@ -152,12 +152,12 @@ metadata:
   tags:
   - Go
   version: 1.0.0
-schemaVersion: 2.3.0
+schemaVersion: 2.2.2
 `
 
 	devfileContentWithVariable := devfileContent + `variables:
   PARAMS: foo`
-	devfileContentWithParent := `schemaVersion: 2.3.0
+	devfileContentWithParent := `schemaVersion: 2.2.2
 parent:
   id: devfile1
   registryUrl: http://127.0.0.1:8080/registry
@@ -167,11 +167,11 @@ parent:
   id: devfile1
   registryUrl: http://127.0.0.1:8080/registry
 `
-	devfileContentWithParentNoRegistry := `schemaVersion: 2.3.0
+	devfileContentWithParentNoRegistry := `schemaVersion: 2.2.2
 parent:
   id: devfile1
 `
-	devfileContentWithCRDParent := `schemaVersion: 2.3.0
+	devfileContentWithCRDParent := `schemaVersion: 2.2.2
 parent:
   kubernetes:
     name: devfile1
