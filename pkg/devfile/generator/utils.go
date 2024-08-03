@@ -24,10 +24,10 @@ import (
 
 	v1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/devfile/library/v2/pkg/devfile/parser"
 	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
-	"github.com/hashicorp/go-multierror"
 	buildv1 "github.com/openshift/api/build/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -153,11 +153,15 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 
 	// Note: PROJECTS_ROOT & PROJECT_SOURCE are validated at the devfile parser level
 	// Add PROJECTS_ROOT to the container
-	container.Env = append(container.Env,
-		corev1.EnvVar{
+	container.Env = append([]corev1.EnvVar{
+		{
 			Name:  EnvProjectsRoot,
 			Value: syncRootFolder,
-		})
+		}, {
+			Name:  EnvProjectsSrc,
+			Value: syncRootFolder,
+		},
+	}, container.Env...)
 
 	return syncRootFolder
 }
