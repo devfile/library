@@ -157,11 +157,16 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 		{
 			Name:  EnvProjectsRoot,
 			Value: syncRootFolder,
-		}, {
-			Name:  EnvProjectsSrc,
-			Value: syncRootFolder,
 		},
 	}, container.Env...)
+
+	if sourceMapping != "" {
+		container.Env = append(container.Env,
+			corev1.EnvVar{
+				Name:  EnvProjectsSrc,
+				Value: sourceMapping,
+			})
+	}
 
 	return syncRootFolder
 }
