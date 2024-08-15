@@ -2,7 +2,7 @@
 
 <div id="header">
 
-![Go](https://img.shields.io/badge/Go-1.19-blue)
+![Go](https://img.shields.io/badge/Go-1.21-blue)
 [![Apache2.0 License](https://img.shields.io/badge/license-Apache2.0-brightgreen.svg)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8231/badge)](https://www.bestpractices.dev/projects/8231)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/devfile/library/badge)](https://securityscorecards.dev/viewer/?uri=github.com/devfile/library)
@@ -11,7 +11,7 @@
 ## About
 
 The Devfile Parser library is a Golang module that:
-1. parses a devfile as specified by the [api](https://devfile.io/docs/2.2.2/devfile-schema) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
+1. parses a devfile as specified by the [api](https://devfile.io/docs/2.3.0/devfile-schema) & [schema](https://github.com/devfile/api/tree/main/schemas/latest).
 2. writes to the specified devfile with the updated data.
 3. generates Kubernetes objects for the various devfile resources.
 4. defines util functions for the devfile.
