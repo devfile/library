@@ -123,6 +123,16 @@ func TestGetContainers(t *testing.T) {
 							Container: v1.Container{
 								Image:        containerImages[0],
 								MountSources: &trueMountSources,
+								Env: []v1.EnvVar{
+									{
+										Name:  "testVar1",
+										Value: "testVal1",
+									},
+									{
+										Name:  "testVar2",
+										Value: "testVal2",
+									},
+								},
 							},
 						},
 					},
@@ -132,12 +142,20 @@ func TestGetContainers(t *testing.T) {
 			wantContainerImage: containerImages[0],
 			wantContainerEnv: []corev1.EnvVar{
 				{
+					Name:  "PROJECT_SOURCE",
+					Value: "/projects/test-project",
+				},
+				{
 					Name:  "PROJECTS_ROOT",
 					Value: "/projects",
 				},
 				{
-					Name:  "PROJECT_SOURCE",
-					Value: "/projects/test-project",
+					Name:  "testVar1",
+					Value: "testVal1",
+				},
+				{
+					Name:  "testVar2",
+					Value: "testVal2",
 				},
 			},
 			wantContainerVolMount: []corev1.VolumeMount{
@@ -158,6 +176,16 @@ func TestGetContainers(t *testing.T) {
 								Image:         containerImages[0],
 								MountSources:  &trueMountSources,
 								SourceMapping: "/myroot",
+								Env: []v1.EnvVar{
+									{
+										Name:  "testVar1",
+										Value: "testVal1",
+									},
+									{
+										Name:  "testVar2",
+										Value: "testVal2",
+									},
+								},
 							},
 						},
 					},
@@ -167,16 +195,20 @@ func TestGetContainers(t *testing.T) {
 			wantContainerImage: containerImages[0],
 			wantContainerEnv: []corev1.EnvVar{
 				{
+					Name:  "PROJECT_SOURCE",
+					Value: "/myroot/test-project",
+				},
+				{
 					Name:  "PROJECTS_ROOT",
 					Value: "/myroot",
 				},
 				{
-					Name:  "PROJECT_SOURCE",
-					Value: "/myroot",
+					Name:  "testVar1",
+					Value: "testVal1",
 				},
 				{
-					Name:  "PROJECT_SOURCE",
-					Value: "/myroot/test-project",
+					Name:  "testVar2",
+					Value: "testVal2",
 				},
 			},
 			wantContainerVolMount: []corev1.VolumeMount{

@@ -160,14 +160,6 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 		},
 	}, container.Env...)
 
-	if sourceMapping != "" {
-		container.Env = append(container.Env,
-			corev1.EnvVar{
-				Name:  EnvProjectsSrc,
-				Value: sourceMapping,
-			})
-	}
-
 	return syncRootFolder
 }
 
@@ -177,13 +169,11 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 func addSyncFolder(container *corev1.Container, sourceVolumePath string, projects []v1.Project) error {
 	var syncFolder string
 
-	// if there are no projects in the devfile, source would be synced to $PROJECTS_ROOT
 	if len(projects) == 0 {
-		syncFolder = sourceVolumePath
+		// No projects found, set PROJECT_SOURCE to empty
+		syncFolder = ""
 	} else {
-		// if there is one or more projects in the devfile, get the first project and check its clonepath
 		project := projects[0]
-		// If clonepath does not exist source would be synced to $PROJECTS_ROOT/projectName
 		syncFolder = filepath.ToSlash(filepath.Join(sourceVolumePath, project.Name))
 
 		if project.ClonePath != "" {
@@ -193,16 +183,16 @@ func addSyncFolder(container *corev1.Container, sourceVolumePath string, project
 			if strings.Contains(project.ClonePath, "..") {
 				return fmt.Errorf("the clonePath %s in the devfile project %s cannot escape the value defined by $PROJECTS_ROOT. Please avoid using \"..\" in clonePath", project.ClonePath, project.Name)
 			}
-			// If clonepath exist source would be synced to $PROJECTS_ROOT/clonePath
 			syncFolder = filepath.ToSlash(filepath.Join(sourceVolumePath, project.ClonePath))
 		}
 	}
 
-	container.Env = append(container.Env,
-		corev1.EnvVar{
+	container.Env = append([]corev1.EnvVar{
+		{
 			Name:  EnvProjectsSrc,
 			Value: syncFolder,
-		})
+		},
+	}, container.Env...)
 
 	return nil
 }
@@ -728,6 +718,7 @@ func getAllContainers(devfileObj parser.DevfileObj, options common.DevfileOption
 		if comp.Container.MountSources == nil || *comp.Container.MountSources {
 			syncRootFolder := addSyncRootFolder(container, comp.Container.SourceMapping)
 
+			// Always set PROJECT_SOURCE, regardless of project presence
 			projects, err := devfileObj.Data.GetProjects(common.DevfileOptions{})
 			if err != nil {
 				return nil, err
