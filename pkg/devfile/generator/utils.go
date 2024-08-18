@@ -169,11 +169,13 @@ func addSyncRootFolder(container *corev1.Container, sourceMapping string) string
 func addSyncFolder(container *corev1.Container, sourceVolumePath string, projects []v1.Project) error {
 	var syncFolder string
 
+	// if there are no projects in the devfile, source would be synced to $PROJECTS_ROOT
 	if len(projects) == 0 {
-		// No projects found, set PROJECT_SOURCE to empty
-		syncFolder = ""
+		syncFolder = sourceVolumePath
 	} else {
+		// if there is one or more projects in the devfile, get the first project and check its clonepath
 		project := projects[0]
+		// If clonepath does not exist source would be synced to $PROJECTS_ROOT/projectName
 		syncFolder = filepath.ToSlash(filepath.Join(sourceVolumePath, project.Name))
 
 		if project.ClonePath != "" {
@@ -183,6 +185,7 @@ func addSyncFolder(container *corev1.Container, sourceVolumePath string, project
 			if strings.Contains(project.ClonePath, "..") {
 				return fmt.Errorf("the clonePath %s in the devfile project %s cannot escape the value defined by $PROJECTS_ROOT. Please avoid using \"..\" in clonePath", project.ClonePath, project.Name)
 			}
+			// If clonepath exist source would be synced to $PROJECTS_ROOT/clonePath
 			syncFolder = filepath.ToSlash(filepath.Join(sourceVolumePath, project.ClonePath))
 		}
 	}
