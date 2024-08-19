@@ -283,7 +283,7 @@ The steps to create a new release are:
 * Run this [script](https://github.com/devfile/library/blob/main/scripts/changelog-script.sh) to generate release changelog.
 ```bash
 # generate a changelog for all the changes since release v2.0.0
-./changelog-script.sh v2.0.0
+./scripts/changelog-script.sh v2.0.0
 ```
 
 * Create a new release [here](https://github.com/devfile/library/releases/new) with a new tag (having the same name with the above branch - e.g. `v2.0.x`) and copy the generated changelog to the details
