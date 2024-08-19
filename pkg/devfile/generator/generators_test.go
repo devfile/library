@@ -1478,8 +1478,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
@@ -1490,8 +1490,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "tools",
 							Image: "a-tool-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
@@ -1542,8 +1542,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
@@ -1596,8 +1596,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
@@ -1652,8 +1652,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
@@ -1706,8 +1706,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
@@ -1744,7 +1744,6 @@ func TestGetPodTemplateSpec(t *testing.T) {
 					mockDevfileData.EXPECT().GetAttributes().Return(attributes.Attributes{
 						PodOverridesAttribute: apiext.JSON{Raw: []byte("{\"spec\": {\"securityContext\": {\"seccompProfile\": {\"type\": \"Localhost\"}}}}")},
 					}, nil)
-
 					mockDevfileData.EXPECT().GetSchemaVersion().Return("2.1.0").AnyTimes()
 					return parser.DevfileObj{
 						Data: mockDevfileData,
@@ -1772,8 +1771,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
@@ -1841,8 +1840,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
@@ -1904,8 +1903,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "main",
 							Image: "an-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
@@ -1966,8 +1965,8 @@ func TestGetPodTemplateSpec(t *testing.T) {
 							Name:  "tools",
 							Image: "a-tool-image",
 							Env: []corev1.EnvVar{
-								{Name: "PROJECTS_ROOT", Value: "/projects"},
 								{Name: "PROJECT_SOURCE", Value: "/projects"},
+								{Name: "PROJECTS_ROOT", Value: "/projects"},
 							},
 							ImagePullPolicy: corev1.PullAlways,
 							Ports:           []corev1.ContainerPort{},
