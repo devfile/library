@@ -62,7 +62,7 @@ Executing `./scripts/updateApi.sh` fetches the latest `github.com/devfile/api` g
 The script also accepts a version number as an argument to update the devfile schema for a specific devfile version.
 For example, running the following command will update the devfile schema for 2.0.0
 ```
-./updateApi.sh 2.0.0
+./scripts/updateApi.sh 2.0.0
 ```
 Running the script with no arguments will default to update the latest devfile version.
 
