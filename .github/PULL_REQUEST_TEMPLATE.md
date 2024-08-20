@@ -1,20 +1,20 @@
-### What does this PR do?:
-<!-- _Summarize the changes_ -->
+# Description of Changes
+_Summarize the changes you made as part of this pull request._
 
-### Which issue(s) this PR fixes:
-<!-- _Link to github issue(s)_ -->
+# Related Issue(s)
+_Link the GitHub/GitLab/JIRA issues that are related to this PR._
 
-### PR acceptance criteria:
-Testing and documentation do not need to be complete in order for this PR to be approved. We just need to ensure tracking issues are opened and linked to this PR, if they are not in the PR scope due to various constraints.
+# Acceptance Criteria
+<!-- _Check the relevant boxes below_ -->
+_Testing and documentation do not need to be complete in order for this PR to be approved. However, tracking issues must be opened for missing testing/documentation._
 
-<!-- 
-- Open new test/doc issues under the [devfile/api](https://github.com/devfile/api/issues) repo
-- Check each criteria if:
-  - There is a separate tracking issue. Add the issue link under the criteria
-  **or**
-  - test/doc updates are made as part of this PR
--  If unchecked, explain why it's not needed 
--->
+New testing and documentation issues can be opened under [`devfile/api/issues`](https://github.com/devfile/api/issues).
+
+You can check the respective criteria below if either of the following is true:
+- There is a separate tracking issue opened and that issue is linked in this PR.
+- Testing/documentation updates are contained within this PR.
+
+If criteria is left unchecked please provide an explanation why.
 
 
 - [ ] Unit/Functional tests
@@ -37,4 +37,11 @@ Testing and documentation do not need to be complete in order for this PR to be 
   <!-- _Review scan results from the PR.  Fix all MEDIUM and higher findings and/or annotate a finding per gosec instructions: https://github.com/securego/gosec#annotating-code to address why a finding is not a security issue_-->
 
 
-### How to test changes / Special notes to the reviewer:
+# Tests Performed
+_Explain what tests you personally ran to ensure the changes are functioning as expected._
+
+# How To Test
+_Instructions for the reviewer on how to test your changes._
+
+# Notes To Reviewer
+_Any notes you would like to include for the reviewer._
