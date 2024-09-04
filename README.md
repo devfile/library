@@ -288,6 +288,10 @@ The steps to create a new release are:
 
 * Create a new release [here](https://github.com/devfile/library/releases/new) with a new tag (having the same name with the above branch - e.g. `v2.0.x`) and copy the generated changelog to the details
 
+## Security
+
+Further information for the devfile organization security policy can be found [here](https://github.com/devfile/api/blob/main/SECURITY.md).
+
 ## Contributing
 
 Please see our [contributing.md](./CONTRIBUTING.md).
