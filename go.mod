@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/devfile/api/v2 v2.3.0
 	github.com/devfile/registry-support/registry-library v0.0.0-20240521161747-89fc566cb024
-	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
+	github.com/distribution/reference v0.6.0
 	github.com/fatih/color v1.14.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-git/go-git/v5 v5.13.0
@@ -47,7 +47,6 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/devfile/registry-support/index/generator v0.0.0-20240419194226-cca4c9a81f8d // indirect
-	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/cli v25.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v25.0.6+incompatible // indirect
