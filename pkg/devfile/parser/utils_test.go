@@ -178,7 +178,7 @@ func TestGetDeployComponents(t *testing.T) {
 			mockDeployCommands := mockDevfileData.EXPECT().GetCommands(deployCommandFilter)
 			mockDeployCommands.Return(tt.deployCommands, nil).AnyTimes()
 			if tt.wantMockErr1 != nil {
-				mockDeployCommands.Return(nil, fmt.Errorf(*tt.wantMockErr1))
+				mockDeployCommands.Return(nil, fmt.Errorf("%s", *tt.wantMockErr1))
 			}
 
 			applyCommandFilter := common.DevfileOptions{
@@ -189,7 +189,7 @@ func TestGetDeployComponents(t *testing.T) {
 			mockApplyCommands := mockDevfileData.EXPECT().GetCommands(applyCommandFilter)
 			mockApplyCommands.Return(tt.applyCommands, nil).AnyTimes()
 			if tt.wantMockErr2 != nil {
-				mockApplyCommands.Return(nil, fmt.Errorf(*tt.wantMockErr2))
+				mockApplyCommands.Return(nil, fmt.Errorf("%s", *tt.wantMockErr2))
 			}
 
 			componentMap, err := GetDeployComponents(mockDevfileData)
@@ -361,7 +361,7 @@ func TestGetImageBuildComponent(t *testing.T) {
 			// set up the mock data
 			mockGetComponents.Return(tt.components, nil).AnyTimes()
 			if tt.wantMockErr != nil {
-				mockGetComponents.Return(nil, fmt.Errorf(*tt.wantMockErr))
+				mockGetComponents.Return(nil, fmt.Errorf("%s", *tt.wantMockErr))
 			}
 
 			component, err := GetImageBuildComponent(mockDevfileData, tt.deployAssociatedComponents)
