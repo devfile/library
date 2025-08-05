@@ -358,7 +358,7 @@ func TestGetContainers(t *testing.T) {
 				mockGetComponents.Return(tt.filteredComponents, nil).AnyTimes()
 			}
 			if tt.wantErr != nil {
-				mockGetComponents.Return(nil, fmt.Errorf(*tt.wantErr))
+				mockGetComponents.Return(nil, fmt.Errorf("%s", *tt.wantErr))
 			}
 			mockDevfileData.EXPECT().GetProjects(common.DevfileOptions{}).Return(projects, nil).AnyTimes()
 
@@ -635,7 +635,7 @@ func TestGetVolumesAndVolumeMounts(t *testing.T) {
 
 			if tt.wantErr != nil {
 				// simulate error condition
-				mockGetContainerComponents.Return(nil, fmt.Errorf(*tt.wantErr))
+				mockGetContainerComponents.Return(nil, fmt.Errorf("%s", *tt.wantErr))
 
 			}
 
@@ -878,7 +878,7 @@ func TestGetInitContainers(t *testing.T) {
 			mockGetCommands.Return(append(applyCommands, compCommands...), nil).AnyTimes()
 
 			if tt.wantErr != nil {
-				mockGetCommands.Return(nil, fmt.Errorf(*tt.wantErr)).AnyTimes()
+				mockGetCommands.Return(nil, fmt.Errorf("%s", *tt.wantErr)).AnyTimes()
 			}
 
 			devObj := parser.DevfileObj{

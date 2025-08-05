@@ -297,7 +297,7 @@ func CopyDevfileSamples(t *testing.T, testDevfiles []string) {
 
 		file, err := os.Stat(srcPath)
 		if err != nil {
-			t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
+			t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
 		} else {
 			commonUtils.LogMessage(fmt.Sprintf("copy file from %s to %s ", srcPath, destPath))
 			util.CopyFile(srcPath, destPath, file)
@@ -312,7 +312,7 @@ func duplicateDevfileSample(t *testing.T, src string, dst string) {
 	destPath := destDir + dst
 	file, err := os.Stat(srcPath)
 	if err != nil {
-		t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
+		t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("Error locating testDevfile %v ", err)))
 	} else {
 		commonUtils.LogMessage(fmt.Sprintf("duplicate file %s to %s ", srcPath, destPath))
 		util.CopyFile(srcPath, destDir+dst, file)
@@ -332,7 +332,7 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 		follower := DevfileFollower{}
 		libraryData, err := devfileData.NewDevfileData(schemaVersion)
 		if err != nil {
-			t.Fatalf(commonUtils.LogMessage(fmt.Sprintf("Error creating parser data : %v", err)))
+			t.Fatalf("%s", commonUtils.LogMessage(fmt.Sprintf("Error creating parser data : %v", err)))
 		}
 		libraryData.SetSchemaVersion(schemaVersion)
 		follower.LibraryData = libraryData
@@ -340,7 +340,7 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 
 		testDevfile, err := commonUtils.GetDevfile(testContent.FileName, follower, validator)
 		if err != nil {
-			t.Fatalf(commonUtils.LogMessage(fmt.Sprintf("Error creating devfile : %v", err)))
+			t.Fatalf("%s", commonUtils.LogMessage(fmt.Sprintf("Error creating devfile : %v", err)))
 		}
 
 		testDevfile.RunTest(testContent, t)
@@ -349,25 +349,25 @@ func RunTest(testContent commonUtils.TestContent, t *testing.T) {
 			if len(testContent.CommandTypes) > 0 {
 				err = editCommands(&testDevfile)
 				if err != nil {
-					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
+					t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing commands :  %s : %v", testContent.FileName, err)))
 				}
 			}
 			if len(testContent.ComponentTypes) > 0 {
 				err = editComponents(&testDevfile)
 				if err != nil {
-					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
+					t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing components :  %s : %v", testContent.FileName, err)))
 				}
 			}
 			if len(testContent.ProjectTypes) > 0 {
 				err = editProjects(&testDevfile)
 				if err != nil {
-					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing projects :  %s : %v", testContent.FileName, err)))
+					t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing projects :  %s : %v", testContent.FileName, err)))
 				}
 			}
 			if len(testContent.StarterProjectTypes) > 0 {
 				err = editStarterProjects(&testDevfile)
 				if err != nil {
-					t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing starter projects :  %s : %v", testContent.FileName, err)))
+					t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("ERROR editing starter projects :  %s : %v", testContent.FileName, err)))
 				}
 			}
 
@@ -386,7 +386,7 @@ func RunStaticTest(testContent commonUtils.TestContent, t *testing.T) {
 	testDevfile.SchemaDevFile.Parent = &schema.Parent{}
 	err := validateDevfile(&testDevfile)
 	if err != nil {
-		t.Fatalf(commonUtils.LogErrorMessage(fmt.Sprintf("Error validating testDevfile %v ", err)))
+		t.Fatalf("%s", commonUtils.LogErrorMessage(fmt.Sprintf("Error validating testDevfile %v ", err)))
 	}
 }
 
