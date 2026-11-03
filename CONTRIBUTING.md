@@ -11,6 +11,12 @@ Origin (DCO). This document was created by the Linux Kernel community and is a
 simple statement that you, as a contributor, have the legal right to make the
 contribution. See the [DCO](./DCO) file for details.
 
+## AI-Assisted Contributions
+
+Contributions created in whole or in part with generative AI tools must comply
+with the project's [AI Governance](https://github.com/devfile/api/blob/main/GOVERNANCE.md#ai-governance), including its
+review, licensing, and attribution requirements.
+
 ## Prerequisites
 
 The following are required to work on devfile library:

@@ -37,6 +37,10 @@ If criteria is left unchecked please provide an explanation why.
   <!-- _Review scan results from the PR.  Fix all MEDIUM and higher findings and/or annotate a finding per gosec instructions: https://github.com/securego/gosec#annotating-code to address why a finding is not a security issue_-->
 
 
+- [ ] [AI Governance](https://github.com/devfile/api/blob/main/GOVERNANCE.md#ai-governance) (if applicable)
+
+_AI-assisted contributions must comply with the project's review, licensing, and attribution requirements._
+
 # Tests Performed
 _Explain what tests you personally ran to ensure the changes are functioning as expected._
 
