@@ -16,11 +16,5 @@
       "groupSlug": "github-actions-deps",
       "commitMessageTopic": "GitHub Action {{depName}}"
     }
-  ],
-  "vulnerabilityAlerts": {
-    "enabled": true
-  },
-  "prHourlyLimit": 20,
-  "prConcurrentLimit": 1,
-  "labels": ["renovatebot"]
+  ]
 }
